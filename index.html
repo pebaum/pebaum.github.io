@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Centered City Fire Simulation</title>
+    <title>Peter Baumgartner</title>
     <style>
         body {
             background-color: #000;
@@ -34,117 +34,83 @@
         const totalDuration = 600000; // 10 minutes in milliseconds
         const updateInterval = 200; // Update every 200ms
         const fireDuration = 5; // Number of turns a cell stays on fire
-        const spreadProbability = 0.165; // Adjusted probability of fire spreading to an adjacent cell
+        const spreadProbability = 0.165; // Probability of fire spreading to an adjacent cell
 
         let city = [];
-        let fires = [];
+        let fires = new Set();
 
-        const cityElements = [
-            { char: '▓', prob: 0.1 },
-            { char: '▒', prob: 0.1 },
-            { char: '░', prob: 0.1 },
-            { char: '█', prob: 0.1 },
-            { char: '◙', prob: 0.05 },
-            { char: '◘', prob: 0.05 },
-            { char: '■', prob: 0.05 },
-            { char: '▪', prob: 0.05 },
-            { char: '●', prob: 0.02 },
-            { char: '○', prob: 0.02 },
-            { char: '♦', prob: 0.02 },
-            { char: '♠', prob: 0.02 },
-            { char: '♣', prob: 0.02 },
-            { char: '♥', prob: 0.02 },
-            { char: '☼', prob: 0.01 },
-            { char: '♫', prob: 0.01 },
-            { char: '☺', prob: 0.01 },
-            { char: '☻', prob: 0.01 },
-        ];
+        const cityElements = '▓▒░█◙◘■▪●○♦♠♣♥☼♫☺☻';
+        const elementProbs = [0.1, 0.1, 0.1, 0.1, 0.05, 0.05, 0.05, 0.05, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.01, 0.01, 0.01, 0.01];
 
         function initCity() {
-            // Start fire near the center
             const centerX = Math.floor(cityWidth / 2);
             const centerY = Math.floor(cityHeight / 2);
-            const fireX = centerX + Math.floor(Math.random() * 21) - 10; // +/- 10 from center
-            const fireY = centerY + Math.floor(Math.random() * 21) - 10; // +/- 10 from center
+            const fireX = centerX + Math.floor(Math.random() * 21) - 10;
+            const fireY = centerY + Math.floor(Math.random() * 21) - 10;
+
+            city = new Array(cityHeight).fill().map(() => new Array(cityWidth).fill(null));
 
             for (let y = 0; y < cityHeight; y++) {
-                let row = [];
                 for (let x = 0; x < cityWidth; x++) {
-                    let placed = false;
-                    for (const element of cityElements) {
-                        if (Math.random() < element.prob) {
-                            if (x === fireX && y === fireY) {
-                                row.push({ char: element.char, state: 'fire', fireTurns: fireDuration });
-                                fires.push([y, x]);
-                            } else {
-                                row.push({ char: element.char, state: 'normal', fireTurns: 0 });
-                            }
-                            placed = true;
+                    const rand = Math.random();
+                    let cumProb = 0;
+                    let char = ' ';
+                    for (let i = 0; i < cityElements.length; i++) {
+                        cumProb += elementProbs[i];
+                        if (rand < cumProb) {
+                            char = cityElements[i];
                             break;
                         }
                     }
-                    if (!placed) {
-                        if (x === fireX && y === fireY) {
-                            row.push({ char: '▓', state: 'fire', fireTurns: fireDuration });
-                            fires.push([y, x]);
-                        } else {
-                            row.push({ char: ' ', state: 'normal', fireTurns: 0 });
-                        }
-                    }
+                    const isFireStart = x === fireX && y === fireY;
+                    city[y][x] = {
+                        char,
+                        state: isFireStart ? 'fire' : 'normal',
+                        fireTurns: isFireStart ? fireDuration : 0
+                    };
+                    if (isFireStart) fires.add(`${y},${x}`);
                 }
-                city.push(row);
             }
         }
 
         function updateCity() {
-            const newFires = [];
-            for (const [y, x] of fires) {
+            const newFires = new Set();
+            fires.forEach(coord => {
+                const [y, x] = coord.split(',').map(Number);
                 city[y][x].fireTurns--;
 
                 if (city[y][x].fireTurns <= 0) {
-                    // Turn to ash
                     city[y][x].state = 'ash';
                     city[y][x].char = '▒';
                 } else {
-                    // Keep burning and try to spread
-                    newFires.push([y, x]);
-                    const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
-                    for (const [dy, dx] of directions) {
+                    newFires.add(coord);
+                    [[-1, 0], [1, 0], [0, -1], [0, 1]].forEach(([dy, dx]) => {
                         const newY = (y + dy + cityHeight) % cityHeight;
                         const newX = (x + dx + cityWidth) % cityWidth;
                         if (city[newY][newX].state === 'normal' && Math.random() < spreadProbability) {
                             city[newY][newX].state = 'fire';
                             city[newY][newX].fireTurns = fireDuration;
-                            newFires.push([newY, newX]);
+                            newFires.add(`${newY},${newX}`);
                         }
-                    }
+                    });
                 }
-            }
+            });
             fires = newFires;
         }
 
         function renderCity() {
-            let cityHTML = '';
-            for (let y = 0; y < cityHeight; y++) {
-                for (let x = 0; x < cityWidth; x++) {
-                    const cell = city[y][x];
-                    let cellHTML = `<span class="${cell.state}">${cell.char}</span>`;
-                    cityHTML += cellHTML;
-                }
-                cityHTML += '\n';
-            }
+            const cityHTML = city.map(row => 
+                row.map(cell => `<span class="${cell.state}">${cell.char}</span>`).join('')
+            ).join('\n');
             document.getElementById('city').innerHTML = cityHTML;
         }
 
         function animate() {
             const startTime = Date.now();
             const animationInterval = setInterval(() => {
-                const elapsedTime = Date.now() - startTime;
-
                 updateCity();
                 renderCity();
-
-                if (elapsedTime >= totalDuration || fires.length === 0) {
+                if (Date.now() - startTime >= totalDuration || fires.size === 0) {
                     clearInterval(animationInterval);
                 }
             }, updateInterval);
