@@ -1,103 +1,158 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centered City Fire Simulation</title>
+    <style>
+        body {
+            background-color: #000;
+            color: #888;
+            font-family: monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #city {
+            white-space: pre;
+            font-size: 6px;
+            line-height: 1;
+        }
+        .normal { color: #888; }
+        .fire { color: #ff6600; }
+        .ash { color: #444; }
+    </style>
 </head>
-<body style="background-color:rgb(0, 0, 0);">
-<pre style="text-align: center;"><p><span style="color: rgb(255, 255, 255);">
-<img src="data:image/gif;base64,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" data-filename="MindFlayer.gif" style="width: 94px;" class="fr-fic fr-dii"></span>
-</pre>
-<ul>
-  <li>pb web l.0<br />
-    <ul>
-      <li>Background music for work not available on Spotify
-        <ul>
-          <li style="text-align: left;">Golden Age JP Amb
-            <ul>
-              <li><a href="https://www.youtube.com/watch?v=34UutDrXV2Q">Haruomi Hosono - Watering a flower (1984)</a></li>
-              <li><a href="https://www.youtube.com/watch?v=n_V1RUAU0p0">Hiroshi Yoshimura - Soft Wave for automatic music box</a></li>
-              <li><a href="https://www.youtube.com/watch?v=zyY7NU4cbtY">Hiroshi Yoshimura &lrm;&ndash; Music For Nine Post Cards (Wave Notation 1) (1982)</a></li>
-              <li><a href="https://www.youtube.com/watch?v=ZJSuKb8YAYI">Hiroshi Yoshimura - Soundscape 1 surround (1986)</a></li>
-              <li><a href="https://www.youtube.com/watch?v=Z3m7HXeiHpg">Hiroshi Yoshimura - Wet Land (1993)</a></li>
-              <li><a href="https://www.youtube.com/watch?v=JiHHR9I3XAc">Hiroshi Yoshimura - Four Post Cards</a></li>
-              <li><a href="https://www.youtube.com/watch?v=F6TRAYUUDcQ">Hiroshi Yoshimura - Static (1988)</a></li>
-              <li><a href="https://www.youtube.com/watch?v=Q-k9Xu5O7AY">Hiroshi Yoshimura - GREEN (1986)</a></li>
-              <li><a href="https://www.youtube.com/watch?v=rWEI9y6PElo">Takashi Kokubo - Oasis Of The Wind II: Story Of Forest And Water (1993)</a></li>
-              <li><a href="https://www.youtube.com/watch?v=YEgmpe8nToU&amp;t=610s">Takashi Kokubo - Oasis Of The Wind: Forest Of Ion (1992)</a></li>
-              <li><a href="https://www.youtube.com/watch?v=acJ6qw0k6FA&amp;feature=youtu.be">Takashi Kokubo - Barcelona: Gaudi&rsquo;s Dream (1992)</a></li>
-              <li><a href="https://www.youtube.com/watch?v=ykZ2tehXH5s">Takashi Kokubo - The Day I Saw the Rainbow (Elegant Harp)</a></li>
-              <li><a href="https://www.youtube.com/watch?v=jaWdVJO5H98">Satoshi Ashikawa - Still Way (Wave Notation 2) (1982)</a></li>
-              <li><a href="https://www.youtube.com/watch?v=9fvGgaqo61s&amp;feature=youtu.be">Tomoyuki Asakawa - Endless Tide (1993)</a></li>
-              <li><a href="https://www.youtube.com/watch?v=sZNAYp5xBO4&amp;t=52s">Takatoshi Naitoh - In The Forest (1993)</a></li>
-              <li><a href="https://www.youtube.com/watch?v=1nVAveg-UQI">(1) Momoe Soeda (添田百枝) - Aloe Extract Sound (アロエ その不思議なサウンド) (1995) [Full Album] - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=Pdv3-p-C__8&amp;t=1942s">(3) Jun Fukamachi (深町純) - Before Spring (海潮音) (1980) [Full Album] - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=fD2J6kuIiuE">Takashi Kokubo - Healing Music - Forest (Full Album) - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=BtMR2ouIQXo">Takashi Kokubo - Healing Music - Bird (Full Album) - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=1ShPxNZE-Ls">Takashi Kokubo - Get at the Wave (Full Album) - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=7e7iwfan6og">Takashi Kokubo - Kyoto / Shadow of the Full Moon</a></li>
-              <li><a href="https://www.youtube.com/watch?v=3x_JZmdijDs">(2) Takashi Kokubo (小久保隆) - Solar Wind ～ Mystery Of Aurora ～ (太陽風～オーロラの神秘～) (1992) [Full Album] - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=jnRVtkw7wsk">(3) Takashi Kokubo (小久保隆) - Loire's Castles ～ Medieval Dreams ～ (ロアールの古城～中世の夢～) (1993) [Full Album] - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?reload=9&amp;v=oyJSV9nnt10&amp;feature=share">Takashi Kokubo (小久保隆) - The Day I Saw The Rainbow (虹を見た日) ～ Elegant Harp ～ (1993) [Full Album] - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=t2Qrb2aZYUQ">Takashi Kokubo (小久保隆) - Tokyo ～ Noise Aesthetics (騒音美学) ～ (1992) [Full Album] - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=sAL9ieJt71k&amp;t=3169s">Takashi Kokubo - Water</a></li>
-            </ul>
-          </li>
-          <li style="text-align: left;">Assorted Western Amb
-            <ul>
-              <li><a href="https://www.youtube.com/watch?v=sfpJTw6M5ps">Daniel Lauter - Quartz Crystal Bells (Side A) - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=J_-5UiMDGy0">Joel Andrews - Violet Flame (Part 1 &amp; 2) - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=3Oya2RRxH7M">Grizzly Hills - World of Warcraft: Wrath of the Lich King Music *1 HOUR EXTENDED* - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=Rk_eb_P_o8E">Crystalsong Forest - World of Warcraft: Wrath of the Lich King Music *1 HOUR EXTENDED* - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=qeneDiLlJXM">Northrend Transport - World of Warcraft: Wrath of the Lich King Music *1 HOUR EXTENDED* - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=syzlGoQQD6s">Howling Fjord - World of Warcraft: Wrath of the Lich King Music *1 HOUR EXTENDED* - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=_4WhO6dlEqg">The Streets of Whiterun - Elder Scrolls V: Skyrim Music *1 HOUR EXTENDED* - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=vAIOx6oH3aU">Jon Gibson - Two Solo Pieces (1977) FULL ALBUM - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=fRz4BiyxqkY">Joanna Brouk - The Space Between (full album) - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=GF853xQz0DE">Joanna Brouk - Healing Music</a></li>
-              <li><a href="https://www.youtube.com/watch?v=4gRdIPHeS1U">Joanna Brouk - Sounds of the Sea</a></li>
-              <li><a href="https://www.youtube.com/watch?v=Xsfb-E2-8wk">David Naegele - Dreamscapes (1983) - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=bz3JiZK3Y5M&amp;t=1747s">Peaceful Waters - The Elder Scrolls III: Morrowind Music *1 HOUR EXTENDED* - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=KW8abQEM1so">(1) Distant Horizons - Elder Scrolls V: Skyrim Music *1 HOUR EXTENDED* - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=i3HHJK5cl6c&amp;list=PLX6OgF6cbBtxmJ4snBPhGjLIYemClpTc4">legend of mana ext ost</a></li>
-              <li><a href="http://www.9beetstretch.com/">www.9beetstretch.com</a></li>
-              <li><a href="https://www.youtube.com/watch?v=rn8e27_aLBo">(6) CHRONO TRIGGER + CHRONO CROSS Orchestral Arrangement - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=LK0WdW1HDzQ">(1) Warren Burt - Music For Tuning Forks (1987) [Full Album] - YouTube</a></li>
-            </ul>
-          </li>
-          <li style="text-align: left;">Crazy JP / City Pop / Other
-            <ul>
-              <li><a href="https://www.youtube.com/watch?v=ypdnSS0La7s">(1) [1991] Katsumi Horii Project &lrm;&ndash; Sky Cruisin' [Full Album] - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=blOGHOU0YGk">(1) (1983) Piper - Summer Breeze (Full Album) - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=y9AQYPDOCts">(1) (1984) Toshiki Kadomatsu - After 5 Clash (Full Album) - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=A59T-qgHqyc">(1) [Full Album] Toshiki Kadomatsu - Sea Is A Lady - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=fjHcPm-ybY0">(1) Toshiki Kadomatsu &lrm;- Legacy Of You (1990) Full Album - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=5D0q_QLbqw0">(1) [1984] Jun Fukamachi - Starview HCT-5808 [Full Album] - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=SP545U-R3Ts">(1) (1983) Toshiki Kadomatsu - On the City Shore (Full Album) - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=_XK4uT7nkwY">(1) (1988) Tokyo Ensemble Lab - Breath From The Season (Full Album) - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=8OJ46GY_8Cg">(1) [1985] TPO2 &lrm;&ndash; つくば科学万博音楽集 ～Expo'85 Sound Track～ [Full Album] - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=nGJ6YPdtSE0">(1) Kenso - ή &Sigma;&pi;ά&rho;&tau;&eta; (Sparta) (1989) - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=IupU1h3xAac">(3) Jun Fukamachi - Queen Emeraldus Synthesizer Fantasy (1983) - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=Ilx-wtoPsLg">(3) Geinoh Yamashirogumi - Ecophony Gaia Album (1990) - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=PSV6bxjOFio">Angel's Egg (1985) - Full Soundtrack [HQ] - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=Fz8nZ78pEFs">Omar Rodriguez-Lopez - Sepulcros De Miel (Full Album) - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=lLrS311Ev0U">Mort Garson - Ataraxia The Unexplained [Full Album] - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=Vj1sZDsWIzE">Mort Garson &lrm;&ndash; Mother Earth's Plantasia (Full Album) - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=cIwDLN2X6Rs">Electronic System - Skylab - 1974 - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=uTTlaM4VNNY">Bill Evans - You Must Believe In Spring(1977) - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=Ql7eX-JFVtk">Sun Kil Moon | 'Ghosts of the Great Highway' [2003] - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=ukythkK4EPQ">Radiohead - Scotch Mist - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=fwkzV8VlteM">The King Of Limbs Live In The Studio - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=ofnq8OjH02U">Gavin Bryars With Tom Waits - Jesus' Blood Never Failed Me Yet (full album) - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=iinw91AVpMg">Terry Riley - The Harp Of New Albion (Full Album) - YouTube</a></li>
-              <li><a href="https://soundcloud.com/sentientruin/sets/hell-hell">HELL - Machitikos in HELL - Hell</a></li>
-              <li><a href="https://www.youtube.com/watch?v=FAWl6YeCN_w">My Bloody Valentine - M B V (2013 Full Album) - YouTube</a></li>
-              <li><a href="https://www.youtube.com/watch?v=b8UfqlwiJOk">Nektar - A Tab In The Ocean</a></li>
-              <li><a href="https://www.youtube.com/watch?v=lAnESYSpgn0">Nektar - Desolation Valley / Waves - Live 1973 (BBC The Old Grey Whistle Test) Remastered - YouTube</a></li>
-            </ul>
-          </li>
-        </ul>
-      </li>
-    </ul>
-  </li>
-</ul>
+<body>
+    <div id="city"></div>
+
+    <script>
+        const cityWidth = 160;
+        const cityHeight = 60;
+        const totalDuration = 600000; // 10 minutes in milliseconds
+        const updateInterval = 200; // Update every 200ms
+        const fireDuration = 5; // Number of turns a cell stays on fire
+        const spreadProbability = 0.165; // Adjusted probability of fire spreading to an adjacent cell
+
+        let city = [];
+        let fires = [];
+
+        const cityElements = [
+            { char: '▓', prob: 0.1 },
+            { char: '▒', prob: 0.1 },
+            { char: '░', prob: 0.1 },
+            { char: '█', prob: 0.1 },
+            { char: '◙', prob: 0.05 },
+            { char: '◘', prob: 0.05 },
+            { char: '■', prob: 0.05 },
+            { char: '▪', prob: 0.05 },
+            { char: '●', prob: 0.02 },
+            { char: '○', prob: 0.02 },
+            { char: '♦', prob: 0.02 },
+            { char: '♠', prob: 0.02 },
+            { char: '♣', prob: 0.02 },
+            { char: '♥', prob: 0.02 },
+            { char: '☼', prob: 0.01 },
+            { char: '♫', prob: 0.01 },
+            { char: '☺', prob: 0.01 },
+            { char: '☻', prob: 0.01 },
+        ];
+
+        function initCity() {
+            // Start fire near the center
+            const centerX = Math.floor(cityWidth / 2);
+            const centerY = Math.floor(cityHeight / 2);
+            const fireX = centerX + Math.floor(Math.random() * 21) - 10; // +/- 10 from center
+            const fireY = centerY + Math.floor(Math.random() * 21) - 10; // +/- 10 from center
+
+            for (let y = 0; y < cityHeight; y++) {
+                let row = [];
+                for (let x = 0; x < cityWidth; x++) {
+                    let placed = false;
+                    for (const element of cityElements) {
+                        if (Math.random() < element.prob) {
+                            if (x === fireX && y === fireY) {
+                                row.push({ char: element.char, state: 'fire', fireTurns: fireDuration });
+                                fires.push([y, x]);
+                            } else {
+                                row.push({ char: element.char, state: 'normal', fireTurns: 0 });
+                            }
+                            placed = true;
+                            break;
+                        }
+                    }
+                    if (!placed) {
+                        if (x === fireX && y === fireY) {
+                            row.push({ char: '▓', state: 'fire', fireTurns: fireDuration });
+                            fires.push([y, x]);
+                        } else {
+                            row.push({ char: ' ', state: 'normal', fireTurns: 0 });
+                        }
+                    }
+                }
+                city.push(row);
+            }
+        }
+
+        function updateCity() {
+            const newFires = [];
+            for (const [y, x] of fires) {
+                city[y][x].fireTurns--;
+
+                if (city[y][x].fireTurns <= 0) {
+                    // Turn to ash
+                    city[y][x].state = 'ash';
+                    city[y][x].char = '▒';
+                } else {
+                    // Keep burning and try to spread
+                    newFires.push([y, x]);
+                    const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+                    for (const [dy, dx] of directions) {
+                        const newY = (y + dy + cityHeight) % cityHeight;
+                        const newX = (x + dx + cityWidth) % cityWidth;
+                        if (city[newY][newX].state === 'normal' && Math.random() < spreadProbability) {
+                            city[newY][newX].state = 'fire';
+                            city[newY][newX].fireTurns = fireDuration;
+                            newFires.push([newY, newX]);
+                        }
+                    }
+                }
+            }
+            fires = newFires;
+        }
+
+        function renderCity() {
+            let cityHTML = '';
+            for (let y = 0; y < cityHeight; y++) {
+                for (let x = 0; x < cityWidth; x++) {
+                    const cell = city[y][x];
+                    let cellHTML = `<span class="${cell.state}">${cell.char}</span>`;
+                    cityHTML += cellHTML;
+                }
+                cityHTML += '\n';
+            }
+            document.getElementById('city').innerHTML = cityHTML;
+        }
+
+        function animate() {
+            const startTime = Date.now();
+            const animationInterval = setInterval(() => {
+                const elapsedTime = Date.now() - startTime;
+
+                updateCity();
+                renderCity();
+
+                if (elapsedTime >= totalDuration || fires.length === 0) {
+                    clearInterval(animationInterval);
+                }
+            }, updateInterval);
+        }
+
+        initCity();
+        renderCity();
+        animate();
+    </script>
 </body>
 </html>
