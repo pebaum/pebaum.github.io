@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Peter Baumgartner</title>
+    <title>View of a Burning City</title>
     <style>
         body {
             background-color: #000;
@@ -14,10 +14,10 @@
             align-items: center;
             height: 100vh;
             margin: 0;
+            overflow: hidden;
         }
         #city {
             white-space: pre;
-            font-size: 6px;
             line-height: 1;
         }
         .normal { color: #888; }
@@ -29,20 +29,39 @@
     <div id="city"></div>
 
     <script>
-        const cityWidth = 160;
-        const cityHeight = 60;
-        const totalDuration = 600000; // 10 minutes in milliseconds
-        const updateInterval = 200; // Update every 200ms
+        let cityWidth, cityHeight;
+        const updateInterval = 10; // Update every 10ms
         const fireDuration = 5; // Number of turns a cell stays on fire
         const spreadProbability = 0.165; // Probability of fire spreading to an adjacent cell
 
         let city = [];
         let fires = new Set();
 
-        const cityElements = '▓▒░█◙◘■▪●○♦♠♣♥☼♫☺☻';
-        const elementProbs = [0.1, 0.1, 0.1, 0.1, 0.05, 0.05, 0.05, 0.05, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.01, 0.01, 0.01, 0.01];
+        const chars = ['░', '▒', '▓', '█', '◘', '◙', '■', '□', '▪', '▫', '▬', '▲', '▼', '◄', '►'];
+        const elementProbs = Array(chars.length).fill(1 / chars.length);
+
+        function calculateDimensions() {
+            const cityElement = document.getElementById('city');
+            const testChar = document.createElement('span');
+            testChar.textContent = '█';
+            cityElement.appendChild(testChar);
+            const charWidth = testChar.offsetWidth;
+            const charHeight = testChar.offsetHeight;
+            cityElement.removeChild(testChar);
+
+            cityWidth = Math.floor(window.innerWidth / charWidth);
+            cityHeight = Math.floor(window.innerHeight / charHeight);
+
+            // Set font size to fill the screen
+            const fontSize = Math.min(
+                window.innerWidth / cityWidth,
+                window.innerHeight / cityHeight
+            );
+            cityElement.style.fontSize = `${fontSize}px`;
+        }
 
         function initCity() {
+            calculateDimensions();
             const centerX = Math.floor(cityWidth / 2);
             const centerY = Math.floor(cityHeight / 2);
             const fireX = centerX + Math.floor(Math.random() * 21) - 10;
@@ -55,10 +74,10 @@
                     const rand = Math.random();
                     let cumProb = 0;
                     let char = ' ';
-                    for (let i = 0; i < cityElements.length; i++) {
+                    for (let i = 0; i < chars.length; i++) {
                         cumProb += elementProbs[i];
                         if (rand < cumProb) {
-                            char = cityElements[i];
+                            char = chars[i];
                             break;
                         }
                     }
@@ -106,15 +125,23 @@
         }
 
         function animate() {
-            const startTime = Date.now();
             const animationInterval = setInterval(() => {
                 updateCity();
                 renderCity();
-                if (Date.now() - startTime >= totalDuration || fires.size === 0) {
+                if (fires.size === 0) {
                     clearInterval(animationInterval);
                 }
             }, updateInterval);
         }
+
+        function handleResize() {
+            clearInterval(animationInterval);
+            initCity();
+            renderCity();
+            animate();
+        }
+
+        window.addEventListener('resize', handleResize);
 
         initCity();
         renderCity();
