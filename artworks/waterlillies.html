@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Water Lillies</title>
+    <title>Simplified Water Lilies Microcosm</title>
     <style>
         body {
             background-color: #000000;
@@ -21,6 +21,7 @@
             line-height: 1;
         }
         .water { color: #103851; }
+        .shallow-water { color: #1a5c7a; }
         .lily-pad { color: #80d2af; }
         .lily-bud { color: #4e73d6; }
         .lily-flower { color: #e487ea; }
@@ -34,18 +35,19 @@
         const lakeWidth = 100;
         const lakeHeight = 40;
         const totalDuration = 1500000; // 25 minutes in milliseconds
-        const updateInterval = 750; // Update every 0.75 seconds (twice as fast as before)
+        const updateInterval = 750; // Update every 0.75 seconds
         const initialClusters = 4;
         const clusterSize = 3;
-        const growthProbability = 0.0015;
-        const expandProbability = 0.06;
-        const matureDuration = 45;
-        const bloomProbability = 0.12;
-        const bloomDuration = 25;
+        const maxLilyAge = 300;
+        const seasonDuration = 1000; // Duration of each season in update cycles
 
         let lake = [];
+        let depthMap = [];
+        let currentSeason = 0; // 0: Spring, 1: Summer, 2: Autumn, 3: Winter
+        let updateCount = 0;
 
         const waterChar = '░';
+        const shallowWaterChar = '▒';
         const lilyChars = ['▓', '▒', '░'];
 
         function getRandomLilyChar() {
@@ -53,14 +55,22 @@
         }
 
         function initLake() {
-            lake = new Array(lakeHeight).fill().map(() => 
-                new Array(lakeWidth).fill().map(() => ({
-                    char: waterChar,
-                    state: 'water',
-                    age: 0
-                }))
-            );
+            // Initialize lake and depth map
+            for (let y = 0; y < lakeHeight; y++) {
+                lake[y] = [];
+                depthMap[y] = [];
+                for (let x = 0; x < lakeWidth; x++) {
+                    let depth = Math.random();
+                    depthMap[y][x] = depth;
+                    lake[y][x] = {
+                        char: depth < 0.3 ? shallowWaterChar : waterChar,
+                        state: 'water',
+                        age: 0
+                    };
+                }
+            }
 
+            // Initialize lily clusters
             for (let i = 0; i < initialClusters; i++) {
                 const centerX = Math.floor(Math.random() * lakeWidth);
                 const centerY = Math.floor(Math.random() * lakeHeight);
@@ -69,55 +79,31 @@
                     const dy = Math.floor(Math.random() * 3) - 1;
                     const x = (centerX + dx + lakeWidth) % lakeWidth;
                     const y = (centerY + dy + lakeHeight) % lakeHeight;
-                    lake[y][x] = {
-                        char: getRandomLilyChar(),
-                        state: 'lily-pad',
-                        age: Math.floor(Math.random() * matureDuration)
-                    };
+                    if (depthMap[y][x] < 0.7) { // Lilies only grow in shallower water
+                        lake[y][x] = {
+                            char: getRandomLilyChar(),
+                            state: 'lily-pad',
+                            age: Math.floor(Math.random() * maxLilyAge / 2)
+                        };
+                    }
                 }
             }
         }
 
         function updateLake() {
+            updateCount++;
+            if (updateCount % seasonDuration === 0) {
+                currentSeason = (currentSeason + 1) % 4;
+            }
+
             const newLilies = [];
 
             for (let y = 0; y < lakeHeight; y++) {
                 for (let x = 0; x < lakeWidth; x++) {
                     if (lake[y][x].state === 'water') {
-                        const nearbyLilies = countNearbyLilies(x, y);
-                        if (nearbyLilies > 0 && Math.random() < growthProbability * nearbyLilies) {
-                            newLilies.push({x, y, state: 'lily-pad', age: 0});
-                        }
+                        handleWaterCell(x, y, newLilies);
                     } else if (['lily-pad', 'lily-bud', 'lily-flower', 'lily-bloom'].includes(lake[y][x].state)) {
-                        lake[y][x].age++;
-
-                        if (lake[y][x].state === 'lily-pad' && lake[y][x].age >= matureDuration) {
-                            lake[y][x].state = 'lily-bud';
-                            lake[y][x].char = getRandomLilyChar();
-                        } else if (lake[y][x].state === 'lily-bud' && lake[y][x].age >= matureDuration * 1.5) {
-                            lake[y][x].state = 'lily-flower';
-                            lake[y][x].char = getRandomLilyChar();
-                        } else if (lake[y][x].state === 'lily-flower' && Math.random() < bloomProbability) {
-                            lake[y][x].state = 'lily-bloom';
-                            lake[y][x].char = getRandomLilyChar();
-                            lake[y][x].age = 0;
-                        } else if (lake[y][x].state === 'lily-bloom' && lake[y][x].age >= bloomDuration) {
-                            lake[y][x] = {
-                                char: waterChar,
-                                state: 'water',
-                                age: 0
-                            };
-                        }
-
-                        if (['lily-pad', 'lily-bud', 'lily-flower'].includes(lake[y][x].state) && Math.random() < expandProbability) {
-                            const dx = Math.floor(Math.random() * 3) - 1;
-                            const dy = Math.floor(Math.random() * 3) - 1;
-                            const newX = (x + dx + lakeWidth) % lakeWidth;
-                            const newY = (y + dy + lakeHeight) % lakeHeight;
-                            if (lake[newY][newX].state === 'water') {
-                                newLilies.push({x: newX, y: newY, state: 'lily-pad', age: 0});
-                            }
-                        }
+                        handleLilyCell(x, y, newLilies);
                     }
                 }
             }
@@ -131,6 +117,58 @@
             });
         }
 
+        function handleWaterCell(x, y, newLilies) {
+            const nearbyLilies = countNearbyLilies(x, y);
+            const growthProbability = 0.001 * getSeasonalFactor('growth');
+            if (nearbyLilies > 0 && Math.random() < growthProbability * nearbyLilies && depthMap[y][x] < 0.7) {
+                newLilies.push({x, y, state: 'lily-pad', age: 0});
+            }
+        }
+
+        function handleLilyCell(x, y, newLilies) {
+            lake[y][x].age++;
+
+            const deathProbability = 0.001 * getSeasonalFactor('death');
+            if (lake[y][x].age >= maxLilyAge || Math.random() < deathProbability) {
+                lake[y][x] = {
+                    char: depthMap[y][x] < 0.3 ? shallowWaterChar : waterChar,
+                    state: 'water',
+                    age: 0
+                };
+                return;
+            }
+
+            const matureDuration = 60 * getSeasonalFactor('growth');
+            if (lake[y][x].state === 'lily-pad' && lake[y][x].age >= matureDuration) {
+                lake[y][x].state = 'lily-bud';
+                lake[y][x].char = getRandomLilyChar();
+            } else if (lake[y][x].state === 'lily-bud' && lake[y][x].age >= matureDuration * 1.5) {
+                lake[y][x].state = 'lily-flower';
+                lake[y][x].char = getRandomLilyChar();
+            } else if (lake[y][x].state === 'lily-flower') {
+                const bloomProbability = 0.005 * getSeasonalFactor('bloom');
+                if (Math.random() < bloomProbability) {
+                    lake[y][x].state = 'lily-bloom';
+                    lake[y][x].char = getRandomLilyChar();
+                    lake[y][x].age = 0;
+                }
+            } else if (lake[y][x].state === 'lily-bloom' && lake[y][x].age >= 20) {
+                lake[y][x].state = 'lily-flower';
+                lake[y][x].char = getRandomLilyChar();
+            }
+
+            const expandProbability = 0.04 * getSeasonalFactor('growth');
+            if (['lily-pad', 'lily-bud', 'lily-flower'].includes(lake[y][x].state) && Math.random() < expandProbability) {
+                const dx = Math.floor(Math.random() * 3) - 1;
+                const dy = Math.floor(Math.random() * 3) - 1;
+                const newX = (x + dx + lakeWidth) % lakeWidth;
+                const newY = (y + dy + lakeHeight) % lakeHeight;
+                if (lake[newY][newX].state === 'water' && depthMap[newY][newX] < 0.7) {
+                    newLilies.push({x: newX, y: newY, state: 'lily-pad', age: 0});
+                }
+            }
+        }
+
         function countNearbyLilies(x, y) {
             let count = 0;
             for (let dy = -1; dy <= 1; dy++) {
@@ -142,6 +180,15 @@
                 }
             }
             return count;
+        }
+
+        function getSeasonalFactor(type) {
+            const seasonalFactors = {
+                growth: [1.2, 1.5, 0.8, 0.5],
+                death: [0.8, 0.5, 1.2, 1.5],
+                bloom: [1.5, 2.0, 0.5, 0.1]
+            };
+            return seasonalFactors[type][currentSeason];
         }
 
         function renderLake() {
