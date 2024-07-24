@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASCII Block Water Lily Lake</title>
+    <style>
+        body {
+            background-color: #000000;
+            color: #f0eec8;
+            font-family: monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #lake {
+            white-space: pre;
+            font-size: 12px;
+            line-height: 1;
+        }
+        .water { color: #103851; }
+        .lily-pad { color: #80d2af; }
+        .lily-bud { color: #4e73d6; }
+        .lily-flower { color: #e487ea; }
+        .lily-bloom { color: #f0eec8; }
+    </style>
+</head>
+<body>
+    <div id="lake"></div>
+
+    <script>
+        const lakeWidth = 100;
+        const lakeHeight = 40;
+        const totalDuration = 1500000; // 25 minutes in milliseconds
+        const updateInterval = 750; // Update every 0.75 seconds (twice as fast as before)
+        const initialClusters = 4;
+        const clusterSize = 3;
+        const growthProbability = 0.0015;
+        const expandProbability = 0.06;
+        const matureDuration = 45;
+        const bloomProbability = 0.12;
+        const bloomDuration = 25;
+
+        let lake = [];
+
+        const waterChar = '░';
+        const lilyChars = ['▓', '▒', '░'];
+
+        function getRandomLilyChar() {
+            return lilyChars[Math.floor(Math.random() * lilyChars.length)];
+        }
+
+        function initLake() {
+            lake = new Array(lakeHeight).fill().map(() => 
+                new Array(lakeWidth).fill().map(() => ({
+                    char: waterChar,
+                    state: 'water',
+                    age: 0
+                }))
+            );
+
+            for (let i = 0; i < initialClusters; i++) {
+                const centerX = Math.floor(Math.random() * lakeWidth);
+                const centerY = Math.floor(Math.random() * lakeHeight);
+                for (let j = 0; j < clusterSize; j++) {
+                    const dx = Math.floor(Math.random() * 3) - 1;
+                    const dy = Math.floor(Math.random() * 3) - 1;
+                    const x = (centerX + dx + lakeWidth) % lakeWidth;
+                    const y = (centerY + dy + lakeHeight) % lakeHeight;
+                    lake[y][x] = {
+                        char: getRandomLilyChar(),
+                        state: 'lily-pad',
+                        age: Math.floor(Math.random() * matureDuration)
+                    };
+                }
+            }
+        }
+
+        function updateLake() {
+            const newLilies = [];
+
+            for (let y = 0; y < lakeHeight; y++) {
+                for (let x = 0; x < lakeWidth; x++) {
+                    if (lake[y][x].state === 'water') {
+                        const nearbyLilies = countNearbyLilies(x, y);
+                        if (nearbyLilies > 0 && Math.random() < growthProbability * nearbyLilies) {
+                            newLilies.push({x, y, state: 'lily-pad', age: 0});
+                        }
+                    } else if (['lily-pad', 'lily-bud', 'lily-flower', 'lily-bloom'].includes(lake[y][x].state)) {
+                        lake[y][x].age++;
+
+                        if (lake[y][x].state === 'lily-pad' && lake[y][x].age >= matureDuration) {
+                            lake[y][x].state = 'lily-bud';
+                            lake[y][x].char = getRandomLilyChar();
+                        } else if (lake[y][x].state === 'lily-bud' && lake[y][x].age >= matureDuration * 1.5) {
+                            lake[y][x].state = 'lily-flower';
+                            lake[y][x].char = getRandomLilyChar();
+                        } else if (lake[y][x].state === 'lily-flower' && Math.random() < bloomProbability) {
+                            lake[y][x].state = 'lily-bloom';
+                            lake[y][x].char = getRandomLilyChar();
+                            lake[y][x].age = 0;
+                        } else if (lake[y][x].state === 'lily-bloom' && lake[y][x].age >= bloomDuration) {
+                            lake[y][x] = {
+                                char: waterChar,
+                                state: 'water',
+                                age: 0
+                            };
+                        }
+
+                        if (['lily-pad', 'lily-bud', 'lily-flower'].includes(lake[y][x].state) && Math.random() < expandProbability) {
+                            const dx = Math.floor(Math.random() * 3) - 1;
+                            const dy = Math.floor(Math.random() * 3) - 1;
+                            const newX = (x + dx + lakeWidth) % lakeWidth;
+                            const newY = (y + dy + lakeHeight) % lakeHeight;
+                            if (lake[newY][newX].state === 'water') {
+                                newLilies.push({x: newX, y: newY, state: 'lily-pad', age: 0});
+                            }
+                        }
+                    }
+                }
+            }
+
+            newLilies.forEach(lily => {
+                lake[lily.y][lily.x] = {
+                    char: getRandomLilyChar(),
+                    state: lily.state,
+                    age: lily.age
+                };
+            });
+        }
+
+        function countNearbyLilies(x, y) {
+            let count = 0;
+            for (let dy = -1; dy <= 1; dy++) {
+                for (let dx = -1; dx <= 1; dx++) {
+                    if (dx === 0 && dy === 0) continue;
+                    const nx = (x + dx + lakeWidth) % lakeWidth;
+                    const ny = (y + dy + lakeHeight) % lakeHeight;
+                    if (lake[ny][nx].state !== 'water') count++;
+                }
+            }
+            return count;
+        }
+
+        function renderLake() {
+            const lakeHTML = lake.map(row => 
+                row.map(cell => `<span class="${cell.state}">${cell.char}</span>`).join('')
+            ).join('\n');
+            document.getElementById('lake').innerHTML = lakeHTML;
+        }
+
+        function animate() {
+            const startTime = Date.now();
+            const animationInterval = setInterval(() => {
+                updateLake();
+                renderLake();
+                if (Date.now() - startTime >= totalDuration) {
+                    clearInterval(animationInterval);
+                }
+            }, updateInterval);
+        }
+
+        initLake();
+        renderLake();
+        animate();
+    </script>
+</body>
+</html>
