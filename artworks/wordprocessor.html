@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRT ASCII Webpage</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background-color: #000000;
+            color: #ff8c00;
+            font-family: monospace;
+            overflow: hidden;
+        }
+        #container {
+            position: relative;
+            height: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        #editor {
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            border: none;
+            resize: none;
+            color: #ff8c00;
+            font-size: 16px;
+            line-height: 1.2;
+            outline: none;
+            text-shadow: 0 0 5px rgba(255,140,0,0.5);
+            caret-color: transparent;  /* Hide the default cursor */
+        }
+        #cursor {
+            position: absolute;
+            font-size: 16px;
+            animation: blink 0.7s infinite;
+            color: #ff8c00;
+            text-shadow: 0 0 5px rgba(255,140,0,0.5);
+            pointer-events: none;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
+        #screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 140, 0, 0.06), rgba(255, 140, 0, 0.02), rgba(255, 140, 0, 0.06));
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <textarea id="editor" spellcheck="false"></textarea>
+        <div id="cursor">█</div>
+    </div>
+    <div id="screen"></div>
+
+    <script>
+        const editor = document.getElementById('editor');
+        const cursor = document.getElementById('cursor');
+
+        function updateCursorPosition() {
+            const rect = editor.getBoundingClientRect();
+            const text = editor.value;
+            const selectionStart = editor.selectionStart;
+            const lines = text.slice(0, selectionStart).split('\n');
+            const currentLineNumber = lines.length - 1;
+            const currentLineText = lines[currentLineNumber];
+
+            const measureSpan = document.createElement('span');
+            measureSpan.style.visibility = 'hidden';
+            measureSpan.style.position = 'absolute';
+            measureSpan.style.whiteSpace = 'pre';
+            measureSpan.style.font = getComputedStyle(editor).font;
+            document.body.appendChild(measureSpan);
+
+            measureSpan.textContent = currentLineText;
+            const textWidth = measureSpan.offsetWidth;
+
+            document.body.removeChild(measureSpan);
+
+            const lineHeight = parseFloat(getComputedStyle(editor).lineHeight);
+            const top = rect.top + currentLineNumber * lineHeight + editor.scrollTop - editor.clientTop;
+            const left = rect.left + textWidth + parseInt(getComputedStyle(editor).paddingLeft, 10) - editor.scrollLeft;
+
+            cursor.style.top = `${top}px`;
+            cursor.style.left = `${left}px`;
+        }
+
+        editor.addEventListener('input', updateCursorPosition);
+        editor.addEventListener('click', updateCursorPosition);
+        editor.addEventListener('keyup', updateCursorPosition);
+        editor.addEventListener('scroll', updateCursorPosition);
+
+        updateCursorPosition();
+        editor.focus();
+    </script>
+</body>
+</html>
