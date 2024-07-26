@@ -3,149 +3,217 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>View of a Burning City</title>
+    <title>ASCII Block Maze Homepage (Slower)</title>
     <style>
-        body {
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
             background-color: #000;
-            color: #888;
+            color: #aaa;
             font-family: monospace;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
-            overflow: hidden;
         }
-        #city {
+        #maze {
             white-space: pre;
+            font-size: 14px;
             line-height: 1;
+            position: relative;
+            z-index: 10;
         }
-        .normal { color: #888; }
-        .fire { color: #ff6600; }
-        .ash { color: #444; }
+        #dustCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 5;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
-    <div id="city"></div>
+    <canvas id="dustCanvas"></canvas>
+    <div id="maze"></div>
 
     <script>
-        let cityWidth, cityHeight;
-        const updateInterval = 10; // Update every 10ms
-        const fireDuration = 5; // Number of turns a cell stays on fire
-        const spreadProbability = 0.165; // Probability of fire spreading to an adjacent cell
+        const mazeElement = document.getElementById('maze');
+        let maze = [];
+        const width = 30;
+        const height = 30;
+        let generationStack = [];
+        let generationInterval;
 
-        let city = [];
-        let fires = new Set();
+        const blocks = {
+            wall: '█',
+            path: '░',
+            decorations: ['▒', '▓', '╬', '╪']
+        };
 
-        const chars = ['░', '▒', '▓', '█', '◘', '◙', '■', '□', '▪', '▫', '▬', '▲', '▼', '◄', '►'];
-        const elementProbs = Array(chars.length).fill(1 / chars.length);
-
-        function calculateDimensions() {
-            const cityElement = document.getElementById('city');
-            const testChar = document.createElement('span');
-            testChar.textContent = '█';
-            cityElement.appendChild(testChar);
-            const charWidth = testChar.offsetWidth;
-            const charHeight = testChar.offsetHeight;
-            cityElement.removeChild(testChar);
-
-            cityWidth = Math.floor(window.innerWidth / charWidth);
-            cityHeight = Math.floor(window.innerHeight / charHeight);
-
-            // Set font size to fill the screen
-            const fontSize = Math.min(
-                window.innerWidth / cityWidth,
-                window.innerHeight / cityHeight
-            );
-            cityElement.style.fontSize = `${fontSize}px`;
+        function initMaze() {
+            maze = Array(height).fill().map(() => Array(width).fill(blocks.wall));
+            generationStack = [[1, 1]];
+            maze[1][1] = blocks.path;
+            renderMaze();
         }
 
-        function initCity() {
-            calculateDimensions();
-            const centerX = Math.floor(cityWidth / 2);
-            const centerY = Math.floor(cityHeight / 2);
-            const fireX = centerX + Math.floor(Math.random() * 21) - 10;
-            const fireY = centerY + Math.floor(Math.random() * 21) - 10;
+        function generateMazeStep() {
+            if (generationStack.length === 0) {
+                clearInterval(generationInterval);
+                addDecorations();
+                return;
+            }
 
-            city = new Array(cityHeight).fill().map(() => new Array(cityWidth).fill(null));
+            const [x, y] = generationStack[generationStack.length - 1];
+            const directions = [[0, 2], [2, 0], [0, -2], [-2, 0]];
+            const availableDirections = directions.filter(([dx, dy]) => 
+                x + dx > 0 && x + dx < width - 1 && y + dy > 0 && y + dy < height - 1 && maze[y + dy][x + dx] === blocks.wall
+            );
 
-            for (let y = 0; y < cityHeight; y++) {
-                for (let x = 0; x < cityWidth; x++) {
-                    const rand = Math.random();
-                    let cumProb = 0;
-                    let char = ' ';
-                    for (let i = 0; i < chars.length; i++) {
-                        cumProb += elementProbs[i];
-                        if (rand < cumProb) {
-                            char = chars[i];
-                            break;
-                        }
+            if (availableDirections.length > 0) {
+                const [dx, dy] = availableDirections[Math.floor(Math.random() * availableDirections.length)];
+                maze[y + dy/2][x + dx/2] = blocks.path;
+                maze[y + dy][x + dx] = blocks.path;
+                generationStack.push([x + dx, y + dy]);
+            } else {
+                generationStack.pop();
+            }
+
+            renderMaze();
+        }
+
+        function addDecorations() {
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    if (maze[y][x] === blocks.path && Math.random() < 0.1) {
+                        maze[y][x] = blocks.decorations[Math.floor(Math.random() * blocks.decorations.length)];
                     }
-                    const isFireStart = x === fireX && y === fireY;
-                    city[y][x] = {
-                        char,
-                        state: isFireStart ? 'fire' : 'normal',
-                        fireTurns: isFireStart ? fireDuration : 0
-                    };
-                    if (isFireStart) fires.add(`${y},${x}`);
                 }
+            }
+            renderMaze();
+        }
+
+        function renderMaze() {
+            mazeElement.innerHTML = maze.map(row => row.join('')).join('\n');
+        }
+
+        function startMazeGeneration() {
+            initMaze();
+            generationInterval = setInterval(generateMazeStep, 200); // Slowed down to 200ms
+        }
+
+        // Particle and bat effect code
+        const canvas = document.getElementById('dustCanvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const particles = [];
+        const particleCount = 100;
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = 14;
+                this.speedX = Math.random() * 0.5 - 0.25;
+                this.speedY = Math.random() * 0.5 - 0.25;
+                this.alpha = Math.random() * 0.3 + 0.1;
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+
+                if (this.x < 0) this.x = canvas.width;
+                if (this.x > canvas.width) this.x = 0;
+                if (this.y < 0) this.y = canvas.height;
+                if (this.y > canvas.height) this.y = 0;
+            }
+
+            draw() {
+                ctx.fillStyle = `rgba(180, 180, 180, ${this.alpha})`;
+                ctx.font = `${this.size}px monospace`;
+                ctx.fillText('.', this.x, this.y);
             }
         }
 
-        function updateCity() {
-            const newFires = new Set();
-            fires.forEach(coord => {
-                const [y, x] = coord.split(',').map(Number);
-                city[y][x].fireTurns--;
+        class Bat {
+            constructor() {
+                this.reset();
+            }
 
-                if (city[y][x].fireTurns <= 0) {
-                    city[y][x].state = 'ash';
-                    city[y][x].char = '▒';
-                } else {
-                    newFires.add(coord);
-                    [[-1, 0], [1, 0], [0, -1], [0, 1]].forEach(([dy, dx]) => {
-                        const newY = (y + dy + cityHeight) % cityHeight;
-                        const newX = (x + dx + cityWidth) % cityWidth;
-                        if (city[newY][newX].state === 'normal' && Math.random() < spreadProbability) {
-                            city[newY][newX].state = 'fire';
-                            city[newY][newX].fireTurns = fireDuration;
-                            newFires.add(`${newY},${newX}`);
-                        }
-                    });
+            reset() {
+                this.x = Math.random() < 0.5 ? -50 : canvas.width + 50;
+                this.y = Math.random() * canvas.height;
+                this.speedX = (Math.random() * 2 + 1) * (this.x < 0 ? 1 : -1);
+                this.speedY = Math.random() * 2 - 1;
+                this.alpha = Math.random() * 0.2 + 0.1;
+                this.flapState = Math.random() < 0.5;
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+
+                if ((this.speedX > 0 && this.x > canvas.width + 50) || 
+                    (this.speedX < 0 && this.x < -50)) {
+                    this.reset();
                 }
-            });
-            fires = newFires;
-        }
 
-        function renderCity() {
-            const cityHTML = city.map(row => 
-                row.map(cell => `<span class="${cell.state}">${cell.char}</span>`).join('')
-            ).join('\n');
-            document.getElementById('city').innerHTML = cityHTML;
-        }
-
-        function animate() {
-            const animationInterval = setInterval(() => {
-                updateCity();
-                renderCity();
-                if (fires.size === 0) {
-                    clearInterval(animationInterval);
+                if (this.y < 0 || this.y > canvas.height) {
+                    this.speedY = -this.speedY;
                 }
-            }, updateInterval);
+
+                if (Math.random() < 0.1) {
+                    this.flapState = !this.flapState;
+                }
+            }
+
+            draw() {
+                ctx.fillStyle = `rgba(180, 180, 180, ${this.alpha})`;
+                ctx.font = `${14}px monospace`;
+                ctx.fillText(this.flapState ? '^' : 'v', this.x, this.y);
+            }
         }
 
-        function handleResize() {
-            clearInterval(animationInterval);
-            initCity();
-            renderCity();
-            animate();
+        const bats = [new Bat(), new Bat()];
+
+        function initParticles() {
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle());
+            }
         }
 
-        window.addEventListener('resize', handleResize);
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            for (let particle of particles) {
+                particle.update();
+                particle.draw();
+            }
 
-        initCity();
-        renderCity();
-        animate();
+            for (let bat of bats) {
+                bat.update();
+                bat.draw();
+            }
+
+            requestAnimationFrame(animateParticles);
+        }
+
+        initParticles();
+        animateParticles();
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        startMazeGeneration();
     </script>
 </body>
 </html>
