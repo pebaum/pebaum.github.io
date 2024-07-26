@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Peter Baumgartner</title>
+    <title>ASCII Block Maze Homepage (Slower)</title>
     <style>
         body, html {
             margin: 0;
@@ -34,16 +34,30 @@
             z-index: 5;
             pointer-events: none;
         }
-        .centered-text {
+        #content {
             text-align: center;
+            z-index: 20;
             margin-top: 20px;
+        }
+        a {
+            color: #aaa;
+            text-decoration: none;
+        }
+        a:hover {
+            color: #fff;
         }
     </style>
 </head>
 <body>
     <canvas id="dustCanvas"></canvas>
     <div id="maze"></div>
-
+    <div id="content">
+        <p>PETER BAUMGARTNER<br>
+        Generative Art:<br>
+        <a href="artworks/viewofaburningcity.html">View of a Burning City</a><br>
+        <a href="artworks/colorexplore.html">Explorer Simulation</a><br>
+        <a href="artworks/mazesend.html">Mazes Eend</a></p>
+    </div>
     <script>
         const mazeElement = document.getElementById('maze');
         let maze = [];
@@ -107,20 +121,72 @@
 
         function startMazeGeneration() {
             initMaze();
-            generationInterval = setInterval(generateMazeStep, 100);
+            generationInterval = setInterval(generateMazeStep, 200); // Slowed down to 200ms
         }
+
+        // Particle effect code
+        const canvas = document.getElementById('dustCanvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const particles = [];
+        const particleCount = 100;
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = 14;
+                this.speedX = Math.random() * 0.5 - 0.25;
+                this.speedY = Math.random() * 0.5 - 0.25;
+                this.alpha = Math.random() * 0.3 + 0.1;
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+
+                if (this.x < 0) this.x = canvas.width;
+                if (this.x > canvas.width) this.x = 0;
+                if (this.y < 0) this.y = canvas.height;
+                if (this.y > canvas.height) this.y = 0;
+            }
+
+            draw() {
+                ctx.fillStyle = `rgba(180, 180, 180, ${this.alpha})`;
+                ctx.font = `${this.size}px monospace`;
+                ctx.fillText('.', this.x, this.y);
+            }
+        }
+
+        function initParticles() {
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            for (let particle of particles) {
+                particle.update();
+                particle.draw();
+            }
+
+            requestAnimationFrame(animateParticles);
+        }
+
+        initParticles();
+        animateParticles();
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
 
         startMazeGeneration();
     </script>
-
-    <!-- Centered Text -->
-    <div class="centered-text">
-        <p>PETER BAUMGARTNER<br>
-            Generative Art:<br>
-            <a href="artworks/viewofaburningcity.html">View of a Burning City</a><br>
-            <a href="artworks/colorexplore.html">Explorer Simulation</a><br>
-            <a href="artworks/mazesend.html">Mazes Eend</a><br>
-        </p>
-    </div>
 </body>
 </html>
