@@ -3,194 +3,859 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Peter Baumgartner</title>
+    <title>Peter Baumgartner - Digital Cartographer</title>
     <style>
-        body, html {
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&display=swap');
+        
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
             height: 100%;
             overflow: hidden;
-            background-color: #000;
-            color: #aaa;
-            font-family: monospace;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-        #maze {
-            white-space: pre;
-            font-size: 14px;
+            background: #0a0a0a;
+            color: #888;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
             line-height: 1;
-            position: relative;
-            z-index: 10;
         }
-        #dustCanvas {
-            position: fixed;
+
+        #world-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            perspective: 1000px;
+            overflow: hidden;
+        }        #world-map {
+            position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 5;
-            pointer-events: none;
+            transform: none;
+            white-space: pre;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: calc(100vw / 200); /* Dynamic font size based on screen width */
+            line-height: calc(100vh / 100); /* Dynamic line height based on screen height */
+            letter-spacing: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
         }
-        #content {
-            text-align: center;
-            z-index: 20;
-            margin-top: 20px;
+
+        .terrain-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            white-space: pre;
+            font-family: inherit;
+            font-size: inherit;
+            line-height: inherit;
+            letter-spacing: inherit;
         }
-        a {
+
+        .base-terrain {
+            z-index: 1;
+            color: #444;
+        }        .elevation-1 {
+            z-index: 2;
+            color: #666;
+        }
+
+        .elevation-2 {
+            z-index: 3;
+            color: #888;
+        }
+
+        .landmarks {
+            z-index: 4;
             color: #aaa;
-            text-decoration: none;
         }
-        a:hover {
+
+        .animated-elements {
+            z-index: 6;
+            color: #bbb;
+        }
+
+        #legend {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(20, 20, 20, 0.9);
+            border: 1px solid #444;
+            padding: 20px;
+            border-radius: 5px;
+            max-width: 300px;
+            z-index: 100;
+            backdrop-filter: blur(5px);
+        }
+
+        #legend h2 {
+            color: #ccc;
+            margin-bottom: 15px;
+            font-size: 14px;
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+
+        #legend .section {
+            margin-bottom: 12px;
+        }
+
+        #legend .label {
+            color: #aaa;
+            font-size: 11px;
+            margin-bottom: 3px;
+        }
+
+        #legend .item {
+            color: #888;
+            font-size: 10px;
+            margin-bottom: 2px;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        #legend .item:hover {
             color: #fff;
+        }
+
+        .clickable {
+            cursor: pointer;
+            transition: color 0.3s, text-shadow 0.3s;
+        }
+
+        .clickable:hover {
+            color: #fff !important;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        @keyframes dragonFly {
+            0% { transform: translateX(0) translateY(0); }
+            25% { transform: translateX(20px) translateY(-5px); }
+            50% { transform: translateX(40px) translateY(0); }
+            75% { transform: translateX(20px) translateY(5px); }
+            100% { transform: translateX(0) translateY(0); }
+        }.dragon {
+            animation: dragonFly 30s ease-in-out infinite;
+            color: #999 !important;
+        }
+
+        /* 3D ASCII Tooltips */
+        .tooltip-overlay {
+            position: absolute;
+            pointer-events: none;
+            z-index: 200;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .tooltip-overlay.visible {
+            opacity: 1;
+        }        .tooltip-ascii-art {
+            background: rgba(10, 10, 10, 0.95);
+            border: 2px solid #666;
+            border-radius: 3px;
+            padding: 15px;
+            font-size: 9px;
+            line-height: 1.1;
+            color: #aaa;
+            white-space: pre;
+            box-shadow: 
+                0 0 0 1px #444,
+                0 4px 8px rgba(0,0,0,0.5),
+                inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+
+        .tooltip-pointer {
+            position: absolute;
+            width: 2px;
+            background: #666;
+            transform-origin: bottom;
+            opacity: 0.7;
+        }
+
+        .landmark-glow {
+            color: #fff !important;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+            animation: landmarkPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes landmarkPulse {
+            0%, 100% { text-shadow: 0 0 15px rgba(255, 255, 255, 0.6); }
+            50% { text-shadow: 0 0 25px rgba(255, 255, 255, 1); }
         }
     </style>
 </head>
 <body>
-    <canvas id="dustCanvas"></canvas>
-    <div id="maze"></div>
-    <div id="content">
-        <p>PETER BAUMGARTNER<br>
-        Generative Art:<br>
-        <a href="artworks/viewofaburningcity.html">View of a Burning City</a><br>
-        <a href="artworks/wordprocessor.html">Word Processor</a><br>
-        <a href="artworks/colorexplore.html">Explorer Simulation</a><br>
-        <a href="artworks/mazesend.html">Maze's End</a><br>
-        <a href="artworks/waterlillies.html">Waterlilies</a><br>
-        <a href="artworks/dungeongame.html">Dungeon Game</a><br>
-        <a href="artworks/blocksnow.html">Blocksnow</a>
+    <div id="world-container">
+        <div id="world-map">
+            <div class="terrain-layer base-terrain" id="base-layer"></div>
+            <div class="terrain-layer elevation-1" id="elevation-1-layer"></div>
+            <div class="terrain-layer elevation-2" id="elevation-2-layer"></div>            <div class="terrain-layer landmarks" id="landmarks-layer"></div>
+            <div class="terrain-layer animated-elements" id="animated-layer"></div>
+        </div>
     </div>
-    <script>
-        const mazeElement = document.getElementById('maze');
-        let maze = [];
-        const width = 30;
-        const height = 30;
-        let generationStack = [];
-        let generationInterval;
 
-        const blocks = {
-            wall: '█',
-            path: '░',
-            decorations: ['▒', '▓', '╬', '╪']
-        };
+    <div id="legend">
+        <h2>PETER BAUMGARTNER</h2>
+        <div class="section">
+            <div class="label">Digital Cartographer & Artist</div>
+            <div class="item">Generative Worlds</div>
+            <div class="item">Interactive Landscapes</div>
+        </div>        <div class="section">
+            <div class="label">EXPLORE</div>
+            <div class="item clickable" data-location="tower">^ Tower of Algorithms</div>
+            <div class="item clickable" data-location="village">o Village of Projects</div>
+            <div class="item clickable" data-location="cave">* Cave of Experiments</div>
+            <div class="item clickable" data-location="port"># Port of Contact</div>
+            <div class="item clickable" data-location="castle">+ Castle Archives</div>
+        </div>
+        <div class="section">
+            <div class="label">TERRAIN</div>
+            <div class="item">▓ Mountains</div>
+            <div class="item">▒ Forests</div>
+            <div class="item">░ Plains</div>
+            <div class="item">~ Rivers</div>
+            <div class="item">≈ Ocean</div>
+        </div>
+    </div>
 
-        function initMaze() {
-            maze = Array(height).fill().map(() => Array(width).fill(blocks.wall));
-            generationStack = [[1, 1]];
-            maze[1][1] = blocks.path;
-            renderMaze();
-        }
+    <script>        class WorldGenerator {            constructor() {
+                // Calculate dimensions based on screen size for perfect fit
+                this.width = 200; // Characters across screen width
+                this.height = 100; // Characters down screen height
+                
+                this.baseLayer = document.getElementById('base-layer');                this.elevation1Layer = document.getElementById('elevation-1-layer');
+                this.elevation2Layer = document.getElementById('elevation-2-layer');
+                this.landmarksLayer = document.getElementById('landmarks-layer');
+                this.animatedLayer = document.getElementById('animated-layer');
+                
+                // Tooltips
+                this.tooltips = new Map();
+                this.currentHoveredLandmark = null;
+                
+                // Remove generation state - we'll load instantly
+                this.islands = [];
+                this.worldData = {
+                    base: [],
+                    elevation1: [],
+                    elevation2: [],
+                    landmarks: []
+                };
+                
+                this.terrain = {
+                    water: '≈',
+                    deepWater: '~',
+                    plains: '░',
+                    forest: '▒',
+                    mountain: '▓',
+                    peak: '█',
+                    river: '~',
+                    shore: '∙',
+                    swamp: '∴',
+                    desert: '▄'
+                };                this.landmarks = {
+                    tower: '^',
+                    village: 'o',
+                    cave: '*',
+                    port: '#',
+                    castle: '+',
+                    temple: '%'
+                };
 
-        function generateMazeStep() {
-            if (generationStack.length === 0) {
-                clearInterval(generationInterval);
-                addDecorations();
-                return;
+                this.init();
+            }generateNoise(x, y, scale = 1) {
+                return (Math.sin(x * 0.1 * scale) + Math.cos(y * 0.15 * scale) + 
+                       Math.sin((x + y) * 0.08 * scale)) / 3;
             }
 
-            const [x, y] = generationStack[generationStack.length - 1];
-            const directions = [[0, 2], [2, 0], [0, -2], [-2, 0]];
-            const availableDirections = directions.filter(([dx, dy]) => 
-                x + dx > 0 && x + dx < width - 1 && y + dy > 0 && y + dy < height - 1 && maze[y + dy][x + dx] === blocks.wall
-            );
-
-            if (availableDirections.length > 0) {
-                const [dx, dy] = availableDirections[Math.floor(Math.random() * availableDirections.length)];
-                maze[y + dy/2][x + dx/2] = blocks.path;
-                maze[y + dy][x + dx] = blocks.path;
-                generationStack.push([x + dx, y + dy]);
-            } else {
-                generationStack.pop();
-            }
-
-            renderMaze();
-        }
-
-        function addDecorations() {
-            for (let y = 0; y < height; y++) {
-                for (let x = 0; x < width; x++) {
-                    if (maze[y][x] === blocks.path && Math.random() < 0.1) {
-                        maze[y][x] = blocks.decorations[Math.floor(Math.random() * blocks.decorations.length)];
+            generateContinentNoise(x, y) {
+                // Create more natural continent shapes
+                const noise1 = Math.sin(x * 0.02) * Math.cos(y * 0.03);
+                const noise2 = Math.sin(x * 0.05 + 10) * Math.cos(y * 0.04 + 5);
+                const noise3 = Math.sin(x * 0.03 + 20) * Math.cos(y * 0.02 + 15);
+                return (noise1 + noise2 * 0.6 + noise3 * 0.4) / 2;
+            }            createBaseLayer() {
+                let layer = '';
+                for (let y = 0; y < this.height; y++) {
+                    for (let x = 0; x < this.width; x++) {
+                        const continentNoise = this.generateContinentNoise(x, y);
+                        const detailNoise = this.generateNoise(x, y, 2);
+                        const riverNoise = this.generateNoise(x, y, 0.3);
+                        
+                        // Create continent shapes - roughly 60% water, 40% land
+                        if (continentNoise < -0.1) {
+                            // Deep ocean
+                            layer += this.terrain.deepWater;
+                        } else if (continentNoise < 0.2) {
+                            // Shallow water/coastal
+                            layer += this.terrain.water;
+                        } else {
+                            // Land areas
+                            if (riverNoise < -0.7) {
+                                layer += this.terrain.river;
+                            } else if (detailNoise < -0.2) {
+                                layer += this.terrain.swamp;
+                            } else if (detailNoise > 0.3) {
+                                layer += this.terrain.desert;
+                            } else {
+                                layer += this.terrain.plains;
+                            }
+                        }
+                    }
+                    layer += '\n';
+                }
+                return layer;
+            }            generateIsland(centerX, centerY, size, shape) {
+                const island = new Set();
+                const baseRadius = size;
+                
+                // Generate island with natural, irregular shape
+                for (let angle = 0; angle < Math.PI * 2; angle += 0.1) {
+                    // Create irregular coastline with multiple noise layers
+                    const noise1 = Math.sin(angle * shape.roughness) * shape.variation1;
+                    const noise2 = Math.sin(angle * shape.roughness * 2.3) * shape.variation2;
+                    const noise3 = Math.sin(angle * shape.roughness * 0.7) * shape.variation3;
+                    
+                    const radius = baseRadius + noise1 + noise2 + noise3;
+                    
+                    // Fill the island area
+                    for (let r = 0; r < radius; r += 0.5) {
+                        const x = Math.round(centerX + Math.cos(angle) * r);
+                        const y = Math.round(centerY + Math.sin(angle) * r);
+                        
+                        if (x >= 0 && x < this.width && y >= 0 && y < this.height) {
+                            island.add(`${x},${y}`);
+                        }
                     }
                 }
-            }
-            renderMaze();
-        }
-
-        function renderMaze() {
-            mazeElement.innerHTML = maze.map(row => row.join('')).join('\n');
-        }
-
-        function startMazeGeneration() {
-            initMaze();
-            generationInterval = setInterval(generateMazeStep, 200); // Slowed down to 200ms
-        }
-
-        // Particle effect code
-        const canvas = document.getElementById('dustCanvas');
-        const ctx = canvas.getContext('2d');
-
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-
-        const particles = [];
-        const particleCount = 100;
-
-        class Particle {
-            constructor() {
-                this.x = Math.random() * canvas.width;
-                this.y = Math.random() * canvas.height;
-                this.size = 14;
-                this.speedX = Math.random() * 0.5 - 0.25;
-                this.speedY = Math.random() * 0.5 - 0.25;
-                this.alpha = Math.random() * 0.3 + 0.1;
+                
+                return island;
             }
 
-            update() {
-                this.x += this.speedX;
-                this.y += this.speedY;
-
-                if (this.x < 0) this.x = canvas.width;
-                if (this.x > canvas.width) this.x = 0;
-                if (this.y < 0) this.y = canvas.height;
-                if (this.y > canvas.height) this.y = 0;
+            generateWorldInstantly() {
+                // Initialize world as all water
+                this.worldData.base = Array(this.height).fill().map(() => Array(this.width).fill('≈'));
+                this.worldData.elevation1 = Array(this.height).fill().map(() => Array(this.width).fill(' '));
+                this.worldData.elevation2 = Array(this.height).fill().map(() => Array(this.width).fill(' '));
+                this.worldData.landmarks = Array(this.height).fill().map(() => Array(this.width).fill(' '));
+                
+                // Generate 3-7 islands with varying sizes and shapes
+                const numIslands = 3 + Math.floor(Math.random() * 5);
+                this.islands = [];
+                
+                for (let i = 0; i < numIslands; i++) {
+                    const centerX = 20 + Math.floor(Math.random() * (this.width - 40));
+                    const centerY = 10 + Math.floor(Math.random() * (this.height - 20));
+                    const size = 8 + Math.floor(Math.random() * 15);
+                    
+                    const shape = {
+                        roughness: 2 + Math.random() * 6,
+                        variation1: 2 + Math.random() * 4,
+                        variation2: 1 + Math.random() * 2,
+                        variation3: 0.5 + Math.random() * 1.5
+                    };
+                    
+                    const island = this.generateIsland(centerX, centerY, size, shape);
+                    this.islands.push({coords: island, centerX, centerY, size});
+                    
+                    // Apply island to world
+                    island.forEach(coordStr => {
+                        const [x, y] = coordStr.split(',').map(Number);
+                        if (x >= 0 && x < this.width && y >= 0 && y < this.height) {
+                            // Create varied terrain on islands
+                            const distFromCenter = Math.sqrt((x - centerX)**2 + (y - centerY)**2);
+                            const terrainNoise = this.generateNoise(x, y, 2);
+                            
+                            if (distFromCenter < size * 0.3) {
+                                // Inner island - mountains and forests
+                                if (terrainNoise > 0.2) {
+                                    this.worldData.base[y][x] = '░'; // Plains
+                                    this.worldData.elevation2[y][x] = '▓'; // Mountains
+                                } else if (terrainNoise > -0.2) {
+                                    this.worldData.base[y][x] = '░'; // Plains
+                                    this.worldData.elevation1[y][x] = '▒'; // Forests
+                                } else {
+                                    this.worldData.base[y][x] = '∴'; // Swamps
+                                }
+                            } else if (distFromCenter < size * 0.8) {
+                                // Mid island - mixed terrain
+                                if (terrainNoise > 0.4) {
+                                    this.worldData.base[y][x] = '▄'; // Desert/hills
+                                } else if (terrainNoise > 0) {
+                                    this.worldData.base[y][x] = '░'; // Plains
+                                    if (Math.random() < 0.4) {
+                                        this.worldData.elevation1[y][x] = '▒'; // Some forests
+                                    }
+                                } else {
+                                    this.worldData.base[y][x] = '░'; // Plains
+                                }
+                            } else {
+                                // Coastal areas
+                                this.worldData.base[y][x] = '∙'; // Shore/beach
+                            }
+                        }
+                    });
+                }
+                
+                // Place landmarks ON islands
+                this.placeLandmarksOnIslands();
+                
+                // Render everything instantly
+                this.renderWorld();
             }
 
-            draw() {
-                ctx.fillStyle = `rgba(180, 180, 180, ${this.alpha})`;
-                ctx.font = `${this.size}px monospace`;
-                ctx.fillText('.', this.x, this.y);
+            placeLandmarksOnIslands() {
+                const landmarkTypes = ['^', 'o', '*', '#', '+'];
+                let landmarkIndex = 0;
+                
+                // Place one landmark per island (if we have enough islands)
+                this.islands.forEach(island => {
+                    if (landmarkIndex < landmarkTypes.length) {
+                        // Find a good spot on this island (not too close to shore)
+                        const candidates = [];
+                        island.coords.forEach(coordStr => {
+                            const [x, y] = coordStr.split(',').map(Number);
+                            const distFromCenter = Math.sqrt((x - island.centerX)**2 + (y - island.centerY)**2);
+                            
+                            // Place landmarks in inner 70% of island
+                            if (distFromCenter < island.size * 0.7) {
+                                candidates.push({x, y});
+                            }
+                        });
+                        
+                        if (candidates.length > 0) {
+                            const spot = candidates[Math.floor(Math.random() * candidates.length)];
+                            this.worldData.landmarks[spot.y][spot.x] = landmarkTypes[landmarkIndex];
+                            landmarkIndex++;
+                        }
+                    }
+                });
             }
-        }
 
-        function initParticles() {
-            for (let i = 0; i < particleCount; i++) {
-                particles.push(new Particle());
+            renderWorld() {
+                this.baseLayer.innerHTML = this.worldData.base.map(row => row.join('')).join('\n');
+                this.elevation1Layer.innerHTML = this.worldData.elevation1.map(row => row.join('')).join('\n');
+                this.elevation2Layer.innerHTML = this.worldData.elevation2.map(row => row.join('')).join('\n');
+                this.updateLandmarksWithHover();
+            }startGeneration() {
+                if (this.isGenerating || this.generationComplete) return;
+                
+                this.isGenerating = true;
+                this.revealedCells.clear();
+                this.growthQueue = [];
+                
+                // Clear all layers
+                this.baseLayer.innerHTML = '';
+                this.elevation1Layer.innerHTML = '';
+                this.elevation2Layer.innerHTML = '';
+                this.landmarksLayer.innerHTML = '';
+                
+                // Pre-generate all world data
+                this.generateWorldData();
+                
+                // Initialize display grids
+                this.initializeDisplayGrids();
+                
+                // Start organic growth from center
+                const centerX = Math.floor(this.width / 2);
+                const centerY = Math.floor(this.height / 2);
+                this.addGrowthSeed(centerX, centerY);
+                
+                // Start the organic reveal process
+                this.organicReveal();
             }
-        }
 
-        function animateParticles() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            initializeDisplayGrids() {
+                for (const layer of ['base', 'elevation1', 'elevation2', 'landmarks']) {
+                    this.displayGrid[layer] = Array(this.height).fill().map(() => Array(this.width).fill(' '));
+                }
+            }
+
+            addGrowthSeed(x, y) {
+                const key = `${x},${y}`;
+                if (!this.revealedCells.has(key) && x >= 0 && x < this.width && y >= 0 && y < this.height) {
+                    this.growthQueue.push({x, y, distance: Math.sqrt((x - this.width/2)**2 + (y - this.height/2)**2)});
+                    this.revealedCells.add(key);
+                }
+            }            organicReveal() {
+                if (this.growthQueue.length === 0) {
+                    this.isGenerating = false;
+                    this.generationComplete = true;
+                    this.startWeatherAnimation();
+                    return;
+                }
+                
+                // Process many more cells per frame for much faster generation (30-50 cells)
+                const cellsPerFrame = Math.min(50, this.growthQueue.length);
+                
+                for (let i = 0; i < cellsPerFrame; i++) {
+                    if (this.growthQueue.length === 0) break;
+                    
+                    // Sort by distance and take closest to growth edge
+                    this.growthQueue.sort((a, b) => a.distance - b.distance);
+                    const {x, y} = this.growthQueue.shift();
+                    
+                    // Reveal this cell
+                    this.revealCell(x, y);
+                    
+                    // Add adjacent cells to growth queue with tendril-like spread pattern
+                    this.addTendrilCells(x, y);
+                }
+                
+                // Update display
+                this.updateDisplay();
+                
+                // Much faster at 20ms intervals (total ~1-2 seconds)
+                setTimeout(() => this.organicReveal(), 20);
+            }
+
+            addTendrilCells(x, y) {
+                // Create tendril-like growth with preferred directions
+                const directions = [
+                    [-1, -1], [-1, 0], [-1, 1],
+                    [0, -1],           [0, 1],
+                    [1, -1],  [1, 0],  [1, 1]
+                ];
+                
+                // Choose 1-3 primary directions for tendril growth
+                const numTendrils = 1 + Math.floor(Math.random() * 3);
+                const chosenDirections = [];
+                
+                for (let i = 0; i < numTendrils; i++) {
+                    const dir = directions[Math.floor(Math.random() * directions.length)];
+                    chosenDirections.push(dir);
+                }
+                
+                // Grow tendrils in chosen directions with high probability
+                chosenDirections.forEach(([dx, dy]) => {
+                    if (Math.random() < 0.9) { // 90% chance to continue tendril
+                        const newX = x + dx;
+                        const newY = y + dy;
+                        this.addGrowthSeed(newX, newY);
+                        
+                        // Extend the tendril further in the same direction
+                        if (Math.random() < 0.7) {
+                            this.addGrowthSeed(newX + dx, newY + dy);
+                        }
+                        if (Math.random() < 0.5) {
+                            this.addGrowthSeed(newX + dx*2, newY + dy*2);
+                        }
+                    }
+                });
+                
+                // Add some randomness with lower probability for branching
+                directions.forEach(([dx, dy]) => {
+                    if (Math.random() < 0.2) { // 20% chance for random branching
+                        const newX = x + dx;
+                        const newY = y + dy;
+                        this.addGrowthSeed(newX, newY);
+                    }
+                });
+                
+                // Occasionally add distant seeds for new tendril starts
+                if (Math.random() < 0.05) {
+                    const randomX = Math.floor(Math.random() * this.width);
+                    const randomY = Math.floor(Math.random() * this.height);
+                    this.addGrowthSeed(randomX, randomY);
+                }
+            }
+
+            revealCell(x, y) {
+                if (x >= 0 && x < this.width && y >= 0 && y < this.height) {
+                    this.displayGrid.base[y][x] = this.worldData.base[y][x];
+                    this.displayGrid.elevation1[y][x] = this.worldData.elevation1[y][x];
+                    this.displayGrid.elevation2[y][x] = this.worldData.elevation2[y][x];
+                    this.displayGrid.landmarks[y][x] = this.worldData.landmarks[y][x];
+                }
+            }            updateDisplay() {
+                this.baseLayer.innerHTML = this.displayGrid.base.map(row => row.join('')).join('\n');
+                this.elevation1Layer.innerHTML = this.displayGrid.elevation1.map(row => row.join('')).join('\n');
+                this.elevation2Layer.innerHTML = this.displayGrid.elevation2.map(row => row.join('')).join('\n');
+                
+                // Create landmarks with hover functionality
+                this.updateLandmarksWithHover();
+            }            updateLandmarksWithHover() {
+                // Clear existing landmarks
+                this.landmarksLayer.innerHTML = '';
+                
+                // Create landmark elements with hover
+                const landmarkContainer = document.createElement('div');
+                landmarkContainer.style.position = 'relative';
+                landmarkContainer.style.whiteSpace = 'pre';
+                landmarkContainer.style.fontFamily = 'inherit';
+                landmarkContainer.style.fontSize = 'inherit';
+                landmarkContainer.style.lineHeight = 'inherit';
+                
+                for (let y = 0; y < this.height; y++) {
+                    for (let x = 0; x < this.width; x++) {
+                        const char = this.worldData.landmarks[y][x];
+                        if (char !== ' ') {
+                            const landmarkElement = document.createElement('span');
+                            landmarkElement.textContent = char;
+                            landmarkElement.className = 'clickable';
+                            landmarkElement.style.position = 'absolute';
+                            // Use viewport-based positioning for perfect alignment
+                            landmarkElement.style.left = ((x / this.width) * 100) + 'vw';
+                            landmarkElement.style.top = ((y / this.height) * 100) + 'vh';
+                            landmarkElement.style.cursor = 'pointer';
+                            
+                            landmarkElement.addEventListener('mouseenter', () => {
+                                landmarkElement.classList.add('landmark-glow');
+                                this.showTooltip(char, x, y);
+                            });
+                            
+                            landmarkElement.addEventListener('mouseleave', () => {
+                                landmarkElement.classList.remove('landmark-glow');
+                                this.hideTooltip(char);
+                            });
+                            
+                            landmarkContainer.appendChild(landmarkElement);
+                        }
+                    }
+                }
+                
+                this.landmarksLayer.appendChild(landmarkContainer);
+            }
+
+            startWeatherAnimation() {
+                // Start weather animation only after world generation is complete
+                setInterval(() => {
+                    if (this.generationComplete) {
+                        this.weatherLayer.innerHTML = this.createWeatherLayer();
+                    }
+                }, 3000);
+            }createElevation1Layer() {
+                let layer = '';
+                for (let y = 0; y < this.height; y++) {
+                    for (let x = 0; x < this.width; x++) {
+                        const continentNoise = this.generateContinentNoise(x, y);
+                        const forestNoise = this.generateNoise(x, y, 1.5);
+                        
+                        // Only place forests on land
+                        if (continentNoise > 0.2) {
+                            if (forestNoise > 0.1 && forestNoise < 0.6) {
+                                layer += this.terrain.forest;
+                            } else {
+                                layer += ' ';
+                            }
+                        } else {
+                            layer += ' ';
+                        }
+                    }
+                    layer += '\n';
+                }
+                return layer;
+            }            createElevation2Layer() {
+                let layer = '';
+                for (let y = 0; y < this.height; y++) {
+                    for (let x = 0; x < this.width; x++) {
+                        const continentNoise = this.generateContinentNoise(x, y);
+                        const mountainNoise = this.generateNoise(x, y, 0.8);
+                        
+                        // Only place mountains on high elevation land
+                        if (continentNoise > 0.4) {
+                            if (mountainNoise > 0.3) {
+                                layer += this.terrain.mountain;
+                            } else if (mountainNoise > 0.5) {
+                                layer += this.terrain.peak;
+                            } else {
+                                layer += ' ';
+                            }
+                        } else {
+                            layer += ' ';
+                        }
+                    }
+                    layer += '\n';
+                }
+                return layer;
+            }            createLandmarksLayer() {
+                let layer = Array(this.height).fill().map(() => Array(this.width).fill(' '));
+                
+                // Find good spots for landmarks (on land)
+                const landmarks = [];
+                
+                for (let attempt = 0; attempt < 100; attempt++) {
+                    const x = Math.floor(Math.random() * this.width);
+                    const y = Math.floor(Math.random() * this.height);
+                    const continentNoise = this.generateContinentNoise(x, y);
+                    
+                    if (continentNoise > 0.2 && landmarks.length < 5) {
+                        landmarks.push({x, y});
+                    }
+                }
+                
+                // Place landmarks
+                const landmarkTypes = ['^', 'o', '*', '#', '+'];
+                landmarks.forEach((pos, i) => {
+                    if (i < landmarkTypes.length) {
+                        layer[pos.y][pos.x] = landmarkTypes[i];
+                    }
+                });
+                
+                return layer.map(row => row.join('')).join('\n');
+            }            createWeatherLayer() {
+                let layer = '';
+                for (let y = 0; y < this.height; y++) {
+                    for (let x = 0; x < this.width; x++) {
+                        const cloudNoise = this.generateNoise(x + Date.now() * 0.0001, y, 0.3);
+                        const clusterNoise = this.generateNoise(x, y, 0.1);
+                        
+                        // Create cloud clusters
+                        if (clusterNoise > 0.3 && cloudNoise > 0.2) {
+                            if (cloudNoise > 0.5) {
+                                layer += this.weather.cloud;
+                            } else if (cloudNoise > 0.3) {
+                                layer += this.weather.mist;
+                            } else {
+                                layer += this.weather.rain;
+                            }
+                        } else {
+                            layer += ' ';
+                        }
+                    }
+                    layer += '\n';
+                }
+                return layer;
+            }            createAnimatedLayer() {
+                // Remove animated creatures - keeping this empty for now
+                return Array(this.height).fill().map(() => Array(this.width).fill(' ')).map(row => row.join('')).join('\n');
+            }            init() {
+                this.addInteractivity();
+                this.createTooltips();
+                // Generate and display world instantly
+                this.generateWorldInstantly();
+            }
+
+            createTooltips() {
+                const tooltipData = {
+                    '^': {
+                        title: 'TOWER OF ALGORITHMS',
+                        ascii: `    ╔═══╗\n    ║ ▲ ║\n    ║▓▓▓║\n    ║▓▓▓║\n    ╚═══╝`,
+                        description: 'Complex problems\nmeet elegant solutions'
+                    },
+                    'o': {
+                        title: 'VILLAGE OF PROJECTS',
+                        ascii: `  ╔═╗ ╔═╗\n  ║ ║ ║ ║\n  ╚═╝ ╚═╝\n   ▓▓▓▓▓`,
+                        description: 'A collection of\ncreative endeavors'
+                    },
+                    '*': {
+                        title: 'CAVE OF EXPERIMENTS',
+                        ascii: `    ░░░░░\n   ▓░░░░▓\n  ▓▓░░░░▓▓\n   ▓▓▓▓▓`,
+                        description: 'Hidden prototypes\nand wild ideas'
+                    },
+                    '#': {
+                        title: 'PORT OF CONTACT',
+                        ascii: `  ║║║   ≈≈≈\n  ╠╬╬═══≈≈≈\n  ║║║   ≈≈≈\n  ▓▓▓   ≈≈≈`,
+                        description: 'Reach out for\ncollaborations'
+                    },
+                    '+': {
+                        title: 'CASTLE ARCHIVES',
+                        ascii: `  ╔═╦═╗\n  ║▓║▓║\n  ╠═╬═╣\n  ║▓▓▓║\n  ╚═══╝`,
+                        description: 'Historical projects\nand documentation'
+                    }
+                };
+
+                Object.entries(tooltipData).forEach(([symbol, data]) => {
+                    const tooltip = this.createTooltipElement(data);
+                    this.tooltips.set(symbol, tooltip);
+                    document.body.appendChild(tooltip);
+                });
+            }
+
+            createTooltipElement(data) {
+                const tooltip = document.createElement('div');
+                tooltip.className = 'tooltip-overlay';
+                
+                const content = document.createElement('div');
+                content.className = 'tooltip-ascii-art';
+                content.innerHTML = `${data.title}\n\n${data.ascii}\n\n${data.description}`;
+                
+                tooltip.appendChild(content);
+                return tooltip;
+            }
+
+            showTooltip(landmarkChar, x, y) {
+                const tooltip = this.tooltips.get(landmarkChar);
+                if (!tooltip) return;
+
+                // Position tooltip near the landmark
+                const worldMapRect = document.getElementById('world-map').getBoundingClientRect();
+                const tooltipX = worldMapRect.left + (x / this.width) * worldMapRect.width + 20;
+                const tooltipY = worldMapRect.top + (y / this.height) * worldMapRect.height - 50;
+                
+                tooltip.style.left = tooltipX + 'px';
+                tooltip.style.top = tooltipY + 'px';
+                tooltip.classList.add('visible');
+
+                // Add pointer line
+                this.addPointerLine(x, y, tooltipX, tooltipY);
+            }
+
+            hideTooltip(landmarkChar) {
+                const tooltip = this.tooltips.get(landmarkChar);
+                if (tooltip) {
+                    tooltip.classList.remove('visible');
+                }
+                this.removePointerLines();
+            }
+
+            addPointerLine(landmarkX, landmarkY, tooltipX, tooltipY) {
+                const worldMapRect = document.getElementById('world-map').getBoundingClientRect();
+                const startX = worldMapRect.left + (landmarkX / this.width) * worldMapRect.width;
+                const startY = worldMapRect.top + (landmarkY / this.height) * worldMapRect.height;
+                
+                const line = document.createElement('div');
+                line.className = 'tooltip-pointer';
+                
+                const length = Math.sqrt((tooltipX - startX) ** 2 + (tooltipY - startY) ** 2);
+                const angle = Math.atan2(tooltipY - startY, tooltipX - startX) * 180 / Math.PI;
+                
+                line.style.left = startX + 'px';
+                line.style.top = startY + 'px';
+                line.style.height = length + 'px';
+                line.style.transform = `rotate(${angle + 90}deg)`;
+                line.dataset.pointerLine = 'true';
+                
+                document.body.appendChild(line);
+            }
+
+            removePointerLines() {
+                document.querySelectorAll('[data-pointer-line]').forEach(line => line.remove());
+            }// Remove the old render and elevation methods - they're replaced by the generation system above
             
-            for (let particle of particles) {
-                particle.update();
-                particle.draw();
-            }
+            addInteractivity() {
+                document.querySelectorAll('.clickable').forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        const location = e.target.dataset.location;
+                        this.showLocationInfo(location);
+                    });
+                });
+            }            showLocationInfo(location) {
+                const info = {
+                    tower: 'Tower of Algorithms - Where complex problems meet elegant solutions',
+                    village: 'Village of Projects - A collection of creative endeavors',
+                    cave: 'Cave of Experiments - Hidden prototypes and wild ideas',
+                    port: 'Port of Contact - Reach out for collaborations',
+                    castle: 'Castle Archives - Historical projects and documentation'
+                };
 
-            requestAnimationFrame(animateParticles);
+                alert(info[location] || 'Unknown location');
+            }
         }
 
-        initParticles();
-        animateParticles();
-
-        window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+        // Initialize the world when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new WorldGenerator();
         });
 
-        startMazeGeneration();
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            // Recalculate world positioning if needed
+        });
     </script>
 </body>
 </html>
