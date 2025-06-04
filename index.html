@@ -165,18 +165,15 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            min-width: 340px;
-            max-width: 90vw;
-            min-height: 180px;
+            max-width: 80vw;
             max-height: 80vh;
-            background: rgba(20, 20, 20, 0.97);
+            background: #111;
             color: #eee;
-            border: 2px solid #444;
-            border-radius: 10px;
-            z-index: 2000;
-            box-shadow: 0 8px 32px #000a;
-            padding: 32px 28px 24px 28px;
+            border: 1px solid #555;
+            border-radius: 6px;
+            padding: 20px;
             overflow: auto;
+            z-index: 2000;
         }
         #close-overlay {
             position: absolute;
@@ -189,25 +186,21 @@
             cursor: pointer;
         }
         #overlay-content .overlay-inner {
-            font-family: 'JetBrains Mono', monospace;
-            color: #888;
-            font-size: 10px;
-            line-height: 1.5;
-        }
-        #overlay-content .overlay-inner h2, #overlay-content .overlay-inner h1 {
-            color: #ccc;
+            font-family: monospace;
+            color: #ddd;
             font-size: 14px;
-            font-weight: 400;
-            margin-top: 0;
-            margin-bottom: 16px;
-            border-bottom: 1px solid #444;
-            padding-bottom: 5px;
-            letter-spacing: 0.01em;
+            line-height: 1.4;
         }
-        #overlay-content .overlay-inner p, #overlay-content .overlay-inner ul, #overlay-content .overlay-inner li {
-            color: #888;
-            font-size: 10px;
+        #overlay-content .overlay-inner h2,
+        #overlay-content .overlay-inner h1 {
+            color: #fff;
+            font-size: 18px;
+            margin-top: 0;
             margin-bottom: 10px;
+            border: none;
+        }
+        #overlay-content .overlay-inner p {
+            margin-bottom: 8px;
         }
     </style>
 </head>
@@ -533,193 +526,28 @@ window.addEventListener('keydown', e => { if (e.key === 'Escape') closeOverlay()
 // Map of explorer link hrefs to placeholder content
 const explorerContent = {
     './gallery.html': `
-        <h2>Generative Visual Art Gallery</h2>
-        <p>Welcome to my collection of generative visual art pieces. Each work explores the intersection of code, mathematics, and aesthetic expression.</p>
-        
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 20px;">
-            <div style="border: 1px solid #666; padding: 15px; background: rgba(0, 0, 0, 0.1);">
-                <h3 style="margin-top: 0; color: #ffffff;">Color Explorer</h3>
-                <p>An interactive exploration of color spaces and palettes.</p>
-                <a href="artworks/colorexplore.html" target="_blank" style="color: #aaaaaa; text-decoration: none; font-size: 14px;">View Project</a>
-            </div>
-            
-            <div style="border: 1px solid #666; padding: 15px; background: rgba(0, 0, 0, 0.1);">
-                <h3 style="margin-top: 0; color: #ffffff;">Water Lillies</h3>
-                <p>Generative interpretation of Monet's impressionist masterpiece.</p>
-                <a href="artworks/waterlillies.html" target="_blank" style="color: #aaaaaa; text-decoration: none; font-size: 14px;">View Project</a>
-            </div>
-            
-            <div style="border: 1px solid #666; padding: 15px; background: rgba(0, 0, 0, 0.1);">
-                <h3 style="margin-top: 0; color: #ffffff;">View of a Burning City</h3>
-                <p>Abstract cityscape with dynamic fire simulation.</p>
-                <a href="artworks/viewofaburningcity.html" target="_blank" style="color: #aaaaaa; text-decoration: none; font-size: 14px;">View Project</a>
-            </div>
-            
-            <div style="border: 1px solid #666; padding: 15px; background: rgba(0, 0, 0, 0.1);">
-                <h3 style="margin-top: 0; color: #ffffff;">Block Snow</h3>
-                <p>Minimalist snow simulation with geometric particles.</p>
-                <a href="artworks/blocksnow.html" target="_blank" style="color: #aaaaaa; text-decoration: none; font-size: 14px;">View Project</a>
-            </div>
-            
-            <div style="border: 1px solid #666; padding: 15px; background: rgba(0, 0, 0, 0.1);">
-                <h3 style="margin-top: 0; color: #ffffff;">Dungeon Game</h3>
-                <p>Procedurally generated dungeon exploration game.</p>
-                <a href="artworks/dungeongame.html" target="_blank" style="color: #aaaaaa; text-decoration: none; font-size: 14px;">View Project</a>
-            </div>
-            
-            <div style="border: 1px solid #666; padding: 15px; background: rgba(0, 0, 0, 0.1);">
-                <h3 style="margin-top: 0; color: #ffffff;">Maze's End</h3>
-                <p>Interactive maze generation and solving algorithms.</p>
-                <a href="artworks/mazesend.html" target="_blank" style="color: #aaaaaa; text-decoration: none; font-size: 14px;">View Project</a>
-            </div>
-            
-            <div style="border: 1px solid #666; padding: 15px; background: rgba(0, 0, 0, 0.1);">
-                <h3 style="margin-top: 0; color: #ffffff;">Word Processor</h3>
-                <p>Experimental text manipulation and visualization tool.</p>
-                <a href="artworks/wordprocessor.html" target="_blank" style="color: #aaaaaa; text-decoration: none; font-size: 14px;">View Project</a>
-            </div>
-        </div>
+        <h2>Generative Visual Art</h2>
+        <p>A selection of my code-driven art projects.</p>
     `,
     './music.html': `
-        <h2>Musical Compositions & Sound Art</h2>
-        <p>Explorations in algorithmic composition, generative music, and interactive sound experiences.</p>
-        
-        <div style="margin: 20px 0; border-left: 3px solid #666; padding-left: 15px;">
-            <h3 style="color: #ffffff; margin-top: 0;">Algorithmic Compositions</h3>
-            <p>Computer-generated musical pieces exploring mathematical patterns and emergent harmony.</p>
-            <ul style="margin: 10px 0;">
-                <li style="margin: 5px 0; color: #cccccc;">Fractal Melodies - Self-similar musical structures</li>
-                <li style="margin: 5px 0; color: #cccccc;">Cellular Harmony - Music generated using cellular automata</li>
-                <li style="margin: 5px 0; color: #cccccc;">Markov Chains in C Minor - Probabilistic composition techniques</li>
-            </ul>
-        </div>
-        
-        <div style="margin: 20px 0; border-left: 3px solid #666; padding-left: 15px;">
-            <h3 style="color: #ffffff; margin-top: 0;">Interactive Sound Experiences</h3>
-            <p>Web-based instruments and sound toys for creative exploration.</p>
-            <ul style="margin: 10px 0;">
-                <li style="margin: 5px 0; color: #cccccc;">ASCII Synthesizer - Musical interface using ASCII art</li>
-                <li style="margin: 5px 0; color: #cccccc;">Generative Soundscapes - Evolving ambient compositions</li>
-                <li style="margin: 5px 0; color: #cccccc;">Code Music - Sonification of programming patterns</li>
-            </ul>
-        </div>
+        <h2>Music</h2>
+        <p>Algorithmic compositions and sound experiments.</p>
     `,
     './poems.html': `
         <h2>Poems & Songs</h2>
-        <p>A collection of verses exploring the intersection of technology, nature, and human experience.</p>
-        
-        <div style="margin: 30px 0; border-bottom: 1px solid #444; padding-bottom: 20px;">
-            <h3 style="color: #ffffff; margin-bottom: 15px;">Digital Dreams</h3>
-            <div style="font-family: 'Georgia', serif; line-height: 1.6;">
-                <p style="margin: 15px 0;"><em style="color: #cccccc; font-style: italic;">In circuits of thought and silicon streams,<br>
-                Where data flows like midnight dreams,<br>
-                We build our worlds with code and care,<br>
-                Creating beauty from pixels bare.</em></p>
-            </div>
-        </div>
-        
-        <div style="margin: 30px 0; border-bottom: 1px solid #444; padding-bottom: 20px;">
-            <h3 style="color: #ffffff; margin-bottom: 15px;">Generative Haiku</h3>
-            <div style="font-family: 'Georgia', serif; line-height: 1.6;">
-                <p style="margin: 15px 0;"><em style="color: #cccccc; font-style: italic;">Random seeds scatter<br>
-                Across the digital garden—<br>
-                Beauty emerges</em></p>
-                
-                <p style="margin: 15px 0;"><em style="color: #cccccc; font-style: italic;">Pixels paint the screen<br>
-                Colors chosen by the code—<br>
-                Art finds its own way</em></p>
-            </div>
-        </div>
+        <p>Short verses exploring technology and nature.</p>
     `,
     './inspiration.html': `
-        <h2>Inspirations & Influences</h2>
-        <p>The artists, thinkers, and creators who shape my approach to generative art and creative coding.</p>
-        
-        <div style="margin: 25px 0; border-left: 2px solid #666; padding-left: 20px;">
-            <h3 style="color: #ffffff; margin-bottom: 10px;">Visual Artists & Pioneers</h3>
-            <ul style="margin: 10px 0;">
-                <li style="margin: 8px 0; color: #cccccc; line-height: 1.4;"><strong style="color: #ffffff;">Casey Reas & Ben Fry</strong> - Creators of Processing, democratizing creative coding</li>
-                <li style="margin: 8px 0; color: #cccccc; line-height: 1.4;"><strong style="color: #ffffff;">Vera Molnár</strong> - Pioneer of algorithmic art, exploring randomness in systems</li>
-                <li style="margin: 8px 0; color: #cccccc; line-height: 1.4;"><strong style="color: #ffffff;">Sol LeWitt</strong> - Conceptual art instructions, systematic creativity</li>
-            </ul>
-        </div>
-        
-        <div style="margin: 25px 0; border-left: 2px solid #666; padding-left: 20px;">
-            <h3 style="color: #ffffff; margin-bottom: 10px;">Contemporary Generative Artists</h3>
-            <ul style="margin: 10px 0;">
-                <li style="margin: 8px 0; color: #cccccc; line-height: 1.4;"><strong style="color: #ffffff;">Tyler Hobbs</strong> - Fidenza and the art of controlled randomness</li>
-                <li style="margin: 8px 0; color: #cccccc; line-height: 1.4;"><strong style="color: #ffffff;">Zach Lieberman</strong> - Interactive art and human-computer expression</li>
-                <li style="margin: 8px 0; color: #cccccc; line-height: 1.4;"><strong style="color: #ffffff;">Andreas Gysin</strong> - ASCII art and terminal aesthetics</li>
-            </ul>
-        </div>
+        <h2>Inspirations</h2>
+        <p>Artists and ideas that fuel my creativity.</p>
     `,
     './resume.html': `
         <h2>Resume</h2>
-        <p>Creative technologist specializing in generative art, procedural systems, and interactive experiences.</p>
-        
-        <div style="margin: 25px 0; border-bottom: 1px solid #444; padding-bottom: 20px;">
-            <h3 style="color: #ffffff; margin-bottom: 15px; border-bottom: 1px solid #666; padding-bottom: 5px;">Technical Skills</h3>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                <div>
-                    <h4 style="color: #ffffff; margin: 0 0 10px 0;">Programming Languages</h4>
-                    <ul style="color: #cccccc; margin: 10px 0;">
-                        <li>JavaScript / TypeScript</li>
-                        <li>Python</li>
-                        <li>Processing / p5.js</li>
-                        <li>HTML5 / CSS3</li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 style="color: #ffffff; margin: 0 0 10px 0;">Specializations</h4>
-                    <ul style="color: #cccccc; margin: 10px 0;">
-                        <li>Generative Art Systems</li>
-                        <li>Procedural Generation</li>
-                        <li>Interactive Web Experiences</li>
-                        <li>ASCII Art & Terminal Interfaces</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-        
-        <div style="margin: 25px 0;">
-            <h3 style="color: #ffffff; margin-bottom: 15px; border-bottom: 1px solid #666; padding-bottom: 5px;">Philosophy</h3>
-            <p style="color: #cccccc; line-height: 1.6;">I believe in the power of constraints to foster creativity. Whether working within the limitations of ASCII characters, terminal interfaces, or algorithmic systems, I find that boundaries often lead to the most innovative and beautiful solutions.</p>
-        </div>
+        <p>Creative technologist focusing on generative systems.</p>
     `,
     './contact.html': `
         <h2>Contact</h2>
-        <p>Get in touch to discuss generative art, creative coding, or potential collaborations.</p>
-        
-        <div style="margin: 25px 0; border-bottom: 1px solid #444; padding-bottom: 20px;">
-            <h3 style="color: #ffffff; margin-bottom: 15px; border-bottom: 1px solid #666; padding-bottom: 5px;">Digital Presence</h3>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                <div style="border: 1px solid #666; padding: 15px; background: rgba(0, 0, 0, 0.1);">
-                    <h4 style="color: #ffffff; margin: 0 0 10px 0;">GitHub</h4>
-                    <p style="margin: 5px 0; color: #cccccc;"><a href="https://github.com/pebaum" target="_blank" style="color: #aaaaaa; text-decoration: none;">github.com/pebaum</a></p>
-                    <p style="margin: 5px 0; color: #cccccc;">Explore my code repositories and ongoing projects</p>
-                </div>
-                
-                <div style="border: 1px solid #666; padding: 15px; background: rgba(0, 0, 0, 0.1);">
-                    <h4 style="color: #ffffff; margin: 0 0 10px 0;">Portfolio</h4>
-                    <p style="margin: 5px 0; color: #cccccc;"><a href="https://pebaum.github.io" target="_blank" style="color: #aaaaaa; text-decoration: none;">pebaum.github.io</a></p>
-                    <p style="margin: 5px 0; color: #cccccc;">You're here! Navigate the ASCII world to discover my work</p>
-                </div>
-            </div>
-        </div>
-        
-        <div style="text-align: center; margin: 20px 0;">
-            <pre style="color: #aaaaaa; font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.2; background: rgba(0, 0, 0, 0.2); padding: 15px; border: 1px solid #666; display: inline-block;">
-    ╭─────────────────────────╮
-    │  OPEN TO COLLABORATION │
-    │                         │
-    │  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  │
-    │  ▓ Let's create some- ▓  │
-    │  ▓ thing beautiful     ▓  │
-    │  ▓ with code together! ▓  │
-    │  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  │
-    ╰─────────────────────────╯
-            </pre>
-        </div>
+        <p>Let's connect about art and code.</p>
     `
 };
 
