@@ -19,9 +19,7 @@
         }        /* === Final Fantasy IX Menu Cursor (Hand Icon) === */
         :root {
             --ff9-cursor-url: url('./cursor.png');
-        }
-
-        body, html {
+        }        body, html {
             height: 100vh;
             width: 100vw;
             overflow: hidden;
@@ -29,7 +27,7 @@
             color: #ffffff;
             font-family: 'Alexandria', 'Times New Roman', serif;
             font-size: 16px;
-            cursor: var(--ff9-cursor-url) 15 6, auto;
+            cursor: var(--ff9-cursor-url) 24 12, auto;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -111,7 +109,27 @@
 
         .character-panel.empty {
             opacity: 0.5;
-        }        .character-portrait {
+        }
+
+        /* Clickable character panel styling */
+        .clickable-character {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .clickable-character:hover {
+            background: linear-gradient(135deg, #4A4D55, #3A3A3A) !important;
+            border-color: #E6D060 !important;
+            box-shadow: inset 1px 1px 3px rgba(230,208,96,0.2), inset -1px -1px 3px rgba(0,0,0,0.4), 0 0 8px rgba(230,208,96,0.3) !important;
+            transform: translateY(-1px);
+        }
+
+        .clickable-character:active {
+            transform: translateY(0px);
+            box-shadow: inset 1px 1px 3px rgba(230,208,96,0.3), inset -1px -1px 3px rgba(0,0,0,0.5) !important;
+        }
+
+        .character-portrait {
             width: 50px;
             height: 50px;
             background: linear-gradient(45deg, #3B3E45, #2F2F2F);
@@ -198,7 +216,7 @@
             background-image: 
                 radial-gradient(circle at 30% 30%, rgba(255,255,255,0.04) 1px, transparent 1px);
             background-size: 10px 10px;
-            cursor: var(--ff9-cursor-url) 15 6, auto;
+            cursor: var(--ff9-cursor-url) 24 12, auto;
         }
 
         .time-gil-box {
@@ -257,18 +275,18 @@
         }        /* Pointer */
         #pointer {
             position: absolute;
-            width: 16px;
-            height: 12px;
+            width: 32px;
+            height: 24px;
             background-image: url('./cursor.png');
             background-size: contain;
             background-repeat: no-repeat;
-            left: -20px;
+            left: -36px;
             transition: top 0.15s ease;
             z-index: 10;
             pointer-events: none;
-            filter: drop-shadow(1px 1px 1px rgba(0,0,0,0.5));
+            filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.6));
             image-rendering: pixelated;
-            transform: translateY(2px);
+            transform: translateY(0px);
         }/* Content Modal */
         .content-modal {
             position: absolute;
@@ -356,11 +374,9 @@
                 flex: 1;
                 margin-bottom: 0;
             }
-        }
-
-        /* PS1 Scanline and CRT Effects */
+        }        /* PS1 Scanline and CRT Effects - Only within viewport */
         .ps1-scanlines {
-            position: fixed;
+            position: absolute;
             top: 0;
             left: 0;
             width: 100%;
@@ -376,9 +392,9 @@
             z-index: 1001;
         }
 
-        /* Dithering overlay */
+        /* Dithering overlay - Only within viewport */
         .ps1-dither {
-            position: fixed;
+            position: absolute;
             top: 0;
             left: 0;
             width: 100%;
@@ -390,7 +406,7 @@
             background-position: 0 0, 2px 2px;
             pointer-events: none;
             z-index: 1002;
-        }        /* PS1 texture wobble animation */
+        }/* PS1 texture wobble animation */
         @keyframes ps1Wobble {
             0% { transform: translateX(0px) translateY(0px) skew(0deg) scaleX(1.0); }
             16% { transform: translateX(0.2px) translateY(-0.1px) skew(0.05deg) scaleX(1.001); }
@@ -459,19 +475,17 @@
         }
     </style>
 </head>
-<body>
-    <!-- PS1 Visual Effects -->
-    <div class="ps1-scanlines"></div>
-    <div class="ps1-dither"></div>
-      <div class="ps1-viewport">
+<body>    <div class="ps1-viewport">
+        <!-- PS1 Visual Effects - Only within viewport -->
+        <div class="ps1-scanlines"></div>
+        <div class="ps1-dither"></div>
         <canvas class="ps1-canvas" id="ps1Canvas"></canvas>
         <div class="content-wrapper">
             <div class="ffix-layout">
                 <!-- Left 75% - Character Area -->
                 <div class="character-area">
-                    <div class="character-panel-stack">
-                        <!-- Character 1: Peter -->
-                        <div class="character-panel active">
+                    <div class="character-panel-stack">                        <!-- Character 1: Peter -->
+                        <div class="character-panel active clickable-character" id="peterPanel">
                             <div class="character-portrait">[portrait]</div>
                             <div class="character-stats">
                                 <div class="character-name">Peter</div>
@@ -714,12 +728,22 @@
                         this.updateActiveItem();
                         this.updateContent();
                     });
-                    
-                    item.addEventListener('mouseenter', () => {
+                      item.addEventListener('mouseenter', () => {
                         this.currentMenuItem = index;
                         this.updateActiveItem();
                     });
                 });
+
+                // Character panel click handler - Peter panel opens Status
+                const peterPanel = document.getElementById('peterPanel');
+                if (peterPanel) {
+                    peterPanel.addEventListener('click', () => {
+                        // Find the Status menu item (index 0) and simulate clicking it
+                        this.currentMenuItem = 0; // Status is the first menu item
+                        this.updateActiveItem();
+                        this.updateContent();
+                    });
+                }
             }
 
             navigateUp() {
