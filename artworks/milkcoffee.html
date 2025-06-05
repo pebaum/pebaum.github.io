@@ -81,170 +81,337 @@
         const ctx = coffeeCanvas.getContext('2d');
         let centerX, centerY;
         const particles = [];
-        const PARTICLE_COUNT = 800;
-        let dropPhase = 0; // 0: falling, 1: impact, 2: dispersing
+        const MAX_PARTICLES = 1200;
+        let dropPhase = 0;
         let dropY = 0;
-        let dropSize = 8;
+        let dropVelocity = 0;
+        let dropSize = 15;
         let impactTime = 0;
         let cycleTime = 0;
-        
-        // Coffee surface level (80% down from top)
         let coffeeLevel;
+        let nextDropDelay = 0;
+        
+        // Fluid simulation grid for more realistic mixing
+        const gridSize = 20;
+        let fluidGrid = [];
+        let densityField = [];
 
         function resize() {
             coffeeCanvas.width = window.innerWidth;
             coffeeCanvas.height = window.innerHeight;
             centerX = coffeeCanvas.width / 2;
             centerY = coffeeCanvas.height / 2;
-            coffeeLevel = coffeeCanvas.height * 0.8;
+            coffeeLevel = coffeeCanvas.height * 0.75;
             
-            // Fill with coffee color
-            ctx.fillStyle = '#2d1810';
-            ctx.fillRect(0, 0, coffeeCanvas.width, coffeeCanvas.height);
+            // Initialize fluid simulation grid
+            const gridWidth = Math.ceil(coffeeCanvas.width / gridSize);
+            const gridHeight = Math.ceil(coffeeCanvas.height / gridSize);
+            fluidGrid = Array(gridHeight).fill().map(() => Array(gridWidth).fill(0));
+            densityField = Array(gridHeight).fill().map(() => Array(gridWidth).fill(0));
         }
 
-        function createCreamParticle(x, y, phase) {
-            const baseRadius = Math.random() * 3 + 1;
-            const opacity = phase === 'impact' ? 0.9 : Math.random() * 0.6 + 0.3;
+        function createCreamParticle(x, y, phase, velocity = null) {
+            const baseRadius = Math.random() * 4 + 2;
+            let vx, vy;
+            
+            if (velocity) {
+                vx = velocity.x + (Math.random() - 0.5) * 3;
+                vy = velocity.y + (Math.random() - 0.5) * 2;
+            } else if (phase === 'impact') {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 8 + 3;
+                vx = Math.cos(angle) * speed;
+                vy = Math.sin(angle) * speed - 2; // Slight upward bias
+            } else {
+                vx = (Math.random() - 0.5) * 1;
+                vy = Math.random() * 0.5;
+            }
             
             return {
-                x: x + (Math.random() - 0.5) * 20,
-                y: y + (Math.random() - 0.5) * 10,
-                vx: (Math.random() - 0.5) * 2,
-                vy: Math.random() * 1 + 0.5,
+                x: x + (Math.random() - 0.5) * 15,
+                y: y + (Math.random() - 0.5) * 8,
+                vx: vx,
+                vy: vy,
                 radius: baseRadius,
                 originalRadius: baseRadius,
-                opacity: opacity,
-                originalOpacity: opacity,
-                life: Math.random() * 300 + 200,
-                maxLife: Math.random() * 300 + 200,
-                phase: phase, // 'falling', 'impact', 'dispersing'
-                density: Math.random() * 0.5 + 0.5, // Cream density
+                opacity: phase === 'impact' ? 1.0 : Math.random() * 0.4 + 0.6,
+                originalOpacity: phase === 'impact' ? 1.0 : Math.random() * 0.4 + 0.6,
+                life: Math.random() * 400 + 300,
+                maxLife: Math.random() * 400 + 300,
+                phase: phase,
+                density: Math.random() * 0.3 + 0.7,
+                viscosity: Math.random() * 0.02 + 0.98,
                 swirl: Math.random() * Math.PI * 2,
-                swirlSpeed: (Math.random() - 0.5) * 0.02
+                swirlSpeed: (Math.random() - 0.5) * 0.03,
+                temperature: phase === 'impact' ? 1.0 : Math.random() * 0.5 + 0.5,
+                mixingRate: Math.random() * 0.002 + 0.001
             };
         }
 
-        function update() {
-            // Clear with coffee background
-            ctx.fillStyle = '#2d1810';
+        function updateFluidGrid() {
+            // Reset grid
+            for (let y = 0; y < fluidGrid.length; y++) {
+                for (let x = 0; x < fluidGrid[y].length; x++) {
+                    fluidGrid[y][x] *= 0.95; // Gradual decay
+                    densityField[y][x] *= 0.98;
+                }
+            }
+            
+            // Add particle influence to grid
+            particles.forEach(p => {
+                const gridX = Math.floor(p.x / gridSize);
+                const gridY = Math.floor(p.y / gridSize);
+                if (gridX >= 0 && gridX < fluidGrid[0].length && gridY >= 0 && gridY < fluidGrid.length) {
+                    fluidGrid[gridY][gridX] += p.opacity * 0.1;
+                    densityField[gridY][gridX] += p.density * 0.05;
+                }
+            });
+        }
+
+        function getFluidVelocity(x, y) {
+            const gridX = Math.floor(x / gridSize);
+            const gridY = Math.floor(y / gridSize);
+            
+            if (gridX < 0 || gridX >= fluidGrid[0].length - 1 || gridY < 0 || gridY >= fluidGrid.length - 1) {
+                return { x: 0, y: 0 };
+            }
+            
+            // Sample neighboring cells for fluid flow
+            const density = densityField[gridY][gridX];
+            const flowX = (fluidGrid[gridY][gridX + 1] - fluidGrid[gridY][gridX - 1]) * 0.5;
+            const flowY = (fluidGrid[gridY + 1][gridX] - fluidGrid[gridY - 1][gridX]) * 0.5;
+            
+            return {
+                x: flowX * density * 2,
+                y: flowY * density * 2
+            };
+        }
+
+        function drawCoffeeBackground() {
+            // Create coffee gradient
+            const gradient = ctx.createLinearGradient(0, 0, 0, coffeeCanvas.height);
+            gradient.addColorStop(0, '#1a0f08');
+            gradient.addColorStop(0.3, '#2d1810');
+            gradient.addColorStop(0.75, '#3d251a');
+            gradient.addColorStop(1, '#2d1810');
+            
+            ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, coffeeCanvas.width, coffeeCanvas.height);
             
-            // Draw coffee surface indication
+            // Draw coffee surface with subtle waves
             ctx.fillStyle = '#1a0f08';
-            ctx.fillRect(0, coffeeLevel - 2, coffeeCanvas.width, 4);
+            ctx.beginPath();
+            ctx.moveTo(0, coffeeLevel);
+            for (let x = 0; x <= coffeeCanvas.width; x += 10) {
+                const wave = Math.sin(x * 0.01 + cycleTime * 0.02) * 2;
+                ctx.lineTo(x, coffeeLevel + wave);
+            }
+            ctx.lineTo(coffeeCanvas.width, coffeeCanvas.height);
+            ctx.lineTo(0, coffeeCanvas.height);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Add subtle coffee surface reflection
+            ctx.fillStyle = 'rgba(139, 69, 19, 0.1)';
+            ctx.fillRect(0, coffeeLevel - 5, coffeeCanvas.width, 5);
+        }
+
+        function update() {
+            drawCoffeeBackground();
+            updateFluidGrid();
             
             cycleTime++;
+            nextDropDelay--;
             
-            // Drop cycle management
-            if (cycleTime % 400 === 0) {
-                dropPhase = 0;
-                dropY = 50;
-                dropSize = 12;
-                impactTime = 0;
+            // More organic drop timing
+            if (nextDropDelay <= 0 && dropPhase === 0) {
+                nextDropDelay = Math.random() * 200 + 300; // 5-8 second intervals
+                dropPhase = 1; // Start new drop
+                dropY = -20;
+                dropVelocity = 0;
+                dropSize = Math.random() * 8 + 12;
             }
             
-            // Falling cream drop
-            if (dropPhase === 0) {
-                // Draw falling drop
-                ctx.fillStyle = '#f5f5dc';
+            // Falling cream drop with realistic physics
+            if (dropPhase === 1) {
+                // Gravity acceleration
+                dropVelocity += 0.3;
+                dropY += dropVelocity;
+                
+                // Air resistance shapes the drop
+                const airResistance = dropVelocity * 0.02;
+                dropSize += airResistance;
+                
+                // Draw realistic falling drop with teardrop shape
+                ctx.fillStyle = '#f8f6f0';
+                ctx.shadowColor = 'rgba(248, 246, 240, 0.3)';
+                ctx.shadowBlur = 8;
+                
                 ctx.beginPath();
-                ctx.ellipse(centerX, dropY, dropSize * 0.6, dropSize, 0, 0, Math.PI * 2);
+                // Teardrop shape
+                const dropWidth = dropSize * 0.7;
+                const dropHeight = dropSize * (1 + dropVelocity * 0.1);
+                ctx.ellipse(centerX, dropY, dropWidth, dropHeight, 0, 0, Math.PI * 2);
                 ctx.fill();
                 
-                // Drop physics - elongate as it falls
-                dropY += 4;
-                dropSize += 0.1;
+                ctx.shadowBlur = 0;
                 
                 // Check for impact
-                if (dropY >= coffeeLevel) {
-                    dropPhase = 1;
+                if (dropY + dropHeight >= coffeeLevel) {
+                    dropPhase = 2; // Impact
                     impactTime = 0;
                     
-                    // Create impact particles
-                    for (let i = 0; i < 150; i++) {
-                        particles.push(createCreamParticle(centerX, coffeeLevel, 'impact'));
+                    // Create realistic splash pattern
+                    const impactForce = dropVelocity * 0.5;
+                    for (let i = 0; i < 80 + impactForce * 10; i++) {
+                        const angle = (i / (80 + impactForce * 10)) * Math.PI * 2;
+                        const speed = Math.random() * impactForce + 2;
+                        const velocity = {
+                            x: Math.cos(angle) * speed,
+                            y: Math.sin(angle) * speed - Math.random() * 3
+                        };
+                        particles.push(createCreamParticle(centerX, coffeeLevel, 'impact', velocity));
+                    }
+                    
+                    // Add central upward splash
+                    for (let i = 0; i < 30; i++) {
+                        const velocity = {
+                            x: (Math.random() - 0.5) * 4,
+                            y: -Math.random() * 8 - 3
+                        };
+                        particles.push(createCreamParticle(centerX, coffeeLevel, 'impact', velocity));
                     }
                 }
             }
             
-            // Impact phase
-            if (dropPhase === 1) {
+            // Impact phase with ripples and secondary effects
+            if (dropPhase === 2) {
                 impactTime++;
                 
-                // Create ripple effect
-                ctx.strokeStyle = `rgba(245, 245, 220, ${0.3 - impactTime * 0.01})`;
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.arc(centerX, coffeeLevel, impactTime * 3, 0, Math.PI * 2);
-                ctx.stroke();
-                
-                if (impactTime % 5 === 0 && impactTime < 50) {
-                    // Add dispersing particles
-                    for (let i = 0; i < 10; i++) {
-                        particles.push(createCreamParticle(centerX, coffeeLevel, 'dispersing'));
+                // Multiple ripple rings
+                for (let ring = 1; ring <= 3; ring++) {
+                    const ringDelay = ring * 15;
+                    if (impactTime > ringDelay) {
+                        const rippleRadius = (impactTime - ringDelay) * 4;
+                        const opacity = Math.max(0, 0.4 - (impactTime - ringDelay) * 0.01);
+                        
+                        ctx.strokeStyle = `rgba(248, 246, 240, ${opacity})`;
+                        ctx.lineWidth = 3 - ring * 0.5;
+                        ctx.beginPath();
+                        ctx.arc(centerX, coffeeLevel, rippleRadius, 0, Math.PI * 2);
+                        ctx.stroke();
                     }
                 }
                 
-                if (impactTime > 60) {
-                    dropPhase = 2;
+                // Secondary droplets from splash
+                if (impactTime % 8 === 0 && impactTime < 60) {
+                    for (let i = 0; i < 5; i++) {
+                        particles.push(createCreamParticle(
+                            centerX + (Math.random() - 0.5) * 60,
+                            coffeeLevel,
+                            'dispersing'
+                        ));
+                    }
+                }
+                
+                if (impactTime > 120) {
+                    dropPhase = 0; // Reset for next cycle
                 }
             }
             
-            // Update and draw particles
+            // Update and render particles with advanced physics
             for (let i = particles.length - 1; i >= 0; i--) {
                 const p = particles[i];
                 
-                // Physics based on phase
+                // Get fluid influence
+                const fluidVel = getFluidVelocity(p.x, p.y);
+                
+                // Physics based on phase and properties
                 if (p.phase === 'impact') {
-                    // Initial splash - high velocity, random directions
-                    p.vx *= 0.98; // Drag
-                    p.vy *= 0.95;
-                    p.x += p.vx;
-                    p.y += p.vy;
-                } else if (p.phase === 'dispersing') {
-                    // Slower dispersion with density effects
-                    p.vx *= 0.99; // Less drag
-                    p.vy *= 0.99;
-                    p.x += p.vx + Math.sin(p.swirl) * 0.5;
-                    p.y += p.vy + Math.cos(p.swirl) * 0.3;
-                    p.swirl += p.swirlSpeed;
+                    // Splash physics with gravity and drag
+                    p.vy += 0.2; // Gravity
+                    p.vx *= 0.97; // Air resistance
+                    p.vy *= 0.97;
                     
-                    // Cream slowly rises due to density difference
-                    p.y -= 0.1 * p.density;
+                    // Surface tension when hitting coffee
+                    if (p.y >= coffeeLevel && p.vy > 0) {
+                        p.vy *= -0.3; // Bounce with energy loss
+                        p.phase = 'dispersing';
+                    }
+                } else if (p.phase === 'dispersing') {
+                    // Brownian motion and convection
+                    p.vx += (Math.random() - 0.5) * 0.1;
+                    p.vy += (Math.random() - 0.5) * 0.1;
+                    
+                    // Fluid currents
+                    p.vx += fluidVel.x * 0.5;
+                    p.vy += fluidVel.y * 0.5;
+                    
+                    // Density-driven movement (cream rises)
+                    p.vy -= p.density * 0.08;
+                    
+                    // Viscosity
+                    p.vx *= p.viscosity;
+                    p.vy *= p.viscosity;
+                    
+                    // Thermal convection
+                    const thermalForce = Math.sin(p.x * 0.01 + cycleTime * 0.01) * p.temperature * 0.1;
+                    p.vx += thermalForce;
                 }
                 
-                // Gradual mixing - opacity and size changes
-                const lifeRatio = p.life / p.maxLife;
-                p.opacity = p.originalOpacity * lifeRatio * 0.8;
-                p.radius = p.originalRadius * (0.5 + lifeRatio * 0.5);
+                // Update position
+                p.x += p.vx;
+                p.y += p.vy;
                 
-                // Draw particle with gradient for realism
-                const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
-                gradient.addColorStop(0, `rgba(245, 245, 220, ${p.opacity})`);
-                gradient.addColorStop(0.7, `rgba(245, 245, 220, ${p.opacity * 0.6})`);
-                gradient.addColorStop(1, `rgba(245, 245, 220, 0)`);
+                // Swirl motion for realism
+                p.swirl += p.swirlSpeed;
+                p.x += Math.sin(p.swirl) * 0.3;
+                p.y += Math.cos(p.swirl) * 0.2;
+                
+                // Gradual mixing and dissolution
+                const lifeRatio = p.life / p.maxLife;
+                const mixingFactor = 1 - Math.pow(lifeRatio, 1.5);
+                
+                p.opacity = p.originalOpacity * lifeRatio * (0.3 + 0.7 * Math.pow(lifeRatio, 0.5));
+                p.radius = p.originalRadius * (0.4 + 0.6 * lifeRatio) * (1 + mixingFactor * 0.3);
+                
+                // Advanced particle rendering with multiple effects
+                const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius * 2);
+                const creamColor = `rgba(248, 246, 240, ${p.opacity})`;
+                const fadeColor = `rgba(248, 246, 240, ${p.opacity * 0.2})`;
+                
+                gradient.addColorStop(0, creamColor);
+                gradient.addColorStop(0.6, fadeColor);
+                gradient.addColorStop(1, 'rgba(248, 246, 240, 0)');
                 
                 ctx.fillStyle = gradient;
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
                 ctx.fill();
                 
-                // Update life
-                p.life--;
+                // Add slight glow for fresher particles
+                if (lifeRatio > 0.7) {
+                    ctx.fillStyle = `rgba(255, 255, 255, ${(lifeRatio - 0.7) * 0.3 * p.opacity})`;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius * 0.5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
                 
-                // Remove dead particles or those that moved too far
-                if (p.life <= 0 || p.x < -50 || p.x > coffeeCanvas.width + 50 || 
-                    p.y < -50 || p.y > coffeeCanvas.height + 50) {
+                // Update life
+                p.life -= 1 + p.mixingRate * 100;
+                
+                // Remove dead or out-of-bounds particles
+                if (p.life <= 0 || p.x < -100 || p.x > coffeeCanvas.width + 100 || 
+                    p.y < -100 || p.y > coffeeCanvas.height + 100 || p.opacity < 0.01) {
                     particles.splice(i, 1);
                 }
             }
             
-            // Add some ambient cream swirls for continuous effect
-            if (particles.length < PARTICLE_COUNT && Math.random() < 0.3) {
+            // Add ambient cream particles for ongoing mixing effect
+            if (particles.length < MAX_PARTICLES && Math.random() < 0.1) {
                 particles.push(createCreamParticle(
-                    centerX + (Math.random() - 0.5) * 100,
-                    coffeeLevel + Math.random() * 100,
+                    centerX + (Math.random() - 0.5) * 150,
+                    coffeeLevel + Math.random() * 80,
                     'dispersing'
                 ));
             }
