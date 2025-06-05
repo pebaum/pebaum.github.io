@@ -27,7 +27,7 @@
             color: #ffffff;
             font-family: 'Alexandria', 'Times New Roman', serif;
             font-size: 16px;
-            cursor: var(--ff9-cursor-url) 48 24, auto;
+            cursor: var(--ff9-cursor-url) 64 32, auto;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -219,7 +219,7 @@
             box-shadow: inset 1px 1px 3px rgba(255,255,255,0.1), inset -1px -1px 3px rgba(0,0,0,0.3);            background-image: 
                 radial-gradient(circle at 30% 30%, rgba(255,255,255,0.04) 1px, transparent 1px);
             background-size: 10px 10px;
-            cursor: var(--ff9-cursor-url) 48 24, auto;
+            cursor: var(--ff9-cursor-url) 64 32, auto;
         }
 
         .time-gil-box {
@@ -277,16 +277,16 @@
             box-shadow: inset 1px 1px 2px rgba(255,255,255,0.1);
         }        /* Pointer */        #pointer {
             position: absolute;
-            width: 64px;
-            height: 48px;
+            width: 80px;
+            height: 60px;
             background-image: url('./cursor.png');
             background-size: contain;
             background-repeat: no-repeat;
-            left: -72px;
+            left: -90px;
             transition: top 0.15s ease;
             z-index: 10;
             pointer-events: none;
-            filter: drop-shadow(4px 4px 4px rgba(0,0,0,0.6));
+            filter: drop-shadow(5px 5px 5px rgba(0,0,0,0.7));
             image-rendering: pixelated;
             transform: translateY(0px);
         }/* Content Modal */
@@ -771,7 +771,7 @@
                     const commandMenu = activeItem.closest('.command-menu');
                     const menuRect = commandMenu.getBoundingClientRect();
                     
-                    this.pointer.style.top = (rect.top - menuRect.top + rect.height / 2 - 24) + 'px';
+                    this.pointer.style.top = (rect.top - menuRect.top + rect.height / 2 - 30) + 'px';
                 }
             }updateContent() {
                 const activeMenuItem = this.menuItems[this.currentMenuItem];
