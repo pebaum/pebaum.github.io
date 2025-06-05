@@ -762,11 +762,15 @@
                     const now = new Date();
                     const pstTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Los_Angeles"}));
                     
-                    const hours = pstTime.getHours();
+                    const hours24 = pstTime.getHours();
                     const minutes = pstTime.getMinutes();
                     const seconds = pstTime.getSeconds();
                     
-                    const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                    // Convert to 12-hour format
+                    const hours12 = hours24 === 0 ? 12 : hours24 > 12 ? hours24 - 12 : hours24;
+                    const ampm = hours24 >= 12 ? 'PM' : 'AM';
+                    
+                    const timeString = `${hours12.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')} ${ampm}`;
                     this.timeDisplay.textContent = timeString;
                 };
                 
