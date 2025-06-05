@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swirling Coffee</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background: #3e2723;
+            overflow: hidden;
+        }
+        .ps1-viewport {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+            image-rendering: pixelated;
+        }
+        #coffeeCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        .ps1-scanlines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 1px,
+                rgba(0, 0, 0, 0.1) 1px,
+                rgba(0, 0, 0, 0.1) 2px
+            );
+            pointer-events: none;
+            z-index: 1001;
+        }
+        .ps1-dither {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                radial-gradient(circle at 25% 25%, rgba(255,255,255,0.03) 1px, transparent 1px),
+                radial-gradient(circle at 75% 75%, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 4px 4px, 4px 4px;
+            background-position: 0 0, 2px 2px;
+            pointer-events: none;
+            z-index: 1002;
+        }
+        .ps1-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+            z-index: 1000;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="ps1-viewport">
+        <canvas id="coffeeCanvas"></canvas>
+        <div class="ps1-scanlines"></div>
+        <div class="ps1-dither"></div>
+        <canvas id="ps1Canvas" class="ps1-canvas"></canvas>
+    </div>
+    <script>
+        const coffeeCanvas = document.getElementById('coffeeCanvas');
+        const ctx = coffeeCanvas.getContext('2d');
+        let centerX, centerY;
+        const particles = [];
+        const PARTICLE_COUNT = 600;
+
+        function resize() {
+            coffeeCanvas.width = window.innerWidth;
+            coffeeCanvas.height = window.innerHeight;
+            centerX = coffeeCanvas.width / 2;
+            centerY = coffeeCanvas.height / 2;
+            ctx.fillStyle = '#3e2723';
+            ctx.fillRect(0, 0, coffeeCanvas.width, coffeeCanvas.height);
+        }
+
+        function createParticle() {
+            return {
+                x: centerX,
+                y: centerY,
+                angle: Math.random() * Math.PI * 2,
+                speed: Math.random() * 1.5 + 0.5,
+                radius: Math.random() * 2 + 1,
+                life: Math.random() * 200 + 100
+            };
+        }
+
+        for (let i = 0; i < PARTICLE_COUNT; i++) {
+            particles.push(createParticle());
+        }
+
+        function update() {
+            ctx.fillStyle = 'rgba(62,39,35,0.2)';
+            ctx.fillRect(0, 0, coffeeCanvas.width, coffeeCanvas.height);
+
+            for (const p of particles) {
+                ctx.fillStyle = 'rgba(255,255,255,0.8)';
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                p.x += Math.cos(p.angle) * p.speed;
+                p.y += Math.sin(p.angle) * p.speed;
+                p.angle += 0.05;
+                p.life--;
+
+                if (p.life <= 0 || p.x < 0 || p.x > coffeeCanvas.width || p.y < 0 || p.y > coffeeCanvas.height) {
+                    Object.assign(p, createParticle());
+                }
+            }
+            requestAnimationFrame(update);
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+        update();
+    </script>
+    <script>
+        class PS1Effects {
+            constructor() {
+                this.frameCount = 0;
+                this.init();
+            }
+            init() {
+                this.canvas = document.getElementById('ps1Canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.setupCanvas();
+                this.startRenderLoop();
+            }
+            setupCanvas() {
+                this.canvas.width = 320;
+                this.canvas.height = 240;
+                this.updateCanvasSize();
+                window.addEventListener('resize', () => this.updateCanvasSize());
+            }
+            updateCanvasSize() {
+                this.canvas.style.width = window.innerWidth + 'px';
+                this.canvas.style.height = window.innerHeight + 'px';
+            }
+            getBayerMatrix() {
+                return [
+                    [0, 8, 2, 10],
+                    [12, 4, 14, 6],
+                    [3, 11, 1, 9],
+                    [15, 7, 13, 5]
+                ];
+            }
+            applyPS1Effects() {
+                const imageData = this.ctx.createImageData(this.canvas.width, this.canvas.height);
+                const data = imageData.data;
+                const bayerMatrix = this.getBayerMatrix();
+                for (let y = 0; y < this.canvas.height; y++) {
+                    for (let x = 0; x < this.canvas.width; x++) {
+                        const index = (y * this.canvas.width + x) * 4;
+                        const noise = (Math.random() - 0.5) * 0.1;
+                        const interference = Math.sin(this.frameCount * 0.1 + x * 0.05) * 5;
+                        if ((x + y + this.frameCount) % 8 === 0) {
+                            data[index] = Math.min(255, Math.max(0, interference + noise * 255));
+                            data[index + 1] = Math.min(255, Math.max(0, interference * 0.8 + noise * 255));
+                            data[index + 2] = Math.min(255, Math.max(0, interference * 0.6 + noise * 255));
+                            data[index + 3] = 8;
+                        } else {
+                            data[index] = 0;
+                            data[index + 1] = 0;
+                            data[index + 2] = 0;
+                            data[index + 3] = 0;
+                        }
+                    }
+                }
+                this.ctx.putImageData(imageData, 0, 0);
+            }
+            startRenderLoop() {
+                const render = () => {
+                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                    this.applyPS1Effects();
+                    this.frameCount++;
+                    requestAnimationFrame(render);
+                };
+                render();
+            }
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            window.ps1Effects = new PS1Effects();
+        });
+    </script>
+</body>
+</html>
