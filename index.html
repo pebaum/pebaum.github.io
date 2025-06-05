@@ -27,7 +27,7 @@
             color: #ffffff;
             font-family: 'Alexandria', 'Times New Roman', serif;
             font-size: 16px;
-            cursor: var(--ff9-cursor-url) 24 12, auto;
+            cursor: var(--ff9-cursor-url) 48 24, auto;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -212,11 +212,10 @@
             margin-bottom: 8px;
             position: relative;
             flex: 1;
-            box-shadow: inset 1px 1px 3px rgba(255,255,255,0.1), inset -1px -1px 3px rgba(0,0,0,0.3);
-            background-image: 
+            box-shadow: inset 1px 1px 3px rgba(255,255,255,0.1), inset -1px -1px 3px rgba(0,0,0,0.3);            background-image: 
                 radial-gradient(circle at 30% 30%, rgba(255,255,255,0.04) 1px, transparent 1px);
             background-size: 10px 10px;
-            cursor: var(--ff9-cursor-url) 24 12, auto;
+            cursor: var(--ff9-cursor-url) 48 24, auto;
         }
 
         .time-gil-box {
@@ -272,19 +271,18 @@
             border-color: #B0B0B0;
             color: #E6D060;
             box-shadow: inset 1px 1px 2px rgba(255,255,255,0.1);
-        }        /* Pointer */
-        #pointer {
+        }        /* Pointer */        #pointer {
             position: absolute;
-            width: 32px;
-            height: 24px;
+            width: 64px;
+            height: 48px;
             background-image: url('./cursor.png');
             background-size: contain;
             background-repeat: no-repeat;
-            left: -36px;
+            left: -72px;
             transition: top 0.15s ease;
             z-index: 10;
             pointer-events: none;
-            filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.6));
+            filter: drop-shadow(4px 4px 4px rgba(0,0,0,0.6));
             image-rendering: pixelated;
             transform: translateY(0px);
         }/* Content Modal */
@@ -680,12 +678,10 @@
                                     transition: all 0.2s ease;
                                 ">Enter the ASCII World</a>
                             </div>
-                            <p>Totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.</p>
-                        `
+                            <p>Totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.</p>                        `
                     }
                 };
 
-                this.startTime = Date.now();
                 this.init();
             }
 
@@ -766,13 +762,12 @@
                 });
                 this.updatePointer();
             }            updatePointer() {
-                const activeItem = this.menuItems[this.currentMenuItem];
-                if (activeItem && this.pointer) {
+                const activeItem = this.menuItems[this.currentMenuItem];                if (activeItem && this.pointer) {
                     const rect = activeItem.getBoundingClientRect();
                     const commandMenu = activeItem.closest('.command-menu');
                     const menuRect = commandMenu.getBoundingClientRect();
                     
-                    this.pointer.style.top = (rect.top - menuRect.top + rect.height / 2 - 10) + 'px';
+                    this.pointer.style.top = (rect.top - menuRect.top + rect.height / 2 - 24) + 'px';
                 }
             }updateContent() {
                 const activeMenuItem = this.menuItems[this.currentMenuItem];
@@ -790,16 +785,17 @@
             closeModal() {
                 this.contentModal.style.display = 'none';
                 this.modalOpen = false;
-            }
-
-            startClock() {
+            }            startClock() {
                 const updateClock = () => {
-                    const elapsed = Date.now() - this.startTime;
-                    const hours = Math.floor(elapsed / 3600000);
-                    const minutes = Math.floor((elapsed % 3600000) / 60000);
-                    const seconds = Math.floor((elapsed % 60000) / 1000);
+                    // Get current time in PST (Pacific Standard Time / PDT)
+                    const now = new Date();
+                    const pstTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Los_Angeles"}));
                     
-                    const timeString = `${hours.toString().padStart(3, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                    const hours = pstTime.getHours();
+                    const minutes = pstTime.getMinutes();
+                    const seconds = pstTime.getSeconds();
+                    
+                    const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
                     this.timeDisplay.textContent = timeString;
                 };
                 
