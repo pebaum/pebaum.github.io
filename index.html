@@ -27,7 +27,7 @@
             color: #ffffff;
             font-family: 'Alexandria', 'Times New Roman', serif;
             font-size: 16px;
-            cursor: var(--ff9-cursor-url) 64 32, auto;
+            cursor: var(--ff9-cursor-url) 112 52, auto;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -180,36 +180,10 @@
             color: #FFFFFF;
             margin-bottom: 1px;
             font-size: 10px;
-        }
-
-        .character-mp {
+        }        .character-mp {
             color: #FFFFFF;
             font-size: 10px;
-        }        .blue-magic-orb {
-            width: 14px;
-            height: 14px;
-            background: radial-gradient(circle, #7DBED2, #5A9BB8);
-            border: 1px solid #7DBED2;
-            border-radius: 50%;
-            margin-right: 6px;
-            margin-left: 2px;
-            flex-shrink: 0;
-            box-shadow: inset 1px 1px 2px rgba(255,255,255,0.3), 0 0 4px rgba(125,190,210,0.5);
-            align-self: center;
-        }
-
-        .blue-magic-orb.empty {
-            background: #1A1A1A;
-            border-color: #333333;
-            box-shadow: none;
-        }        .ability-points {
-            font-size: 10px;
-            color: #A0A0A0;
-            writing-mode: vertical-rl;
-            text-orientation: mixed;
-            margin-left: 4px;
-            flex-shrink: 0;
-        }        /* Right 25% - Menu Area */
+        }/* Right 25% - Menu Area */
         .menu-area {
             width: 25%;
             background: linear-gradient(180deg, #3B3E45, #2F2F2F);
@@ -226,8 +200,7 @@
             flex: 1;
             box-shadow: inset 1px 1px 3px rgba(255,255,255,0.1), inset -1px -1px 3px rgba(0,0,0,0.3);            background-image: 
                 radial-gradient(circle at 30% 30%, rgba(255,255,255,0.04) 1px, transparent 1px);
-            background-size: 10px 10px;
-            cursor: var(--ff9-cursor-url) 64 32, auto;
+            background-size: 10px 10px;            cursor: var(--ff9-cursor-url) 112 52, auto;
         }
 
         .time-gil-box {
@@ -285,18 +258,18 @@
             box-shadow: inset 1px 1px 2px rgba(255,255,255,0.1);
         }        /* Pointer */        #pointer {
             position: absolute;
-            width: 80px;
-            height: 60px;
+            width: 140px;
+            height: 105px;
             background-image: url('./cursor.png');
             background-size: contain;
             background-repeat: no-repeat;
-            left: -90px;
+            left: -50px;
             transition: top 0.15s ease;
             z-index: 10;
             pointer-events: none;
-            filter: drop-shadow(5px 5px 5px rgba(0,0,0,0.7));
+            filter: drop-shadow(8px 8px 8px rgba(0,0,0,0.8));
             image-rendering: pixelated;
-            transform: translateY(0px);
+            transform: translateY(-52px);
         }/* Content Modal */
         .content-modal {
             position: absolute;
@@ -494,8 +467,7 @@
             <div class="ffix-layout">
                 <!-- Left 75% - Character Area -->
                 <div class="character-area">
-                    <div class="character-panel-stack">                        <!-- Character 1: Peter -->
-                        <div class="character-panel active clickable-character" id="peterPanel">
+                    <div class="character-panel-stack">                        <!-- Character 1: Peter -->                        <div class="character-panel active clickable-character" id="peterPanel">
                             <div class="character-portrait peter"></div>
                             <div class="character-stats">
                                 <div class="character-name">Peter</div>
@@ -503,11 +475,8 @@
                                 <div class="character-hp">HP 9999/9999</div>
                                 <div class="character-mp">MP  999/ 999</div>
                             </div>
-                            <div class="blue-magic-orb"></div>
-                            <div class="ability-points">AP</div>
                         </div>
-                        
-                        <!-- Character 2: Empty slot -->
+                          <!-- Character 2: Empty slot -->
                         <div class="character-panel empty">
                             <div class="character-portrait empty"></div>
                             <div class="character-stats">
@@ -516,11 +485,8 @@
                                 <div class="character-hp">HP ----/----</div>
                                 <div class="character-mp">MP ----/----</div>
                             </div>
-                            <div class="blue-magic-orb empty"></div>
-                            <div class="ability-points">AP</div>
                         </div>
-                        
-                        <!-- Character 3: Empty slot -->
+                          <!-- Character 3: Empty slot -->
                         <div class="character-panel empty">
                             <div class="character-portrait empty"></div>
                             <div class="character-stats">
@@ -529,11 +495,8 @@
                                 <div class="character-hp">HP ----/----</div>
                                 <div class="character-mp">MP ----/----</div>
                             </div>
-                            <div class="blue-magic-orb empty"></div>
-                            <div class="ability-points">AP</div>
                         </div>
-                        
-                        <!-- Character 4: Empty slot -->
+                          <!-- Character 4: Empty slot -->
                         <div class="character-panel empty">
                             <div class="character-portrait empty"></div>
                             <div class="character-stats">
@@ -542,8 +505,6 @@
                                 <div class="character-hp">HP ----/----</div>
                                 <div class="character-mp">MP ----/----</div>
                             </div>
-                            <div class="blue-magic-orb empty"></div>
-                            <div class="ability-points">AP</div>
                         </div>
                     </div>
                 </div>
@@ -779,7 +740,7 @@
                     const commandMenu = activeItem.closest('.command-menu');
                     const menuRect = commandMenu.getBoundingClientRect();
                     
-                    this.pointer.style.top = (rect.top - menuRect.top + rect.height / 2 - 30) + 'px';
+                    this.pointer.style.top = (rect.top - menuRect.top + rect.height / 2 - 37) + 'px';
                 }
             }updateContent() {
                 const activeMenuItem = this.menuItems[this.currentMenuItem];
