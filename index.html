@@ -16,7 +16,12 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-        }        body, html {
+        }        /* === Final Fantasy IX Menu Cursor (Hand Icon) === */
+        :root {
+            --ff9-cursor-url: url('./cursor.png');
+        }
+
+        body, html {
             height: 100vh;
             width: 100vw;
             overflow: hidden;
@@ -24,11 +29,11 @@
             color: #ffffff;
             font-family: 'Alexandria', 'Times New Roman', serif;
             font-size: 16px;
-            cursor: url('./cursor.png') 8 8, auto;
+            cursor: var(--ff9-cursor-url) 15 6, auto;
             display: flex;
             align-items: center;
             justify-content: center;
-        }        /* PS1 Square Viewport Container */
+        }/* PS1 Square Viewport Container */
         .ps1-viewport {
             width: min(80vh, 80vw);
             height: min(60vh, 60vw);
@@ -65,13 +70,13 @@
             display: flex;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, #5a5a52, #4a4a42);
-            border: 2px solid #707058;
+            background: linear-gradient(135deg, #2F2F2F, #252525);
+            border: 2px solid #B0B0B0;
         }        /* Left 75% - Character Area */
         .character-area {
             width: 75%;
-            background: linear-gradient(180deg, #3a3a32, #2a2a22);
-            border-right: 2px solid #5a5a4a;
+            background: linear-gradient(180deg, #2F2F2F, #252525);
+            border-right: 2px solid #B0B0B0;
             padding: 8px;
             position: relative;
         }
@@ -83,8 +88,8 @@
             gap: 2px;
         }        .character-panel {
             height: 65px;
-            background: linear-gradient(135deg, #4a4a3a, #3a3a2a);
-            border: 1px solid #6a6a5a;
+            background: linear-gradient(135deg, #2F2F2F, #252525);
+            border: 1px solid #B0B0B0;
             border-radius: 3px;
             display: flex;
             align-items: center;
@@ -99,8 +104,8 @@
         }
 
         .character-panel.active {
-            background: linear-gradient(135deg, #5a5a4a, #4a4a3a);
-            border-color: #7a7a6a;
+            background: linear-gradient(135deg, #3B3E45, #2F2F2F);
+            border-color: #B0B0B0;
             box-shadow: inset 1px 1px 3px rgba(255,255,255,0.15), inset -1px -1px 3px rgba(0,0,0,0.4);
         }
 
@@ -109,14 +114,14 @@
         }        .character-portrait {
             width: 50px;
             height: 50px;
-            background: linear-gradient(45deg, #5a5a4a, #6a6a5a);
-            border: 1px solid #7a7a6a;
+            background: linear-gradient(45deg, #3B3E45, #2F2F2F);
+            border: 1px solid #B0B0B0;
             border-radius: 2px;
             display: flex;
             align-items: center;
             justify-content: center;
             margin-right: 12px;
-            color: #ccccaa;
+            color: #A0A0A0;
             font-size: 10px;
             text-align: center;
             flex-shrink: 0;
@@ -124,8 +129,8 @@
         }
 
         .character-portrait.empty {
-            background: linear-gradient(45deg, #3a3a2a, #2a2a1a);
-            border-color: #4a4a3a;
+            background: linear-gradient(45deg, #1A1A1A, #151515);
+            border-color: #333333;
         }
 
         .character-stats {
@@ -135,41 +140,41 @@
         }        .character-name {
             font-size: 12px;
             font-weight: bold;
-            color: #ffffff;
+            color: #FFFFFF;
             margin-bottom: 1px;
             text-shadow: 1px 1px 1px rgba(0,0,0,0.8);
         }
 
         .character-level {
-            color: #ddddcc;
+            color: #A0A0A0;
             margin-bottom: 1px;
         }
 
         .character-hp {
-            color: #ffdddd;
+            color: #FFFFFF;
             margin-bottom: 1px;
         }
 
         .character-mp {
-            color: #ddddff;
+            color: #FFFFFF;
         }        .blue-magic-orb {
             width: 12px;
             height: 12px;
-            background: radial-gradient(circle, #6699ff, #3366cc);
-            border: 1px solid #7799ff;
+            background: radial-gradient(circle, #7DBED2, #5A9BB8);
+            border: 1px solid #7DBED2;
             border-radius: 50%;
             margin-right: 8px;
             flex-shrink: 0;
-            box-shadow: inset 1px 1px 2px rgba(255,255,255,0.3), 0 0 4px rgba(102,153,255,0.5);
+            box-shadow: inset 1px 1px 2px rgba(255,255,255,0.3), 0 0 4px rgba(125,190,210,0.5);
         }
 
         .blue-magic-orb.empty {
-            background: #3a3a2a;
-            border-color: #4a4a3a;
+            background: #1A1A1A;
+            border-color: #333333;
             box-shadow: none;
         }        .ability-points {
             font-size: 10px;
-            color: #bbbbaa;
+            color: #A0A0A0;
             writing-mode: vertical-rl;
             text-orientation: mixed;
             margin-left: 4px;
@@ -177,13 +182,13 @@
         }        /* Right 25% - Menu Area */
         .menu-area {
             width: 25%;
-            background: linear-gradient(180deg, #3a3a32, #2a2a22);
+            background: linear-gradient(180deg, #3B3E45, #2F2F2F);
             display: flex;
             flex-direction: column;
             padding: 8px;
         }        .command-menu {
-            background: linear-gradient(135deg, #4a4a3a, #3a3a2a);
-            border: 1px solid #6a6a5a;
+            background: linear-gradient(135deg, #3B3E45, #2F2F2F);
+            border: 1px solid #B0B0B0;
             border-radius: 3px;
             padding: 8px;
             margin-bottom: 8px;
@@ -193,11 +198,12 @@
             background-image: 
                 radial-gradient(circle at 30% 30%, rgba(255,255,255,0.04) 1px, transparent 1px);
             background-size: 10px 10px;
+            cursor: var(--ff9-cursor-url) 15 6, auto;
         }
 
         .time-gil-box {
-            background: linear-gradient(135deg, #4a4a3a, #3a3a2a);
-            border: 1px solid #6a6a5a;
+            background: linear-gradient(135deg, #3B3E45, #2F2F2F);
+            border: 1px solid #B0B0B0;
             border-radius: 3px;
             padding: 8px;
             margin-bottom: 8px;
@@ -207,18 +213,18 @@
 
         .time-display {
             font-size: 11px;
-            color: #ddddff;
+            color: #FFFFFF;
             margin-bottom: 4px;
         }
 
         .gil-display {
             font-size: 11px;
-            color: #ffffdd;
+            color: #E6D060;
         }
 
         .location-box {
-            background: linear-gradient(135deg, #4a4a3a, #3a3a2a);
-            border: 1px solid #6a6a5a;
+            background: linear-gradient(135deg, #3B3E45, #2F2F2F);
+            border: 1px solid #B0B0B0;
             border-radius: 3px;
             padding: 8px;
             text-align: center;
@@ -227,7 +233,7 @@
 
         .location-name {
             font-size: 11px;
-            color: #ddffdd;
+            color: #FFFFFF;
         }        .menu-item {
             padding: 4px 8px;
             margin: 1px 0;
@@ -236,31 +242,34 @@
             border-radius: 2px;
             cursor: pointer;
             transition: all 0.15s ease;
-            font-size: 11px;
-            color: #ddddcc;
+            font-size: 12px;
+            line-height: 16px;
+            color: #FFFFFF;
             position: relative;
         }
 
         .menu-item:hover,
         .menu-item.active {
-            background: linear-gradient(135deg, #5a5a4a, #4a4a3a);
-            border-color: #7a7a6a;
-            color: #ffffff;
+            background: linear-gradient(135deg, #5A5A5A, #404040);
+            border-color: #B0B0B0;
+            color: #E6D060;
             box-shadow: inset 1px 1px 2px rgba(255,255,255,0.1);
         }        /* Pointer */
         #pointer {
             position: absolute;
-            width: 20px;
-            height: 20px;
+            width: 16px;
+            height: 12px;
             background-image: url('./cursor.png');
             background-size: contain;
             background-repeat: no-repeat;
-            left: -4px;
+            left: -20px;
             transition: top 0.15s ease;
             z-index: 10;
             pointer-events: none;
             filter: drop-shadow(1px 1px 1px rgba(0,0,0,0.5));
-        }        /* Content Modal */
+            image-rendering: pixelated;
+            transform: translateY(2px);
+        }/* Content Modal */
         .content-modal {
             position: absolute;
             top: 50%;
@@ -268,8 +277,8 @@
             transform: translate(-50%, -50%);
             width: 80%;
             height: 70%;
-            background: linear-gradient(180deg, #3a3a32, #2a2a22);
-            border: 2px solid #6a6a5a;
+            background: linear-gradient(180deg, #2F2F2F, #252525);
+            border: 2px solid #B0B0B0;
             border-radius: 4px;
             padding: 20px;
             z-index: 100;
@@ -280,20 +289,20 @@
         .content-header {
             font-size: 16px;
             font-weight: bold;
-            color: #ffffff;
+            color: #FFFFFF;
             margin-bottom: 15px;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-            border-bottom: 1px solid #3a3a5a;
+            border-bottom: 1px solid #B0B0B0;
             padding-bottom: 5px;
         }        .content-body {
-            color: #ddddcc;
+            color: #A0A0A0;
             line-height: 1.5;
             font-size: 12px;
         }
 
         .stat-block {
-            background: linear-gradient(135deg, #4a4a3a, #3a3a2a);
-            border: 1px solid #6a6a5a;
+            background: linear-gradient(135deg, #3B3E45, #2F2F2F);
+            border: 1px solid #B0B0B0;
             border-radius: 3px;
             padding: 10px;
             margin-bottom: 8px;
@@ -301,13 +310,13 @@
         }
 
         .stat-label {
-            color: #bbbbaa;
+            color: #A0A0A0;
             font-size: 10px;
             margin-bottom: 3px;
         }
 
         .stat-value {
-            color: #ffffff;
+            color: #FFFFFF;
             font-size: 12px;
             font-weight: bold;
             text-shadow: 1px 1px 1px rgba(0,0,0,0.8);
@@ -323,12 +332,11 @@
             .ffix-layout {
                 flex-direction: column;
             }
-            
-            .character-area {
+              .character-area {
                 width: 100%;
                 height: 60%;
                 border-right: none;
-                border-bottom: 2px solid #4a4a6a;
+                border-bottom: 2px solid #B0B0B0;
             }
             
             .menu-area {
@@ -420,19 +428,13 @@
         .time-gil-box,
         .location-box {
             filter: contrast(1.2) saturate(0.8);
-        }
-
-        /* PS1 text rendering effects */
+        }        /* PS1 text rendering effects */
         .character-name,
         .content-header,
         .menu-item,
         .stat-value {
             text-shadow: 1px 1px 0px rgba(0,0,0,0.8);
             font-weight: normal;
-        }        /* Pixelated cursor */
-        body {
-            cursor: url('./cursor.png') 8 8, auto;
-            image-rendering: pixelated;
         }/* Add subtle chromatic aberration */
         .ffix-layout::before {
             content: '';
