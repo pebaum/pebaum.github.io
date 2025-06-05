@@ -142,6 +142,14 @@
             text-align: center;
             flex-shrink: 0;
             box-shadow: inset 1px 1px 2px rgba(255,255,255,0.1), inset -1px -1px 2px rgba(0,0,0,0.3);
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .character-portrait.peter {
+            background-image: url('./Peter Baumgartner Silvertone Headshot.jpg');
+            background-color: #2F2F2F; /* Fallback color */
         }
 
         .character-portrait.empty {
@@ -488,7 +496,7 @@
                 <div class="character-area">
                     <div class="character-panel-stack">                        <!-- Character 1: Peter -->
                         <div class="character-panel active clickable-character" id="peterPanel">
-                            <div class="character-portrait">[portrait]</div>
+                            <div class="character-portrait peter"></div>
                             <div class="character-stats">
                                 <div class="character-name">Peter</div>
                                 <div class="character-level">Lv ∞</div>
