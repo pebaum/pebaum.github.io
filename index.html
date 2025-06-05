@@ -16,17 +16,45 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-        }
-
-        body, html {
+        }        body, html {
             height: 100vh;
             width: 100vw;
             overflow: hidden;
-            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            background: #000000;
             color: #ffffff;
             font-family: 'Alexandria', 'Times New Roman', serif;
             font-size: 16px;
-            cursor: url('./cursor.png'), auto;        }
+            cursor: url('./cursor.png'), auto;
+        }
+
+        /* PS1 Visual Container */
+        .ps1-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: #000000;
+        }
+
+        .ps1-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        .content-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            z-index: 1;
+        }
 
         .menu-container {
             display: flex;
@@ -205,16 +233,132 @@
                 margin: 0;
                 border-radius: 0;
             }
-            
-            .menu-panel {
+              .menu-panel {
                 width: 100%;
                 height: auto;
                 order: 3;
                 margin-top: 5px;
             }
-        }</style>
+        }
+
+        /* PS1 Scanline and CRT Effects */
+        .ps1-scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 1px,
+                rgba(0, 0, 0, 0.1) 1px,
+                rgba(0, 0, 0, 0.1) 2px
+            );
+            pointer-events: none;
+            z-index: 1001;
+        }
+
+        /* Dithering overlay */
+        .ps1-dither {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(255,255,255,0.03) 1px, transparent 1px),
+                radial-gradient(circle at 75% 75%, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 4px 4px, 4px 4px;
+            background-position: 0 0, 2px 2px;
+            pointer-events: none;
+            z-index: 1002;
+        }        /* PS1 texture wobble animation */
+        @keyframes ps1Wobble {
+            0% { transform: translateX(0px) translateY(0px) skew(0deg) scaleX(1.0); }
+            16% { transform: translateX(0.2px) translateY(-0.1px) skew(0.05deg) scaleX(1.001); }
+            33% { transform: translateX(-0.1px) translateY(0.3px) skew(-0.03deg) scaleX(0.999); }
+            50% { transform: translateX(0.3px) translateY(0.1px) skew(0.02deg) scaleX(1.001); }
+            66% { transform: translateX(-0.2px) translateY(-0.2px) skew(-0.04deg) scaleX(0.999); }
+            83% { transform: translateX(0.1px) translateY(0.2px) skew(0.01deg) scaleX(1.0); }
+            100% { transform: translateX(0px) translateY(0px) skew(0deg) scaleX(1.0); }
+        }
+
+        .menu-container {
+            animation: ps1Wobble 4s infinite linear;
+        }
+
+        /* Add vertex jitter to panels */
+        @keyframes panelJitter {
+            0%, 100% { transform: translateX(0) translateY(0); }
+            10% { transform: translateX(0.1px) translateY(-0.1px); }
+            20% { transform: translateX(-0.1px) translateY(0.1px); }
+            30% { transform: translateX(0.1px) translateY(0.1px); }
+            40% { transform: translateX(-0.05px) translateY(-0.05px); }
+            50% { transform: translateX(0.05px) translateY(0.1px); }
+            60% { transform: translateX(-0.1px) translateY(-0.1px); }
+            70% { transform: translateX(0.1px) translateY(-0.05px); }
+            80% { transform: translateX(-0.05px) translateY(0.1px); }
+            90% { transform: translateX(0.05px) translateY(-0.1px); }
+        }
+
+        .character-panel,
+        .content-area,
+        .menu-panel {
+            animation: panelJitter 6s infinite linear;
+        }/* Reduce color depth for PS1 effect */
+        .character-panel,
+        .content-area,
+        .menu-panel {
+            filter: contrast(1.2) saturate(0.8);
+        }
+
+        /* PS1 text rendering effects */
+        .character-name,
+        .content-header,
+        .menu-item,
+        .stat-value {
+            text-shadow: 1px 1px 0px rgba(0,0,0,0.8);
+            font-weight: normal;
+        }
+
+        /* Pixelated cursor */
+        body {
+            cursor: url('./cursor.png'), auto;
+            image-rendering: pixelated;
+        }
+
+        /* Add subtle chromatic aberration */
+        .menu-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, 
+                rgba(255,0,0,0.02) 0%, 
+                transparent 1%, 
+                transparent 99%, 
+                rgba(0,0,255,0.02) 100%);
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        /* Low resolution scaling */
+        @media (min-width: 1024px) {
+            .menu-container {
+                transform: scale(1.0);
+                transform-origin: center;
+            }
+        }
+    </style>
 </head>
 <body>
+    <!-- PS1 Visual Effects -->
+    <div class="ps1-scanlines"></div>
+    <div class="ps1-dither"></div>
+    
     <div class="time-display" id="timeDisplay">000:00:00</div>
     
     <div class="menu-container">        <!-- Character Panel -->
@@ -462,15 +606,121 @@
         // Initialize the menu when the page loads
         document.addEventListener('DOMContentLoaded', () => {
             window.ffixMenu = new FFIXMenu();
-        });
-
-        // Handle window resize for pointer position
+        });        // Handle window resize for pointer position
         window.addEventListener('resize', () => {
             setTimeout(() => {
                 if (window.ffixMenu) {
                     window.ffixMenu.updatePointer();
                 }
             }, 100);
+        });
+
+        // PS1 Visual Effects System
+        class PS1Effects {
+            constructor() {
+                this.frameCount = 0;
+                this.init();
+            }
+
+            init() {
+                // Create canvas for PS1 effects
+                this.canvas = document.createElement('canvas');
+                this.canvas.style.position = 'fixed';
+                this.canvas.style.top = '0';
+                this.canvas.style.left = '0';
+                this.canvas.style.width = '100%';
+                this.canvas.style.height = '100%';
+                this.canvas.style.pointerEvents = 'none';
+                this.canvas.style.zIndex = '1003';
+                this.canvas.style.imageRendering = 'pixelated';
+                document.body.appendChild(this.canvas);
+
+                this.ctx = this.canvas.getContext('2d');
+                this.setupCanvas();
+                this.startRenderLoop();
+            }
+
+            setupCanvas() {
+                // Set canvas resolution to simulate PS1's low resolution
+                this.canvas.width = 320;
+                this.canvas.height = 240;
+                
+                // Update canvas size on window resize
+                this.updateCanvasSize();
+                window.addEventListener('resize', () => this.updateCanvasSize());
+            }
+
+            updateCanvasSize() {
+                const rect = document.documentElement.getBoundingClientRect();
+                this.canvas.style.width = window.innerWidth + 'px';
+                this.canvas.style.height = window.innerHeight + 'px';
+            }
+
+            // Bayer matrix for dithering
+            getBayerMatrix() {
+                return [
+                    [0,  8,  2, 10],
+                    [12, 4, 14, 6],
+                    [3, 11, 1,  9],
+                    [15, 7, 13, 5]
+                ];
+            }
+
+            applyPS1Effects() {
+                const imageData = this.ctx.createImageData(this.canvas.width, this.canvas.height);
+                const data = imageData.data;
+                const bayerMatrix = this.getBayerMatrix();
+
+                // Generate PS1-style visual noise and effects
+                for (let y = 0; y < this.canvas.height; y++) {
+                    for (let x = 0; x < this.canvas.width; x++) {
+                        const index = (y * this.canvas.width + x) * 4;
+
+                        // Simulate affine texture wobble
+                        const wobbleX = Math.sin((x + this.frameCount * 0.5) * 0.1) * 0.3;
+                        const wobbleY = Math.cos((y + this.frameCount * 0.3) * 0.1) * 0.2;
+
+                        // Add subtle dithering pattern
+                        const ditherThreshold = bayerMatrix[y % 4][x % 4] / 16;
+                        const noise = (Math.random() - 0.5) * 0.1;
+
+                        // Create subtle color interference
+                        const interference = Math.sin(this.frameCount * 0.1 + x * 0.05) * 5;
+
+                        // Apply effects only to certain areas to create subtle PS1 look
+                        if ((x + y + this.frameCount) % 8 === 0) {
+                            // Very subtle color reduction effect
+                            data[index] = Math.min(255, Math.max(0, interference + noise * 255)); // R
+                            data[index + 1] = Math.min(255, Math.max(0, interference * 0.8 + noise * 255)); // G
+                            data[index + 2] = Math.min(255, Math.max(0, interference * 0.6 + noise * 255)); // B
+                            data[index + 3] = 8; // Very low alpha for subtle effect
+                        } else {
+                            data[index] = 0;
+                            data[index + 1] = 0;
+                            data[index + 2] = 0;
+                            data[index + 3] = 0;
+                        }
+                    }
+                }
+
+                this.ctx.putImageData(imageData, 0, 0);
+            }
+
+            startRenderLoop() {
+                const render = () => {
+                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                    this.applyPS1Effects();
+                    this.frameCount++;
+                    requestAnimationFrame(render);
+                };
+                render();
+            }
+        }
+
+        // Initialize PS1 effects
+        document.addEventListener('DOMContentLoaded', () => {
+            window.ffixMenu = new FFIXMenu();
+            window.ps1Effects = new PS1Effects();
         });
     </script>
 </body>
