@@ -25,13 +25,29 @@
             font-family: 'Alexandria', 'Times New Roman', serif;
             font-size: 16px;
             cursor: url('./cursor.png'), auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* PS1 Square Viewport Container */
+        .ps1-viewport {
+            width: min(80vh, 80vw);
+            height: min(60vh, 60vw);
+            max-width: 640px;
+            max-height: 480px;
+            background: linear-gradient(135deg, #404040, #2a2a2a);
+            border: 3px solid #666666;
+            position: relative;
+            overflow: hidden;
+            image-rendering: pixelated;
         }
 
         /* PS1 Visual Container */
         .ps1-container {
             position: relative;
-            width: 100vw;
-            height: 100vh;
+            width: 100%;
+            height: 100%;
             background: #000000;
         }
 
@@ -46,81 +62,224 @@
             image-rendering: crisp-edges;
             z-index: 1000;
             pointer-events: none;
-        }
-
-        .content-wrapper {
-            position: relative;
+        }        /* FFIX Layout Structure */
+        .ffix-layout {
+            display: flex;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
-            z-index: 1;
+            background: linear-gradient(135deg, #404040, #2a2a2a);
+            border: 2px solid #666666;
         }
 
-        .menu-container {
-            display: flex;
-            height: 100vh;
-            width: 100vw;
-            position: relative;
-        }        /* Character List Panel */
-        .character-panel {
-            width: 220px;
+        /* Left 75% - Character Area */
+        .character-area {
+            width: 75%;
             background: linear-gradient(180deg, #1a1a3e, #0f0f2a);
-            border: 2px solid #4a4a6a;
-            border-radius: 4px;
-            padding: 15px;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+            border-right: 2px solid #4a4a6a;
+            padding: 8px;
+            position: relative;
         }
 
-        .character-entry {
+        .character-panel-stack {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            gap: 2px;
+        }
+
+        .character-panel {
+            height: 65px;
             background: linear-gradient(135deg, #2a2a4a, #1a1a3a);
             border: 1px solid #3a3a5a;
-            border-radius: 4px;
-            padding: 10px;
-            margin-bottom: 10px;
+            border-radius: 3px;
             display: flex;
             align-items: center;
+            padding: 6px 10px;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .character-panel.active {
+            background: linear-gradient(135deg, #3a3a5a, #2a2a4a);
+            border-color: #5a5a7a;
+            box-shadow: inset 0 0 8px rgba(90, 90, 122, 0.3);
+        }
+
+        .character-panel.empty {
+            opacity: 0.5;
         }
 
         .character-portrait {
-            width: 40px;
-            height: 40px;
+            width: 50px;
+            height: 50px;
             background: linear-gradient(45deg, #3a3a5a, #4a4a6a);
             border: 1px solid #5a5a7a;
             border-radius: 2px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-right: 10px;
+            margin-right: 12px;
             color: #aaaaaa;
             font-size: 10px;
             text-align: center;
             flex-shrink: 0;
         }
 
-        .character-info {
+        .character-portrait.empty {
+            background: linear-gradient(45deg, #2a2a3a, #1a1a2a);
+            border-color: #3a3a4a;
+        }
+
+        .character-stats {
             flex: 1;
+            font-size: 11px;
+            line-height: 1.1;
         }
 
         .character-name {
-            font-size: 14px;
+            font-size: 12px;
             font-weight: bold;
             color: #ffffff;
-            margin-bottom: 2px;
+            margin-bottom: 1px;
         }
 
-        .character-details {
+        .character-level {
+            color: #cccccc;
+            margin-bottom: 1px;
+        }
+
+        .character-hp {
+            color: #ffcccc;
+            margin-bottom: 1px;
+        }
+
+        .character-mp {
+            color: #ccccff;
+        }
+
+        .blue-magic-orb {
+            width: 12px;
+            height: 12px;
+            background: radial-gradient(circle, #4444ff, #2222aa);
+            border: 1px solid #6666ff;
+            border-radius: 50%;
+            margin-right: 8px;
+            flex-shrink: 0;
+        }
+
+        .blue-magic-orb.empty {
+            background: #2a2a3a;
+            border-color: #3a3a4a;
+        }
+
+        .ability-points {
             font-size: 10px;
             color: #aaaaaa;
-            line-height: 1.2;
-        }        /* Main Content Area */
-        .content-area {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            margin-left: 4px;
+            flex-shrink: 0;
+        }
+
+        /* Right 25% - Menu Area */
+        .menu-area {
+            width: 25%;
+            background: linear-gradient(180deg, #1a1a3e, #0f0f2a);
+            display: flex;
+            flex-direction: column;
+            padding: 8px;
+        }
+
+        .command-menu {
+            background: linear-gradient(135deg, #2a2a4a, #1a1a3a);
+            border: 1px solid #3a3a5a;
+            border-radius: 3px;
+            padding: 8px;
+            margin-bottom: 8px;
+            position: relative;
             flex: 1;
+        }
+
+        .time-gil-box {
+            background: linear-gradient(135deg, #2a2a4a, #1a1a3a);
+            border: 1px solid #3a3a5a;
+            border-radius: 3px;
+            padding: 8px;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .time-display {
+            font-size: 11px;
+            color: #ccccff;
+            margin-bottom: 4px;
+        }
+
+        .gil-display {
+            font-size: 11px;
+            color: #ffffcc;
+        }
+
+        .location-box {
+            background: linear-gradient(135deg, #2a2a4a, #1a1a3a);
+            border: 1px solid #3a3a5a;
+            border-radius: 3px;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .location-name {
+            font-size: 11px;
+            color: #ccffcc;
+        }
+
+        .menu-item {
+            padding: 4px 8px;
+            margin: 1px 0;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 2px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-size: 11px;
+            color: #cccccc;
+            position: relative;
+        }
+
+        .menu-item:hover,
+        .menu-item.active {
+            background: linear-gradient(135deg, #3a3a5a, #2a2a4a);
+            border-color: #5a5a7a;
+            color: #ffffff;
+        }
+
+        /* Pointer */
+        #pointer {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background-image: url('./cursor.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            left: -2px;
+            transition: top 0.15s ease;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        /* Content Modal */
+        .content-modal {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            height: 70%;
             background: linear-gradient(180deg, #1a1a3e, #0f0f2a);
             border: 2px solid #4a4a6a;
             border-radius: 4px;
-            margin: 0 5px;
             padding: 20px;
-            position: relative;
+            z-index: 100;
             overflow-y: auto;
         }
 
@@ -138,52 +297,6 @@
             color: #cccccc;
             line-height: 1.5;
             font-size: 12px;
-        }        /* Menu Panel */
-        .menu-panel {
-            width: 160px;
-            background: linear-gradient(180deg, #1a1a3e, #0f0f2a);
-            border: 2px solid #4a4a6a;
-            border-radius: 4px;
-            padding: 15px;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
-            position: relative;
-        }
-
-        .menu-item {
-            padding: 8px 15px;
-            margin: 2px 0;
-            background: transparent;
-            border: 1px solid transparent;
-            border-radius: 2px;
-            cursor: pointer;
-            transition: all 0.15s ease;
-            font-size: 12px;
-            color: #cccccc;
-            position: relative;
-        }
-
-        .menu-item:hover,
-        .menu-item.active {
-            background: linear-gradient(135deg, #3a3a5a, #2a2a4a);
-            border-color: #5a5a7a;
-            color: #ffffff;
-        }        /* Pointer */
-        #pointer {
-            position: absolute;
-            width: 16px;
-            height: 16px;
-            background-image: url('./cursor.png');
-            background-size: contain;
-            background-repeat: no-repeat;
-            left: -2px;
-            transition: top 0.15s ease;
-            z-index: 10;
-            pointer-events: none;
-        }
-
-        /* Window decorations */
-        .window-frame {
-            /* Remove extra window frame styling for more compact look */
         }
 
         .stat-block {
@@ -204,40 +317,42 @@
             color: #ffffff;
             font-size: 12px;
             font-weight: bold;
+        }        .content-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
         }
 
-        /* Time display */
-        .time-display {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            font-size: 14px;
-            color: #aaaacc;
-            background: rgba(42, 42, 90, 0.8);
-            padding: 8px 12px;
-            border-radius: 6px;
-            border: 1px solid #5a5a9a;
-        }        /* Responsive adjustments */
+        /* Responsive adjustments */
         @media (max-width: 768px) {
-            .menu-container {
+            .ffix-layout {
                 flex-direction: column;
             }
             
-            .character-panel {
+            .character-area {
                 width: 100%;
-                height: auto;
-                margin-bottom: 5px;
+                height: 60%;
+                border-right: none;
+                border-bottom: 2px solid #4a4a6a;
             }
             
-            .content-area {
-                margin: 0;
-                border-radius: 0;
-            }
-              .menu-panel {
+            .menu-area {
                 width: 100%;
-                height: auto;
-                order: 3;
-                margin-top: 5px;
+                height: 40%;
+                flex-direction: row;
+                gap: 8px;
+            }
+            
+            .command-menu {
+                flex: 2;
+                margin-bottom: 0;
+            }
+            
+            .time-gil-box,
+            .location-box {
+                flex: 1;
+                margin-bottom: 0;
             }
         }
 
@@ -326,10 +441,8 @@
         body {
             cursor: url('./cursor.png'), auto;
             image-rendering: pixelated;
-        }
-
-        /* Add subtle chromatic aberration */
-        .menu-container::before {
+        }        /* Add subtle chromatic aberration */
+        .ffix-layout::before {
             content: '';
             position: absolute;
             top: 0;
@@ -343,11 +456,9 @@
                 rgba(0,0,255,0.02) 100%);
             pointer-events: none;
             z-index: 999;
-        }
-
-        /* Low resolution scaling */
+        }        /* Low resolution scaling */
         @media (min-width: 1024px) {
-            .menu-container {
+            .ffix-layout {
                 transform: scale(1.0);
                 transform-origin: center;
             }
@@ -358,46 +469,108 @@
     <!-- PS1 Visual Effects -->
     <div class="ps1-scanlines"></div>
     <div class="ps1-dither"></div>
-    
-    <div class="time-display" id="timeDisplay">000:00:00</div>
-    
-    <div class="menu-container">        <!-- Character Panel -->
-        <div class="character-panel window-frame">
-            <div class="character-entry">
-                <div class="character-portrait">[portrait]</div>
-                <div class="character-info">
-                    <div class="character-name">Peter</div>
-                    <div class="character-details">
-                        Lv: ∞<br>
-                        HP: 9999/9999
+      <div class="ps1-viewport">
+        <canvas class="ps1-canvas" id="ps1Canvas"></canvas>
+        <div class="content-wrapper">
+            <div class="ffix-layout">
+                <!-- Left 75% - Character Area -->
+                <div class="character-area">
+                    <div class="character-panel-stack">
+                        <!-- Character 1: Peter -->
+                        <div class="character-panel active">
+                            <div class="character-portrait">[portrait]</div>
+                            <div class="character-stats">
+                                <div class="character-name">Peter</div>
+                                <div class="character-level">Lv ∞</div>
+                                <div class="character-hp">HP 9999/9999</div>
+                                <div class="character-mp">MP  999/ 999</div>
+                            </div>
+                            <div class="blue-magic-orb"></div>
+                            <div class="ability-points">AP</div>
+                        </div>
+                        
+                        <!-- Character 2: Empty slot -->
+                        <div class="character-panel empty">
+                            <div class="character-portrait empty"></div>
+                            <div class="character-stats">
+                                <div class="character-name">------</div>
+                                <div class="character-level">Lv --</div>
+                                <div class="character-hp">HP ----/----</div>
+                                <div class="character-mp">MP ----/----</div>
+                            </div>
+                            <div class="blue-magic-orb empty"></div>
+                            <div class="ability-points">AP</div>
+                        </div>
+                        
+                        <!-- Character 3: Empty slot -->
+                        <div class="character-panel empty">
+                            <div class="character-portrait empty"></div>
+                            <div class="character-stats">
+                                <div class="character-name">------</div>
+                                <div class="character-level">Lv --</div>
+                                <div class="character-hp">HP ----/----</div>
+                                <div class="character-mp">MP ----/----</div>
+                            </div>
+                            <div class="blue-magic-orb empty"></div>
+                            <div class="ability-points">AP</div>
+                        </div>
+                        
+                        <!-- Character 4: Empty slot -->
+                        <div class="character-panel empty">
+                            <div class="character-portrait empty"></div>
+                            <div class="character-stats">
+                                <div class="character-name">------</div>
+                                <div class="character-level">Lv --</div>
+                                <div class="character-hp">HP ----/----</div>
+                                <div class="character-mp">MP ----/----</div>
+                            </div>
+                            <div class="blue-magic-orb empty"></div>
+                            <div class="ability-points">AP</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right 25% - Menu and Info Area -->
+                <div class="menu-area">
+                    <!-- Command Menu -->
+                    <div class="command-menu">
+                        <div id="pointer"></div>
+                        <div class="menu-item active" data-menu="status">Status</div>
+                        <div class="menu-item" data-menu="items">Items</div>
+                        <div class="menu-item" data-menu="abilities">Abilities</div>
+                        <div class="menu-item" data-menu="equip">Equip</div>
+                        <div class="menu-item" data-menu="config">Config</div>
+                        <div class="menu-item" data-menu="map">Map</div>
+                    </div>
+                    
+                    <!-- Time and Gil Display -->
+                    <div class="time-gil-box">
+                        <div class="time-display" id="timeDisplay">000:00:00</div>
+                        <div class="gil-display">Gil: 999999</div>
+                    </div>
+                    
+                    <!-- Location Display -->
+                    <div class="location-box">
+                        <div class="location-name">Lorem Ipsum</div>
                     </div>
                 </div>
             </div>
-        </div>        <!-- Main Content Area -->
-        <div class="content-area">
-            <div class="content-header" id="contentHeader">Status</div>
-            <div class="content-body" id="contentBody">
-                <div class="stat-block">
-                    <div class="stat-label">Lorem</div>
-                    <div class="stat-value">Ipsum</div>
+            
+            <!-- Content Modal (hidden by default) -->
+            <div class="content-modal" id="contentModal" style="display: none;">
+                <div class="content-header" id="contentHeader">Status</div>
+                <div class="content-body" id="contentBody">
+                    <div class="stat-block">
+                        <div class="stat-label">Lorem</div>
+                        <div class="stat-value">Ipsum</div>
+                    </div>
+                    <div class="stat-block">
+                        <div class="stat-label">Dolor</div>
+                        <div class="stat-value">Sit Amet</div>
+                    </div>
+                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
                 </div>
-                <div class="stat-block">
-                    <div class="stat-label">Dolor</div>
-                    <div class="stat-value">Sit Amet</div>
-                </div>
-                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
             </div>
-        </div>
-
-        <!-- Menu Panel -->
-        <div class="menu-panel window-frame">
-            <div id="pointer"></div>
-            <div class="menu-item active" data-menu="status">Status</div>
-            <div class="menu-item" data-menu="items">Items</div>
-            <div class="menu-item" data-menu="abilities">Abilities</div>
-            <div class="menu-item" data-menu="equip">Equip</div>
-            <div class="menu-item" data-menu="config">Config</div>
-            <div class="menu-item" data-menu="map">Map</div>
         </div>
     </div>    <script>
         class FFIXMenu {
@@ -405,9 +578,11 @@
                 this.currentMenuItem = 0;
                 this.menuItems = document.querySelectorAll('.menu-item');
                 this.pointer = document.getElementById('pointer');
+                this.contentModal = document.getElementById('contentModal');
                 this.contentHeader = document.getElementById('contentHeader');
                 this.contentBody = document.getElementById('contentBody');
                 this.timeDisplay = document.getElementById('timeDisplay');
+                this.modalOpen = false;
                   this.menuContent = {
                     status: {
                         title: 'Status',
@@ -512,9 +687,16 @@
                 this.startClock();
             }
 
-            setupEventListeners() {
-                // Keyboard navigation
+            setupEventListeners() {                // Keyboard navigation
                 document.addEventListener('keydown', (e) => {
+                    if (this.modalOpen) {
+                        if (e.key === 'Escape' || e.key === 'Backspace') {
+                            e.preventDefault();
+                            this.closeModal();
+                        }
+                        return;
+                    }
+
                     switch(e.key) {
                         case 'ArrowUp':
                             e.preventDefault();
@@ -565,18 +747,16 @@
                     item.classList.toggle('active', index === this.currentMenuItem);
                 });
                 this.updatePointer();
-            }
-
-            updatePointer() {
+            }            updatePointer() {
                 const activeItem = this.menuItems[this.currentMenuItem];
-                const rect = activeItem.getBoundingClientRect();
-                const menuPanel = activeItem.closest('.menu-panel');
-                const menuRect = menuPanel.getBoundingClientRect();
-                
-                this.pointer.style.top = (rect.top - menuRect.top + rect.height / 2 - 10) + 'px';
-            }
-
-            updateContent() {
+                if (activeItem && this.pointer) {
+                    const rect = activeItem.getBoundingClientRect();
+                    const commandMenu = activeItem.closest('.command-menu');
+                    const menuRect = commandMenu.getBoundingClientRect();
+                    
+                    this.pointer.style.top = (rect.top - menuRect.top + rect.height / 2 - 6) + 'px';
+                }
+            }updateContent() {
                 const activeMenuItem = this.menuItems[this.currentMenuItem];
                 const menuKey = activeMenuItem.dataset.menu;
                 const content = this.menuContent[menuKey];
@@ -584,7 +764,14 @@
                 if (content) {
                     this.contentHeader.textContent = content.title;
                     this.contentBody.innerHTML = content.content;
+                    this.contentModal.style.display = 'block';
+                    this.modalOpen = true;
                 }
+            }
+
+            closeModal() {
+                this.contentModal.style.display = 'none';
+                this.modalOpen = false;
             }
 
             startClock() {
@@ -620,20 +807,14 @@
             constructor() {
                 this.frameCount = 0;
                 this.init();
-            }
-
-            init() {
-                // Create canvas for PS1 effects
-                this.canvas = document.createElement('canvas');
-                this.canvas.style.position = 'fixed';
-                this.canvas.style.top = '0';
-                this.canvas.style.left = '0';
-                this.canvas.style.width = '100%';
-                this.canvas.style.height = '100%';
-                this.canvas.style.pointerEvents = 'none';
-                this.canvas.style.zIndex = '1003';
-                this.canvas.style.imageRendering = 'pixelated';
-                document.body.appendChild(this.canvas);
+            }            init() {
+                // Use existing canvas or create new one
+                this.canvas = document.getElementById('ps1Canvas') || document.createElement('canvas');
+                if (!document.getElementById('ps1Canvas')) {
+                    this.canvas.id = 'ps1Canvas';
+                    this.canvas.className = 'ps1-canvas';
+                    document.querySelector('.ps1-viewport').appendChild(this.canvas);
+                }
 
                 this.ctx = this.canvas.getContext('2d');
                 this.setupCanvas();
