@@ -504,9 +504,10 @@
                         <div class="time-display" id="timeDisplay">000:00:00</div>
                         <div class="gil-display">Gil: 92691</div>
                     </div>
-                      <!-- Location Display -->
+                    
+                    <!-- Location Display -->
                     <div class="location-box">
-                        <div class="location-name">California/S.Coast</div>
+                        <div class="location-name">Orange County</div>
                     </div>
                 </div>
             </div>
@@ -740,16 +741,11 @@
                     const now = new Date();
                     const pstTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Los_Angeles"}));
                     
-                    let hours = pstTime.getHours();
+                    const hours = pstTime.getHours();
                     const minutes = pstTime.getMinutes();
                     const seconds = pstTime.getSeconds();
                     
-                    // Convert to 12-hour format
-                    const ampm = hours >= 12 ? 'PM' : 'AM';
-                    hours = hours % 12;
-                    hours = hours ? hours : 12; // 0 should be 12
-                    
-                    const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')} ${ampm}`;
+                    const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
                     this.timeDisplay.textContent = timeString;
                 };
                 
