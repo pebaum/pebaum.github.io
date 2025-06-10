@@ -1005,6 +1005,12 @@
                     return;
                 }
                 
+                // Special handling for magic - directly open Moxfield profile
+                if (menuKey === 'magic') {
+                    window.open('https://moxfield.com/users/plbaumgartner', '_blank');
+                    return;
+                }
+                
                 const content = this.menuContent[menuKey];
                 
                 if (content) {
