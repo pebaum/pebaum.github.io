@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Peter Baumgartner - Status Menu</title>
-    <style>
-        @font-face {
+    <style>        @font-face {
             font-family: 'Alexandria';
             src: url('./Alexandria.ttf') format('truetype');
             font-weight: normal;
             font-style: normal;
+            font-display: swap; /* Improves loading performance */
         }
 
         * {
@@ -19,13 +19,18 @@
         }        /* === Final Fantasy IX Menu Cursor (Hand Icon) === */
         :root {
             --ff9-cursor-url: url('./cursor.png');
-        }        body, html {
+        }
+        
+        /* Fallback cursor in case the custom cursor fails to load */
+        * {
+            cursor: var(--ff9-cursor-url) 112 52, pointer;
+        }body, html {
             height: 100vh;
             width: 100vw;
             overflow: hidden;
             background: #000000;
             color: #ffffff;
-            font-family: 'Alexandria', 'Times New Roman', serif;
+            font-family: 'Alexandria', 'Times New Roman', serif, 'Arial', sans-serif;
             font-size: 16px;
             cursor: var(--ff9-cursor-url) 112 52, auto;
             display: flex;
@@ -735,8 +740,7 @@
                     },
                     map: {
                         title: 'World Map',
-                        content: `
-                            <div style="text-align: center; margin-bottom: 20px;">
+                        content: `                            <div style="text-align: center; margin-bottom: 20px;">
                                 <h3 style="color: #ffffff; margin-bottom: 15px;">Explore the Original World</h3>
                                 <p style="margin-bottom: 20px;">Experience the ASCII art world map that was the original homepage design.</p>
                                 <a href="./Save%20files/old%20homepage%206.4.html" style="
@@ -900,17 +904,29 @@
                 this.frameCount = 0;
                 this.init();
             }            init() {
-                // Use existing canvas or create new one
-                this.canvas = document.getElementById('ps1Canvas') || document.createElement('canvas');
-                if (!document.getElementById('ps1Canvas')) {
-                    this.canvas.id = 'ps1Canvas';
-                    this.canvas.className = 'ps1-canvas';
-                    document.querySelector('.ps1-viewport').appendChild(this.canvas);
-                }
+                try {
+                    // Use existing canvas or create new one
+                    this.canvas = document.getElementById('ps1Canvas') || document.createElement('canvas');
+                    if (!document.getElementById('ps1Canvas')) {
+                        this.canvas.id = 'ps1Canvas';
+                        this.canvas.className = 'ps1-canvas';
+                        const viewport = document.querySelector('.ps1-viewport');
+                        if (viewport) {
+                            viewport.appendChild(this.canvas);
+                        }
+                    }
 
-                this.ctx = this.canvas.getContext('2d');
-                this.setupCanvas();
-                this.startRenderLoop();
+                    this.ctx = this.canvas.getContext('2d');
+                    if (!this.ctx) {
+                        console.warn('Could not get 2D context for PS1 effects');
+                        return;
+                    }
+                    
+                    this.setupCanvas();
+                    this.startRenderLoop();
+                } catch (error) {
+                    console.error('PS1 effects initialization failed:', error);
+                }
             }
 
             setupCanvas() {
@@ -988,12 +1004,20 @@
                 };
                 render();
             }
-        }
-
-        // Initialize PS1 effects
+        }        // Initialize PS1 effects
         document.addEventListener('DOMContentLoaded', () => {
-            window.ffixMenu = new FFIXMenu();
-            window.ps1Effects = new PS1Effects();
+            try {
+                window.ffixMenu = new FFIXMenu();
+                window.ps1Effects = new PS1Effects();
+            } catch (error) {
+                console.error('Error initializing site:', error);
+                // Fallback: at least show the basic menu without effects
+                try {
+                    window.ffixMenu = new FFIXMenu();
+                } catch (fallbackError) {
+                    console.error('Fallback initialization failed:', fallbackError);
+                }
+            }
         });
     </script>
 </body>
