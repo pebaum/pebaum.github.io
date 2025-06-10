@@ -817,19 +817,23 @@
                             <p><strong>Style:</strong> Documentary, artistic, experimental</p>
                             <p>Photography is about seeing the extraordinary in the ordinary. Whether capturing urban landscapes or intimate moments, each photo tells a story and preserves a fleeting moment in time.</p>
                         `
-                    },
-                    contact: {
+                    },                    contact: {
                         title: 'Contact',
                         content: `
                             <div style="text-align: center; margin-bottom: 20px;">
-                                <h3 style="color: #ffffff; margin-bottom: 15px;">📧 Get In Touch</h3>
-                                <p style="margin-bottom: 20px;">Let's connect and collaborate.</p>
+                                <h3 style="color: #ffffff; margin-bottom: 15px;">📧 Contact</h3>
+                                <a href="mailto:p.l.baumgartner@gmail.com" style="
+                                    display: inline-block;
+                                    padding: 15px 30px;
+                                    background: linear-gradient(135deg, #3a3a5a, #2a2a4a);
+                                    border: 1px solid #5a5a7a;
+                                    border-radius: 4px;
+                                    color: #ffffff;
+                                    text-decoration: none;
+                                    font-size: 14px;
+                                    transition: all 0.2s ease;
+                                ">p.l.baumgartner@gmail.com</a>
                             </div>
-                            <p><strong>Professional Inquiries:</strong> Available for creative and technical projects</p>
-                            <p><strong>Collaboration:</strong> Open to artistic collaborations and creative partnerships</p>
-                            <p><strong>Location:</strong> California, USA</p>
-                            <p><strong>Interests:</strong> Creative coding, digital art, web development, music production</p>
-                            <p>Whether you're interested in discussing a project, sharing ideas, or just connecting with a fellow creative, I'm always open to meaningful conversations and new opportunities.</p>
                         `
                     },
                     save: {
@@ -991,9 +995,16 @@
                     
                     this.pointer.style.top = (rect.top - menuRect.top + rect.height / 2 - 37) + 'px';
                 }
-            }updateContent() {
+            }            updateContent() {
                 const activeMenuItem = this.menuItems[this.currentMenuItem];
                 const menuKey = activeMenuItem.dataset.menu;
+                
+                // Special handling for contact - directly open mailto
+                if (menuKey === 'contact') {
+                    window.location.href = 'mailto:p.l.baumgartner@gmail.com';
+                    return;
+                }
+                
                 const content = this.menuContent[menuKey];
                 
                 if (content) {
