@@ -1161,12 +1161,13 @@
                         this.updateActiveItem();
                         this.updateContent();
                     });
-                      item.addEventListener('mouseenter', () => {
+                    
+                    item.addEventListener('mouseenter', () => {
                         // Only play sound if we're actually changing menu items
                         if (this.currentMenuItem !== index) {
                             this.currentMenuItem = index;
                             this.updateActiveItem();
-                            this.playCursorSound(); // Play sound on mouse hover
+                            this.playCursorSound();
                         }
                     });
                 });
