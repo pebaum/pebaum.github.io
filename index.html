@@ -4,8 +4,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <title>Peter Baumgartner - Status Menu</title>
+    <meta http-equiv="Expires" content="0">    <meta name="description" content="Peter Baumgartner">
+    <link rel="icon" type="image/jpeg" href="./Peter Baumgartner Silvertone Headshot.jpg">
+    <link rel="shortcut icon" type="image/jpeg" href="./Peter Baumgartner Silvertone Headshot.jpg">
+    <title>Peter Baumgartner</title>
     <style>        @font-face {
             font-family: 'Alexandria';
             src: url('./Alexandria.ttf') format('truetype');
@@ -430,6 +432,57 @@
                 transform-origin: center;
             }
         }
+
+        /* Loading Screen for Save & Quit */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000000;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            font-family: 'Alexandria', 'Times New Roman', serif;
+        }        .loading-text {
+            color: #FFFFFF;
+            font-size: 14px;
+            margin-bottom: 20px;
+            text-align: center;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            font-family: 'Alexandria', 'Times New Roman', serif;
+        }
+
+        .loading-bar-container {
+            width: 300px;
+            height: 16px;
+            background: linear-gradient(135deg, #3B3E45, #2F2F2F);
+            border: 1px solid #B0B0B0;
+            border-radius: 3px;
+            padding: 2px;
+            margin-bottom: 15px;
+            box-shadow: inset 1px 1px 3px rgba(255,255,255,0.1), inset -1px -1px 3px rgba(0,0,0,0.3);
+        }
+
+        .loading-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #E6D060, #F0E080);
+            border-radius: 1px;
+            width: 0%;
+            transition: width 0.1s ease;
+            box-shadow: inset 1px 1px 1px rgba(255,255,255,0.3), inset -1px -1px 1px rgba(0,0,0,0.2);
+        }
+
+        .loading-percentage {
+            color: #FFFFFF;
+            font-size: 11px;
+            text-align: center;
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.8);
+            font-family: 'Alexandria', 'Times New Roman', serif;
+        }
     </style>
 </head>
 <body>    <div class="ps1-viewport">
@@ -492,9 +545,8 @@
                         <div class="menu-item" data-menu="art">Visual Art</div>
                         <div class="menu-item" data-menu="poetry">Poetry</div>
                         <div class="menu-item" data-menu="magic">Magic</div>
-                        <div class="menu-item" data-menu="photos">Photos</div>
-                        <div class="menu-item" data-menu="contact">Contact</div>
-                        <div class="menu-item" data-menu="save">Save</div>
+                        <div class="menu-item" data-menu="photos">Photos</div>                        <div class="menu-item" data-menu="contact">Contact</div>
+                        <div class="menu-item" data-menu="save">Save & Quit</div>
                         <div class="menu-item" data-menu="resume">Resume</div>
                         <div class="menu-item" data-menu="map">Map</div>
                     </div>
@@ -523,10 +575,20 @@
                         <div class="stat-value">Sit Amet</div>
                     </div>
                     <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-                </div>
-            </div>
+                </div>            </div>
         </div>
-    </div>    <script>
+    </div>
+
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-text">Saving game data...</div>
+        <div class="loading-bar-container">
+            <div class="loading-bar" id="loadingBar"></div>
+        </div>
+        <div class="loading-percentage" id="loadingPercentage">0%</div>
+    </div>
+
+    <script>
         class FFIXMenu {
             constructor() {
                 this.currentMenuItem = 0;
@@ -1010,6 +1072,12 @@
                     window.open('https://moxfield.com/users/plbaumgartner', '_blank');
                     return;
                 }
+
+                // Special handling for Save & Quit - show loading screen
+                if (menuKey === 'save') {
+                    this.startSaveQuitSequence();
+                    return;
+                }
                 
                 const content = this.menuContent[menuKey];
                 
@@ -1019,6 +1087,34 @@
                     this.contentModal.style.display = 'block';
                     this.modalOpen = true;
                 }
+            }
+
+            startSaveQuitSequence() {
+                const loadingScreen = document.getElementById('loadingScreen');
+                const loadingBar = document.getElementById('loadingBar');
+                const loadingPercentage = document.getElementById('loadingPercentage');
+                
+                // Show loading screen
+                loadingScreen.style.display = 'flex';
+                
+                let progress = 0;
+                const progressInterval = setInterval(() => {
+                    progress += Math.random() * 5 + 2; // Random progress increment
+                    if (progress >= 100) {
+                        progress = 100;
+                        clearInterval(progressInterval);
+                        
+                        // Complete loading, then go to black screen
+                        setTimeout(() => {
+                            document.body.style.background = '#000000';
+                            document.body.innerHTML = '';
+                            document.body.style.cursor = 'none';
+                        }, 500);
+                    }
+                    
+                    loadingBar.style.width = progress + '%';
+                    loadingPercentage.textContent = Math.floor(progress) + '%';
+                }, 100);
             }
 
             closeModal() {
