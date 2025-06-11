@@ -626,8 +626,7 @@
         <div class="loading-percentage" id="loadingPercentage">0%</div>
     </div>
 
-    <script>
-        class FFIXMenu {
+    <script>        class FFIXMenu {
             constructor() {
                 this.currentMenuItem = 0;
                 this.menuItems = document.querySelectorAll('.menu-item');
@@ -636,7 +635,10 @@
                 this.contentHeader = document.getElementById('contentHeader');
                 this.contentBody = document.getElementById('contentBody');
                 this.timeDisplay = document.getElementById('timeDisplay');
-                this.modalOpen = false;                  this.menuContent = {                    status: {
+                this.modalOpen = false;
+                
+                // Initialize cursor sound
+                this.initializeCursorSound();this.menuContent = {                    status: {
                         title: 'Status',
                         content: `
                             <div style="display: flex; flex-direction: column; height: 100%; gap: 10px;">
@@ -1079,10 +1081,47 @@
                                     <div style="font-size: 9px; line-height: 1.2;">Created Office 365 support content. Led content refresh improving satisfaction scores.</div>
                                 </div>                            </div>
                         `
-                    }
-                };
+                    }                };
 
                 this.init();
+            }
+
+            initializeCursorSound() {
+                // Create multiple audio instances for rapid-fire playback
+                this.cursorSounds = [];
+                for (let i = 0; i < 5; i++) {
+                    const audio = new Audio('./Final Fantasy IX (PS1) - Cut Menu Cursor Sound.mp3');
+                    audio.volume = 0.3; // Set volume to 30% for pleasant UX
+                    audio.preload = 'auto';
+                    this.cursorSounds.push(audio);
+                }
+                this.currentSoundIndex = 0;
+            }
+
+            playCursorSound() {
+                try {
+                    // Use round-robin approach to prevent audio conflicts
+                    const audio = this.cursorSounds[this.currentSoundIndex];
+                    
+                    // Reset audio to beginning for rapid playback
+                    audio.currentTime = 0;
+                    
+                    // Play the sound
+                    const playPromise = audio.play();
+                    
+                    // Handle promise-based audio play (for modern browsers)
+                    if (playPromise !== undefined) {
+                        playPromise.catch(error => {
+                            // Silently handle audio play errors (user hasn't interacted yet, etc.)
+                            console.debug('Audio play prevented:', error);
+                        });
+                    }
+                    
+                    // Move to next sound instance
+                    this.currentSoundIndex = (this.currentSoundIndex + 1) % this.cursorSounds.length;
+                } catch (error) {
+                    console.debug('Cursor sound error:', error);
+                }
             }
 
             init() {
@@ -1115,9 +1154,7 @@
                             this.selectCurrentItem();
                             break;
                     }
-                });
-
-                // Mouse navigation
+                });                // Mouse navigation
                 this.menuItems.forEach((item, index) => {
                     item.addEventListener('click', () => {
                         this.currentMenuItem = index;
@@ -1125,8 +1162,12 @@
                         this.updateContent();
                     });
                       item.addEventListener('mouseenter', () => {
-                        this.currentMenuItem = index;
-                        this.updateActiveItem();
+                        // Only play sound if we're actually changing menu items
+                        if (this.currentMenuItem !== index) {
+                            this.currentMenuItem = index;
+                            this.updateActiveItem();
+                            this.playCursorSound(); // Play sound on mouse hover
+                        }
                     });
                 });
 
@@ -1140,16 +1181,16 @@
                         this.updateContent();
                     });
                 }
-            }
-
-            navigateUp() {
+            }            navigateUp() {
                 this.currentMenuItem = (this.currentMenuItem - 1 + this.menuItems.length) % this.menuItems.length;
                 this.updateActiveItem();
+                this.playCursorSound(); // Play sound on keyboard navigation
             }
 
             navigateDown() {
                 this.currentMenuItem = (this.currentMenuItem + 1) % this.menuItems.length;
                 this.updateActiveItem();
+                this.playCursorSound(); // Play sound on keyboard navigation
             }
 
             selectCurrentItem() {
