@@ -1084,43 +1084,48 @@
                     }                };
 
                 this.init();
-            }
-
-            initializeCursorSound() {
-                // Create multiple audio instances for rapid-fire playback
-                this.cursorSounds = [];
-                for (let i = 0; i < 5; i++) {
-                    const audio = new Audio('./Final Fantasy IX (PS1) - Cut Menu Cursor Sound.mp3');
-                    audio.volume = 0.3; // Set volume to 30% for pleasant UX
-                    audio.preload = 'auto';
-                    this.cursorSounds.push(audio);
-                }
-                this.currentSoundIndex = 0;
+            }            initializeCursorSound() {
+                // Create a single audio instance and track if it's playing
+                this.cursorSound = new Audio('./Final Fantasy IX (PS1) - Cut Menu Cursor Sound.mp3');
+                this.cursorSound.volume = 0.3; // Set volume to 30% for pleasant UX
+                this.cursorSound.preload = 'auto';
+                this.soundPlaying = false;
             }
 
             playCursorSound() {
                 try {
-                    // Use round-robin approach to prevent audio conflicts
-                    const audio = this.cursorSounds[this.currentSoundIndex];
+                    // Stop any currently playing sound first
+                    if (this.soundPlaying) {
+                        this.cursorSound.pause();
+                        this.cursorSound.currentTime = 0;
+                    }
                     
-                    // Reset audio to beginning for rapid playback
-                    audio.currentTime = 0;
+                    // Mark as playing and reset to beginning
+                    this.soundPlaying = true;
+                    this.cursorSound.currentTime = 0;
                     
                     // Play the sound
-                    const playPromise = audio.play();
+                    const playPromise = this.cursorSound.play();
                     
                     // Handle promise-based audio play (for modern browsers)
                     if (playPromise !== undefined) {
-                        playPromise.catch(error => {
+                        playPromise.then(() => {
+                            // Sound started successfully
+                        }).catch(error => {
                             // Silently handle audio play errors (user hasn't interacted yet, etc.)
                             console.debug('Audio play prevented:', error);
+                            this.soundPlaying = false;
                         });
                     }
                     
-                    // Move to next sound instance
-                    this.currentSoundIndex = (this.currentSoundIndex + 1) % this.cursorSounds.length;
+                    // Set up event listener to track when sound ends
+                    this.cursorSound.onended = () => {
+                        this.soundPlaying = false;
+                    };
+                    
                 } catch (error) {
                     console.debug('Cursor sound error:', error);
+                    this.soundPlaying = false;
                 }
             }
 
