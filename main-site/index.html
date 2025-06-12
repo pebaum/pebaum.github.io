@@ -1164,6 +1164,7 @@
                     item.addEventListener('click', () => {
                         this.currentMenuItem = index;
                         this.updateActiveItem();
+                        this.playCursorSound();
                         this.updateContent();
                     });
                     
@@ -1184,6 +1185,7 @@
                         // Find the Status menu item (index 0) and simulate clicking it
                         this.currentMenuItem = 0; // Status is the first menu item
                         this.updateActiveItem();
+                        this.playCursorSound();
                         this.updateContent();
                     });
                 }
@@ -1200,6 +1202,7 @@
             }
 
             selectCurrentItem() {
+                this.playCursorSound();
                 this.updateContent();
             }
 
