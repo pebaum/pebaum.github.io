@@ -83,7 +83,10 @@
         /* Main Content Area */
         .main-area {
             width: 100%;
-            background: linear-gradient(180deg, #2F2F2F, #252525);
+            background-image: url("./benji's site/benji-battle-model.png");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
             padding: 15px;
             position: relative;
             overflow-y: auto;
@@ -102,7 +105,6 @@
         }        .character-portrait {
             width: 80px;
             height: 80px;
-            background: linear-gradient(45deg, #3B3E45, #2F2F2F);
             border: 2px solid #B0B0B0;
             border-radius: 3px;
             display: flex;
@@ -114,11 +116,10 @@
             text-align: center;
             flex-shrink: 0;
             box-shadow: inset 1px 1px 2px rgba(255,255,255,0.1), inset -1px -1px 2px rgba(0,0,0,0.3);
-            background-image: url('./benji battle model.png');
+            background-image: url("./benji's site/benji-battle-model.png");
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
-            background-color: #4A90E2;
         }
 
         .character-info {
@@ -384,8 +385,8 @@
                             <div style="margin-left: 10px; font-size: 10px; color: #A0A0A0;">
                                 <span id="musicStatus">Ready to play</span>
                             </div>
-                        </div>                        <audio id="bgMusic" loop>
-                            <source src="./Vamo'alla flamenco.mp3" type="audio/mpeg">
+                        </div>                        <audio id="bgMusic" loop preload="auto">
+                            <source src="./benji's site/Vamo'alla flamenco.mp3" type="audio/mpeg">
                             Your browser does not support the audio element.
                         </audio>
                     </div>
@@ -457,7 +458,6 @@
 
             init() {
                 this.setupMusicPlayer();
-                this.autoPlayMusic();
             }
 
             setupMusicPlayer() {
@@ -485,10 +485,17 @@
                 this.bgMusic.addEventListener('ended', () => {
                     this.isPlaying = false;
                     this.musicStatus.textContent = 'Ready to play';
+                });                this.bgMusic.addEventListener('error', (e) => {
+                    console.log('Audio error:', e);
+                    this.musicStatus.textContent = 'Music file error - check console';
                 });
 
-                this.bgMusic.addEventListener('error', () => {
-                    this.musicStatus.textContent = 'Music file not found';
+                this.bgMusic.addEventListener('loadstart', () => {
+                    this.musicStatus.textContent = 'Loading music...';
+                });
+
+                this.bgMusic.addEventListener('canplay', () => {
+                    this.musicStatus.textContent = 'Music ready to play';
                 });
 
                 // Set volume to comfortable level
@@ -497,30 +504,31 @@
 
             playMusic() {
                 try {
+                    // Check if audio file is loaded
+                    if (this.bgMusic.readyState === 0) {
+                        this.musicStatus.textContent = 'Loading music file...';
+                        this.bgMusic.load(); // Force reload
+                        return;
+                    }
+
                     const playPromise = this.bgMusic.play();
                     if (playPromise !== undefined) {
                         playPromise.then(() => {
                             console.log('Music started successfully');
+                            this.musicStatus.textContent = 'Now playing...';
                         }).catch(error => {
                             console.log('Auto-play prevented:', error);
-                            this.musicStatus.textContent = 'Click play to start music';
+                            this.musicStatus.textContent = 'Click play button to start music';
                         });
                     }
                 } catch (error) {
                     console.log('Play error:', error);
-                    this.musicStatus.textContent = 'Unable to play music';
+                    this.musicStatus.textContent = 'Unable to play music - ' + error.message;
                 }
             }
 
             pauseMusic() {
                 this.bgMusic.pause();
-            }
-
-            autoPlayMusic() {
-                // Try to auto-play when page loads (may be blocked by browser)
-                setTimeout(() => {
-                    this.playMusic();
-                }, 1000);
             }
         }
 
