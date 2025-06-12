@@ -1,0 +1,140 @@
+bfa5aeb - added README.md
+deb5c96 - added assets/css/font-awesome.min.css; added assets/css/images/bg.jpg; added assets/css/images/ie/footer.png; added assets/css/images/ie/footer.svg; added assets/css/images/overlay-pattern.png; added assets/css/images/overlay.svg; added assets/css/main.css; added assets/css/noscript.css; added assets/fonts/FontAwesome.otf; added assets/fonts/fontawesome-webfont.eot; added assets/fonts/fontawesome-webfont.svg; added assets/fonts/fontawesome-webfont.ttf; added assets/fonts/fontawesome-webfont.woff; added assets/fonts/fontawesome-webfont.woff2; added assets/sass/libs/_breakpoints.scss; added assets/sass/libs/_functions.scss; added assets/sass/libs/_mixins.scss; added assets/sass/libs/_vars.scss; added assets/sass/libs/_vendor.scss; added assets/sass/main.scss; added assets/sass/noscript.scss; added index.html
+ce722c0 - modified index.html
+4453a1b - deleted assets/css/images/bg.jpg; added assets/css/images/bg.png; deleted assets/css/images/overlay-pattern.png; deleted assets/css/images/overlay.svg; modified index.html
+2cde3dd - modified index.html
+c8fabdf - modified index.html
+ccaf192 - modified index.html
+f7d9c7b - modified index.html
+a017fe2 - modified index.html
+1fface1 - modified index.html
+7866715 - modified index.html
+560bba1 - modified index.html
+9c03b8c - modified index.html
+6e2bd90 - modified index.html
+580c893 - modified index.html
+627e622 - modified index.html
+1a29af5 - added mazesend.html
+48b37d1 - added colorexplore
+3b4d284 - deleted colorexplore; added colorexplore.html
+14b27a6 - modified mazesend.html
+5427ed3 - added viewofaburningcity.html
+fec0cab - deleted assets/css/font-awesome.min.css; deleted assets/css/images/bg.png; deleted assets/css/images/ie/footer.png; deleted assets/css/images/ie/footer.svg; deleted assets/css/main.css; deleted assets/css/noscript.css; deleted assets/fonts/FontAwesome.otf; deleted assets/fonts/fontawesome-webfont.eot; deleted assets/fonts/fontawesome-webfont.svg; deleted assets/fonts/fontawesome-webfont.ttf; deleted assets/fonts/fontawesome-webfont.woff; deleted assets/fonts/fontawesome-webfont.woff2; deleted assets/sass/libs/_breakpoints.scss; deleted assets/sass/libs/_functions.scss; deleted assets/sass/libs/_mixins.scss; deleted assets/sass/libs/_vars.scss; deleted assets/sass/libs/_vendor.scss; deleted assets/sass/main.scss; deleted assets/sass/noscript.scss
+90dc174 - deleted README.md
+c805716 - added artworks/foo
+5121f22 - deleted artworks/foo
+7927c6f - added artworks/foo
+720dfed - added artworks/colorexplore.html; added artworks/mazesend.html; added artworks/viewofaburningcity.html; deleted colorexplore.html; deleted mazesend.html; deleted viewofaburningcity.html
+407ec11 - deleted artworks/foo
+2212d81 - added artworks/waterlillies.html
+f3dc8c2 - modified artworks/waterlillies.html
+5667134 - modified artworks/waterlillies.html
+7131a14 - modified artworks/waterlillies.html
+2946d56 - added artworks/dungeongame.html
+4e273a9 - modified index.html
+ea8ea39 - modified index.html
+ea3bcff - modified index.html
+733c1db - modified index.html
+518ba48 - modified index.html
+48a7853 - modified index.html
+ff30fbe - modified index.html
+e6eb711 - modified index.html
+273e14f - added artworks/wordprocessor.html
+a459fbb - modified index.html
+6630aee - modified artworks/wordprocessor.html
+d63ca4f - modified index.html
+c03ea58 - modified artworks/wordprocessor.html
+58a2d3a - added fonts/foo
+c93060a - modified index.html
+d4c705d - modified index.html
+a69301c - modified index.html
+430b857 - added artworks/blocksnow.html
+ca77646 - modified artworks/blocksnow.html
+1d6f642 - modified index.html
+5a281bb - added README.md
+da9ae0d - deleted README.md; deleted artworks/blocksnow.html; deleted artworks/colorexplore.html; deleted artworks/dungeongame.html; deleted artworks/mazesend.html; deleted artworks/viewofaburningcity.html; deleted artworks/waterlillies.html; deleted artworks/wordprocessor.html; deleted fonts/foo; modified index.html; added old version/README.md; added old version/artworks/blocksnow.html; added old version/artworks/colorexplore.html; added old version/artworks/dungeongame.html; added old version/artworks/mazesend.html; added old version/artworks/viewofaburningcity.html; added old version/artworks/waterlillies.html; added old version/artworks/wordprocessor.html; added old version/fonts/foo; added old version/index.html
+bf42743 - added artworks/blocksnow.html; added artworks/colorexplore.html; added artworks/dungeongame.html; added artworks/mazesend.html; added artworks/viewofaburningcity.html; added artworks/waterlillies.html; added artworks/wordprocessor.html; modified index.html; deleted old version/README.md; deleted old version/artworks/blocksnow.html; deleted old version/artworks/colorexplore.html; deleted old version/artworks/dungeongame.html; deleted old version/artworks/mazesend.html; deleted old version/artworks/viewofaburningcity.html; deleted old version/artworks/waterlillies.html; deleted old version/artworks/wordprocessor.html; deleted old version/fonts/foo; deleted old version/index.html
+a803a40 - added README.md
+397fa5b - modified index.html
+5c6167a - added contact.html; added gallery.html; added inspiration.html; added music.html; added poems.html; added resume.html
+7de8196 - deleted contact.html; deleted gallery.html; modified index.html; deleted inspiration.html; deleted music.html; deleted poems.html; deleted resume.html
+c60e607 - added .github/workflows/static.yml
+58944c8 - modified index.html
+f8a9e23 - No changes
+53e3e82 - added Alexandria.ttf
+63d5b25 - No changes
+1529cc0 - added cursor.png
+9e46785 - modified index.html; added old homepage 6.4.html
+0ea78e4 - modified index.html
+3e2d2e3 - modified index.html
+f99842c - modified index.html
+c20e7f3 - modified index.html
+dbda9d5 - modified index.html
+148151d - modified index.html
+7b2d61d - modified index.html
+48f6474 - modified index.html
+0852083 - modified index.html
+587a460 - added Peter Baumgartner Silvertone Headshot.jpg; modified index.html
+ee76d4e - modified index.html
+5fccf19 - modified index.html
+a6f7c17 - modified index.html
+79b3ab9 - modified index.html
+04e76b3 - modified index.html
+30b4fb0 - modified index.html
+89a99c7 - modified index.html
+071a2be - modified index.html
+2ab5f28 - modified index.html
+da4804f - added artworks/milkcoffee.html
+68aeff5 - No changes
+4089c1a - modified index.html
+9f71d20 - No changes
+ed45438 - modified index.html
+9b2f7c4 - modified index.html
+315a360 - modified artworks/milkcoffee.html
+9208fc4 - modified artworks/milkcoffee.html
+4e364c5 - modified artworks/milkcoffee.html
+966ccf1 - modified artworks/milkcoffee.html
+8e19767 - No changes
+95c480d - deleted artworks/milkcoffee.html; modified index.html
+60a7301 - modified index.html
+5ddc01b - No changes
+faecdef - added Save files/index_2025-06-06.html; added Save files/old homepage 6.4.html; modified index.html; deleted old homepage 6.4.html
+13e7fcf - modified index.html
+b753fa2 - modified index.html
+4d0095c - No changes
+1f31403 - modified index.html; added tatus
+9c64fbf - modified index.html
+35719d9 - modified index.html
+e957c4b - modified index.html
+42a3596 - modified index.html
+a9a7d3f - added Resume/Peter Baumgartner.docx; modified index.html
+688b538 - modified index.html; added resume/peter-baumgartner-ffix.html; added resume/peter-baumgartner.html; deleted tatus
+e310b21 - modified index.html; modified resume/peter-baumgartner-ffix.html
+bd5ea0d - modified index.html
+17904bc - modified index.html
+a12cf28 - modified index.html
+21344e5 - modified index.html
+093cfc2 - No changes
+a7a694b - No changes
+cf8d6f0 - added Final Fantasy IX (PS1) - Cut Menu Cursor Sound.mp3; modified index.html
+dd2b3e4 - modified index.html
+70cd691 - modified index.html
+1aaefa9 - added benji's site/Alexandria.ttf; added benji's site/Vamo'alla flamenco.mp3; added benji's site/benji battle model.png; added benji's site/benji.html; added benji's site/cursor.png; added benji.html
+526d4d7 - deleted benji's site/benji battle model.png; added benji's site/benji-battle-model.png; modified benji's site/benji.html
+08e26f8 - modified benji's site/benji.html
+4bbadfc - No changes
+05abb1b - modified index.html
+24dade4 - No changes
+87f0e09 - modified index.html
+16764ff - modified index.html
+03eba66 - No changes
+c04084f - No changes
+10532ee - modified index.html; added mobile.html
+fa18ccc - No changes
+39646e3 - modified index.html; deleted mobile.html
+a274d41 - modified benji.html
+d259b9a - No changes
+0aceac1 - No changes
+b202836 - modified benji.html
+d000649 - No changes
+14e495c - modified benji's site/benji.html
