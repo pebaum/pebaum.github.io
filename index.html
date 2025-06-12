@@ -523,9 +523,83 @@
             text-shadow: 1px 1px 1px rgba(0,0,0,0.8);
             font-family: 'Alexandria', 'Times New Roman', serif;
         }
+
+        /* ======= Simple Mobile Layout ======= */
+        #mobile-menu, #mobile-content {
+            display: none;
+            padding: 20px;
+            font-family: sans-serif;
+            color: #ffffff;
+            background: #000;
+        }
+
+        #mobile-menu ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        #mobile-menu li {
+            margin-bottom: 10px;
+        }
+
+        #mobile-menu button {
+            width: 100%;
+            padding: 10px;
+            font-size: 18px;
+            background: #333;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+        }
+
+        #mobile-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        #mobile-back {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 24px;
+        }
+
+        @media (max-width: 600px) {
+            body, html {
+                overflow: auto;
+            }
+            .ps1-viewport {
+                display: none;
+            }
+            #mobile-menu {
+                display: block;
+            }
+        }
     </style>
 </head>
-<body>    <div class="ps1-viewport">
+<body>
+    <div id="mobile-menu">
+        <ul>
+            <li><button data-menu="status">Status</button></li>
+            <li><button data-menu="resume">Resume</button></li>
+            <li><button data-menu="music">Music</button></li>
+            <li><button data-menu="art">Visual Art</button></li>
+            <li><button data-menu="poetry">Poetry</button></li>
+            <li><button data-menu="magic">Magic</button></li>
+            <li><button data-menu="photos">Photos</button></li>
+            <li><button data-menu="contact">Contact</button></li>
+            <li><button data-menu="save">Save &amp; Quit</button></li>
+        </ul>
+    </div>
+    <div id="mobile-content">
+        <div id="mobile-header">
+            <button id="mobile-back">&lt;</button>
+            <span id="mobile-title"></span>
+        </div>
+        <div id="mobile-body"></div>
+    </div>
+    <div class="ps1-viewport">
         <!-- PS1 Visual Effects - Only within viewport -->
         <div class="ps1-scanlines"></div>
         <div class="ps1-dither"></div>
@@ -1082,6 +1156,7 @@
                                 </div>                            </div>
                         `
                     }                };
+                window.mobileMenuContent = this.menuContent;
 
                 this.init();
             }            initializeCursorSound() {
@@ -1303,10 +1378,7 @@
             }
         }
 
-        // Initialize the menu when the page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            window.ffixMenu = new FFIXMenu();
-        });        // Handle window resize for pointer position
+        // Handle window resize for pointer position
         window.addEventListener('resize', () => {
             setTimeout(() => {
                 if (window.ffixMenu) {
@@ -1422,6 +1494,45 @@
                 render();
             }
         }        // Initialize PS1 effects
+        function initSimpleMobile() {
+            if (window.innerWidth > 600) return;
+            const menu = document.getElementById('mobile-menu');
+            const content = document.getElementById('mobile-content');
+            const back = document.getElementById('mobile-back');
+            const title = document.getElementById('mobile-title');
+            const body = document.getElementById('mobile-body');
+
+            menu.querySelectorAll('button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const key = btn.dataset.menu;
+                    if (key === 'contact') {
+                        window.location.href = 'mailto:p.l.baumgartner@gmail.com';
+                        return;
+                    }
+                    if (key === 'magic') {
+                        window.open('https://moxfield.com/users/plbaumgartner', '_blank');
+                        return;
+                    }
+                    if (key === 'save' && window.ffixMenu) {
+                        window.ffixMenu.startSaveQuitSequence();
+                        return;
+                    }
+                    const data = window.mobileMenuContent && window.mobileMenuContent[key];
+                    if (data) {
+                        title.textContent = data.title;
+                        body.innerHTML = data.content;
+                        menu.style.display = 'none';
+                        content.style.display = 'block';
+                    }
+                });
+            });
+
+            back.addEventListener('click', () => {
+                content.style.display = 'none';
+                menu.style.display = 'block';
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             try {
                 window.ffixMenu = new FFIXMenu();
@@ -1435,6 +1546,8 @@
                     console.error('Fallback initialization failed:', fallbackError);
                 }
             }
+
+            initSimpleMobile();
         });
     </script>
 </body>
