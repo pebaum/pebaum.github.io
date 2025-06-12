@@ -382,9 +382,10 @@
                             <button class="music-button" id="playBtn">▶️ Play</button>
                             <button class="music-button" id="pauseBtn">⏸️ Pause</button>
                             <div style="margin-left: 10px; font-size: 10px; color: #A0A0A0;">
-                                <span id="musicStatus">Ready to play</span>
-                            </div>
-                        </div>                        <audio id="bgMusic" loop preload="auto">
+                                <span id="musicStatus">Ready to play</span>                            </div>
+                        </div>
+
+                        <audio id="bgMusic" loop preload="auto">
                             <source src="./Vamo'alla flamenco.mp3" type="audio/mpeg">
                             Your browser does not support the audio element.
                         </audio>
@@ -495,11 +496,11 @@
 
                 this.bgMusic.addEventListener('canplay', () => {
                     this.musicStatus.textContent = 'Music ready to play';
-                });
-
-                // Set volume to comfortable level
+                });                // Set volume to comfortable level
                 this.bgMusic.volume = 0.4;
-            }            playMusic() {
+            }
+
+            playMusic() {
                 try {
                     // Check if audio file is loaded
                     if (this.bgMusic.readyState === 0) {
@@ -522,11 +523,10 @@
                     console.log('Play error:', error);
                     this.musicStatus.textContent = 'Unable to play music - ' + error.message;
                 }
-            }
-
-            pauseMusic() {
+            }            pauseMusic() {
                 this.bgMusic.pause();
             }
+        }
 
         // Initialize when page loads
         document.addEventListener('DOMContentLoaded', () => {
