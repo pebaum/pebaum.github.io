@@ -594,10 +594,14 @@
                     <div class="time-gil-box">
                         <div class="time-display" id="timeDisplay">000:00:00</div>
                         <div class="gil-display">Gil: 92691</div>
-                    </div>
-                      <!-- Location Display -->
+                    </div>                      <!-- Location Display -->
                     <div class="location-box">
                         <div class="location-name">California/S.Coast</div>
+                    </div>
+                    
+                    <!-- BGM Player -->
+                    <div class="location-box" id="bgm-box" style="margin-top: 8px; cursor: pointer;">
+                        <div class="location-name">Play BGM: "Stone" (P. Baumgartner)</div>
                     </div>
                 </div>
             </div>
@@ -1428,18 +1432,73 @@
                     requestAnimationFrame(render);
                 };
                 render();
+            }        }
+        
+        // Stone BGM Player
+        class StoneBGMPlayer {
+            constructor() {
+                this.bgmBox = document.getElementById('bgm-box');
+                this.stoneMusic = new Audio('../Stone.mp3');
+                this.stoneMusic.volume = 0.4;
+                this.isPlaying = false;
+                
+                // Initialize event listeners
+                this.init();
             }
-        }        // Initialize PS1 effects
+            
+            init() {
+                // Click to play/pause
+                this.bgmBox.addEventListener('click', () => {
+                    if (this.isPlaying) {
+                        this.pauseMusic();
+                    } else {
+                        this.playMusic();
+                    }
+                });
+                
+                // Update UI when music ends
+                this.stoneMusic.addEventListener('ended', () => {
+                    this.isPlaying = false;
+                    this.updateUI();
+                });
+            }
+            
+            playMusic() {
+                const playPromise = this.stoneMusic.play();
+                
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        this.isPlaying = true;
+                        this.updateUI();
+                    }).catch(err => {
+                        console.debug('Stone music play prevented:', err);
+                    });
+                }
+            }
+            
+            pauseMusic() {
+                this.stoneMusic.pause();
+                this.isPlaying = false;
+                this.updateUI();
+            }
+            
+            updateUI() {
+                if (this.isPlaying) {
+                    this.bgmBox.querySelector('.location-name').textContent = 'Now Playing: "Stone" (P. Baumgartner)';
+                    this.bgmBox.style.background = 'linear-gradient(135deg, #4A4A6A, #3A3A5A)';
+                } else {
+                    this.bgmBox.querySelector('.location-name').textContent = 'Play BGM: "Stone" (P. Baumgartner)';
+                    this.bgmBox.style.background = 'linear-gradient(135deg, #3B3E45, #2F2F2F)';
+                }
+            }
+        }
+
+        // Initialize PS1 effects
         document.addEventListener('DOMContentLoaded', () => {
             try {
                 window.ffixMenu = new FFIXMenu();
                 window.ps1Effects = new PS1Effects();
-                // Attempt to autoplay the Stone music when the page loads
-                const stoneMusic = new Audio('../Stone.mp3');
-                stoneMusic.volume = 0.4;
-                stoneMusic.play().catch(err => {
-                    console.debug('Stone music autoplay prevented:', err);
-                });
+                window.stoneBGM = new StoneBGMPlayer();
             } catch (error) {
                 console.error('Error initializing site:', error);
                 // Fallback: at least show the basic menu without effects
