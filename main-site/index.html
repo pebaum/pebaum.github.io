@@ -588,20 +588,20 @@
                         <div class="menu-item" data-menu="magic">Magic</div>
                         <div class="menu-item" data-menu="photos">Photos</div>
                         <div class="menu-item" data-menu="contact">Contact</div>
-                        <div class="menu-item" data-menu="save">Save & Quit</div>
+                        <div class="menu-item" data-menu="save">Save & Quit</div>                    </div>
+
+                    <!-- BGM Player -->
+                    <div class="location-box" id="bgm-box" style="cursor: pointer; margin-bottom: 8px;">
+                        <div class="location-name">Toggle BGM</div>
                     </div>
-                      <!-- Time and Gil Display -->
+                    
+                    <!-- Time and Gil Display -->
                     <div class="time-gil-box">
                         <div class="time-display" id="timeDisplay">000:00:00</div>
                         <div class="gil-display">Gil: 92691</div>
                     </div>                      <!-- Location Display -->
                     <div class="location-box">
                         <div class="location-name">California/S.Coast</div>
-                    </div>
-                    
-                    <!-- BGM Player -->
-                    <div class="location-box" id="bgm-box" style="margin-top: 8px; cursor: pointer;">
-                        <div class="location-name">Play BGM: "Stone" (P. Baumgartner)</div>
                     </div>
                 </div>
             </div>
@@ -1481,13 +1481,12 @@
                 this.isPlaying = false;
                 this.updateUI();
             }
-            
-            updateUI() {
+              updateUI() {
                 if (this.isPlaying) {
-                    this.bgmBox.querySelector('.location-name').textContent = 'Now Playing: "Stone" (P. Baumgartner)';
-                    this.bgmBox.style.background = 'linear-gradient(135deg, #4A4A6A, #3A3A5A)';
+                    this.bgmBox.querySelector('.location-name').textContent = 'Toggle BGM';
+                    this.bgmBox.style.background = 'linear-gradient(135deg, #4A4A4A, #3A3A3A)';
                 } else {
-                    this.bgmBox.querySelector('.location-name').textContent = 'Play BGM: "Stone" (P. Baumgartner)';
+                    this.bgmBox.querySelector('.location-name').textContent = 'Toggle BGM';
                     this.bgmBox.style.background = 'linear-gradient(135deg, #3B3E45, #2F2F2F)';
                 }
             }
