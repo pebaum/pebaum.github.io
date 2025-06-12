@@ -1434,6 +1434,12 @@
             try {
                 window.ffixMenu = new FFIXMenu();
                 window.ps1Effects = new PS1Effects();
+                // Attempt to autoplay the Stone music when the page loads
+                const stoneMusic = new Audio('../Stone.mp3');
+                stoneMusic.volume = 0.4;
+                stoneMusic.play().catch(err => {
+                    console.debug('Stone music autoplay prevented:', err);
+                });
             } catch (error) {
                 console.error('Error initializing site:', error);
                 // Fallback: at least show the basic menu without effects
