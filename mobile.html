@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Peter Baumgartner - Mobile</title>
+<link rel="icon" type="image/jpeg" href="./Peter Baumgartner Silvertone Headshot.jpg">
+<style>
+@font-face {
+    font-family: 'Alexandria';
+    src: url('./Alexandria.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+body,html {
+    margin:0; padding:0; height:100vh; width:100vw;
+    background:#000; color:#fff;
+    font-family:'Alexandria','Times New Roman',serif;
+    display:flex; flex-direction:column; align-items:center;
+}
+#portrait { width:70%; max-width:300px; border:1px solid #B0B0B0; margin-top:20px; }
+.menu-list { width:100%; max-width:300px; margin-top:20px; }
+.menu-list button { width:100%; padding:10px; margin-bottom:10px; background:#222; color:#fff; border:1px solid #B0B0B0; font-size:16px; font-family:inherit; }
+#content-area { display:none; padding:20px; width:100%; max-width:640px; overflow-y:auto; position:relative; }
+#back-button { position:absolute; top:10px; left:10px; background:none; border:none; color:#fff; font-size:24px; }
+.ps1-scanlines, .ps1-dither { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; }
+.ps1-scanlines { background:repeating-linear-gradient(0deg,transparent,transparent 1px,rgba(0,0,0,0.1) 1px,rgba(0,0,0,0.1) 2px); z-index:1001; }
+.ps1-dither { background-image:radial-gradient(circle at 25% 25%, rgba(255,255,255,0.03) 1px, transparent 1px), radial-gradient(circle at 75% 75%, rgba(255,255,255,0.03) 1px, transparent 1px); background-size:4px 4px,4px 4px; background-position:0 0,2px 2px; z-index:1002; }
+</style>
+</head>
+<body>
+<div class="ps1-scanlines"></div>
+<div class="ps1-dither"></div>
+<img id="portrait" src="./Peter Baumgartner Silvertone Headshot.jpg" alt="Peter">
+<div id="menu">
+  <div class="menu-list">
+    <button data-menu="status">Status</button>
+    <button data-menu="resume">Resume</button>
+    <button data-menu="music">Music</button>
+    <button data-menu="art">Visual Art</button>
+    <button data-menu="poetry">Poetry</button>
+    <button data-menu="magic">Magic</button>
+    <button data-menu="photos">Photos</button>
+    <button data-menu="contact">Contact</button>
+    <button data-menu="save">Save &amp; Quit</button>
+  </div>
+</div>
+<div id="content-area">
+  <button id="back-button">&lt;</button>
+  <h3 id="content-title"></h3>
+  <div id="content-body"></div>
+</div>
+<script>
+const menuContent = {
+                this.initializeCursorSound();this.menuContent = {                    status: {
+                        title: 'Status',
+                        content: `
+                            <div style="display: flex; flex-direction: column; height: 100%; gap: 10px;">
+                                <!-- Character Info Header -->
+                                <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                                    <div style="width: 60px; height: 60px; background-image: url('./Peter Baumgartner Silvertone Headshot.jpg'); background-size: cover; background-position: center; border: 1px solid #B0B0B0; margin-right: 15px;"></div>
+                                    <div>
+                                        <div style="font-size: 16px; font-weight: bold; color: #FFFFFF; margin-bottom: 4px;">Peter</div>
+                                        <div style="font-size: 12px; color: #FFFFFF;">Lv 37</div>
+                                        <div style="font-size: 10px; color: #FFFFFF;">HP 1988/2025</div>
+                                        <div style="font-size: 10px; color: #FFFFFF;">MP   34/  47</div>
+                                    </div>
+                                    <div style="margin-left: auto; text-align: center;">
+                                        <div style="color: #60C0E0; font-size: 14px; margin-bottom: 4px;">🔮 18/18</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Stats Layout -->
+                                <div style="display: flex; gap: 20px; margin-bottom: 15px;">
+                                    <!-- Left Stats Column -->
+                                    <div style="flex: 1;">
+                                        <div class="stat-block" style="margin-bottom: 4px; padding: 4px 8px;">
+                                            <div style="display: flex; justify-content: space-between;">
+                                                <span style="color: #A0A0A0; font-size: 10px;">Speed</span>
+                                                <span style="color: #FFFFFF; font-size: 10px;">: 23</span>
+                                            </div>
+                                        </div>
+                                        <div class="stat-block" style="margin-bottom: 4px; padding: 4px 8px;">
+                                            <div style="display: flex; justify-content: space-between;">
+                                                <span style="color: #A0A0A0; font-size: 10px;">Strength</span>
+                                                <span style="color: #FFFFFF; font-size: 10px;">: 21</span>
+                                            </div>
+                                        </div>
+                                        <div class="stat-block" style="margin-bottom: 4px; padding: 4px 8px;">
+                                            <div style="display: flex; justify-content: space-between;">
+                                                <span style="color: #A0A0A0; font-size: 10px;">Magic</span>
+                                                <span style="color: #FFFFFF; font-size: 10px;">: 18</span>
+                                            </div>
+                                        </div>
+                                        <div class="stat-block" style="margin-bottom: 4px; padding: 4px 8px;">
+                                            <div style="display: flex; justify-content: space-between;">
+                                                <span style="color: #A0A0A0; font-size: 10px;">Spirit</span>
+                                                <span style="color: #FFFFFF; font-size: 10px;">: 23</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Right Stats Column -->
+                                    <div style="flex: 1;">
+                                        <div class="stat-block" style="margin-bottom: 4px; padding: 4px 8px;">
+                                            <div style="display: flex; justify-content: space-between;">
+                                                <span style="color: #A0A0A0; font-size: 10px;">EXP</span>
+                                                <span style="color: #FFFFFF; font-size: 10px;">: 0</span>
+                                            </div>
+                                        </div>
+                                        <div class="stat-block" style="margin-bottom: 4px; padding: 4px 8px;">
+                                            <div style="display: flex; justify-content: space-between;">
+                                                <span style="color: #A0A0A0; font-size: 10px;">Next Lv</span>
+                                                <span style="color: #FFFFFF; font-size: 10px;">: 16</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Combat Stats -->
+                                <div style="margin-bottom: 15px;">
+                                    <div style="display: flex; gap: 20px;">
+                                        <div style="flex: 1;">
+                                            <div class="stat-block" style="margin-bottom: 4px; padding: 4px 8px;">
+                                                <div style="display: flex; justify-content: space-between;">
+                                                    <span style="color: #A0A0A0; font-size: 10px;">Attack</span>
+                                                    <span style="color: #FFFFFF; font-size: 10px;">: 12</span>
+                                                </div>
+                                            </div>
+                                            <div class="stat-block" style="margin-bottom: 4px; padding: 4px 8px;">
+                                                <div style="display: flex; justify-content: space-between;">
+                                                    <span style="color: #A0A0A0; font-size: 10px;">Defence</span>
+                                                    <span style="color: #FFFFFF; font-size: 10px;">: 6</span>
+                                                </div>
+                                            </div>
+                                            <div class="stat-block" style="margin-bottom: 4px; padding: 4px 8px;">
+                                                <div style="display: flex; justify-content: space-between;">
+                                                    <span style="color: #A0A0A0; font-size: 10px;">Evade</span>
+                                                    <span style="color: #FFFFFF; font-size: 10px;">: 5</span>
+                                                </div>
+                                            </div>
+                                            <div class="stat-block" style="margin-bottom: 4px; padding: 4px 8px;">
+                                                <div style="display: flex; justify-content: space-between;">
+                                                    <span style="color: #A0A0A0; font-size: 10px;">Magic Def</span>
+                                                    <span style="color: #FFFFFF; font-size: 10px;">: 6</span>
+                                                </div>
+                                            </div>
+                                            <div class="stat-block" style="margin-bottom: 4px; padding: 4px 8px;">
+                                                <div style="display: flex; justify-content: space-between;">
+                                                    <span style="color: #A0A0A0; font-size: 10px;">Magic Eva</span>
+                                                    <span style="color: #FFFFFF; font-size: 10px;">: 3</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Equipment Column -->
+                                        <div style="flex: 1;">
+                                            <div class="stat-block" style="margin-bottom: 4px; padding: 4px 8px;">
+                                                <div style="display: flex; align-items: center; gap: 8px;">
+                                                    <span style="color: #60A0C0;">⚔️</span>
+                                                    <span style="color: #FFFFFF; font-size: 10px;">: 🗡️ Developer Tools</span>
+                                                </div>
+                                            </div>
+                                            <div class="stat-block" style="margin-bottom: 4px; padding: 4px 8px;">
+                                                <div style="display: flex; align-items: center; gap: 8px;">
+                                                    <span style="color: #60A0C0;">🔵</span>
+                                                    <span style="color: #FFFFFF; font-size: 10px;">: 🎓 Bachelor's Degree</span>
+                                                </div>
+                                            </div>
+                                            <div class="stat-block" style="margin-bottom: 4px; padding: 4px 8px;">
+                                                <div style="display: flex; align-items: center; gap: 8px;">
+                                                    <span style="color: #60A0C0;">⚙️</span>
+                                                    <span style="color: #FFFFFF; font-size: 10px;">: ⌚ Experience</span>
+                                                </div>
+                                            </div>
+                                            <div class="stat-block" style="margin-bottom: 4px; padding: 4px 8px;">
+                                                <div style="display: flex; align-items: center; gap: 8px;">
+                                                    <span style="color: #60A0C0;">👕</span>
+                                                    <span style="color: #FFFFFF; font-size: 10px;">: 💼 Professional Skills</span>
+                                                </div>
+                                            </div>
+                                            <div class="stat-block" style="margin-bottom: 4px; padding: 4px 8px;">
+                                                <div style="display: flex; align-items: center; gap: 8px;">
+                                                    <span style="color: #60A0C0;">💎</span>
+                                                    <span style="color: #FFFFFF; font-size: 10px;">: 🌟 Achievements</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `
+                    },                    music: {
+                        title: 'Music',
+                        content: `
+                            <div style="text-align: center; margin-bottom: 20px;">
+                                <h3 style="color: #ffffff; margin-bottom: 15px;">🎵 Music Library</h3>
+                                <p style="margin-bottom: 20px;">My musical compositions across various projects and collaborations.</p>
+                            </div>
+
+                            <div style="margin-bottom: 15px;">
+                                <p style="color: #E6D060; font-size: 12px;"><strong>Solo</strong></p>
+                                <ul style="margin-left: 15px; list-style: disc;">
+                                    <li style="margin-bottom: 4px;"><a href="https://open.spotify.com/artist/4T87J20L8uHSVkOuhP2oYX?si=wlP7w1flSXWAAJeKuove3w" target="_blank" style="color: #60C0E0; text-decoration: none;">Peter Baumgartner (Artist Page)</a></li>
+                                    <li style="margin-bottom: 4px;"><a href="https://open.spotify.com/album/4DZCyZqEWIXzdPey4lNdrM?si=NstDMoB6STyk7wU0tard4A" target="_blank" style="color: #60C0E0; text-decoration: none;">Section of Ingrid</a></li>
+                                    <li style="margin-bottom: 4px;"><a href="https://open.spotify.com/album/4AsYtbaOdaMUYewuquvomO?si=w9FsPNZtRLSgwNg8wqEkiA" target="_blank" style="color: #60C0E0; text-decoration: none;">Upper Room</a></li>
+                                    <li style="margin-bottom: 4px;"><a href="https://open.spotify.com/album/2necIl7Jrp8X6WkeO38k3M?si=gqsP3mh6QJ2kzWCSgpJ1TQ" target="_blank" style="color: #60C0E0; text-decoration: none;">Through the Corridors of Sleep</a></li>
+                                    <li style="margin-bottom: 4px;"><a href="https://open.spotify.com/album/5SxwvQeGKK9Y2HHOoa1Iw7?si=gCsdsI_6RhmO1JizXqBIdA" target="_blank" style="color: #60C0E0; text-decoration: none;">Local Failures</a></li>
+                                    <li style="margin-bottom: 4px;"><a href="https://open.spotify.com/album/0fTrKx7ZuLkwZ3UMSX1ABk?si=RU0wVYlEQRCVRzZXJPhcdg" target="_blank" style="color: #60C0E0; text-decoration: none;">For Jackie Dean Yee 5.7.23</a></li>
+                                    <li style="margin-bottom: 4px;"><a href="https://open.spotify.com/album/24Nx5Jqavu5bWIEd3UmvVi?si=WzGGon03T9aqFICEtabMCg" target="_blank" style="color: #60C0E0; text-decoration: none;">Woolen</a></li>
+                                    <li style="margin-bottom: 4px;"><a href="https://open.spotify.com/album/17eUP9ZYo0iF7qsWUaQzMP?si=IRfnX3JeQ9ee5U6Aon4nwg" target="_blank" style="color: #60C0E0; text-decoration: none;">MUSIC FOR ON HOLD</a></li>
+                                    <li style="margin-bottom: 4px;"><a href="https://open.spotify.com/album/56eeEbWhdtz22CAwbCzWUB?si=mL9E__4MTfuh3Pf6eyXsCA" target="_blank" style="color: #60C0E0; text-decoration: none;">A Prism of My Own Making</a></li>
+                                    <li style="margin-bottom: 4px;"><a href="https://open.spotify.com/album/4vLaP0eyN9JDDqtlloo2BL?si=EFanzjeESIyJTPJsjfUMvg" target="_blank" style="color: #60C0E0; text-decoration: none;">Autosave</a></li>
+                                    <li style="margin-bottom: 4px;"><a href="https://open.spotify.com/album/4b1plg4AJaHk7ZcXnVTzyK?si=b5MFc_egQGKYBfvqWDpljA" target="_blank" style="color: #60C0E0; text-decoration: none;">Ellipsis-heavy Dialogue</a></li>
+                                    <li style="margin-bottom: 4px;"><a href="https://open.spotify.com/album/6nTAdutlpB9dN0yl1U7gfB?si=oqkSeE1LQe6mey1eLstyjw" target="_blank" style="color: #60C0E0; text-decoration: none;">STEALING FROM GIANTS</a></li>
+                                    <li style="margin-bottom: 4px;"><a href="https://open.spotify.com/album/0lE6WgropnGgOo0CcUrqJ4?si=o1mH1f_IStGE4BnGV06xsA" target="_blank" style="color: #60C0E0; text-decoration: none;">///// (World in Silence / Rainbow of Nothing)</a></li>
+                                </ul>
+                            </div>
+
+                            <div style="margin-bottom: 15px;">
+                                <p style="color: #E6D060; font-size: 12px;"><strong>In The Infinite Reprise</strong></p>
+                                <ul style="margin-left: 15px; list-style: disc;">
+                                    <li style="margin-bottom: 4px;"><a href="https://open.spotify.com/album/5WaE4Svo5tSuyetr5f1kMk?si=xVPjLZFVQdCYFgxnsPDpFA" target="_blank" style="color: #60C0E0; text-decoration: none;">Sometimes I Dream</a></li>
+                                </ul>
+                            </div>
+
+                            <div style="margin-bottom: 15px;">
+                                <p style="color: #E6D060; font-size: 12px;"><strong>In Proto Evangelion</strong></p>
+                                <ul style="margin-left: 15px; list-style: disc;">
+                                    <li style="margin-bottom: 4px;"><a href="https://open.spotify.com/album/30pGnh3ueQHsqJoLw46XNA?si=N7qxlQn-S0WjAVCwyVRJ3w" target="_blank" style="color: #60C0E0; text-decoration: none;">Dimly Lit</a></li>
+                                    <li style="margin-bottom: 4px;"><a href="https://open.spotify.com/album/4ZJj6WZK7BUfsd0Ko4mKYH?si=KysCiZrzQGWXxP9UfVnghQ" target="_blank" style="color: #60C0E0; text-decoration: none;">Emmanuel</a></li>
+                                    <li style="margin-bottom: 4px;"><a href="https://open.spotify.com/album/3R46zfvQIBtVdZT3MsOIBx?si=lbBloCNHTlyfEKT3myErWQ" target="_blank" style="color: #60C0E0; text-decoration: none;">My Heart Has Spoken</a></li>
+                                </ul>
+                            </div>
+
+                            <div>
+                                <p style="color: #E6D060; font-size: 12px;"><strong>In Mountlake Music</strong></p>
+                                <ul style="margin-left: 15px; list-style: disc;">
+                                    <li style="margin-bottom: 4px;"><a href="https://open.spotify.com/album/2E8VthA6mnjAxKsk2W6Xz9?si=USyyiybtQ2mAr6v3vwbW_Q" target="_blank" style="color: #60C0E0; text-decoration: none;">Songs of Deepening</a></li>
+                                </ul>
+                            </div>
+                        `,
+                    },
+                    art: {
+                        title: 'Visual Art',
+                        content: `
+                            <div style="text-align: center; margin-bottom: 20px;">
+                                <h3 style="color: #ffffff; margin-bottom: 15px;">🎨 Visual Artworks</h3>
+                                <p style="margin-bottom: 20px;">Discover my digital and traditional art pieces.</p>
+                                <div style="margin-bottom: 15px;">
+                                    <a href="./artworks/waterlillies.html" style="
+                                        display: inline-block;
+                                        margin: 5px;
+                                        padding: 8px 15px;
+                                        background: linear-gradient(135deg, #3a3a5a, #2a2a4a);
+                                        border: 1px solid #5a5a7a;
+                                        border-radius: 4px;
+                                        color: #ffffff;
+                                        text-decoration: none;
+                                        font-size: 11px;
+                                    ">Water Lillies</a>
+                                    <a href="./artworks/viewofaburningcity.html" style="
+                                        display: inline-block;
+                                        margin: 5px;
+                                        padding: 8px 15px;
+                                        background: linear-gradient(135deg, #3a3a5a, #2a2a4a);
+                                        border: 1px solid #5a5a7a;
+                                        border-radius: 4px;
+                                        color: #ffffff;
+                                        text-decoration: none;
+                                        font-size: 11px;
+                                    ">Burning City</a>
+                                    <a href="./artworks/colorexplore.html" style="
+                                        display: inline-block;
+                                        margin: 5px;
+                                        padding: 8px 15px;
+                                        background: linear-gradient(135deg, #3a3a5a, #2a2a4a);
+                                        border: 1px solid #5a5a7a;
+                                        border-radius: 4px;
+                                        color: #ffffff;
+                                        text-decoration: none;
+                                        font-size: 11px;
+                                    ">Color Explorer</a>
+                                </div>
+                                <div style="margin-bottom: 15px;">
+                                    <a href="./artworks/blocksnow.html" style="
+                                        display: inline-block;
+                                        margin: 5px;
+                                        padding: 8px 15px;
+                                        background: linear-gradient(135deg, #3a3a5a, #2a2a4a);
+                                        border: 1px solid #5a5a7a;
+                                        border-radius: 4px;
+                                        color: #ffffff;
+                                        text-decoration: none;
+                                        font-size: 11px;
+                                    ">Block Snow</a>
+                                    <a href="./artworks/dungeongame.html" style="
+                                        display: inline-block;
+                                        margin: 5px;
+                                        padding: 8px 15px;
+                                        background: linear-gradient(135deg, #3a3a5a, #2a2a4a);
+                                        border: 1px solid #5a5a7a;
+                                        border-radius: 4px;
+                                        color: #ffffff;
+                                        text-decoration: none;
+                                        font-size: 11px;
+                                    ">Dungeon Game</a>
+                                    <a href="./artworks/wordprocessor.html" style="
+                                        display: inline-block;
+                                        margin: 5px;
+                                        padding: 8px 15px;
+                                        background: linear-gradient(135deg, #3a3a5a, #2a2a4a);
+                                        border: 1px solid #5a5a7a;
+                                        border-radius: 4px;
+                                        color: #ffffff;
+                                        text-decoration: none;
+                                        font-size: 11px;
+                                    ">Word Processor</a>
+                                    <a href="./artworks/mazesend.html" style="
+                                        display: inline-block;
+                                        margin: 5px;
+                                        padding: 8px 15px;
+                                        background: linear-gradient(135deg, #3a3a5a, #2a2a4a);
+                                        border: 1px solid #5a5a7a;
+                                        border-radius: 4px;
+                                        color: #ffffff;
+                                        text-decoration: none;
+                                        font-size: 11px;
+                                    ">Maze Send</a>
+                                </div>
+                            </div>
+                            <p>Visual art allows me to explore color, form, and digital expression. From traditional-inspired pieces to interactive digital experiences, each work represents a journey of discovery.</p>
+                        `
+                    },
+                    poetry: {
+                        title: 'Poetry',
+                        content: `
+                            <div style="text-align: center; margin-bottom: 20px;">
+                                <h3 style="color: #ffffff; margin-bottom: 15px;">📝 Poetry & Verse</h3>
+                                <p style="margin-bottom: 20px;">Words that capture moments, emotions, and dreams.</p>
+                            </div>
+                            <p><strong>Style:</strong> Free verse, experimental, digital poetry</p>
+                            <p><strong>Themes:</strong> Technology, nature, human connection, time</p>
+                            <p><strong>Current Work:</strong> Interactive poetry experiences</p>
+                            <p>Poetry is the art of distilling complex emotions and experiences into their purest form. Through verse, I explore the intersection of technology and humanity, finding beauty in both digital and natural worlds.</p>
+                        `
+                    },
+                    magic: {
+                        title: 'Magic',
+                        content: `
+                            <div style="text-align: center; margin-bottom: 20px;">
+                                <h3 style="color: #ffffff; margin-bottom: 15px;">✨ Digital Magic</h3>
+                                <p style="margin-bottom: 20px;">The art of creating wonder through code and creativity.</p>
+                            </div>
+                            <p><strong>Specialties:</strong> Interactive experiences, generative art, algorithmic creativity</p>
+                            <p><strong>Tools:</strong> JavaScript, Canvas API, WebGL, Creative coding</p>
+                            <p><strong>Philosophy:</strong> Technology as a medium for wonder and discovery</p>
+                            <p>Magic in the digital age isn't about illusion—it's about creating experiences that inspire wonder, curiosity, and joy. Through creative coding and interactive design, I craft digital spells that bring ideas to life.</p>
+                        `
+                    },
+                    photos: {
+                        title: 'Photos',
+                        content: `
+                            <div style="text-align: center; margin-bottom: 20px;">
+                                <h3 style="color: #ffffff; margin-bottom: 15px;">📸 Photography</h3>
+                                <p style="margin-bottom: 20px;">Capturing moments and perspectives through the lens.</p>
+                            </div>
+                            <p><strong>Focus Areas:</strong> Street photography, digital landscapes, candid moments</p>
+                            <p><strong>Equipment:</strong> Digital cameras, smartphone photography, editing software</p>
+                            <p><strong>Style:</strong> Documentary, artistic, experimental</p>
+                            <p>Photography is about seeing the extraordinary in the ordinary. Whether capturing urban landscapes or intimate moments, each photo tells a story and preserves a fleeting moment in time.</p>
+                        `
+                    },                    contact: {
+                        title: 'Contact',
+                        content: `
+                            <div style="text-align: center; margin-bottom: 20px;">
+                                <h3 style="color: #ffffff; margin-bottom: 15px;">📧 Contact</h3>
+                                <a href="mailto:p.l.baumgartner@gmail.com" style="
+                                    display: inline-block;
+                                    padding: 15px 30px;
+                                    background: linear-gradient(135deg, #3a3a5a, #2a2a4a);
+                                    border: 1px solid #5a5a7a;
+                                    border-radius: 4px;
+                                    color: #ffffff;
+                                    text-decoration: none;
+                                    font-size: 14px;
+                                    transition: all 0.2s ease;
+                                ">p.l.baumgartner@gmail.com</a>
+                            </div>
+                        `
+                    },
+                    save: {
+                        title: 'Save Files',
+                        content: `
+                            <div style="text-align: center; margin-bottom: 20px;">
+                                <h3 style="color: #ffffff; margin-bottom: 15px;">💾 Archived Versions</h3>
+                                <p style="margin-bottom: 20px;">Previous iterations and saved states of this digital world.</p>
+                                <div style="margin-bottom: 15px;">
+                                    <a href="./Save%20files/old-homepage-6.4.html" style="
+                                        display: inline-block;
+                                        margin: 5px;
+                                        padding: 10px 20px;
+                                        background: linear-gradient(135deg, #3a3a5a, #2a2a4a);
+                                        border: 1px solid #5a5a7a;
+                                        border-radius: 4px;
+                                        color: #ffffff;
+                                        text-decoration: none;
+                                        font-size: 12px;
+                                    ">Original ASCII World (v6.4)</a>
+                                </div>
+                                <div style="margin-bottom: 15px;">
+                                    <a href="./Save%20files/index_2025-06-06.html" style="
+                                        display: inline-block;
+                                        margin: 5px;
+                                        padding: 10px 20px;
+                                        background: linear-gradient(135deg, #3a3a5a, #2a2a4a);
+                                        border: 1px solid #5a5a7a;
+                                        border-radius: 4px;
+                                        color: #ffffff;
+                                        text-decoration: none;
+                                        font-size: 12px;
+                                    ">June 2025 Snapshot</a>
+                                </div>
+                            </div>
+                            <p>Like save files in a video game, these archived versions preserve different states of this digital space. Each represents a moment in the evolution of this creative project, documenting the journey from ASCII art to interactive experience.</p>
+                        `
+                    },                    resume: {
+                        title: 'Resume',
+                        content: `
+                            <div style="text-align: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #B0B0B0;">
+                                <a href="./resume/Peter Baumgartner.docx" download="Peter_Baumgartner_Resume.docx" style="
+                                    display: inline-block;
+                                    padding: 6px 12px;
+                                    background: linear-gradient(135deg, #3a3a5a, #2a2a4a);
+                                    border: 1px solid #5a5a7a;
+                                    border-radius: 3px;
+                                    color: #ffffff;
+                                    text-decoration: none;
+                                    font-size: 10px;
+                                    transition: all 0.2s ease;
+                                    box-shadow: inset 1px 1px 2px rgba(255,255,255,0.1);
+                                ">📄 Download .DOCX</a>
+                            </div>
+
+                            <div style="text-align: center; margin-bottom: 20px;">
+                                <h3 style="font-size: 16px; color: #FFFFFF; margin-bottom: 6px; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); border-bottom: 1px solid #B0B0B0; padding-bottom: 6px;">Peter Baumgartner</h3>
+                                <div style="font-size: 9px; color: #A0A0A0; margin-bottom: 15px;">
+                                    Mission Viejo, CA · <a href="mailto:p.l.baumgartner@gmail.com" style="color: #60C0E0; text-decoration: none;">p.l.baumgartner@gmail.com</a> · 206.518.3344 · <a href="https://www.linkedin.com" style="color: #60C0E0; text-decoration: none;">LinkedIn</a>
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 20px;">
+                                <h4 style="font-size: 12px; color: #FFFFFF; margin-bottom: 10px; text-shadow: 1px 1px 1px rgba(0,0,0,0.8); border-bottom: 1px solid #5a5a7a; padding-bottom: 5px;">Summary</h4>
+                                <p style="font-size: 10px; line-height: 1.3; margin-bottom: 0;">
+                                    Senior Program Manager with 10+ years driving product strategy, shipping scalable automation systems, and leading cross-functional teams at Microsoft. Expertise in launching AI-driven user experiences, significantly reducing operational costs, and ensuring measurable impact.
+                                </p>
+                            </div>
+
+                            <div style="margin-bottom: 20px;">
+                                <h4 style="font-size: 12px; color: #FFFFFF; margin-bottom: 10px; text-shadow: 1px 1px 1px rgba(0,0,0,0.8); border-bottom: 1px solid #5a5a7a; padding-bottom: 5px;">Key Skills</h4>
+                                <ul style="margin-left: 15px; list-style: disc;">
+                                    <li style="margin-bottom: 8px; font-size: 9px; line-height: 1.2;">
+                                        <span style="color: #E6D060;"><strong>Product & Program Management:</strong></span>
+                                        Product roadmapping, agile/Scrum execution, OKR planning, risk management
+                                    </li>
+                                    <li style="margin-bottom: 8px; font-size: 9px; line-height: 1.2;">
+                                        <span style="color: #E6D060;"><strong>Technical Expertise:</strong></span>
+                                        AI integration, automation systems, data analysis, Azure DevOps, enterprise CMS
+                                    </li>
+                                    <li style="margin-bottom: 0; font-size: 9px; line-height: 1.2;">
+                                        <span style="color: #E6D060;"><strong>Leadership & Communication:</strong></span>
+                                        Cross-functional team leadership, stakeholder alignment, workshop facilitation
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <div>
+                                <h4 style="font-size: 12px; color: #FFFFFF; margin-bottom: 10px; text-shadow: 1px 1px 1px rgba(0,0,0,0.8); border-bottom: 1px solid #5a5a7a; padding-bottom: 5px;">Experience</h4>
+                                
+                                <div style="margin-bottom: 15px;">
+                                    <div style="font-size: 10px; color: #FFFFFF; font-weight: bold; margin-bottom: 3px;">Senior Content Program Manager – Microsoft Corporation</div>
+                                    <div style="font-size: 9px; color: #A0A0A0; margin-bottom: 5px; font-style: italic;">Redmond, WA / Remote — 2016 to 2025</div>
+                                    <div style="font-size: 9px; line-height: 1.2;">Led content strategy for Microsoft 365. Launched AI-powered video creation system reducing costs by 100x. Improved content accuracy from 50-90%.</div>
+                                </div>
+                                
+                                <div style="margin-bottom: 15px;">
+                                    <div style="font-size: 10px; color: #FFFFFF; font-weight: bold; margin-bottom: 3px;">Sales Engineer – Wave Broadband</div>
+                                    <div style="font-size: 9px; color: #A0A0A0; margin-bottom: 5px; font-style: italic;">Kirkland, WA — 2015 to 2016</div>
+                                    <div style="font-size: 9px; line-height: 1.2;">Designed custom network solutions. Closed multi-year contracts exceeding revenue targets.</div>
+                                </div>
+                                
+                                <div style="margin-bottom: 0;">
+                                    <div style="font-size: 10px; color: #FFFFFF; font-weight: bold; margin-bottom: 3px;">Technical Writer – Microsoft (Contract)</div>
+                                    <div style="font-size: 9px; color: #A0A0A0; margin-bottom: 5px; font-style: italic;">Redmond, WA — 2014 to 2015</div>
+                                    <div style="font-size: 9px; line-height: 1.2;">Created Office 365 support content. Led content refresh improving satisfaction scores.</div>
+                                </div>                            </div>
+                        `
+                    }                };
+status: {
+                        title: 'Status',
+                        content: `
+                            <div style="display: flex; flex-direction: column; height: 100%; gap: 10px;">
+                                <!-- Character Info Header -->
+                                <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                                    <div style="width: 60px; height: 60px; background-image: url('./Peter Baumgartner Silvertone Headshot.jpg'); background-size: cover; background-position: center; border: 1px solid #B0B0B0; margin-right: 15px;"></div>
+                                    <div>
+                                        <div style="font-size: 16px; font-weight: bold; color: #FFFFFF; margin-bottom: 4px;">Peter</div>
+                                        <div style="font-size: 12px; color: #FFFFFF;">Lv 37</div>
+                                        <div style="font-size: 10px; color: #FFFFFF;">HP 1988/2025</div>
+                                        <div style="font-size: 10px; color: #FFFFFF;">MP   34/  47</div>
+                                    </div>
+                                    <div style="margin-left: auto; text-align: center;">
+                                        <div style="color: #60C0E0; font-size: 14px; margin-bottom: 4px;">🔮 18/18</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Stats Layout -->
+                                <div style="display: flex; gap: 20px; margin-bottom: 15px;">
+                                    <!-- Left Stats Column -->
+                                    <div style="flex: 1;">
+                                        <div class="stat-block" style="margin-bottom: 4px; padding: 4px 8px;">
+                                            <div style="display: flex; justify-content: space-between;">
+                                                <span style="color: #A0A0A0; font-size: 10px;">Speed</span>
+                                                <span style="color: #FFFFFF; font-size: 10px;">: 23</span>
+                                            </div>
+                                        </div>
+                                        <div class="stat-block" style="margin-bottom: 4px; padding: 4px 8px;">
+                                            <div style="display: flex; justify-content: space-between;">
+                                                <span style="color: #A0A0A0; font-size: 10px;">Strength</span>
+                                                <span style="color: #FFFFFF; font-size: 10px;">: 21</span>
+                                            </div>
+                                        </div>
+                                        <div class="stat-block" style="margin-bottom: 4px; padding: 4px 8px;">
+                                            <div style="display: flex; justify-content: space-between;">
+                                                <span style="color: #A0A0A0; font-size: 10px;">Magic</span>
+                                                <span style="color: #FFFFFF; font-size: 10px;">: 18</span>
+                                            </div>
+                                        </div>
+                                        <div class="stat-block" style="margin-bottom: 4px; padding: 4px 8px;">
+                                            <div style="display: flex; justify-content: space-between;">
+                                                <span style="color: #A0A0A0; font-size: 10px;">Spirit</span>
+                                                <span style="color: #FFFFFF; font-size: 10px;">: 23</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Right Stats Column -->
+                                    <div style="flex: 1;">
+                                        <div class="stat-block" style="margin-bottom: 4px; padding: 4px 8px;">
+                                            <div style="display: flex; justify-content: space-between;">
+                                                <span style="color: #A0A0A0; font-size: 10px;">EXP</span>
+                                                <span style="color: #FFFFFF; font-size: 10px;">: 0</span>
+                                            </div>
+                                        </div>
+                                        <div class="stat-block" style="margin-bottom: 4px; padding: 4px 8px;">
+                                            <div style="display: flex; justify-content: space-between;">
+                                                <span style="color: #A0A0A0; font-size: 10px;">Next Lv</span>
+                                                <span style="color: #FFFFFF; font-size: 10px;">: 16</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Combat Stats -->
+                                <div style="margin-bottom: 15px;">
+                                    <div style="display: flex; gap: 20px;">
+                                        <div style="flex: 1;">
+                                            <div class="stat-block" style="margin-bottom: 4px; padding: 4px 8px;">
+                                                <div style="display: flex; justify-content: space-between;">
+                                                    <span style="color: #A0A0A0; font-size: 10px;">Attack</span>
+                                                    <span style="color: #FFFFFF; font-size: 10px;">: 12</span>
+                                                </div>
+                                            </div>
+                                            <div class="stat-block" style="margin-bottom: 4px; padding: 4px 8px;">
+                                                <div style="display: flex; justify-content: space-between;">
+                                                    <span style="color: #A0A0A0; font-size: 10px;">Defence</span>
+                                                    <span style="color: #FFFFFF; font-size: 10px;">: 6</span>
+                                                </div>
+                                            </div>
+                                            <div class="stat-block" style="margin-bottom: 4px; padding: 4px 8px;">
+                                                <div style="display: flex; justify-content: space-between;">
+                                                    <span style="color: #A0A0A0; font-size: 10px;">Evade</span>
+                                                    <span style="color: #FFFFFF; font-size: 10px;">: 5</span>
+                                                </div>
+                                            </div>
+                                            <div class="stat-block" style="margin-bottom: 4px; padding: 4px 8px;">
+                                                <div style="display: flex; justify-content: space-between;">
+                                                    <span style="color: #A0A0A0; font-size: 10px;">Magic Def</span>
+                                                    <span style="color: #FFFFFF; font-size: 10px;">: 6</span>
+                                                </div>
+                                            </div>
+                                            <div class="stat-block" style="margin-bottom: 4px; padding: 4px 8px;">
+                                                <div style="display: flex; justify-content: space-between;">
+                                                    <span style="color: #A0A0A0; font-size: 10px;">Magic Eva</span>
+                                                    <span style="color: #FFFFFF; font-size: 10px;">: 3</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Equipment Column -->
+                                        <div style="flex: 1;">
+                                            <div class="stat-block" style="margin-bottom: 4px; padding: 4px 8px;">
+                                                <div style="display: flex; align-items: center; gap: 8px;">
+                                                    <span style="color: #60A0C0;">⚔️</span>
+                                                    <span style="color: #FFFFFF; font-size: 10px;">: 🗡️ Developer Tools</span>
+                                                </div>
+                                            </div>
+                                            <div class="stat-block" style="margin-bottom: 4px; padding: 4px 8px;">
+                                                <div style="display: flex; align-items: center; gap: 8px;">
+                                                    <span style="color: #60A0C0;">🔵</span>
+                                                    <span style="color: #FFFFFF; font-size: 10px;">: 🎓 Bachelor's Degree</span>
+                                                </div>
+                                            </div>
+                                            <div class="stat-block" style="margin-bottom: 4px; padding: 4px 8px;">
+                                                <div style="display: flex; align-items: center; gap: 8px;">
+                                                    <span style="color: #60A0C0;">⚙️</span>
+                                                    <span style="color: #FFFFFF; font-size: 10px;">: ⌚ Experience</span>
+                                                </div>
+                                            </div>
+                                            <div class="stat-block" style="margin-bottom: 4px; padding: 4px 8px;">
+                                                <div style="display: flex; align-items: center; gap: 8px;">
+                                                    <span style="color: #60A0C0;">👕</span>
+                                                    <span style="color: #FFFFFF; font-size: 10px;">: 💼 Professional Skills</span>
+                                                </div>
+                                            </div>
+                                            <div class="stat-block" style="margin-bottom: 4px; padding: 4px 8px;">
+                                                <div style="display: flex; align-items: center; gap: 8px;">
+                                                    <span style="color: #60A0C0;">💎</span>
+                                                    <span style="color: #FFFFFF; font-size: 10px;">: 🌟 Achievements</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `
+                    },                    music: {
+                        title: 'Music',
+                        content: `
+                            <div style="text-align: center; margin-bottom: 20px;">
+                                <h3 style="color: #ffffff; margin-bottom: 15px;">🎵 Music Library</h3>
+                                <p style="margin-bottom: 20px;">My musical compositions across various projects and collaborations.</p>
+                            </div>
+
+                            <div style="margin-bottom: 15px;">
+                                <p style="color: #E6D060; font-size: 12px;"><strong>Solo</strong></p>
+                                <ul style="margin-left: 15px; list-style: disc;">
+                                    <li style="margin-bottom: 4px;"><a href="https://open.spotify.com/artist/4T87J20L8uHSVkOuhP2oYX?si=wlP7w1flSXWAAJeKuove3w" target="_blank" style="color: #60C0E0; text-decoration: none;">Peter Baumgartner (Artist Page)</a></li>
+                                    <li style="margin-bottom: 4px;"><a href="https://open.spotify.com/album/4DZCyZqEWIXzdPey4lNdrM?si=NstDMoB6STyk7wU0tard4A" target="_blank" style="color: #60C0E0; text-decoration: none;">Section of Ingrid</a></li>
+                                    <li style="margin-bottom: 4px;"><a href="https://open.spotify.com/album/4AsYtbaOdaMUYewuquvomO?si=w9FsPNZtRLSgwNg8wqEkiA" target="_blank" style="color: #60C0E0; text-decoration: none;">Upper Room</a></li>
+                                    <li style="margin-bottom: 4px;"><a href="https://open.spotify.com/album/2necIl7Jrp8X6WkeO38k3M?si=gqsP3mh6QJ2kzWCSgpJ1TQ" target="_blank" style="color: #60C0E0; text-decoration: none;">Through the Corridors of Sleep</a></li>
+                                    <li style="margin-bottom: 4px;"><a href="https://open.spotify.com/album/5SxwvQeGKK9Y2HHOoa1Iw7?si=gCsdsI_6RhmO1JizXqBIdA" target="_blank" style="color: #60C0E0; text-decoration: none;">Local Failures</a></li>
+                                    <li style="margin-bottom: 4px;"><a href="https://open.spotify.com/album/0fTrKx7ZuLkwZ3UMSX1ABk?si=RU0wVYlEQRCVRzZXJPhcdg" target="_blank" style="color: #60C0E0; text-decoration: none;">For Jackie Dean Yee 5.7.23</a></li>
+                                    <li style="margin-bottom: 4px;"><a href="https://open.spotify.com/album/24Nx5Jqavu5bWIEd3UmvVi?si=WzGGon03T9aqFICEtabMCg" target="_blank" style="color: #60C0E0; text-decoration: none;">Woolen</a></li>
+                                    <li style="margin-bottom: 4px;"><a href="https://open.spotify.com/album/17eUP9ZYo0iF7qsWUaQzMP?si=IRfnX3JeQ9ee5U6Aon4nwg" target="_blank" style="color: #60C0E0; text-decoration: none;">MUSIC FOR ON HOLD</a></li>
+                                    <li style="margin-bottom: 4px;"><a href="https://open.spotify.com/album/56eeEbWhdtz22CAwbCzWUB?si=mL9E__4MTfuh3Pf6eyXsCA" target="_blank" style="color: #60C0E0; text-decoration: none;">A Prism of My Own Making</a></li>
+                                    <li style="margin-bottom: 4px;"><a href="https://open.spotify.com/album/4vLaP0eyN9JDDqtlloo2BL?si=EFanzjeESIyJTPJsjfUMvg" target="_blank" style="color: #60C0E0; text-decoration: none;">Autosave</a></li>
+                                    <li style="margin-bottom: 4px;"><a href="https://open.spotify.com/album/4b1plg4AJaHk7ZcXnVTzyK?si=b5MFc_egQGKYBfvqWDpljA" target="_blank" style="color: #60C0E0; text-decoration: none;">Ellipsis-heavy Dialogue</a></li>
+                                    <li style="margin-bottom: 4px;"><a href="https://open.spotify.com/album/6nTAdutlpB9dN0yl1U7gfB?si=oqkSeE1LQe6mey1eLstyjw" target="_blank" style="color: #60C0E0; text-decoration: none;">STEALING FROM GIANTS</a></li>
+                                    <li style="margin-bottom: 4px;"><a href="https://open.spotify.com/album/0lE6WgropnGgOo0CcUrqJ4?si=o1mH1f_IStGE4BnGV06xsA" target="_blank" style="color: #60C0E0; text-decoration: none;">///// (World in Silence / Rainbow of Nothing)</a></li>
+                                </ul>
+                            </div>
+
+                            <div style="margin-bottom: 15px;">
+                                <p style="color: #E6D060; font-size: 12px;"><strong>In The Infinite Reprise</strong></p>
+                                <ul style="margin-left: 15px; list-style: disc;">
+                                    <li style="margin-bottom: 4px;"><a href="https://open.spotify.com/album/5WaE4Svo5tSuyetr5f1kMk?si=xVPjLZFVQdCYFgxnsPDpFA" target="_blank" style="color: #60C0E0; text-decoration: none;">Sometimes I Dream</a></li>
+                                </ul>
+                            </div>
+
+                            <div style="margin-bottom: 15px;">
+                                <p style="color: #E6D060; font-size: 12px;"><strong>In Proto Evangelion</strong></p>
+                                <ul style="margin-left: 15px; list-style: disc;">
+                                    <li style="margin-bottom: 4px;"><a href="https://open.spotify.com/album/30pGnh3ueQHsqJoLw46XNA?si=N7qxlQn-S0WjAVCwyVRJ3w" target="_blank" style="color: #60C0E0; text-decoration: none;">Dimly Lit</a></li>
+                                    <li style="margin-bottom: 4px;"><a href="https://open.spotify.com/album/4ZJj6WZK7BUfsd0Ko4mKYH?si=KysCiZrzQGWXxP9UfVnghQ" target="_blank" style="color: #60C0E0; text-decoration: none;">Emmanuel</a></li>
+                                    <li style="margin-bottom: 4px;"><a href="https://open.spotify.com/album/3R46zfvQIBtVdZT3MsOIBx?si=lbBloCNHTlyfEKT3myErWQ" target="_blank" style="color: #60C0E0; text-decoration: none;">My Heart Has Spoken</a></li>
+                                </ul>
+                            </div>
+
+                            <div>
+                                <p style="color: #E6D060; font-size: 12px;"><strong>In Mountlake Music</strong></p>
+                                <ul style="margin-left: 15px; list-style: disc;">
+                                    <li style="margin-bottom: 4px;"><a href="https://open.spotify.com/album/2E8VthA6mnjAxKsk2W6Xz9?si=USyyiybtQ2mAr6v3vwbW_Q" target="_blank" style="color: #60C0E0; text-decoration: none;">Songs of Deepening</a></li>
+                                </ul>
+                            </div>
+                        `,
+                    },
+                    art: {
+                        title: 'Visual Art',
+                        content: `
+                            <div style="text-align: center; margin-bottom: 20px;">
+                                <h3 style="color: #ffffff; margin-bottom: 15px;">🎨 Visual Artworks</h3>
+                                <p style="margin-bottom: 20px;">Discover my digital and traditional art pieces.</p>
+                                <div style="margin-bottom: 15px;">
+                                    <a href="./artworks/waterlillies.html" style="
+                                        display: inline-block;
+                                        margin: 5px;
+                                        padding: 8px 15px;
+                                        background: linear-gradient(135deg, #3a3a5a, #2a2a4a);
+                                        border: 1px solid #5a5a7a;
+                                        border-radius: 4px;
+                                        color: #ffffff;
+                                        text-decoration: none;
+                                        font-size: 11px;
+                                    ">Water Lillies</a>
+                                    <a href="./artworks/viewofaburningcity.html" style="
+                                        display: inline-block;
+                                        margin: 5px;
+                                        padding: 8px 15px;
+                                        background: linear-gradient(135deg, #3a3a5a, #2a2a4a);
+                                        border: 1px solid #5a5a7a;
+                                        border-radius: 4px;
+                                        color: #ffffff;
+                                        text-decoration: none;
+                                        font-size: 11px;
+                                    ">Burning City</a>
+                                    <a href="./artworks/colorexplore.html" style="
+                                        display: inline-block;
+                                        margin: 5px;
+                                        padding: 8px 15px;
+                                        background: linear-gradient(135deg, #3a3a5a, #2a2a4a);
+                                        border: 1px solid #5a5a7a;
+                                        border-radius: 4px;
+                                        color: #ffffff;
+                                        text-decoration: none;
+                                        font-size: 11px;
+                                    ">Color Explorer</a>
+                                </div>
+                                <div style="margin-bottom: 15px;">
+                                    <a href="./artworks/blocksnow.html" style="
+                                        display: inline-block;
+                                        margin: 5px;
+                                        padding: 8px 15px;
+                                        background: linear-gradient(135deg, #3a3a5a, #2a2a4a);
+                                        border: 1px solid #5a5a7a;
+                                        border-radius: 4px;
+                                        color: #ffffff;
+                                        text-decoration: none;
+                                        font-size: 11px;
+                                    ">Block Snow</a>
+                                    <a href="./artworks/dungeongame.html" style="
+                                        display: inline-block;
+                                        margin: 5px;
+                                        padding: 8px 15px;
+                                        background: linear-gradient(135deg, #3a3a5a, #2a2a4a);
+                                        border: 1px solid #5a5a7a;
+                                        border-radius: 4px;
+                                        color: #ffffff;
+                                        text-decoration: none;
+                                        font-size: 11px;
+                                    ">Dungeon Game</a>
+                                    <a href="./artworks/wordprocessor.html" style="
+                                        display: inline-block;
+                                        margin: 5px;
+                                        padding: 8px 15px;
+                                        background: linear-gradient(135deg, #3a3a5a, #2a2a4a);
+                                        border: 1px solid #5a5a7a;
+                                        border-radius: 4px;
+                                        color: #ffffff;
+                                        text-decoration: none;
+                                        font-size: 11px;
+                                    ">Word Processor</a>
+                                    <a href="./artworks/mazesend.html" style="
+                                        display: inline-block;
+                                        margin: 5px;
+                                        padding: 8px 15px;
+                                        background: linear-gradient(135deg, #3a3a5a, #2a2a4a);
+                                        border: 1px solid #5a5a7a;
+                                        border-radius: 4px;
+                                        color: #ffffff;
+                                        text-decoration: none;
+                                        font-size: 11px;
+                                    ">Maze Send</a>
+                                </div>
+                            </div>
+                            <p>Visual art allows me to explore color, form, and digital expression. From traditional-inspired pieces to interactive digital experiences, each work represents a journey of discovery.</p>
+                        `
+                    },
+                    poetry: {
+                        title: 'Poetry',
+                        content: `
+                            <div style="text-align: center; margin-bottom: 20px;">
+                                <h3 style="color: #ffffff; margin-bottom: 15px;">📝 Poetry & Verse</h3>
+                                <p style="margin-bottom: 20px;">Words that capture moments, emotions, and dreams.</p>
+                            </div>
+                            <p><strong>Style:</strong> Free verse, experimental, digital poetry</p>
+                            <p><strong>Themes:</strong> Technology, nature, human connection, time</p>
+                            <p><strong>Current Work:</strong> Interactive poetry experiences</p>
+                            <p>Poetry is the art of distilling complex emotions and experiences into their purest form. Through verse, I explore the intersection of technology and humanity, finding beauty in both digital and natural worlds.</p>
+                        `
+                    },
+                    magic: {
+                        title: 'Magic',
+                        content: `
+                            <div style="text-align: center; margin-bottom: 20px;">
+                                <h3 style="color: #ffffff; margin-bottom: 15px;">✨ Digital Magic</h3>
+                                <p style="margin-bottom: 20px;">The art of creating wonder through code and creativity.</p>
+                            </div>
+                            <p><strong>Specialties:</strong> Interactive experiences, generative art, algorithmic creativity</p>
+                            <p><strong>Tools:</strong> JavaScript, Canvas API, WebGL, Creative coding</p>
+                            <p><strong>Philosophy:</strong> Technology as a medium for wonder and discovery</p>
+                            <p>Magic in the digital age isn't about illusion—it's about creating experiences that inspire wonder, curiosity, and joy. Through creative coding and interactive design, I craft digital spells that bring ideas to life.</p>
+                        `
+                    },
+                    photos: {
+                        title: 'Photos',
+                        content: `
+                            <div style="text-align: center; margin-bottom: 20px;">
+                                <h3 style="color: #ffffff; margin-bottom: 15px;">📸 Photography</h3>
+                                <p style="margin-bottom: 20px;">Capturing moments and perspectives through the lens.</p>
+                            </div>
+                            <p><strong>Focus Areas:</strong> Street photography, digital landscapes, candid moments</p>
+                            <p><strong>Equipment:</strong> Digital cameras, smartphone photography, editing software</p>
+                            <p><strong>Style:</strong> Documentary, artistic, experimental</p>
+                            <p>Photography is about seeing the extraordinary in the ordinary. Whether capturing urban landscapes or intimate moments, each photo tells a story and preserves a fleeting moment in time.</p>
+                        `
+                    },                    contact: {
+                        title: 'Contact',
+                        content: `
+                            <div style="text-align: center; margin-bottom: 20px;">
+                                <h3 style="color: #ffffff; margin-bottom: 15px;">📧 Contact</h3>
+                                <a href="mailto:p.l.baumgartner@gmail.com" style="
+                                    display: inline-block;
+                                    padding: 15px 30px;
+                                    background: linear-gradient(135deg, #3a3a5a, #2a2a4a);
+                                    border: 1px solid #5a5a7a;
+                                    border-radius: 4px;
+                                    color: #ffffff;
+                                    text-decoration: none;
+                                    font-size: 14px;
+                                    transition: all 0.2s ease;
+                                ">p.l.baumgartner@gmail.com</a>
+                            </div>
+                        `
+                    },
+                    save: {
+                        title: 'Save Files',
+                        content: `
+                            <div style="text-align: center; margin-bottom: 20px;">
+                                <h3 style="color: #ffffff; margin-bottom: 15px;">💾 Archived Versions</h3>
+                                <p style="margin-bottom: 20px;">Previous iterations and saved states of this digital world.</p>
+                                <div style="margin-bottom: 15px;">
+                                    <a href="./Save%20files/old-homepage-6.4.html" style="
+                                        display: inline-block;
+                                        margin: 5px;
+                                        padding: 10px 20px;
+                                        background: linear-gradient(135deg, #3a3a5a, #2a2a4a);
+                                        border: 1px solid #5a5a7a;
+                                        border-radius: 4px;
+                                        color: #ffffff;
+                                        text-decoration: none;
+                                        font-size: 12px;
+                                    ">Original ASCII World (v6.4)</a>
+                                </div>
+                                <div style="margin-bottom: 15px;">
+                                    <a href="./Save%20files/index_2025-06-06.html" style="
+                                        display: inline-block;
+                                        margin: 5px;
+                                        padding: 10px 20px;
+                                        background: linear-gradient(135deg, #3a3a5a, #2a2a4a);
+                                        border: 1px solid #5a5a7a;
+                                        border-radius: 4px;
+                                        color: #ffffff;
+                                        text-decoration: none;
+                                        font-size: 12px;
+                                    ">June 2025 Snapshot</a>
+                                </div>
+                            </div>
+                            <p>Like save files in a video game, these archived versions preserve different states of this digital space. Each represents a moment in the evolution of this creative project, documenting the journey from ASCII art to interactive experience.</p>
+                        `
+                    },                    resume: {
+                        title: 'Resume',
+                        content: `
+                            <div style="text-align: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #B0B0B0;">
+                                <a href="./resume/Peter Baumgartner.docx" download="Peter_Baumgartner_Resume.docx" style="
+                                    display: inline-block;
+                                    padding: 6px 12px;
+                                    background: linear-gradient(135deg, #3a3a5a, #2a2a4a);
+                                    border: 1px solid #5a5a7a;
+                                    border-radius: 3px;
+                                    color: #ffffff;
+                                    text-decoration: none;
+                                    font-size: 10px;
+                                    transition: all 0.2s ease;
+                                    box-shadow: inset 1px 1px 2px rgba(255,255,255,0.1);
+                                ">📄 Download .DOCX</a>
+                            </div>
+
+                            <div style="text-align: center; margin-bottom: 20px;">
+                                <h3 style="font-size: 16px; color: #FFFFFF; margin-bottom: 6px; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); border-bottom: 1px solid #B0B0B0; padding-bottom: 6px;">Peter Baumgartner</h3>
+                                <div style="font-size: 9px; color: #A0A0A0; margin-bottom: 15px;">
+                                    Mission Viejo, CA · <a href="mailto:p.l.baumgartner@gmail.com" style="color: #60C0E0; text-decoration: none;">p.l.baumgartner@gmail.com</a> · 206.518.3344 · <a href="https://www.linkedin.com" style="color: #60C0E0; text-decoration: none;">LinkedIn</a>
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 20px;">
+                                <h4 style="font-size: 12px; color: #FFFFFF; margin-bottom: 10px; text-shadow: 1px 1px 1px rgba(0,0,0,0.8); border-bottom: 1px solid #5a5a7a; padding-bottom: 5px;">Summary</h4>
+                                <p style="font-size: 10px; line-height: 1.3; margin-bottom: 0;">
+                                    Senior Program Manager with 10+ years driving product strategy, shipping scalable automation systems, and leading cross-functional teams at Microsoft. Expertise in launching AI-driven user experiences, significantly reducing operational costs, and ensuring measurable impact.
+                                </p>
+                            </div>
+
+                            <div style="margin-bottom: 20px;">
+                                <h4 style="font-size: 12px; color: #FFFFFF; margin-bottom: 10px; text-shadow: 1px 1px 1px rgba(0,0,0,0.8); border-bottom: 1px solid #5a5a7a; padding-bottom: 5px;">Key Skills</h4>
+                                <ul style="margin-left: 15px; list-style: disc;">
+                                    <li style="margin-bottom: 8px; font-size: 9px; line-height: 1.2;">
+                                        <span style="color: #E6D060;"><strong>Product & Program Management:</strong></span>
+                                        Product roadmapping, agile/Scrum execution, OKR planning, risk management
+                                    </li>
+                                    <li style="margin-bottom: 8px; font-size: 9px; line-height: 1.2;">
+                                        <span style="color: #E6D060;"><strong>Technical Expertise:</strong></span>
+                                        AI integration, automation systems, data analysis, Azure DevOps, enterprise CMS
+                                    </li>
+                                    <li style="margin-bottom: 0; font-size: 9px; line-height: 1.2;">
+                                        <span style="color: #E6D060;"><strong>Leadership & Communication:</strong></span>
+                                        Cross-functional team leadership, stakeholder alignment, workshop facilitation
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <div>
+                                <h4 style="font-size: 12px; color: #FFFFFF; margin-bottom: 10px; text-shadow: 1px 1px 1px rgba(0,0,0,0.8); border-bottom: 1px solid #5a5a7a; padding-bottom: 5px;">Experience</h4>
+                                
+                                <div style="margin-bottom: 15px;">
+                                    <div style="font-size: 10px; color: #FFFFFF; font-weight: bold; margin-bottom: 3px;">Senior Content Program Manager – Microsoft Corporation</div>
+                                    <div style="font-size: 9px; color: #A0A0A0; margin-bottom: 5px; font-style: italic;">Redmond, WA / Remote — 2016 to 2025</div>
+                                    <div style="font-size: 9px; line-height: 1.2;">Led content strategy for Microsoft 365. Launched AI-powered video creation system reducing costs by 100x. Improved content accuracy from 50-90%.</div>
+                                </div>
+                                
+                                <div style="margin-bottom: 15px;">
+                                    <div style="font-size: 10px; color: #FFFFFF; font-weight: bold; margin-bottom: 3px;">Sales Engineer – Wave Broadband</div>
+                                    <div style="font-size: 9px; color: #A0A0A0; margin-bottom: 5px; font-style: italic;">Kirkland, WA — 2015 to 2016</div>
+                                    <div style="font-size: 9px; line-height: 1.2;">Designed custom network solutions. Closed multi-year contracts exceeding revenue targets.</div>
+                                </div>
+                                
+                                <div style="margin-bottom: 0;">
+                                    <div style="font-size: 10px; color: #FFFFFF; font-weight: bold; margin-bottom: 3px;">Technical Writer – Microsoft (Contract)</div>
+                                    <div style="font-size: 9px; color: #A0A0A0; margin-bottom: 5px; font-style: italic;">Redmond, WA — 2014 to 2015</div>
+                                    <div style="font-size: 9px; line-height: 1.2;">Created Office 365 support content. Led content refresh improving satisfaction scores.</div>
+                                </div>                            </div>
+                        `
+                    }
+                };
+};
+
+const menuButtons = document.querySelectorAll('.menu-list button');
+const menu = document.getElementById('menu');
+const contentArea = document.getElementById('content-area');
+const backBtn = document.getElementById('back-button');
+const titleElem = document.getElementById('content-title');
+const bodyElem = document.getElementById('content-body');
+
+menuButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+        const key = btn.dataset.menu;
+        if (key === 'contact') {
+            window.location.href = 'mailto:p.l.baumgartner@gmail.com';
+            return;
+        }
+        if (key === 'magic') {
+            window.open('https://moxfield.com/users/plbaumgartner', '_blank');
+            return;
+        }
+        if (key === 'save') {
+            startSaveQuitSequence();
+            return;
+        }
+        const data = menuContent[key];
+        if (data) {
+            titleElem.textContent = data.title;
+            bodyElem.innerHTML = data.content;
+            menu.style.display = 'none';
+            contentArea.style.display = 'block';
+        }
+    });
+});
+
+backBtn.addEventListener('click', () => {
+    contentArea.style.display = 'none';
+    menu.style.display = 'block';
+});
+
+function startSaveQuitSequence() {
+    const loading = document.createElement('div');
+    loading.style.position = 'fixed';
+    loading.style.top = '0';
+    loading.style.left = '0';
+    loading.style.width = '100vw';
+    loading.style.height = '100vh';
+    loading.style.background = '#000';
+    loading.style.display = 'flex';
+    loading.style.flexDirection = 'column';
+    loading.style.alignItems = 'center';
+    loading.style.justifyContent = 'center';
+    loading.style.fontFamily = 'Alexandria, sans-serif';
+    loading.innerHTML = '<p>Saving...</p>';
+    document.body.appendChild(loading);
+    setTimeout(() => {
+        loading.innerHTML = '<p>Goodbye.</p>';
+        setTimeout(() => { document.body.innerHTML = ''; }, 700);
+    }, 1000);
+}
+</script>
+</body>
+</html>
