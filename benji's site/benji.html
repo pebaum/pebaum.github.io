@@ -82,7 +82,10 @@
         /* Main Content Area */
         .main-area {
             width: 100%;
-            background: linear-gradient(180deg, #2F2F2F, #252525);
+            background-image: url('./benji-battle-model.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
             padding: 15px;
             position: relative;
             overflow-y: auto;
@@ -101,8 +104,7 @@
         }        .character-portrait {
             width: 80px;
             height: 80px;
-            background: linear-gradient(45deg, #3B3E45, #2F2F2F);
-            border: 2px solid #B0B0B0;
+                        border: 2px solid #B0B0B0;
             border-radius: 3px;
             display: flex;
             align-items: center;
@@ -111,12 +113,12 @@
             color: #A0A0A0;
             font-size: 12px;
             text-align: center;
-            flex-shrink: 0;            box-shadow: inset 1px 1px 2px rgba(255,255,255,0.1), inset -1px -1px 2px rgba(0,0,0,0.3);
+            flex-shrink: 0;
+            box-shadow: inset 1px 1px 2px rgba(255,255,255,0.1), inset -1px -1px 2px rgba(0,0,0,0.3);
             background-image: url('./benji-battle-model.png');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
-            background-color: #4A90E2;
         }
 
         .character-info {
@@ -382,7 +384,7 @@
                             <div style="margin-left: 10px; font-size: 10px; color: #A0A0A0;">
                                 <span id="musicStatus">Ready to play</span>
                             </div>
-                        </div>                        <audio id="bgMusic" loop>
+                        </div>                        <audio id="bgMusic" loop preload="auto">
                             <source src="./Vamo'alla flamenco.mp3" type="audio/mpeg">
                             Your browser does not support the audio element.
                         </audio>
@@ -455,7 +457,6 @@
 
             init() {
                 this.setupMusicPlayer();
-                this.autoPlayMusic();
             }
 
             setupMusicPlayer() {
@@ -525,23 +526,7 @@
 
             pauseMusic() {
                 this.bgMusic.pause();
-            }            autoPlayMusic() {
-                // Try to auto-play when page loads (may be blocked by browser)
-                setTimeout(() => {
-                    this.playMusic();
-                }, 1000);
-
-                // Also try to play on first user interaction
-                const enableAudioOnInteraction = () => {
-                    this.playMusic();
-                    document.removeEventListener('click', enableAudioOnInteraction);
-                    document.removeEventListener('keydown', enableAudioOnInteraction);
-                };
-                
-                document.addEventListener('click', enableAudioOnInteraction);
-                document.addEventListener('keydown', enableAudioOnInteraction);
             }
-        }
 
         // Initialize when page loads
         document.addEventListener('DOMContentLoaded', () => {
