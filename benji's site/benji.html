@@ -111,9 +111,8 @@
             color: #A0A0A0;
             font-size: 12px;
             text-align: center;
-            flex-shrink: 0;
-            box-shadow: inset 1px 1px 2px rgba(255,255,255,0.1), inset -1px -1px 2px rgba(0,0,0,0.3);
-            background-image: url('./benji battle model.png');
+            flex-shrink: 0;            box-shadow: inset 1px 1px 2px rgba(255,255,255,0.1), inset -1px -1px 2px rgba(0,0,0,0.3);
+            background-image: url('./benji-battle-model.png');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -484,42 +483,63 @@
                 this.bgMusic.addEventListener('ended', () => {
                     this.isPlaying = false;
                     this.musicStatus.textContent = 'Ready to play';
+                });                this.bgMusic.addEventListener('error', (e) => {
+                    console.log('Audio error:', e);
+                    this.musicStatus.textContent = 'Music file error - check console';
                 });
 
-                this.bgMusic.addEventListener('error', () => {
-                    this.musicStatus.textContent = 'Music file not found';
+                this.bgMusic.addEventListener('loadstart', () => {
+                    this.musicStatus.textContent = 'Loading music...';
+                });
+
+                this.bgMusic.addEventListener('canplay', () => {
+                    this.musicStatus.textContent = 'Music ready to play';
                 });
 
                 // Set volume to comfortable level
                 this.bgMusic.volume = 0.4;
-            }
-
-            playMusic() {
+            }            playMusic() {
                 try {
+                    // Check if audio file is loaded
+                    if (this.bgMusic.readyState === 0) {
+                        this.musicStatus.textContent = 'Loading music file...';
+                        this.bgMusic.load(); // Force reload
+                        return;
+                    }
+
                     const playPromise = this.bgMusic.play();
                     if (playPromise !== undefined) {
                         playPromise.then(() => {
                             console.log('Music started successfully');
+                            this.musicStatus.textContent = 'Now playing...';
                         }).catch(error => {
                             console.log('Auto-play prevented:', error);
-                            this.musicStatus.textContent = 'Click play to start music';
+                            this.musicStatus.textContent = 'Click play button to start music';
                         });
                     }
                 } catch (error) {
                     console.log('Play error:', error);
-                    this.musicStatus.textContent = 'Unable to play music';
+                    this.musicStatus.textContent = 'Unable to play music - ' + error.message;
                 }
             }
 
             pauseMusic() {
                 this.bgMusic.pause();
-            }
-
-            autoPlayMusic() {
+            }            autoPlayMusic() {
                 // Try to auto-play when page loads (may be blocked by browser)
                 setTimeout(() => {
                     this.playMusic();
                 }, 1000);
+
+                // Also try to play on first user interaction
+                const enableAudioOnInteraction = () => {
+                    this.playMusic();
+                    document.removeEventListener('click', enableAudioOnInteraction);
+                    document.removeEventListener('keydown', enableAudioOnInteraction);
+                };
+                
+                document.addEventListener('click', enableAudioOnInteraction);
+                document.addEventListener('keydown', enableAudioOnInteraction);
             }
         }
 
