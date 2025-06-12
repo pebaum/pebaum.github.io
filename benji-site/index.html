@@ -6,12 +6,12 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">    <meta name="description" content="Benji's Page">
-    <link rel="icon" type="image/jpeg" href="../Peter Baumgartner Silvertone Headshot.jpg">
+    <link rel="icon" type="image/jpeg" href="../assets/images/Peter Baumgartner Silvertone Headshot.jpg">
     <title>Benji's Adventure</title>
     <style>
         @font-face {
             font-family: 'Alexandria';
-            src: url('./Alexandria.ttf') format('truetype');
+            src: url('../assets/fonts/Alexandria.ttf') format('truetype');
             font-weight: normal;
             font-style: normal;
             font-display: swap;
@@ -24,7 +24,7 @@
         }
 
         :root {
-            --ff9-cursor-url: url('./cursor.png');
+            --ff9-cursor-url: url('../assets/images/cursor.png');
         }
         
         * {
@@ -82,7 +82,7 @@
         /* Main Content Area */
         .main-area {
             width: 100%;
-            background-image: url('./benji-battle-model.png');
+            background-image: url('../assets/images/benji-battle-model.png');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -115,7 +115,7 @@
             text-align: center;
             flex-shrink: 0;
             box-shadow: inset 1px 1px 2px rgba(255,255,255,0.1), inset -1px -1px 2px rgba(0,0,0,0.3);
-            background-image: url('./benji-battle-model.png');
+            background-image: url('../assets/images/benji-battle-model.png');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -203,6 +203,22 @@
 
         .music-button:active {
             background: linear-gradient(135deg, #3A3A5A, #2A2A4A);
+        }
+
+        /* Pointer (FF9 hand cursor) */
+        #pointer {
+            position: absolute;
+            width: 140px;
+            height: 105px;
+            background-image: url('../assets/images/cursor.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            left: -45px;
+            transition: top 0.15s ease;
+            z-index: 10;
+            pointer-events: none;
+            image-rendering: pixelated;
+            transform: translateY(-15px);
         }
 
         /* Content Sections */
@@ -349,6 +365,7 @@
         <div class="content-wrapper">
             <div class="ffix-layout">
                 <div class="main-area">
+                    <div id="pointer"></div>
                     <!-- Character Header -->
                     <div class="character-header">                        <div class="character-portrait" id="benjiPortrait">
                         </div>
@@ -386,7 +403,7 @@
                         </div>
 
                         <audio id="bgMusic" loop preload="auto">
-                            <source src="./Vamo'alla flamenco.mp3" type="audio/mpeg">
+                            <source src="../assets/audio/Vamo'alla flamenco.mp3" type="audio/mpeg">
                             Your browser does not support the audio element.
                         </audio>
                     </div>
@@ -452,12 +469,24 @@
                 this.pauseBtn = document.getElementById('pauseBtn');
                 this.musicStatus = document.getElementById('musicStatus');
                 this.isPlaying = false;
+
+                this.pointer = document.getElementById('pointer');
+                this.mainArea = document.querySelector('.main-area');
+                this.listItems = document.querySelectorAll('.favorites-list li');
+                this.currentIndex = 0;
+
+                this.cursorSound = new Audio('../assets/audio/Final Fantasy IX (PS1) - Cut Menu Cursor Sound.mp3');
+                this.cursorSound.volume = 0.3;
+                this.cursorSound.preload = 'auto';
+                this.soundPlaying = false;
                 
                 this.init();
             }
 
             init() {
                 this.setupMusicPlayer();
+                this.updatePointer();
+                this.startPointerLoop();
             }
 
             setupMusicPlayer() {
@@ -523,8 +552,50 @@
                     console.log('Play error:', error);
                     this.musicStatus.textContent = 'Unable to play music - ' + error.message;
                 }
-            }            pauseMusic() {
+            }
+
+            pauseMusic() {
                 this.bgMusic.pause();
+            }
+
+            updatePointer() {
+                const item = this.listItems[this.currentIndex];
+                if (item && this.pointer && this.mainArea) {
+                    const itemRect = item.getBoundingClientRect();
+                    const areaRect = this.mainArea.getBoundingClientRect();
+                    this.pointer.style.left = (itemRect.left - areaRect.left - 45) + 'px';
+                    this.pointer.style.top = (itemRect.top - areaRect.top + itemRect.height / 2 - 37) + 'px';
+                }
+            }
+
+            startPointerLoop() {
+                if (this.listItems.length === 0) return;
+                setInterval(() => {
+                    this.currentIndex = (this.currentIndex + 1) % this.listItems.length;
+                    this.updatePointer();
+                    this.playCursorSound();
+                }, 1500);
+            }
+
+            playCursorSound() {
+                try {
+                    if (this.soundPlaying) {
+                        this.cursorSound.pause();
+                        this.cursorSound.currentTime = 0;
+                    }
+                    this.soundPlaying = true;
+                    const playPromise = this.cursorSound.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(err => {
+                            console.debug('Audio play prevented:', err);
+                            this.soundPlaying = false;
+                        });
+                    }
+                    this.cursorSound.onended = () => { this.soundPlaying = false; };
+                } catch (e) {
+                    console.debug('Cursor sound error:', e);
+                    this.soundPlaying = false;
+                }
             }
         }
 
