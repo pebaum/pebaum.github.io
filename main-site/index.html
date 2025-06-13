@@ -1198,6 +1198,15 @@
                         this.updateContent();
                     });
                 }
+
+                // Close modal when clicking outside of it
+                document.addEventListener('click', (event) => {
+                    if (this.modalOpen &&
+                        !this.contentModal.contains(event.target) &&
+                        !event.target.closest('.menu-item')) {
+                        this.closeModal();
+                    }
+                });
             }            navigateUp() {
                 this.currentMenuItem = (this.currentMenuItem - 1 + this.menuItems.length) % this.menuItems.length;
                 this.updateActiveItem();
