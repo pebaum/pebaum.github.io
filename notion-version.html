@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peter Baumgartner - Final Fantasy IX Style Portfolio</title>
+    <style>
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #1a1a1a;
+            color: #ffffff;
+            line-height: 1.6;
+        }
+        
+        .ffix-header {
+            text-align: center;
+            border: 2px solid #B0B0B0;
+            background: linear-gradient(135deg, #2F2F2F, #252525);
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        
+        .character-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .character-portrait {
+            width: 80px;
+            height: 80px;
+            border: 2px solid #B0B0B0;
+            border-radius: 4px;
+            background: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+        }
+        
+        .character-stats {
+            text-align: left;
+        }
+        
+        .character-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 5px;
+        }
+        
+        .character-level {
+            font-size: 14px;
+            color: #ffffff;
+            margin-bottom: 3px;
+        }
+        
+        .character-hp, .character-mp {
+            font-size: 12px;
+            color: #ffffff;
+        }
+        
+        .location-info {
+            text-align: center;
+            color: #A0A0A0;
+            font-size: 14px;
+            margin-top: 15px;
+        }
+        
+        .menu-section {
+            border: 2px solid #B0B0B0;
+            background: linear-gradient(135deg, #2F2F2F, #252525);
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+        
+        .menu-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #E6D060;
+            margin-bottom: 15px;
+            text-align: center;
+            border-bottom: 1px solid #5a5a7a;
+            padding-bottom: 10px;
+        }
+        
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .stat-label {
+            color: #A0A0A0;
+        }
+        
+        .stat-value {
+            color: #ffffff;
+        }
+        
+        .equipment-list {
+            margin-top: 15px;
+        }
+        
+        .equipment-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 5px 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            margin-bottom: 5px;
+            font-size: 12px;
+        }
+        
+        .equipment-icon {
+            font-size: 16px;
+            color: #60A0C0;
+        }
+        
+        .music-section, .art-section {
+            margin-bottom: 20px;
+        }
+        
+        .music-category {
+            margin-bottom: 15px;
+        }
+        
+        .music-category-title {
+            color: #E6D060;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .music-list {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .music-item {
+            margin-bottom: 5px;
+            padding: 3px 0;
+        }
+        
+        .music-link {
+            color: #60C0E0;
+            text-decoration: none;
+            font-size: 13px;
+        }
+        
+        .music-link:hover {
+            text-decoration: underline;
+        }
+        
+        .art-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+        
+        .art-button {
+            padding: 8px 15px;
+            background: linear-gradient(135deg, #3a3a5a, #2a2a4a);
+            border: 1px solid #5a5a7a;
+            border-radius: 4px;
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+        
+        .art-button:hover {
+            background: linear-gradient(135deg, #4a4a6a, #3a3a5a);
+            color: #ffffff;
+        }
+        
+        .contact-section {
+            text-align: center;
+        }
+        
+        .contact-button {
+            display: inline-block;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #3a3a5a, #2a2a4a);
+            border: 1px solid #5a5a7a;
+            border-radius: 4px;
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 16px;
+            transition: all 0.2s ease;
+        }
+        
+        .contact-button:hover {
+            background: linear-gradient(135deg, #4a4a6a, #3a3a5a);
+            color: #ffffff;
+        }
+        
+        .resume-download {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .download-button {
+            display: inline-block;
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #3a3a5a, #2a2a4a);
+            border: 1px solid #5a5a7a;
+            border-radius: 4px;
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 12px;
+        }
+        
+        .download-button:hover {
+            background: linear-gradient(135deg, #4a4a6a, #3a3a5a);
+            color: #ffffff;
+        }
+        
+        .resume-content {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .resume-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .resume-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #B0B0B0;
+            padding-bottom: 5px;
+        }
+        
+        .resume-contact {
+            font-size: 12px;
+            color: #A0A0A0;
+        }
+        
+        .resume-section {
+            margin-bottom: 20px;
+        }
+        
+        .resume-section-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #5a5a7a;
+            padding-bottom: 5px;
+        }
+        
+        .job-item {
+            margin-bottom: 15px;
+        }
+        
+        .job-title {
+            font-size: 12px;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 3px;
+        }
+        
+        .job-company {
+            font-size: 11px;
+            color: #A0A0A0;
+            font-style: italic;
+            margin-bottom: 5px;
+        }
+        
+        .job-description {
+            font-size: 11px;
+            line-height: 1.3;
+        }
+        
+        .skill-category {
+            margin-bottom: 8px;
+            font-size: 11px;
+            line-height: 1.3;
+        }
+        
+        .skill-title {
+            color: #E6D060;
+            font-weight: bold;
+        }
+        
+        .save-files {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+        
+        .save-button {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #3a3a5a, #2a2a4a);
+            border: 1px solid #5a5a7a;
+            border-radius: 4px;
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 12px;
+        }
+        
+        .save-button:hover {
+            background: linear-gradient(135deg, #4a4a6a, #3a3a5a);
+            color: #ffffff;
+        }
+        
+        .section-description {
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+        
+        @media (max-width: 600px) {
+            .character-info {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .stat-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .art-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Character Header -->
+    <div class="ffix-header">
+        <div class="character-info">
+            <div class="character-portrait">👤</div>
+            <div class="character-stats">
+                <div class="character-name">Peter</div>
+                <div class="character-level">Lv 37</div>
+                <div class="character-hp">HP 1988/2025</div>
+                <div class="character-mp">MP   34/  47</div>
+            </div>
+        </div>
+        <div class="location-info">
+            📍 California/S.Coast &nbsp;&nbsp;&nbsp; 🔮 18/18 &nbsp;&nbsp;&nbsp; Gil: 92691
+        </div>
+    </div>
+
+    <!-- Status Section -->
+    <div class="menu-section">
+        <div class="menu-title">⚔️ Status</div>
+        
+        <div class="stat-grid">
+            <div class="stat-item">
+                <span class="stat-label">Speed</span>
+                <span class="stat-value">: 23</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">EXP</span>
+                <span class="stat-value">: 0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Strength</span>
+                <span class="stat-value">: 21</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Next Lv</span>
+                <span class="stat-value">: 16</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Magic</span>
+                <span class="stat-value">: 18</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Attack</span>
+                <span class="stat-value">: 12</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Spirit</span>
+                <span class="stat-value">: 23</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Defence</span>
+                <span class="stat-value">: 6</span>
+            </div>
+        </div>
+        
+        <div class="equipment-list">
+            <div class="equipment-item">
+                <span class="equipment-icon">⚔️</span>
+                <span>🗡️ Developer Tools</span>
+            </div>
+            <div class="equipment-item">
+                <span class="equipment-icon">🔵</span>
+                <span>🎓 Bachelor's Degree</span>
+            </div>
+            <div class="equipment-item">
+                <span class="equipment-icon">⚙️</span>
+                <span>⌚ Experience</span>
+            </div>
+            <div class="equipment-item">
+                <span class="equipment-icon">👕</span>
+                <span>💼 Professional Skills</span>
+            </div>
+            <div class="equipment-item">
+                <span class="equipment-icon">💎</span>
+                <span>🌟 Achievements</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resume Section -->
+    <div class="menu-section">
+        <div class="menu-title">📄 Resume</div>
+        
+        <div class="resume-download">
+            <a href="./resume/Peter Baumgartner.docx" class="download-button">📄 Download .DOCX</a>
+        </div>
+        
+        <div class="resume-content">
+            <div class="resume-header">
+                <div class="resume-name">Peter Baumgartner</div>
+                <div class="resume-contact">
+                    Mission Viejo, CA · p.l.baumgartner@gmail.com · 206.518.3344
+                </div>
+            </div>
+            
+            <div class="resume-section">
+                <div class="resume-section-title">Summary</div>
+                <p>Senior Program Manager with 10+ years driving product strategy, shipping scalable automation systems, and leading cross-functional teams at Microsoft. Expertise in launching AI-driven user experiences, significantly reducing operational costs, and ensuring measurable impact.</p>
+            </div>
+            
+            <div class="resume-section">
+                <div class="resume-section-title">Key Skills</div>
+                <div class="skill-category">
+                    <span class="skill-title">Product & Program Management:</span>
+                    Product roadmapping, agile/Scrum execution, OKR planning, risk management
+                </div>
+                <div class="skill-category">
+                    <span class="skill-title">Technical Expertise:</span>
+                    AI integration, automation systems, data analysis, Azure DevOps, enterprise CMS
+                </div>
+                <div class="skill-category">
+                    <span class="skill-title">Leadership & Communication:</span>
+                    Cross-functional team leadership, stakeholder alignment, workshop facilitation
+                </div>
+            </div>
+            
+            <div class="resume-section">
+                <div class="resume-section-title">Experience</div>
+                
+                <div class="job-item">
+                    <div class="job-title">Senior Content Program Manager – Microsoft Corporation</div>
+                    <div class="job-company">Redmond, WA / Remote — 2016 to 2025</div>
+                    <div class="job-description">Led content strategy for Microsoft 365. Launched AI-powered video creation system reducing costs by 100x. Improved content accuracy from 50-90%.</div>
+                </div>
+                
+                <div class="job-item">
+                    <div class="job-title">Sales Engineer – Wave Broadband</div>
+                    <div class="job-company">Kirkland, WA — 2015 to 2016</div>
+                    <div class="job-description">Designed custom network solutions. Closed multi-year contracts exceeding revenue targets.</div>
+                </div>
+                
+                <div class="job-item">
+                    <div class="job-title">Technical Writer – Microsoft (Contract)</div>
+                    <div class="job-company">Redmond, WA — 2014 to 2015</div>
+                    <div class="job-description">Created Office 365 support content. Led content refresh improving satisfaction scores.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Music Section -->
+    <div class="menu-section">
+        <div class="menu-title">🎵 Music</div>
+        <div class="section-description">
+            My musical compositions across various projects and collaborations.
+        </div>
+        
+        <div class="music-section">
+            <div class="music-category">
+                <div class="music-category-title">Solo</div>
+                <ul class="music-list">
+                    <li class="music-item">• <a href="https://open.spotify.com/artist/4T87J20L8uHSVkOuhP2oYX" class="music-link">Peter Baumgartner (Artist Page)</a></li>
+                    <li class="music-item">• <a href="https://open.spotify.com/album/4DZCyZqEWIXzdPey4lNdrM" class="music-link">Section of Ingrid</a></li>
+                    <li class="music-item">• <a href="https://open.spotify.com/album/4AsYtbaOdaMUYewuquvomO" class="music-link">Upper Room</a></li>
+                    <li class="music-item">• <a href="https://open.spotify.com/album/2necIl7Jrp8X6WkeO38k3M" class="music-link">Through the Corridors of Sleep</a></li>
+                    <li class="music-item">• <a href="https://open.spotify.com/album/5SxwvQeGKK9Y2HHOoa1Iw7" class="music-link">Local Failures</a></li>
+                    <li class="music-item">• <a href="https://open.spotify.com/album/0fTrKx7ZuLkwZ3UMSX1ABk" class="music-link">For Jackie Dean Yee 5.7.23</a></li>
+                    <li class="music-item">• <a href="https://open.spotify.com/album/24Nx5Jqavu5bWIEd3UmvVi" class="music-link">Woolen</a></li>
+                    <li class="music-item">• <a href="https://open.spotify.com/album/17eUP9ZYo0iF7qsWUaQzMP" class="music-link">MUSIC FOR ON HOLD</a></li>
+                    <li class="music-item">• <a href="https://open.spotify.com/album/56eeEbWhdtz22CAwbCzWUB" class="music-link">A Prism of My Own Making</a></li>
+                    <li class="music-item">• <a href="https://open.spotify.com/album/4vLaP0eyN9JDDqtlloo2BL" class="music-link">Autosave</a></li>
+                    <li class="music-item">• <a href="https://open.spotify.com/album/4b1plg4AJaHk7ZcXnVTzyK" class="music-link">Ellipsis-heavy Dialogue</a></li>
+                    <li class="music-item">• <a href="https://open.spotify.com/album/6nTAdutlpB9dN0yl1U7gfB" class="music-link">STEALING FROM GIANTS</a></li>
+                    <li class="music-item">• <a href="https://open.spotify.com/album/0lE6WgropnGgOo0CcUrqJ4" class="music-link">///// (World in Silence / Rainbow of Nothing)</a></li>
+                </ul>
+            </div>
+            
+            <div class="music-category">
+                <div class="music-category-title">In The Infinite Reprise</div>
+                <ul class="music-list">
+                    <li class="music-item">• <a href="https://open.spotify.com/album/5WaE4Svo5tSuyetr5f1kMk" class="music-link">Sometimes I Dream</a></li>
+                </ul>
+            </div>
+            
+            <div class="music-category">
+                <div class="music-category-title">In Proto Evangelion</div>
+                <ul class="music-list">
+                    <li class="music-item">• <a href="https://open.spotify.com/album/30pGnh3ueQHsqJoLw46XNA" class="music-link">Dimly Lit</a></li>
+                    <li class="music-item">• <a href="https://open.spotify.com/album/4ZJj6WZK7BUfsd0Ko4mKYH" class="music-link">Emmanuel</a></li>
+                    <li class="music-item">• <a href="https://open.spotify.com/album/3R46zfvQIBtVdZT3MsOIBx" class="music-link">My Heart Has Spoken</a></li>
+                </ul>
+            </div>
+            
+            <div class="music-category">
+                <div class="music-category-title">In Mountlake Music</div>
+                <ul class="music-list">
+                    <li class="music-item">• <a href="https://open.spotify.com/album/2E8VthA6mnjAxKsk2W6Xz9" class="music-link">Songs of Deepening</a></li>
+                </ul>
+            </div>
+            
+            <div class="music-category">
+                <div class="music-category-title">Film Scores</div>
+                <ul class="music-list">
+                    <li class="music-item">• <a href="https://www.youtube.com/watch?v=08iASU7FCJk" class="music-link">The Sower (Pacific Parable)</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Visual Art Section -->
+    <div class="menu-section">
+        <div class="menu-title">🎨 Visual Art</div>
+        <div class="section-description">
+            Discover my digital and traditional art pieces.
+        </div>
+        
+        <div class="art-buttons">
+            <a href="./artworks/waterlillies.html" class="art-button">Water Lillies</a>
+            <a href="./artworks/viewofaburningcity.html" class="art-button">Burning City</a>
+            <a href="./artworks/colorexplore.html" class="art-button">Color Explorer</a>
+            <a href="./artworks/blocksnow.html" class="art-button">Block Snow</a>
+            <a href="./artworks/dungeongame.html" class="art-button">Dungeon Game</a>
+            <a href="./artworks/wordprocessor.html" class="art-button">Word Processor</a>
+            <a href="./artworks/mazesend.html" class="art-button">Maze Send</a>
+        </div>
+        
+        <p>Visual art allows me to explore color, form, and digital expression. From traditional-inspired pieces to interactive digital experiences, each work represents a journey of discovery.</p>
+    </div>
+
+    <!-- Poetry Section -->
+    <div class="menu-section">
+        <div class="menu-title">📝 Poetry</div>
+        <div class="section-description">
+            Words that capture moments, emotions, and dreams.
+        </div>
+        
+        <p><strong>Style:</strong> Free verse, experimental, digital poetry</p>
+        <p><strong>Themes:</strong> Technology, nature, human connection, time</p>
+        <p><strong>Current Work:</strong> Interactive poetry experiences</p>
+        
+        <p>Poetry is the art of distilling complex emotions and experiences into their purest form. Through verse, I explore the intersection of technology and humanity, finding beauty in both digital and natural worlds.</p>
+    </div>
+
+    <!-- Digital Magic Section -->
+    <div class="menu-section">
+        <div class="menu-title">✨ Digital Magic</div>
+        <div class="section-description">
+            The art of creating wonder through code and creativity.
+        </div>
+        
+        <p><strong>Specialties:</strong> Interactive experiences, generative art, algorithmic creativity</p>
+        <p><strong>Tools:</strong> JavaScript, Canvas API, WebGL, Creative coding</p>
+        <p><strong>Philosophy:</strong> Technology as a medium for wonder and discovery</p>
+        
+        <p>Magic in the digital age isn't about illusion—it's about creating experiences that inspire wonder, curiosity, and joy. Through creative coding and interactive design, I craft digital spells that bring ideas to life.</p>
+        
+        <p style="text-align: center; margin-top: 20px;">
+            <a href="https://moxfield.com/users/plbaumgartner" class="art-button">🔮 Visit Moxfield Profile</a>
+        </p>
+    </div>
+
+    <!-- Photography Section -->
+    <div class="menu-section">
+        <div class="menu-title">📸 Photography</div>
+        <div class="section-description">
+            Capturing moments and perspectives through the lens.
+        </div>
+        
+        <p><strong>Focus Areas:</strong> Street photography, digital landscapes, candid moments</p>
+        <p><strong>Equipment:</strong> Digital cameras, smartphone photography, editing software</p>
+        <p><strong>Style:</strong> Documentary, artistic, experimental</p>
+        
+        <p>Photography is about seeing the extraordinary in the ordinary. Whether capturing urban landscapes or intimate moments, each photo tells a story and preserves a fleeting moment in time.</p>
+    </div>
+
+    <!-- Contact Section -->
+    <div class="menu-section">
+        <div class="menu-title">📧 Contact</div>
+        <div class="contact-section">
+            <a href="mailto:p.l.baumgartner@gmail.com" class="contact-button">p.l.baumgartner@gmail.com</a>
+        </div>
+    </div>
+
+    <!-- Save Files Section -->
+    <div class="menu-section">
+        <div class="menu-title">💾 Save Files</div>
+        <div class="section-description">
+            Previous iterations and saved states of this digital world.
+        </div>
+        
+        <div class="save-files">
+            <a href="./Save%20files/old-homepage-6.4.html" class="save-button">Original ASCII World (v6.4)</a>
+            <a href="./Save%20files/index_2025-06-06.html" class="save-button">June 2025 Snapshot</a>
+        </div>
+        
+        <p>Like save files in a video game, these archived versions preserve different states of this digital space. Each represents a moment in the evolution of this creative project, documenting the journey from ASCII art to interactive experience.</p>
+    </div>
+</body>
+</html>
