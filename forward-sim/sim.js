@@ -19,9 +19,63 @@ const LOCATIONS_BASE=[
 
 // ---------------- Card DB Parsing ----------------
 let CARD_DB=[]; const LOCATION_CARDS={};
-function simplifyLocation(n){return (n||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();}
+// Location key normalization (strip punctuation, leading 'the', and map spelling variants)
+const LOCATION_ALIASES={
+  'sicorro wastes':'sirroco wastes', // unify spelling
+  'sirroco wastes':'sirroco wastes'
+};
+function simplifyLocation(n){
+  let k=(n||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+  if(k.startsWith('the ')) k=k.slice(4); // drop leading 'the'
+  if(LOCATION_ALIASES[k]) k=LOCATION_ALIASES[k];
+  return k;
+}
 function clone(o){return JSON.parse(JSON.stringify(o));}
-function parseCSV(csv){ const lines=csv.split(/\r?\n/); const out=[]; let head=lines.findIndex(l=>/^card no/i.test(l)); if(head===-1) return out; for(let i=head+1;i<lines.length;i++){ const row=lines[i]; if(!row.trim()) continue; const parts=row.split(','); const name=(parts[3]||'').trim(); const typeRaw=(parts[2]||'').trim(); const assoc=(parts[1]||'').trim(); const raw=row; let type=typeRaw; const o={name,type,location:assoc,raw}; if(/(\d+)hp/i.test(raw)&&/fight/i.test(raw)) o.hp=parseInt(/(\d+)hp/i.exec(raw)[1]); if(/equip:.*1 ?atk/i.test(raw)) o.atk=(o.atk||0)+1; if(/equip:.*1 ?def/i.test(raw)) o.def=(o.def||0)+1; if(/heal (\d+)/i.test(raw)) o.heal=parseInt(/heal (\d+)/i.exec(raw)[1]); if(/full heal/i.test(raw)) o.fullHeal=true; if(/miss first 2/i.test(raw)) o.snareMissFirst=2; else if(/miss first attack/i.test(raw)) o.snareMissFirst=1; if(/first attack against deals double damage/i.test(raw)) o.snareDoubleFirstIncoming=true; if(/cleanse snare/i.test(raw)) o.cleansesSnare=true; if(/normal hit on 1/i.test(raw)) o.normalHitOn1=true; if(/block on 1-2/i.test(raw)) o.blockOn12=true; if(/when player reaches 0hp, heal 10/i.test(raw)) o.phoenixTear=true; if(/choose: -?(\d+)hp or bury/i.test(raw)) o.terrorHpLoss=parseInt(/choose: -?(\d+)hp/i.exec(raw)[1]); if(/save on (\d)/i.test(raw)&&/pit/i.test(raw)) o.pitTN=parseInt(/save on (\d)/i.exec(raw)[1]); if(['hollow','beast','scene','pit','snare','terror','blessing','item','equipment','location'].indexOf(type)===-1){ if(/equip:/i.test(raw)) type='equipment'; else if(/use:/i.test(raw)||/heal/i.test(raw)) type='item'; else if(/fight:/i.test(raw)) type='hollow'; else type='scene'; } o.type=type; out.push(o);} return out; }
+function parseCSV(csv){
+  function splitLine(line){
+    const res=[]; let cur=''; let q=false; for(let i=0;i<line.length;i++){
+      const ch=line[i];
+      if(ch==='"') { // toggle quote unless escaped
+        if(q && line[i+1]==='"') { cur+='"'; i++; }
+        else q=!q;
+      } else if(ch===',' && !q){ res.push(cur); cur=''; }
+      else cur+=ch;
+    }
+    res.push(cur); return res;
+  }
+  const lines=csv.split(/\r?\n/); const out=[]; const headIndex=lines.findIndex(l=>/^card no/i.test(l)); if(headIndex===-1) return out;
+  for(let i=headIndex+1;i<lines.length;i++){
+    const row=lines[i]; if(!row.trim()) continue;
+    const parts=splitLine(row);
+    const assoc=(parts[1]||'').trim();
+    const typeRaw=(parts[2]||'').trim();
+    const name=(parts[3]||'').trim();
+    const raw=row; let type=typeRaw;
+    const o={name,type,location:assoc,raw};
+    if(/(\d+)hp/i.test(raw)&&/fight/i.test(raw)) o.hp=parseInt(/(\d+)hp/i.exec(raw)[1]);
+    if(/equip:.*1 ?atk/i.test(raw)) o.atk=(o.atk||0)+1;
+    if(/equip:.*1 ?def/i.test(raw)) o.def=(o.def||0)+1;
+    if(/heal (\d+)/i.test(raw)) o.heal=parseInt(/heal (\d+)/i.exec(raw)[1]);
+    if(/full heal/i.test(raw)) o.fullHeal=true;
+    if(/miss first 2/i.test(raw)) o.snareMissFirst=2; else if(/miss first attack/i.test(raw)) o.snareMissFirst=1;
+    if(/first attack against deals double damage/i.test(raw)) o.snareDoubleFirstIncoming=true;
+    if(/cleanse snare/i.test(raw)) o.cleansesSnare=true;
+    if(/normal hit on 1/i.test(raw)) o.normalHitOn1=true;
+    if(/block on 1-2/i.test(raw)) o.blockOn12=true;
+    if(/when player reaches 0hp, heal 10/i.test(raw)) o.phoenixTear=true;
+    if(/choose: -?(\d+)hp or bury/i.test(raw)) o.terrorHpLoss=parseInt(/choose: -?(\d+)hp/i.exec(raw)[1]);
+    if(/save on (\d)/i.test(raw)&&/pit/i.test(raw)) o.pitTN=parseInt(/save on (\d)/i.exec(raw)[1]);
+    if(['hollow','beast','scene','pit','snare','terror','blessing','item','equipment','location'].indexOf(type)===-1){
+      if(/equip:/i.test(raw)) type='equipment';
+      else if(/use:/i.test(raw)||/heal/i.test(raw)) type='item';
+      else if(/fight:/i.test(raw)) type='hollow';
+      else type='scene';
+    }
+    o.type=type;
+    out.push(o);
+  }
+  return out;
+}
 function indexLocationCards(){ const locs=CARD_DB.filter(c=>c.type==='location'); locs.forEach(l=>{ const key=simplifyLocation(l.name||l.location); LOCATION_CARDS[key]=CARD_DB.filter(c=>c.location===l.name && c.type!=='location'); }); }
 function cardsForLocation(key){ const desired=['scene','equipment','item','snare','hollow','pit','beast','terror','blessing']; const pool=LOCATION_CARDS[key]; if(!pool||pool.length<5){ const rand=CARD_DB.filter(c=>desired.includes(c.type)); return RNG.shuffle(rand.slice()).slice(0,9).map(clone);} const picked=[]; desired.forEach(t=>{ const f=pool.find(c=>c.type===t&&!picked.includes(c)); if(f) picked.push(f); }); while(picked.length<9) picked.push(RNG.pick(pool)); return picked.slice(0,9).map(clone); }
 
@@ -42,11 +96,11 @@ function updateHUD(){ hud.hp.textContent=G.hp; hud.maxHp.textContent=G.maxHp; hu
 
 // ---------------- Game Flow ----------------
 function startGame(){ RNG.applySeed(seedInput.value.trim()); resetState(); hud.log.textContent=''; summaryPanel.style.display='none'; log('Seed '+RNG.seed+' v2025-08-14-a'); buildDeck(); G.locationOrder=RNG.shuffle([...LOCATIONS_BASE]); buttons.start.disabled=true; buttons.reset.disabled=false; buttons.next.disabled=false; buttons.dragon.disabled=true; nextLocation(); }
-function nextLocation(){ G.locIndex++; if(G.locIndex>=G.locationOrder.length){ log('All locations cleared. Dragon available.'); buttons.next.disabled=true; buttons.dragon.disabled=false; return; } const loc=G.locationOrder[G.locIndex]; log('Enter: '+loc.name); const key=simplifyLocation(loc.name); const cards=cardsForLocation(key); G.board=loc.layout.map((cell,i)=>({ id:cell.id,x:cell.x,y:cell.y,card:cards[i],state:'faceDown',layer:Infinity })); G.startTile=null; renderBoard(); log('Pick a starting tile (top row).'); updateHUD(); }
+function nextLocation(){ G.locIndex++; if(G.locIndex>=G.locationOrder.length){ log('All locations cleared. Dragon available.'); buttons.next.disabled=true; buttons.dragon.disabled=false; return; } const loc=G.locationOrder[G.locIndex]; log('Enter: '+loc.name); const key=simplifyLocation(loc.name); const cards=cardsForLocation(key); G.board=loc.layout.map((cell,i)=>({ id:cell.id,x:cell.x,y:cell.y,card:cards[i],state:'faceDown',layer:Infinity })); G.startTile=null; renderBoard(); log('Pick a starting tile (bottom row).'); updateHUD(); }
 function renderBoard(){ const loc=G.locationOrder[G.locIndex]; if(!loc) return; boardEl.style.gridTemplateColumns=`repeat(${Math.max(...loc.layout.map(c=>c.x))+1},72px)`; boardEl.innerHTML=''; const minLayer=currentMinUnflippedLayer(); G.board.forEach(t=>{ const d=document.createElement('div'); d.className='tile '+t.state+(t.start?' start':''); d.style.gridColumnStart=t.x+1; d.style.gridRowStart=t.y+1; d.dataset.id=t.id; if(t.state==='faceDown'){ d.textContent='?'; if(canFlip(t,minLayer)) d.classList.add('adjacent'); } else { d.innerHTML=`<div>${t.card.name}</div><div class="tag ${cssTag(t.card.type)}">${t.card.type}</div>`; } d.addEventListener('click',()=> attemptFlip(t.id)); boardEl.appendChild(d); }); }
 function cssTag(t){ return ['monster','item','equipment','scene','pit','snare','terror','blessing'].includes(t)?t:'special'; }
 function attemptFlip(id){ const tile=G.board.find(t=>t.id==id); if(!tile) return; const minLayer=currentMinUnflippedLayer(); if(!canFlip(tile,minLayer)) return; flip(tile); }
-function canFlip(tile,minLayer){ if(tile.state!=='faceDown') return false; if(!G.startTile){ const topY=Math.min(...G.board.map(t=>t.y)); return tile.y===topY; } return tile.layer!==Infinity && tile.layer===minLayer && isAdjacentToRevealed(tile); }
+function canFlip(tile,minLayer){ if(tile.state!=='faceDown') return false; if(!G.startTile){ const bottomY=Math.max(...G.board.map(t=>t.y)); return tile.y===bottomY; } return tile.layer!==Infinity && tile.layer===minLayer && isAdjacentToRevealed(tile); }
 function isAdjacentToRevealed(tile){ return G.board.some(o=> o!==tile && (o.state==='revealed'||o.state==='resolved') && adj(o,tile)); }
 function adj(a,b){ const dx=Math.abs(a.x-b.x), dy=Math.abs(a.y-b.y); return dx+dy===1 || (dx===1&&dy===1); }
 function flip(tile){ tile.state='revealed'; if(!G.startTile){ G.startTile=tile; tile.start=true; buildLayers(); } log('Reveal '+tile.card.name+' ['+tile.card.type+']'); resolve(tile); updateHUD(); renderBoard(); }
@@ -96,8 +150,9 @@ copySummaryBtn.addEventListener('click',()=>{ navigator.clipboard.writeText(runS
 
 // ---------------- Initial Load ----------------
 resetState(); updateHUD(); log('Enter seed (optional) & Start Game. v2025-08-14-a');
-fetch('FORWARD%20CARDS%20DB%20-%20v3%20raw%20restart%208.14.25.csv')
+// Adjusted path to reference original CSV in legacy folder (space encoded)
+fetch('../FORWARD%20SIM/FORWARD%20CARDS%20DB%20-%20v3%20raw%20restart%208.14.25.csv')
   .then(r=>r.text())
-  .then(txt=>{ CARD_DB=parseCSV(txt); indexLocationCards(); log('Loaded card DB '+CARD_DB.length); })
+  .then(txt=>{ CARD_DB=parseCSV(txt); indexLocationCards(); const locSet=new Set(CARD_DB.filter(c=>c.type==='location').map(c=>simplifyLocation(c.name))); log('Loaded card DB '+CARD_DB.length+' cards; locations indexed: '+[...locSet].join(', ')); })
   .catch(()=>{ log('Card DB not found (using fallback deck).'); buildDeck(); });
 log('Note: Location effects removed in this build.');
