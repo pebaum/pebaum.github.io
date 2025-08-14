@@ -80,8 +80,12 @@ function indexLocationCards(){ const locs=CARD_DB.filter(c=>c.type==='location')
 function cardsForLocation(key){ const desired=['scene','equipment','item','snare','hollow','pit','beast','terror','blessing']; const pool=LOCATION_CARDS[key]; if(!pool||pool.length<5){ const rand=CARD_DB.filter(c=>desired.includes(c.type)); return RNG.shuffle(rand.slice()).slice(0,9).map(clone);} const picked=[]; desired.forEach(t=>{ const f=pool.find(c=>c.type===t&&!picked.includes(c)); if(f) picked.push(f); }); while(picked.length<9) picked.push(RNG.pick(pool)); return picked.slice(0,9).map(clone); }
 
 // ---------------- State ----------------
-const G={ hp:20,maxHp:20,xp:0,atk:1,def:0,equipment:[],items:[],board:[],locationOrder:[],locIndex:-1,startTile:null,snareMisses:0,snareDouble:false,normalHitOn1:false,blockOn12:false,buried:0,xpPile:[],plusDmgTemp:0,pendingTrue:0 };
-function resetState(){ Object.assign(G,{ hp:20,maxHp:20,xp:0,atk:1,def:0,equipment:[],items:[],board:[],locationOrder:[],locIndex:-1,startTile:null,snareMisses:0,snareDouble:false,normalHitOn1:false,blockOn12:false,buried:0,xpPile:[],plusDmgTemp:0,pendingTrue:0 }); }
+const G={ hp:20,maxHp:20,xp:0,atk:1,def:0,equipment:[],items:[],board:[],locationOrder:[],locIndex:-1,startTile:null,snareMisses:0,snareDouble:false,normalHitOn1:false,blockOn12:false,buried:0,xpPile:[],plusDmgTemp:0,pendingTrue:0,
+  quest:{ haveSword:false, princessDelivered:false, sageDelivered:false, pendingPrincessCard:false, pendingSageCard:false }
+};
+function resetState(){ Object.assign(G,{ hp:20,maxHp:20,xp:0,atk:1,def:0,equipment:[],items:[],board:[],locationOrder:[],locIndex:-1,startTile:null,snareMisses:0,snareDouble:false,normalHitOn1:false,blockOn12:false,buried:0,xpPile:[],plusDmgTemp:0,pendingTrue:0,
+  quest:{ haveSword:false, princessDelivered:false, sageDelivered:false, pendingPrincessCard:false, pendingSageCard:false }
+}); }
 
 // ---------------- DOM ----------------
 const el=id=>document.getElementById(id);
@@ -96,7 +100,11 @@ function updateHUD(){ hud.hp.textContent=G.hp; hud.maxHp.textContent=G.maxHp; hu
 
 // ---------------- Game Flow ----------------
 function startGame(){ RNG.applySeed(seedInput.value.trim()); resetState(); hud.log.textContent=''; summaryPanel.style.display='none'; log('Seed '+RNG.seed+' v2025-08-14-a'); buildDeck(); G.locationOrder=RNG.shuffle([...LOCATIONS_BASE]); buttons.start.disabled=true; buttons.reset.disabled=false; buttons.next.disabled=false; buttons.dragon.disabled=true; nextLocation(); }
-function nextLocation(){ G.locIndex++; if(G.locIndex>=G.locationOrder.length){ log('All locations cleared. Dragon available.'); buttons.next.disabled=true; buttons.dragon.disabled=false; return; } const loc=G.locationOrder[G.locIndex]; log('Enter: '+loc.name); const key=simplifyLocation(loc.name); const cards=cardsForLocation(key); G.board=loc.layout.map((cell,i)=>({ id:cell.id,x:cell.x,y:cell.y,card:cards[i],state:'faceDown',layer:Infinity })); G.startTile=null; renderBoard(); log('Pick a starting tile (bottom row).'); updateHUD(); }
+function nextLocation(){ G.locIndex++; if(G.locIndex>=G.locationOrder.length){ log('All locations cleared. Dragon available.'); buttons.next.disabled=true; buttons.dragon.disabled=false; return; } const loc=G.locationOrder[G.locIndex]; log('Enter: '+loc.name); const key=simplifyLocation(loc.name); let cards=cardsForLocation(key);
+  // Inject quest NPC special cards if not yet delivered (princess appears early, sage mid-late)
+  if(!G.quest.princessDelivered && !G.quest.pendingPrincessCard && G.locIndex<=2){ const princess=CARD_DB.find(c=>c.type==='special' && /ghostly princess/i.test(c.name)); if(princess){ cards = [...cards]; cards[cards.length-1]=princess; G.quest.pendingPrincessCard=true; }}
+  if(!G.quest.sageDelivered && !G.quest.pendingSageCard && G.locIndex>=2 && G.locIndex<=5){ const sage=CARD_DB.find(c=>c.type==='special' && /^sage$/i.test(c.name)); if(sage){ cards = [...cards]; cards[cards.length-2]=sage; G.quest.pendingSageCard=true; }}
+  G.board=loc.layout.map((cell,i)=>({ id:cell.id,x:cell.x,y:cell.y,card:cards[i],state:'faceDown',layer:Infinity })); G.startTile=null; renderBoard(); log('Pick a starting tile (bottom row).'); updateHUD(); }
 function renderBoard(){ const loc=G.locationOrder[G.locIndex]; if(!loc) return; boardEl.style.gridTemplateColumns=`repeat(${Math.max(...loc.layout.map(c=>c.x))+1},72px)`; boardEl.innerHTML=''; const minLayer=currentMinUnflippedLayer(); G.board.forEach(t=>{ const d=document.createElement('div'); d.className='tile '+t.state+(t.start?' start':''); d.style.gridColumnStart=t.x+1; d.style.gridRowStart=t.y+1; d.dataset.id=t.id; if(t.state==='faceDown'){ d.textContent='?'; if(canFlip(t,minLayer)) d.classList.add('adjacent'); } else { d.innerHTML=`<div>${t.card.name}</div><div class="tag ${cssTag(t.card.type)}">${t.card.type}</div>`; } d.addEventListener('click',()=> attemptFlip(t.id)); boardEl.appendChild(d); }); }
 function cssTag(t){ return ['monster','item','equipment','scene','pit','snare','terror','blessing'].includes(t)?t:'special'; }
 function attemptFlip(id){ const tile=G.board.find(t=>t.id==id); if(!tile) return; const minLayer=currentMinUnflippedLayer(); if(!canFlip(tile,minLayer)) return; flip(tile); }
@@ -108,7 +116,15 @@ function buildLayers(){ G.board.forEach(t=>t.layer=Infinity); const q=[G.startTi
 function currentMinUnflippedLayer(){ const layers=G.board.filter(t=>t.state==='faceDown').map(t=>t.layer); return layers.length? Math.min(...layers): Infinity; }
 
 // ---------------- Resolution ----------------
-function resolve(tile){ const c=tile.card; switch(c.type){ case 'hollow': case 'beast': combat(c,tile); break; case 'scene': doScene(c,tile); break; case 'pit': doPit(c,tile); break; case 'terror': doTerror(c,tile); break; case 'snare': doSnare(c,tile); break; case 'blessing': doBlessing(c,tile); break; case 'item': pickupItem(c,tile); break; case 'equipment': equipItem(c,tile); break; default: awardXP(c); tile.state='resolved'; } if(G.board.every(t=>t.state==='resolved')) { awardXP({xp:1,name:'Location Clear'}); log('Location Cleared (+1 XP)'); buttons.next.disabled=false; } }
+function resolve(tile){ const c=tile.card; if(c.type==='special'){ handleSpecial(c,tile); return; } switch(c.type){ case 'hollow': case 'beast': combat(c,tile); break; case 'scene': doScene(c,tile); break; case 'pit': doPit(c,tile); break; case 'terror': doTerror(c,tile); break; case 'snare': doSnare(c,tile); break; case 'blessing': doBlessing(c,tile); break; case 'item': pickupItem(c,tile); break; case 'equipment': equipItem(c,tile); break; default: awardXP(c); tile.state='resolved'; } if(G.board.every(t=>t.state==='resolved')) { awardXP({xp:1,name:'Location Clear'}); log('Location Cleared (+1 XP)'); buttons.next.disabled=false; } }
+function handleSpecial(c,t){ if(/ghostly princess/i.test(c.name)){ log('Ghostly Princess encountered. Requires gilded bangle to break shield.'); if(G.equipment.find(e=>/gilded bangle/i.test(e.name))){ // deliver
+    const idx=G.equipment.findIndex(e=>/gilded bangle/i.test(e.name)); const b=G.equipment.splice(idx,1)[0]; log('Offer '+b.name+' -> Princess accepts. Shield broken.'); G.quest.princessDelivered=true; G.quest.pendingPrincessCard=false; G.quest.princessLogTurn=G.xp; G.atk+=(b.atk||0); // already applied before; we keep stats (no change) just narrative
+  } else { log('Need Gilded Bangle first. Card remains resolved.'); }
+  awardXP({xp:1,name:'Princess'}); t.state='resolved'; refreshInventory(); updateHUD();
+} else if(/^sage$/i.test(c.name)){ log('Sage encountered. Requires ferryman\'s bell to halve dragon HP.'); if(G.equipment.find(e=>/ferryman'?s bell/i.test(e.name))){ const idx=G.equipment.findIndex(e=>/ferryman'?s bell/i.test(e.name)); const bell=G.equipment.splice(idx,1)[0]; log('Give '+bell.name+' -> Sage accepts. Dragon vitality ritual cast (half HP).'); G.quest.sageDelivered=true; G.quest.pendingSageCard=false; }
+  awardXP({xp:1,name:'Sage'}); t.state='resolved'; refreshInventory(); updateHUD();
+} else { log('Mysterious figure (unused special).'); awardXP({xp:1,name:c.name}); t.state='resolved'; }
+}
 function awardXP(card){ const gain=card.xp||1; G.xp+=gain; G.maxHp+=gain; G.xpPile.push(card.name||card.type||'Card'); }
 function damage(n,why='Dmg'){ const before=G.hp; G.hp-=n; log(`${why} -${n} (${before}->${G.hp})`); if(G.hp<=0){ log('You fall.'); disableAll(); } }
 function heal(n){ const b=G.hp; G.hp=Math.min(G.maxHp,G.hp+n); log(`Heal +${n} (${b}->${G.hp})`); }
@@ -118,7 +134,7 @@ function doTerror(c,t){ const loss=c.terrorHpLoss||4; if(G.hp>loss+1){ damage(lo
 function doSnare(c,t){ log('Snare '+c.name); if(c.snareMissFirst) G.snareMisses=c.snareMissFirst; if(c.snareDoubleFirstIncoming) G.snareDouble=true; t.state='revealed'; }
 function doBlessing(c,t){ log('Blessing '+c.name); if(c.cleansesSnare){ G.snareMisses=0; G.snareDouble=false; log('Snares cleansed'); } if(c.fullHeal) { const b=G.hp; G.hp=G.maxHp; log(`Full Heal (${b}->${G.hp})`);} if(c.normalHitOn1) G.normalHitOn1=true; if(c.blockOn12) G.blockOn12=true; awardXP(c); t.state='resolved'; }
 function pickupItem(c,t){ if(G.items.length>=2){ autoUseOrDiscard(c); } else { G.items.push(c); log('Item '+c.name); } t.state='resolved'; refreshInventory(); }
-function equipItem(c,t){ if(G.equipment.length>=2){ const old=G.equipment.shift(); log('Unequip '+old.name+' -> XP'); awardXP(old);} G.equipment.push(c); G.atk+=(c.atk||0); G.def+=(c.def||0); log(`Equip ${c.name} (+${c.atk||0}A +${c.def||0}D)`); t.state='resolved'; refreshInventory(); }
+function equipItem(c,t){ if(G.equipment.length>=2){ const old=G.equipment.shift(); log('Unequip '+old.name+' -> XP'); awardXP(old);} G.equipment.push(c); G.atk+=(c.atk||0); G.def+=(c.def||0); if(/ancient sword/i.test(c.name)) G.quest.haveSword=true; log(`Equip ${c.name} (+${c.atk||0}A +${c.def||0}D)`); t.state='resolved'; refreshInventory(); }
 function autoUseOrDiscard(c){ if(c.heal){ heal(c.heal); awardXP(c);} else { log('Discard '+c.name); awardXP(c);} }
 
 // ---------------- Combat ----------------
@@ -139,7 +155,14 @@ function buildDeck(){ if(!CARD_DB.length){ const dummyTypes=['hollow','scene','i
 // ---------------- Summary / Dragon ----------------
 function showSummary(){ const data={seed:RNG.seed,hp:G.hp,maxHp:G.maxHp,xp:G.xp,buried:G.buried,equipment:G.equipment.map(e=>e.name),items:G.items.map(i=>i.name),xpPile:G.xpPile}; runSummaryEl.textContent=JSON.stringify(data,null,2); summaryPanel.style.display='block'; }
 function disableAll(){ Object.values(buttons).forEach(b=>b.disabled=true); buttons.reset.disabled=false; }
-function startDragon(){ const base=40+G.buried; let hp=base; log('Dragon '+hp+' HP'); while(hp>0 && G.hp>0){ const pr=d6(), dr=d6(); const pR=duel(pr), dR=duel(dr); let pD=damageFor(pR)+(pR==='miss'||pR==='parry'?0:G.atk); let dD=damageFor(dR); dD=Math.max(0,dD-G.def); if(pD>0) hp-=pD; if(dD>0) G.hp-=dD; log(`D: You ${pR}+${pD} / D ${dR}+${dD} | DHP ${Math.max(0,hp)} HP ${Math.max(0,G.hp)}`); if(G.hp<=0){ log('Dragon slays you'); disableAll(); return;} } if(hp<=0){ log('Dragon defeated!'); showSummary(); disableAll(); } }
+function startDragon(){ if(!G.quest.haveSword){ log('You face the Dragon without the Ancient Sword: you cannot harm it.'); }
+  if(!G.quest.princessDelivered){ log('Dragon shield intact (Princess not aided): your damage is negated.'); }
+  const base=40+G.buried; let hp=base; if(G.quest.sageDelivered){ hp=Math.ceil(hp/2); log('Sage ritual halves dragon HP -> '+hp); }
+  log('Dragon '+hp+' HP'); while(hp>0 && G.hp>0){ const pr=d6(), dr=d6(); const pR=duel(pr), dR=duel(dr); let pD=(pR==='miss'||pR==='parry'?0:damageFor(pR)+G.atk); if(!G.quest.haveSword || !G.quest.princessDelivered) pD=0; let dD=damageFor(dR); dD=Math.max(0,dD-G.def); if(pD>0) hp-=pD; if(dD>0) G.hp-=dD; log(`D: You ${pR}${pD?"+"+pD:''} / D ${dR}${dD?"+"+dD:''} | DHP ${Math.max(0,hp)} HP ${Math.max(0,G.hp)}`); if(G.hp<=0){ log('Dragon slays you'); disableAll(); return;} if(!G.quest.haveSword && pD===0 && G.hp>0){ // stalemate guard
+      if(G.hp<5){ log('Exhaustion overtakes you.'); G.hp=0; disableAll(); return;} }
+  }
+  if(hp<=0){ log('Dragon defeated!'); showSummary(); disableAll(); }
+}
 
 // ---------------- Events ----------------
 buttons.start.addEventListener('click',startGame);
