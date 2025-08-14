@@ -177,37 +177,46 @@ function updateHUD() {
   hud.hp.textContent = G.hp; hud.maxHp.textContent = G.maxHp; hud.xp.textContent = G.xp; hud.buried.textContent = G.buried; hud.loc.textContent = G.locationIndex >=0 ? LOCATIONS[G.locationIndex].name : '-';
 }
 
-function applySeed(v){ if(!v) return; let s=0; for(let i=0;i<v.length;i++) s=(s*31+v.charCodeAt(i))%2147483647; if(s<=0) s=Date.now()%2147483647; RNG.seed=s; }
-function startGame() {
+applySeed = function(v){ if(!v){ RNG.seed=Date.now()%2147483647; return; } let s=0; if(/^\d+$/.test(v)){ s=parseInt(v,10)%2147483647; } else { for(let i=0;i<v.length;i++) s=(s*131+v.charCodeAt(i))%2147483647; } if(s<=0) s+=2147483646; RNG.seed=s; };
+
+startGame = function(){
   applySeed(seedInput.value.trim());
   Object.assign(G,{
     hp:20,maxHp:20,xp:0,atk:1,def:0,
     equipment:[],items:[],locationIndex:-1,board:[],buried:0,startTile:null,farthestRowY:null,fights:0,
-    xpPile:[],deck:[],princess:false,princessActivated:false,sage:false,sageActivated:false,mirrorKnightInserted:false,locationXPGranted:false
+    xpPile:[],deck:[],princess:false,princessActivated:false,sage:false,sageActivated:false,mirrorKnightInserted:false,locationXPGranted:false,locationOrder:[]
   });
   hud.log.textContent=''; summaryPanel.style.display='none';
   log('Game started. Seed='+RNG.seed);
   buildFullDeck();
-  RNG.shuffle(LOCATIONS); // randomize location order
+  G.locationOrder = RNG.shuffle([...LOCATIONS]);
   buttons.start.disabled = true; buttons.reset.disabled = false; buttons.nextLoc.disabled = false; buttons.dragon.disabled = true;
   updateCompanions();
   nextLocation();
+};
+
+nextLocation = function(){
+  G.locationIndex++;
+  if(G.locationIndex >= G.locationOrder.length){ log('All locations cleared. Dragon unlocked.'); buttons.nextLoc.disabled=true; buttons.dragon.disabled=false; return; }
+  const loc = G.locationOrder[G.locationIndex];
+  log(`Entering Location: ${loc.name} — Effect: ${loc.effect}`);
+  const key=simplifyLocation(loc.name); const cards=getNineCardsForLocation(key);
+  G.board = loc.layout.map((cell,i)=>({ id:cell.id,x:cell.x,y:cell.y,card:cards[i],state:'faceDown'}));
+  G.locationXPGranted=false; G.startTile=null; G.farthestRowY=null;
+  renderBoard(); updateHUD();
+  log('Select a starting tile from the closest (lowest Y) row.');
+};
+
+function canFlip(tile) {
+  if (tile.state !== 'faceDown') return false;
+  if (!G.startTile) {
+    const minY=Math.min(...G.board.map(t=>t.y));
+    return tile.y===minY;
+  }
+  return G.board.some(t=> (t.state==='revealed'||t.state==='resolved') && (Math.abs(t.x-tile.x)+Math.abs(t.y-tile.y)===1 || (Math.abs(t.x-tile.x)===1 && Math.abs(t.y-tile.y)===1)) );
 }
 
-function nextLocation() {
-  G.locationIndex++;
-  if (G.locationIndex >= LOCATIONS.length) { log('All 9 locations cleared. Enable Dragon fight.'); buttons.nextLoc.disabled = true; buttons.dragon.disabled = false; return; }
-  const loc = LOCATIONS[G.locationIndex];
-  log(`Entering Location: ${loc.name} — Effect: ${loc.effect}`);
-  // Build board
-  const key = simplifyLocation(loc.name);
-  const cards = getNineCardsForLocation(key);
-  G.board = loc.layout.map((cell,i) => ({ id:cell.id, x:cell.x, y:cell.y, card:cards[i], state:'faceDown' }));
-  G.locationXPGranted=false;
-  G.startTile = null; G.farthestRowY = null;
-  renderBoard(); updateHUD();
-  log('Choose any starting adjacent (any face-down tile) — first flip sets your start.');
-}
+function currentLocationKey(){ return G.locationOrder[G.locationIndex]?.key; }
 
 function renderBoard() {
   const loc = LOCATIONS[G.locationIndex];
@@ -246,29 +255,6 @@ function cssTag(type) {
     case 'blessing': return 'blessing';
     default: return 'special';
   }
-}
-
-function canFlip(tile) {
-  if (tile.state !== 'faceDown') return false;
-  if (!G.startTile) {
-    const faces=G.board.filter(t=>t.state==='faceDown');
-    if(!faces.length) return false;
-    const xs=G.board.map(t=>t.x), ys=G.board.map(t=>t.y);
-    const cx=(Math.max(...xs)+Math.min(...xs))/2, cy=(Math.max(...ys)+Math.min(...ys))/2;
-    const dist=t=>Math.hypot(t.x-cx,t.y-cy); const min=Math.min(...faces.map(dist));
-    return Math.abs(dist(tile)-min) < 1e-6;
-  }
-  return G.board.some(rt => (rt.state==='revealed'||rt.state==='resolved') && isAdjacent(rt,tile));
-}
-function isAdjacent(a,b){ const dx=Math.abs(a.x-b.x), dy=Math.abs(a.y-b.y); return dx+dy===1 || (dx===1 && dy===1); }
-
-function neighbors(tile, mode='all') {
-  return G.board.filter(t => {
-    const dx = Math.abs(t.x - tile.x); const dy = Math.abs(t.y - tile.y);
-    if (mode==='orth') return (dx+dy)===1;
-    if (mode==='diag') return dx===1 && dy===1;
-    return (dx+dy)===1 || (dx===1&&dy===1);
-  });
 }
 
 function tryFlip(id) {
@@ -485,3 +471,60 @@ function mirrorDuel(enemy,tile){ let eHP=enemy.hp; let round=1; while(G.hp>0 && 
 }
 
 function showRunSummary(){ if(!runSummaryEl) return; const summary={ seed:RNG.seed, hp:G.hp, maxHp:G.maxHp, xp:G.xp, buried:G.buried, princess:G.princessActivated, sage:G.sageActivated, equipment:G.equipment.map(e=>e.name), items:G.items.map(i=>i.name), xpPile:G.xpPile }; runSummaryEl.textContent=JSON.stringify(summary,null,2); summaryPanel.style.display='block'; }
+
+// --- Overrides & Fixups (appended) ---
+// Add locationOrder to state if missing
+if(!('locationOrder' in G)) G.locationOrder=[];
+
+applySeed = function(v){ if(!v){ RNG.seed=Date.now()%2147483647; return; } let s=0; if(/^\d+$/.test(v)){ s=parseInt(v,10)%2147483647; } else { for(let i=0;i<v.length;i++) s=(s*131+v.charCodeAt(i))%2147483647; } if(s<=0) s+=2147483646; RNG.seed=s; };
+
+startGame = function(){
+  applySeed(seedInput.value.trim());
+  Object.assign(G,{
+    hp:20,maxHp:20,xp:0,atk:1,def:0,
+    equipment:[],items:[],locationIndex:-1,board:[],buried:0,startTile:null,farthestRowY:null,fights:0,
+    xpPile:[],deck:[],princess:false,princessActivated:false,sage:false,sageActivated:false,mirrorKnightInserted:false,locationXPGranted:false,locationOrder:[]
+  });
+  hud.log.textContent=''; summaryPanel.style.display='none';
+  log('Game started. Seed='+RNG.seed);
+  buildFullDeck();
+  G.locationOrder = RNG.shuffle([...LOCATIONS]);
+  buttons.start.disabled = true; buttons.reset.disabled = false; buttons.nextLoc.disabled = false; buttons.dragon.disabled = true;
+  updateCompanions();
+  nextLocation();
+};
+
+nextLocation = function(){
+  G.locationIndex++;
+  if(G.locationIndex >= G.locationOrder.length){ log('All locations cleared. Dragon unlocked.'); buttons.nextLoc.disabled=true; buttons.dragon.disabled=false; return; }
+  const loc = G.locationOrder[G.locationIndex];
+  log(`Entering Location: ${loc.name} — Effect: ${loc.effect}`);
+  const key=simplifyLocation(loc.name); const cards=getNineCardsForLocation(key);
+  G.board = loc.layout.map((cell,i)=>({ id:cell.id,x:cell.x,y:cell.y,card:cards[i],state:'faceDown'}));
+  G.locationXPGranted=false; G.startTile=null; G.farthestRowY=null;
+  renderBoard(); updateHUD();
+  log('Select a starting tile from the closest (lowest Y) row.');
+};
+
+canFlip = function(tile){
+  if(tile.state!=='faceDown') return false;
+  if(!G.startTile){ const minY=Math.min(...G.board.map(t=>t.y)); return tile.y===minY; }
+  return G.board.some(t=> (t.state==='revealed'||t.state==='resolved') && (Math.abs(t.x-tile.x)+Math.abs(t.y-tile.y)===1 || (Math.abs(t.x-tile.x)===1 && Math.abs(t.y-tile.y)===1)) );
+};
+
+currentLocationKey = function(){ return G.locationOrder[G.locationIndex]?.key; };
+
+// Adjust burial message by wrapping original checkLocationEnd if present
+if(typeof checkLocationEnd==='function'){
+  const _chk=checkLocationEnd; checkLocationEnd=function(){
+    const prevLogLen = hud.log.children.length;
+    _chk();
+    // Replace specific prior message text if present
+    [...hud.log.children].slice(prevLogLen).forEach(div=>{
+      if(div.textContent.includes('Reached farthest row')){
+        div.textContent='Reached farthest row — proceed unlocked. Remaining unrevealed auto-buried.';
+      }
+    });
+  };
+}
+// --- End Overrides ---
