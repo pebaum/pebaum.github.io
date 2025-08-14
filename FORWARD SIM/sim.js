@@ -170,7 +170,8 @@ const runSummaryEl = el('runSummary');
 const summaryPanel = el('summaryPanel');
 const copySummaryBtn = el('copySummary');
 
-function log(msg) { hud.log.innerHTML += msg + '\n'; hud.log.scrollTop = hud.log.scrollHeight; }
+// Replace log implementation
+function log(msg) { const line=document.createElement('div'); line.textContent=msg; hud.log.appendChild(line); hud.log.scrollTop=hud.log.scrollHeight; }
 
 function updateHUD() {
   hud.hp.textContent = G.hp; hud.maxHp.textContent = G.maxHp; hud.xp.textContent = G.xp; hud.buried.textContent = G.buried; hud.loc.textContent = G.locationIndex >=0 ? LOCATIONS[G.locationIndex].name : '-';
@@ -187,6 +188,7 @@ function startGame() {
   hud.log.textContent=''; summaryPanel.style.display='none';
   log('Game started. Seed='+RNG.seed);
   buildFullDeck();
+  RNG.shuffle(LOCATIONS); // randomize location order
   buttons.start.disabled = true; buttons.reset.disabled = false; buttons.nextLoc.disabled = false; buttons.dragon.disabled = true;
   updateCompanions();
   nextLocation();
@@ -248,18 +250,17 @@ function cssTag(type) {
 
 function canFlip(tile) {
   if (tile.state !== 'faceDown') return false;
-  if (!G.startTile) return true; // first pick free
-  // adjacency: orth first else allow diag if no orth face-down exists
-  const orth = neighbors(G.startTile, 'orth');
-  const hasOrthFaceDown = orth.some(t=>t.state==='faceDown');
-  const current = G.currentPos || G.startTile;
-  if (!current) return false;
-  const isOrth = (Math.abs(tile.x-current.x)+Math.abs(tile.y-current.y))===1;
-  const isDiag = (Math.abs(tile.x-current.x)===1 && Math.abs(tile.y-current.y)===1);
-  if (isOrth) return true;
-  if (!hasOrthFaceDown && isDiag) return true;
-  return false;
+  if (!G.startTile) {
+    const faces=G.board.filter(t=>t.state==='faceDown');
+    if(!faces.length) return false;
+    const xs=G.board.map(t=>t.x), ys=G.board.map(t=>t.y);
+    const cx=(Math.max(...xs)+Math.min(...xs))/2, cy=(Math.max(...ys)+Math.min(...ys))/2;
+    const dist=t=>Math.hypot(t.x-cx,t.y-cy); const min=Math.min(...faces.map(dist));
+    return Math.abs(dist(tile)-min) < 1e-6;
+  }
+  return G.board.some(rt => (rt.state==='revealed'||rt.state==='resolved') && isAdjacent(rt,tile));
 }
+function isAdjacent(a,b){ const dx=Math.abs(a.x-b.x), dy=Math.abs(a.y-b.y); return dx+dy===1 || (dx===1 && dy===1); }
 
 function neighbors(tile, mode='all') {
   return G.board.filter(t => {
