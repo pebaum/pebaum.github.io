@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>FORWARD — Simulator</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root { font-family: system-ui, Arial, sans-serif; color-scheme: dark; }
+    body { background:#0d0f14; color:#e4e6eb; margin:0; padding:1rem; }
+    h1 { margin:0 0 .5rem; font-size:1.15rem; letter-spacing:1px; }
+    button { cursor:pointer; background:#1e2735; color:#fff; border:1px solid #3a485c; padding:.45rem .8rem; border-radius:4px; font-size:.8rem; }
+    button:hover { background:#2a3648; }
+    button:disabled { opacity:.4; cursor:not-allowed; }
+    #hud { display:flex; flex-wrap:wrap; gap:.65rem; margin-bottom:.7rem; }
+    #hud div { background:#161d27; padding:.45rem .6rem; border:1px solid #2a3648; border-radius:4px; min-width:135px; font-size:.7rem; }
+    #boardWrapper { display:flex; gap:1rem; }
+    #board { display:grid; gap:6px; }
+    .tile { width:72px; height:72px; background:#1b2431; border:1px solid #334355; border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:.6rem; text-align:center; padding:4px; line-height:1.1; position:relative; }
+    .tile.faceDown { background:linear-gradient(135deg,#28354a,#1a2430); cursor:pointer; }
+    .tile.revealed { background:#222e3d; }
+    .tile.resolved { outline:2px solid #3aa657; }
+    .tile.start { box-shadow:0 0 0 2px #ffd34d inset; }
+    .tile.adjacent.faceDown { animation:pulse 1.1s linear infinite; }
+    @keyframes pulse { 0%,100% { box-shadow:0 0 0 0 rgba(255,211,77,.55); } 50% { box-shadow:0 0 0 4px rgba(255,211,77,0); } }
+    #log { flex:1; min-height:360px; background:#11161e; border:1px solid #253040; padding:.6rem; border-radius:4px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:.65rem; overflow:auto; max-height:70vh; }
+    #controls { margin:.6rem 0; display:flex; gap:.45rem; flex-wrap:wrap; }
+    .tag { display:inline-block; padding:2px 6px; border-radius:3px; font-size:.55rem; background:#2c394b; margin-top:2px; }
+    .item { background:#345d6e; } .equipment { background:#5a5f2f; } .scene { background:#4e3e70; }
+    .pit { background:#6a3e1e; } .snare { background:#6b2f54; } .terror { background:#6b542f; } .blessing { background:#2f6b49; }
+  </style>
+</head>
+<body>
+  <h1>FORWARD — Simulator <span id="versionTag" style="font-size:.55rem;opacity:.65;font-weight:400;">v2025-08-14-a</span></h1>
+  <div id="hud" aria-live="polite">
+    <div>HP: <span id="hp"></span>/<span id="maxHp"></span></div>
+    <div>XP: <span id="xp"></span></div>
+    <div>Buried: <span id="buried"></span></div>
+    <div>Location: <span id="locationName"></span></div>
+  </div>
+  <div id="controls">
+    <label style="font-size:.6rem;display:flex;flex-direction:column;gap:2px;">Seed
+      <input id="seedInput" type="text" placeholder="(optional)" style="background:#0b1016;color:#fff;border:1px solid #2a3648;padding:4px 6px;border-radius:4px;min-width:110px;font-size:.6rem;" />
+    </label>
+    <button id="btnStart">Start</button>
+    <button id="btnNextLocation" disabled>Next</button>
+    <button id="btnDragon" disabled>Dragon</button>
+    <button id="btnReset" disabled>Reset</button>
+  </div>
+  <div id="boardWrapper">
+    <div id="board"></div>
+    <div style="display:flex;flex-direction:column;flex:1;gap:.6rem;min-width:300px;">
+      <div id="log" role="log" aria-live="polite"></div>
+      <div style="background:#11161e;border:1px solid #253040;padding:.5rem;border-radius:4px;font-size:.6rem;">
+        <strong>Inventory</strong>
+        <div id="equipmentList" style="margin-top:.3rem;"></div>
+        <div id="itemList" style="margin-top:.4rem;"></div>
+      </div>
+      <div id="summaryPanel" style="display:none;background:#11161e;border:1px solid #253040;padding:.5rem;border-radius:4px;font-size:.6rem;white-space:pre-wrap;">
+        <strong>Run Summary</strong>
+        <div id="runSummary" style="margin-top:.35rem;max-height:180px;overflow:auto;"></div>
+        <button id="copySummary" style="margin-top:.45rem;">Copy JSON</button>
+      </div>
+    </div>
+  </div>
+  <script src="sim.js?v=2025-08-14-a"></script>
+  <script>window.addEventListener('DOMContentLoaded',()=>{ if(window.log) log('Version tag v2025-08-14-a loaded'); });</script>
+</body>
+</html>
