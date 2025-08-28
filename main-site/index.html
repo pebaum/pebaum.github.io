@@ -631,6 +631,7 @@
         <div class="loading-percentage" id="loadingPercentage">0%</div>
     </div>
 
+    <script src="../assets/js/bgm-player.js"></script>
     <script>        class FFIXMenu {
             constructor() {
                 this.currentMenuItem = 0;
@@ -1408,71 +1409,12 @@
                 };
                 render();
             }        }
-        
-        // Stone BGM Player
-        class StoneBGMPlayer {
-            constructor() {
-                this.bgmBox = document.getElementById('bgm-box');
-                this.stoneMusic = new Audio('../Stone.mp3');
-                this.stoneMusic.volume = 0.4;
-                this.isPlaying = false;
-                
-                // Initialize event listeners
-                this.init();
-            }
-            
-            init() {
-                // Click to play/pause
-                this.bgmBox.addEventListener('click', () => {
-                    if (this.isPlaying) {
-                        this.pauseMusic();
-                    } else {
-                        this.playMusic();
-                    }
-                });
-                
-                // Update UI when music ends
-                this.stoneMusic.addEventListener('ended', () => {
-                    this.isPlaying = false;
-                    this.updateUI();
-                });
-            }
-            
-            playMusic() {
-                const playPromise = this.stoneMusic.play();
-                
-                if (playPromise !== undefined) {
-                    playPromise.then(() => {
-                        this.isPlaying = true;
-                        this.updateUI();
-                    }).catch(err => {
-                        console.debug('Stone music play prevented:', err);
-                    });
-                }
-            }
-            
-            pauseMusic() {
-                this.stoneMusic.pause();
-                this.isPlaying = false;
-                this.updateUI();
-            }
-              updateUI() {
-                if (this.isPlaying) {
-                    this.bgmBox.querySelector('.location-name').textContent = 'Toggle BGM';
-                    this.bgmBox.style.background = 'linear-gradient(135deg, #4A4A4A, #3A3A3A)';
-                } else {
-                    this.bgmBox.querySelector('.location-name').textContent = 'Toggle BGM';
-                    this.bgmBox.style.background = 'linear-gradient(135deg, #3B3E45, #2F2F2F)';
-                }
-            }
-        }
-
         // Initialize PS1 effects
         document.addEventListener('DOMContentLoaded', () => {
             try {
                 window.ffixMenu = new FFIXMenu();
                 window.ps1Effects = new PS1Effects();
-                window.stoneBGM = new StoneBGMPlayer();
+                window.stoneBGM = new StoneBGMPlayer('../Stone.mp3');
             } catch (error) {
                 console.error('Error initializing site:', error);
                 // Fallback: at least show the basic menu without effects
