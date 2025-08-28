@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explorer Maze with Visible Red Trail</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #maze-container {
+            aspect-ratio: 1 / 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #maze {
+            font-family: monospace;
+            line-height: 1;
+            white-space: pre;
+            letter-spacing: 0.1em;
+        }
+    </style>
+</head>
+<body>
+    <div id="maze-container"><div id="maze"></div></div>
+    <script>
+        const terrainTypes = {
+            '░': { color: '#90EE90', forward: 0.7, drain: [1,1,2], gain: [0,2,0] },
+            '▒': { color: '#228B22', forward: 0.5, drain: [2,1,1], gain: [0,3,1] },
+            '▓': { color: '#A9A9A9', forward: 0.4, drain: [3,2,2], gain: [0,0,0] },
+            '█': { color: '#4169E1', forward: 0.2, drain: [2,1,0], gain: [0,0,5] },
+            '◘': { color: '#FFD700', forward: 0.6, drain: [2,1,3], gain: [0,0,0] },
+            '◙': { color: '#8FBC8F', forward: 0.3, drain: [2,1,1], gain: [0,0,2] },
+            '■': { color: '#696969', forward: 0.4, drain: [1,1,1], gain: [0,0,0] },
+            '□': { color: '#98FB98', forward: 0.8, drain: [1,1,1], gain: [2,0,0] },
+            '▪': { color: '#B8860B', forward: 0.5, drain: [2,1,1], gain: [0,0,0] },
+            '▫': { color: '#F0F8FF', forward: 0.6, drain: [2,2,1], gain: [0,0,0] },
+            '▬': { color: '#1E90FF', forward: 0.7, drain: [1,1,0], gain: [0,0,4] },
+            '▲': { color: '#FF4500', forward: 0.2, drain: [3,1,2], gain: [0,0,0] },
+            '▼': { color: '#32CD32', forward: 0.6, drain: [1,1,1], gain: [0,2,2] },
+            '◄': { color: '#DEB887', forward: 0.8, drain: [2,1,1], gain: [0,0,0] },
+            '►': { color: '#F4A460', forward: 0.7, drain: [1,1,2], gain: [0,1,0] },
+            'X': { color: '#FF0000', forward: 0.7, drain: [1,1,1], gain: [0,0,0] } // Explorer
+        };
+
+        let size, maze, explorerX, explorerY, stepCount = 0, isResting = false;
+        const visited = new Set(), basecamps = [];
+        const explorer = { stamina: 100, food: 100, water: 100 };
+
+        function initMaze() {
+            const containerSize = Math.min(window.innerWidth, window.innerHeight) * 0.9;
+            const mazeContainer = document.getElementById('maze-container');
+            mazeContainer.style.width = `${containerSize}px`;
+            mazeContainer.style.height = `${containerSize}px`;
+            
+            size = 50; // Fixed size for the maze array
+            const cellSize = Math.floor(containerSize / size);
+            
+            document.getElementById('maze').style.fontSize = `${cellSize}px`;
+            
+            maze = Array(size).fill().map(() => Array(size).fill(null));
+            explorerX = Math.floor(size / 2);
+            explorerY = 0;
+            generateMaze();
+            renderMaze();
+            startExploration();
+        }
+
+        function generateMaze() {
+            for (let y = 0; y < size; y++) {
+                for (let x = 0; x < size; x++) {
+                    maze[y][x] = randomTerrain();
+                }
+            }
+            maze[explorerY][explorerX] = 'X'; // Explorer starting position
+        }
+
+        function randomTerrain() {
+            const terrainKeys = Object.keys(terrainTypes).filter(key => key !== 'X');
+            return terrainKeys[Math.floor(Math.random() * terrainKeys.length)];
+        }
+
+        function renderMaze() {
+            const mazeHTML = maze.map(row => 
+                row.map(cell => `<span style="color:${terrainTypes[cell].color}">${cell}</span>`).join('')
+            ).join('\n');
+            document.getElementById('maze').innerHTML = mazeHTML;
+        }
+
+        function startExploration() {
+            exploreStep();
+        }
+
+        function exploreStep() {
+            if (explorerY === size - 1) return; // Reached the bottom
+
+            const currentTerrain = maze[explorerY][explorerX];
+            
+            if (isResting) {
+                restAtBasecamp();
+                return;
+            }
+
+            updateResources(currentTerrain);
+
+            if (explorer.stamina === 0 || explorer.food === 0 || explorer.water === 0) {
+                setupBasecamp();
+                return;
+            }
+
+            maze[explorerY][explorerX] = 'X'; // Mark explorer's current position
+            const nextMove = explorer.stamina < 30 || explorer.food < 30 || explorer.water < 30
+                ? findResourcefulTerrain()
+                : normalExploration(terrainTypes[currentTerrain].forward);
+
+            explorerX = nextMove.x;
+            explorerY = nextMove.y;
+
+            renderMaze();
+
+            if (stepCount % 10 === 0) considerBasecamp();
+
+            stepCount++;
+            setTimeout(exploreStep, 100);
+        }
+
+        function updateResources(terrain) {
+            ['stamina', 'food', 'water'].forEach((resource, i) => {
+                explorer[resource] = Math.max(0, Math.min(100, explorer[resource] - terrainTypes[terrain].drain[i] + terrainTypes[terrain].gain[i]));
+            });
+        }
+
+        function findResourcefulTerrain() {
+            const directions = [[0,1], [1,0], [-1,0], [1,1], [-1,1], [0,-1]];
+            for (let [dx, dy] of directions) {
+                const newX = explorerX + dx, newY = explorerY + dy;
+                if (newX >= 0 && newX < size && newY >= 0 && newY < size) {
+                    const terrain = maze[newY][newX];
+                    if (terrainTypes[terrain].gain.some(g => g > 0)) {
+                        return { x: newX, y: newY };
+                    }
+                }
+            }
+            return { x: explorerX, y: explorerY };
+        }
+
+        function normalExploration(forwardProb) {
+            const rand = Math.random();
+            if (rand < forwardProb && explorerY < size - 1) return { x: explorerX, y: explorerY + 1 };
+            else if (rand < forwardProb + (1 - forwardProb) / 2 && explorerX > 0) return { x: explorerX - 1, y: explorerY };
+            else if (explorerX < size - 1) return { x: explorerX + 1, y: explorerY };
+            return { x: explorerX, y: explorerY + 1 };
+        }
+
+        function considerBasecamp() {
+            if (Math.random() < 0.3) {
+                setupBasecamp();
+            }
+        }
+
+        function setupBasecamp() {
+            basecamps.push([explorerX, explorerY]);
+            maze[explorerY][explorerX] = '▲';
+            isResting = true;
+            renderMaze();
+            setTimeout(restAtBasecamp, 1000);
+        }
+
+        function restAtBasecamp() {
+            if (explorer.food > 0 && explorer.water > 0) {
+                explorer.stamina = Math.min(100, explorer.stamina + 10);
+                explorer.food = Math.max(0, explorer.food - 2);
+                explorer.water = Math.max(0, explorer.water - 3);
+                
+                if (explorer.stamina < 100 && explorer.food > 0 && explorer.water > 0) {
+                    setTimeout(restAtBasecamp, 1000);
+                } else {
+                    finishResting();
+                }
+            } else {
+                finishResting();
+            }
+        }
+
+        function finishResting() {
+            isResting = false;
+            exploreStep();
+        }
+
+        window.onload = initMaze;
+        window.onresize = initMaze;
+    </script>
+</body>
+</html>

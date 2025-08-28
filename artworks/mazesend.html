@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ribbon Maze</title>
+    <style>
+        body {
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        #maze {
+            font-family: monospace;
+            font-size: 8px;
+            line-height: 1;
+            white-space: pre;
+        }
+    </style>
+</head>
+<body>
+    <div id="maze"></div>
+
+    <script>
+        const width = 95;
+        const height = 130;
+        const maze = Array(height).fill().map(() => Array(width).fill(' '));
+        const chars = ['░', '▒', '▓', '█', '◘', '◙', '■', '□', '▪', '▫', '▬', '▲', '▼', '◄', '►'];
+        const visited = new Set();
+
+        function getRandomChar() {
+            return chars[Math.floor(Math.random() * chars.length)];
+        }
+
+        function getRandomGray() {
+            const shade = Math.floor(Math.random() * 200) + 55;
+            return `rgb(${shade},${shade},${shade})`;
+        }
+
+        function isValidCell(x, y) {
+            return x >= 0 && x < width && y >= 0 && y < height;
+        }
+
+        function getNeighbors(x, y) {
+            return [
+                [x+1, y], [x-1, y], [x, y+1], [x, y-1],
+                [x+1, y+1], [x-1, y-1], [x+1, y-1], [x-1, y+1]
+            ].filter(([nx, ny]) => isValidCell(nx, ny) && !visited.has(`${nx},${ny}`));
+        }
+
+        function growMaze() {
+            if (visited.size === 0) {
+                const startX = Math.floor(width / 2);
+                const startY = Math.floor(height / 2);
+                visited.add(`${startX},${startY}`);
+                maze[startY][startX] = `<span style="color:${getRandomGray()}">${getRandomChar()}</span>`;
+            }
+
+            const currentCells = Array.from(visited);
+            let grew = false;
+
+            for (const cell of currentCells) {
+                const [x, y] = cell.split(',').map(Number);
+                const neighbors = getNeighbors(x, y);
+                
+                if (neighbors.length > 0) {
+                    const [nx, ny] = neighbors[Math.floor(Math.random() * neighbors.length)];
+                    visited.add(`${nx},${ny}`);
+                    maze[ny][nx] = `<span style="color:${getRandomGray()}">${getRandomChar()}</span>`;
+                    grew = true;
+                }
+            }
+
+            document.getElementById('maze').innerHTML = maze.map(row => row.join('')).join('\n');
+
+            if (grew) {
+                setTimeout(growMaze, 10);
+            } else {
+                createBalancedRandomPath();
+            }
+        }
+
+        function createBalancedRandomPath() {
+            let x = Math.floor(width / 2);  // Start at the center of the top
+            let y = 0;
+
+            function step() {
+                maze[y][x] = `<span style="color:red">█</span>`;
+                document.getElementById('maze').innerHTML = maze.map(row => row.join('')).join('\n');
+
+                if (y === height - 1) {
+                    return;  // Reached the bottom, end the path
+                }
+
+                // Possible moves: down (50% chance), left or right (50% chance combined)
+                const rand = Math.random();
+                if (rand < 0.5 && y < height - 1) {
+                    y++;  // Move down
+                } else if (rand < 0.75 && x > 0) {
+                    x--;  // Move left
+                } else if (x < width - 1) {
+                    x++;  // Move right
+                } else {
+                    y++;  // If can't move left or right, move down
+                }
+
+                // Add some randomness to prevent getting stuck in a vertical line
+                if (Math.random() < 0.1) {
+                    x = Math.max(0, Math.min(width - 1, x + (Math.random() < 0.5 ? -1 : 1)));
+                }
+
+                setTimeout(step, 20);  // Back to original speed
+            }
+
+            step();
+        }
+
+        growMaze();
+    </script>
+</body>
+</html>
