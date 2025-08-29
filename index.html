@@ -587,6 +587,8 @@
                         <div class="menu-item" data-menu="poetry">Poetry</div>
                         <div class="menu-item" data-menu="magic">Magic</div>
                         <div class="menu-item" data-menu="sim">FORWARD sim. [WIP]</div>
+                        <div class="menu-item" data-menu="forward">forward</div>
+                        <div class="menu-item" data-menu="bughunt">bug hunt</div>
                         <div class="menu-item" data-menu="photos">Photos</div>
                         <div class="menu-item" data-menu="contact">Contact</div>
                         <div class="menu-item" data-menu="save">Save & Quit</div>                    </div>
@@ -1265,6 +1267,16 @@
                 // Special handling for magic - directly open Moxfield profile
                 if (menuKey === 'magic') {
                     window.open('https://moxfield.com/users/plbaumgartner', '_blank');
+                    return;
+                }
+
+                // Special handling for folder links
+                if (menuKey === 'forward') {
+                    window.location.href = 'forward/index.html';
+                    return;
+                }
+                if (menuKey === 'bughunt') {
+                    window.location.href = 'bug-hunt/index.html';
                     return;
                 }
 
