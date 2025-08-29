@@ -32,6 +32,8 @@ let worker = null;
 let busy = false;
 let lastObjectURL = null;
 let ticker = null;
+let awaitingInit = false;
+let resolveInit = null;
 let mediaRecorder = null;
 let recChunks = [];
 let recBlob = null;
@@ -89,6 +91,8 @@ function ensureWorker(){
     if (type === 'status') { setStatus(data); logLine(String(data)); }
     else if (type === 'progress') { setProgress(data); }
     else if (type === 'ready') {
+  // First 'ready' is worker loaded; subsequent 'ready' after init means pipeline ready
+  if (awaitingInit && typeof resolveInit === 'function') { resolveInit(); awaitingInit = false; resolveInit = null; }
       setStatus('Ready. Drop an audio file or click Select Audio.');
       logLine('Worker ready.');
     } else if (type === 'result') {
@@ -144,6 +148,8 @@ function startTranscribe(file){
   setProgress(5);
   startTicker(5, 18, 4000); // animate while model downloads
   logLine(`Initializing model: ${model}`);
+  // Initialize model and await pipeline-ready before sending audio to avoid race
+  const modelReady = new Promise((res) => { awaitingInit = true; resolveInit = res; });
   worker.postMessage({ type: 'init', model });
   (async () => {
     try {
@@ -153,6 +159,8 @@ function startTranscribe(file){
       const { samples, sampleRate: sr, duration: durSec } = await decodeToMono(file);
   setProgress(30);
   logLine(`Decoded mono ${sr} Hz, duration ~${durSec.toFixed(1)}s`);
+      // Ensure model is fully initialized before sending audio
+      await modelReady;
       // For long files, stream in chunks to keep memory bounded
       const chunkSec = 20;        // chunk length in seconds
       const strideSec = 5;        // overlap for context
@@ -174,8 +182,10 @@ function startTranscribe(file){
           if (!busy) break; // allow Stop
           if (start >= samples.length) break;
           const end = Math.min(samples.length, start + chunk);
-          const slice = samples.subarray(start, end);
-          worker.postMessage({ type: 'chunk', i: index, n: total, audio: { samples: slice, sample_rate: sr } }, [slice.buffer]);
+          // Copy to a fresh buffer per chunk to avoid detaching the source samples buffer
+          const sliceView = samples.subarray(start, end);
+          const chunkCopy = new Float32Array(sliceView);
+          worker.postMessage({ type: 'chunk', i: index, n: total, audio: { samples: chunkCopy, sample_rate: sr } }, [chunkCopy.buffer]);
           logLine(`Sent chunk ${index+1}/${total} (${((end-start)/sr).toFixed(1)}s)`);
           index++;
           // small yield to keep UI responsive
