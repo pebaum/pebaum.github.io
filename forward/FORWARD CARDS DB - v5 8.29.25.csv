@@ -41,8 +41,10 @@ Terror,HVT-TER-01,Parents slain by Magistrate Ellard,,"CHOOSE:
 or
 Place card in DREAD (face down)
 ",Ellard’s decree ends in blood; grief hardens into purpose.,
+Caesura,HVT-CA-01,Smoke along the lanes,,"EFFECT: None","Ash drifts; names taste like cinder.",
 Scene,HVT-SCN-01,Keep vigil at their graves,,"REST: 
 ???","You rest by new earth, whispering promises to the dead.",
+Caesura,HVT-CA-02,Gravel under vow,,"EFFECT: None","Each step repeats the promise without words.",
 Beast,HVT-BST-01,Ravenous Boar,,"FIGHT: 5 HP
 ----------
 1 Miss
@@ -51,17 +53,22 @@ Beast,HVT-BST-01,Ravenous Boar,,"FIGHT: 5 HP
 4 Gore (1 DMG)
 5 Gore (1 DMG)
 6 Trample (1 DMG)",You wake to tusks and fury in the ruined orchard.,
+Caesura,HVT-CA-03,Orchard rows at dusk,,"EFFECT: None","Trees hold still as if listening.",
 Item,HVT-ITM-01,Rations,,"USE: 
 Heal 4 HP","You gather what the raiders missed—bread, apples, salt.",
+Caesura,HVT-CA-04,Cold hearth shadows,,"EFFECT: None","Stone remembers warmth, not the why.",
 Equipment,HVT-EQP-01,Homespun cloak,,"EQUIP:
 Rest = Heal 2 HP",Woven by Mother's hand. Smells of smoke and cider.,
+Caesura,HVT-CA-05,Moon on the well,,"EFFECT: None","A circle of light steadies your breath.",
 Snare,HVT-SNR-01,Stench of piled bodies,,"EFFECT: 
 Cannot spend resolve",The reek gnaws at resolve; every breath remembers.,
+Caesura,HVT-CA-06,Keeping downwind,,"EFFECT: None","You move with the smoke instead of through it.",
 Pit,HVT-PIT-01,Infiltrate the Magistrate’s manor,,"CHALLENGE - Save on 3+
 Roll 1d6 until you have 3 saves or 3 fails.
 Each fail: -2 HP.
 On 3 fails: add this card to DREAD.
 ","If you fail, turned villagers force a terrible choice.",
+Caesura,HVT-CA-07,Back stairs holding breath,,"EFFECT: None","Wood does not argue with careful feet.",
 Hollow,HVT-HLW-01,Confront Ellard and his lackeys,,"FIGHT: 3 HP
 ----------
 1 Miss
@@ -70,23 +77,29 @@ Hollow,HVT-HLW-01,Confront Ellard and his lackeys,,"FIGHT: 3 HP
 4 Torch (1 DMG)
 5 Kris (1 DMG)
 6 Cower ",Power bows to cruelty—until you make it otherwise.,
+Caesura,HVT-CA-08,Torches gutter on empty street,,"EFFECT: None","Night edits the day to essentials.",
 Blessing,HVT-BLS-01,"Liberation, but ashes remain",,"EFFECT: 
 Cleanse 1 Snare
 +1 to Player rolls next combat",Nothing left to keep you; only resolve to go forward.,
 Location,,Forgotten Shrine,,,Lightning outlines ruins; a stair yawns downward into old stone.,
 Blessing,FS-BLS-01,Providential shelter,,"EFFECT:
 Cleanse 1 Snare ","Dry stone, found by chance—or design.",
+Caesura,FS-CA-01,Steps into the nave,,"EFFECT: None","Echoes learn your name and let it fade.",
 Pit,FS-PIT-01,Trapped hallway,,"CHALLENGE: 
 Roll 1d6, Target: 3+, 3 successes
 Lose 2HP for each failure",Mechanisms still remember intruders.,
+Caesura,FS-CA-02,Dust wakes,,"EFFECT: None","Fingerprints teach the corridor a new story.",
 Snare,FS-SNR-01,Supernatural darkness,,"EFFECT: 
 Automatic miss first 2 attacks each combat",Light dies mid-air; the dark has weight.,
+Caesura,FS-CA-03,Flame stutters,,"EFFECT: None","Light shrinks, patience grows.",
 Terror,FS-TER-01,Crushing silence of the Grand Cathedral,,"CHOOSE: 
 Lose 7HP 
 or 
 add to DREAD","Answerless nave, breath held by centuries.",
+Caesura,FS-CA-04,Arches counting,,"EFFECT: None","You become a number the ruin can accept.",
 Item,FS-ITM-01,Ritual water basin,,"USE: 
 Heal 1d6+1",Cold as truth; eyes clear when you touch it.,
+Caesura,FS-CA-05,Water ring on stone,,"EFFECT: None","Ripples measure a silence you can stand in.",
 Beast,FS-BST-01,Wraithwing Moth,,"FIGHT: 5 HP
 ----------
 1 Miss
@@ -95,8 +108,10 @@ Beast,FS-BST-01,Wraithwing Moth,,"FIGHT: 5 HP
 4 Toxic dust (1 DMG) 
 5 Wing buffet (1 DMG)
 6 Body slam (2 DMG)",Dust like winter; wings hum like lost vows.,
+Caesura,FS-CA-06,Draft carries an old hymn,,"EFFECT: None","You do not sing; you keep time.",
 Equipment,FS-EQP-01,Ancient Sword,,"EQUIP: 
 6 COUNTER → BLOCK + DEAL 1 DMG.",???,
+Caesura,FS-CA-07,Carvings in pale glow,,"EFFECT: None","Meaning chooses to arrive later.",
 Hollow,FS-HLW-01,Assailed by living shadows,,"FIGHT: 3 HP
 ----------
 1 Miss 
@@ -105,6 +120,7 @@ Hollow,FS-HLW-01,Assailed by living shadows,,"FIGHT: 3 HP
 4 Scrape (1 DMG)
 5 Cold embrace (2 DMG)
 6 Dark claw (2 DMG)",They test what the storm already found wanting.,
+Caesura,FS-CA-08,Candles take and hold,,"EFFECT: None","Small fires barter with the dark.",
 Scene,FS-SCN-02,Candles and pews till morning,,"REST:
 ???","Wax, wood, heartbeat; dawn negotiates your return.",
 Location,,Bannered City Valthria,,,Valthria—annexed sprawl where status is law and waste its shadow.,
@@ -112,12 +128,16 @@ Pit,BCV-PIT-01,City Watch shakedown,,"CHALLENGE:
 Roll 1d6, Target: 3+, 3 successes
 Lose 2 HP for each failure
 If 3 failures, add to DREAD","Pay, talk, or vanish into paperwork.",
+Caesura,BCV-CA-01,Gate queue shuffles,,"EFFECT: None","Boots, stamps, and sighs share a beat.",
 Scene,BCV-SCN-02,Vast markets,,"REST:
 ???",A thousand cries; a thousand prices on the same soul.,
+Caesura,BCV-CA-02,Papers folded flat,,"EFFECT: None","You keep your face the way walls do.",
 Snare,BCV-SNR-01,Intoxicating spices,,"EFFECT: 
 Cannot spend resolve",Scent blinds judgment; excess wears a smile.,
+Caesura,BCV-CA-03,Alleys braid and unbraid,,"EFFECT: None","Corners practice misdirection for sport.",
 Item,BCV-ITM-01,Moonleaf Brandy,,"USE: 
 Heal 7 HP, then lose -1d6 HP",Warm courage in a bottle; debts arrive later.,
+Caesura,BCV-CA-04,Street vendor chorus,,"EFFECT: None","Calls weave through you and keep going.",
 Hollow,BCV-HLW-01,Assassin in the crowd,,"FIGHT: 
 3 HP
 ----------
@@ -127,10 +147,12 @@ Hollow,BCV-HLW-01,Assassin in the crowd,,"FIGHT:
 4 Subvert (2 DMG)
 5 Eviscerate (2 DMG)
 6 Riposte (Block & 1 DMG)",Steel learns your name between two heartbeats.,
+Caesura,BCV-CA-05,Faces blur in the crowd,,"EFFECT: None","You prefer it that way for now.",
 Terror,BCV-TER-01,Out of your depth,,"CHOOSE:
 Lose 7HP
 or
 add to DREAD ",Vulnerability exposed beneath banners and gold.,
+Caesura,BCV-CA-06,Eyes on the banners,,"EFFECT: None","You practice being less than a question.",
 Beast,BCV-BST-01,Refuse Ooze,,"FIGHT: 
 5 HP
 ----------
@@ -140,32 +162,49 @@ Beast,BCV-BST-01,Refuse Ooze,,"FIGHT:
 4 Toxic burn (3 DMG)
 5 Rip (3 DMG)
 6 Autophagy (Heal self 1 HP)",City’s sins congeal and reach for you.,
+Caesura,BCV-CA-07,Gutter water finds a drain,,"EFFECT: None","You follow the downhill logic.",
 Equipment,BCV-EQP-01,Golden bangle,,"EQUIP: 
 ???",xxx,
+Caesura,BCV-CA-08,Steps match the bells,,"EFFECT: None","Time is public; you are passing through.",
 Blessing,BCV-BLS-01,Humility,,"EFFECT:
 Cleanse 1 Snare 
 & 
 +1 to Player rolls next combat",Smallness becomes sight; you pass gate to gate.,
+Caesura,BCV-CA-01,Gate queue shuffles,,"EFFECT: None","Boots, stamps, and sighs share a beat.",
+Caesura,BCV-CA-02,Papers folded flat,,"EFFECT: None","You keep your face the way walls do.",
+Caesura,BCV-CA-03,Alleys braid and unbraid,,"EFFECT: None","Corners practice misdirection for sport.",
+Caesura,BCV-CA-04,Street vendor chorus,,"EFFECT: None","Calls weave through you and keep going.",
+Caesura,BCV-CA-05,Faces blur in the crowd,,"EFFECT: None","You prefer it that way for now.",
+Caesura,BCV-CA-06,Eyes on the banners,,"EFFECT: None","You practice being less than a question.",
+Caesura,BCV-CA-07,Gutter water finds a drain,,"EFFECT: None","You follow the downhill logic.",
+Caesura,BCV-CA-08,Steps match the bells,,"EFFECT: None","Time is public; you are passing through.",
 Location,,The Caelith Spiremaze,,,Spire upon spire; answers drift like dreams.,
 Pit,CSP-PIT-01,Labyrinthine ascent,,"CHALLENGE:
 Roll 1d6, Target: 3+, 3 successes
 Lose 2 HP for each failure
 If 3 failures, add to DREAD",Stairs lie; corridors argue; you get lost anyway.,
+Caesura,CSP-CA-01,Stairs that disagree,,"EFFECT: None","Up and down negotiate underfoot.",
 Scene,CSP-SCN-02,Constellation shaped like a sword,,"REST:
 ???",Stars arrange themselves as if remembering you.,
+Caesura,CSP-CA-02,Star-lines rehearsed,,"EFFECT: None","Constellations suggest a route without insisting.",
 Terror,CSP-TER-01,Damsel in a distant tower,,"CHOOSE:
 Lose 8 HP
 or 
 add to DREAD","Is rescue possible, or only pursuit?",
+Caesura,CSP-CA-03,High light, far away,,"EFFECT: None","Distance keeps its counsel.",
 Snare,CSP-SNR-01,Psychic malaise of questions,,"EFFECT: 
 Can not REST",Doubt multiplies like hallways.,
+Caesura,CSP-CA-04,Questions thin to wind,,"EFFECT: None","You walk anyway; it approves.",
 Item,CSP-ITM-01,Mirror shard on a pedestal,,"USE: 
 ???",It shows the cut between who you are and could be.,
+Caesura,CSP-CA-05,Palm lines itch with choices,,"EFFECT: None","You close your hand and keep moving.",
 Equipment,CSP-EQP-01,Spectral lantern,,"EQUIP: 
 Once per location, peek at 2 face down cards
 Turn sideways to track use",Cold flame that lights only the honest path.,
+Caesura,CSP-CA-06,Cold light at an arch,,"EFFECT: None","Edges glow where paths decide.",
 Hollow,CSP-HLW-01,Ghostly Princess,,"???: 
 ???",The bangle remembers her pulse; She follows like a moon,
+Caesura,CSP-CA-07,Footfalls find a second rhythm,,"EFFECT: None","Something unseen keeps pace without promise.",
 Beast,CSP-BST-01,Scholarly sphinx at the exit,,"FIGHT: 
 7 HP
 ----------
@@ -175,23 +214,38 @@ Beast,CSP-BST-01,Scholarly sphinx at the exit,,"FIGHT:
 4 Refute (2 DMG)
 5 Deconstruct (3 DMG)
 6 Slander (Block & 2 DMG)",Riddles with claws; doctrine with teeth.,
+Caesura,CSP-CA-08,Door that was not there,,"EFFECT: None","You pass as if it always was.",
 Blessing,CSP-BLS-01,Purpose: follow and protect,,"EFFECT:
 Cleanse 1 Snare 
 & 
 +1 to Player rolls next combat",Her direction steadies your step.,
+Caesura,CSP-CA-01,Stairs that disagree,,"EFFECT: None","Up and down negotiate underfoot.",
+Caesura,CSP-CA-02,Star-lines rehearsed,,"EFFECT: None","Constellations suggest a route without insisting.",
+Caesura,CSP-CA-03,High light, far away,,"EFFECT: None","Distance keeps its counsel.",
+Caesura,CSP-CA-04,Questions thin to wind,,"EFFECT: None","You walk anyway; it approves.",
+Caesura,CSP-CA-05,Palm lines itch with choices,,"EFFECT: None","You close your hand and keep moving.",
+Caesura,CSP-CA-06,Cold light at an arch,,"EFFECT: None","Edges glow where paths decide.",
+Caesura,CSP-CA-07,Footfalls find a second rhythm,,"EFFECT: None","Something unseen keeps pace without promise.",
+Caesura,CSP-CA-08,Door that was not there,,"EFFECT: None","You pass as if it always was.",
 Location,,Sirroco Wastes ,,,The wastes were empire once; now only distance rules.,
 Scene,SRW-SCN-02,Four days under the red sun,,"EFFECT:
 -2 HP",It never sets; neither do you.,
+Caesura,SRW-CA-01,Heat shimmer road,,"EFFECT: None","The air wears a mirage and you wear the air.",
 Item,SRW-ITM-01,Scattered adventuring gear (ruined),,"EFFECT:
 -2 HP","Broken straps, sand-gnawed steel—warnings or gifts.",
+Caesura,SRW-CA-02,Sand repairs your stride,,"EFFECT: None","Leather learns new compromises.",
 Equipment,SRW-EQP-01,Recovered gear pieces,,"EFFECT:
 -2 HP",Every fragment teaches economy.,
+Caesura,SRW-CA-03,Sky without corners,,"EFFECT: None","Your shadow signs its small agreement.",
 Beast,SRW-BST-01,Sand-eaten war colossus,,"EFFECT:
 -2 HP",A battlefield remembers how to stand.,
+Caesura,SRW-CA-04,Half-buried ribs,,"EFFECT: None","Ruins make their own horizon.",
 Snare,SRW-SNR-01,Desiccating winds,,"EFFECT:
 -2 HP",Hours peel you down to intent.,
+Caesura,SRW-CA-05,Wind writes in salt,,"EFFECT: None","You read what you need and let the rest blow.",
 Terror,SRW-TER-01,Featureless expanse,,"EFFECT:
 -2 HP",Exile is the shape of a horizon.,
+Caesura,SRW-CA-06,Counting to the next shade,,"EFFECT: None","Numbers break and you keep counting.",
 Hollow,SRW-HLW-01,Mirror Knight,,"FIGHT: 
 HP = Player HP
 1 Copy player roll
@@ -200,26 +254,40 @@ HP = Player HP
 4 Copy player roll
 5 Copy player roll
 6 Copy player roll",You brandish the shard; he lowers his blade and follows.,
+Caesura,SRW-CA-07,Long shadow keeps pace,,"EFFECT: None","Distance teaches companionship without words.",
 Pit,SRW-PIT-01,Wandering until treeline appears,,"CHALLENGE: 
 Roll 1d6, Target: 4+, 3 successes
 Lose 3 HP for each failure
 If 3 failures, add to DREAD","At last, green edges the sky; night follows.",
+Caesura,SRW-CA-08,Green rumor at the edge,,"EFFECT: None","Hope changes color first.",
 Blessing,SRW-BLS-01,Gratitude,,"EFFECT:
 Cleanse 1 Snare 
 & 
 Full Heal","Empty hands, lighter heart.",
+Caesura,SRW-CA-01,Heat shimmer road,,"EFFECT: None","The air wears a mirage and you wear the air.",
+Caesura,SRW-CA-02,Sand repairs your stride,,"EFFECT: None","Leather learns new compromises.",
+Caesura,SRW-CA-03,Sky without corners,,"EFFECT: None","Your shadow signs its small agreement.",
+Caesura,SRW-CA-04,Half-buried ribs,,"EFFECT: None","Ruins make their own horizon.",
+Caesura,SRW-CA-05,Wind writes in salt,,"EFFECT: None","You read what you need and let the rest blow.",
+Caesura,SRW-CA-06,Counting to the next shade,,"EFFECT: None","Numbers break and you keep counting.",
+Caesura,SRW-CA-07,Long shadow keeps pace,,"EFFECT: None","Distance teaches companionship without words.",
+Caesura,SRW-CA-08,Green rumor at the edge,,"EFFECT: None","Hope changes color first.",
 Location,,Darkwood Brume,,,Mist and misdirection; meaning hides off-path.,
 Scene,DB-SCN-02,Brook in the shade,,"REST:
 ???",Cold water trades heat for hope.,
+Caesura,DB-CA-01,Brook keeps slow time,,"EFFECT: None","You tune your breath to water.",
 Item,DB-ITM-01,Cooling moss salve,,"ITEM
 USE: 
 Heal 6 HP",Sunburn eases; breath deepens.,
+Caesura,DB-CA-02,Ferns brush the knee,,"EFFECT: None","Touch teaches direction better than sight.",
 Pit,DB-PIT-01,False trails and lost purpose,,"CHALLENGE: 
 Roll 1d6, Target: 4+, 3 successes
 Lose 3 HP for each failure
 If 3 failures, add to DREAD",The map unhelpfully becomes you.,
+Caesura,DB-CA-03,Marks blur to nothing,,"EFFECT: None","The forest edits your certainty.",
 Snare,DB-SNR-01,Why bother?,,"EFFECT: 
 Lose 2 HP every time a card is turned face up",Fatigue argues for surrender.,
+Caesura,DB-CA-04,Paths suggest detours,,"EFFECT: None","You nod politely and continue.",
 Beast,DB-BST-01,Mist-spun giant spider,,"FIGHT: 
 7 HP
 ----------
@@ -229,27 +297,41 @@ Beast,DB-BST-01,Mist-spun giant spider,,"FIGHT:
 4 Needle Bite (2 DMG)
 5 Envenom (1 DMG & +1 DMG rest of fight)
 6 Fog-Feint (Block & 2 DMG)",You cut vapor and find venom.,
+Caesura,DB-CA-05,Fine threads on your sleeve,,"EFFECT: None","You prefer not to know their maker.",
 Terror,DB-TER-01,"After victory, pointlessness lingers",,"CHOOSE:
 Lose 8 HP
 or 
 add to DREAD",Meaning hides behind the next step.,
+Caesura,DB-CA-06,Fog blinks first,,"EFFECT: None","You take the path that opens an eye.",
 Hollow,DB-HLW-01,The robed sage appears,,"???:
 ???",He follows without a word; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX,
+Caesura,DB-CA-07,Footsteps ahead, unclaimed,,"EFFECT: None","You are not the only traveler and that is fine.",
 Equipment,DB-EQP-01,Sunstone,,"EQUIP:
 Once per location, turn 2 cards face up
 Turn sideways to track use","With it, you walk out of the fog.",
+Caesura,DB-CA-08,Light thickens then thins,,"EFFECT: None","Somewhere is nearer than it was.",
 Blessing,DB-BLS-01,Guidance,,"EFFECT:
 Cleanse 1 Snare 
 & 
 +1 to Player rolls next CHALLENGE",xxxxxxxxxxxxxxxxxx,
+Caesura,DB-CA-01,Brook keeps slow time,,"EFFECT: None","You tune your breath to water.",
+Caesura,DB-CA-02,Ferns brush the knee,,"EFFECT: None","Touch teaches direction better than sight.",
+Caesura,DB-CA-03,Marks blur to nothing,,"EFFECT: None","The forest edits your certainty.",
+Caesura,DB-CA-04,Paths suggest detours,,"EFFECT: None","You nod politely and continue.",
+Caesura,DB-CA-05,Fine threads on your sleeve,,"EFFECT: None","You prefer not to know their maker.",
+Caesura,DB-CA-06,Fog blinks first,,"EFFECT: None","You take the path that opens an eye.",
+Caesura,DB-CA-07,Footsteps ahead, unclaimed,,"EFFECT: None","You are not the only traveler and that is fine.",
+Caesura,DB-CA-08,Light thickens then thins,,"EFFECT: None","Somewhere is nearer than it was.",
 Location,,Amara Rot Glade,,,Resentment blooms among red rot and biting flies.,
 Item,ARG-ITM-01,Black-thorn sap,,"USE: 
 2 DMG to Human
 ",Poison or remedy depends on the hand.,
+Caesura,ARG-CA-01,Thorns watching,,"EFFECT: None","You pass like an apology through green teeth.",
 Pit,ARG-PIT-01,Tar pits and crimson vines,,"CHALLENGE: 
 Roll 1d6, Target: 5+, 3 successes
 Lose 3 HP for each failure
 If 3 failures, add to DREAD",Every step negotiates with hunger.,
+Caesura,ARG-CA-02,Step lifts, step sinks,,"EFFECT: None","The ground takes a vote each pace.",
 Beast,ARG-BST-01,Gravecoil Ambusher,,"FIGHT: 
 7 HP
 ----------
@@ -259,6 +341,7 @@ Beast,ARG-BST-01,Gravecoil Ambusher,,"FIGHT:
 4 Carrion Bite (3 DMG)
 5 Rot-Venom (3 DMG & +1 DMG rest of fight)
 6 Undying Coil (Block & 4 DMG)",Death coils; patience tightens.,
+Caesura,ARG-CA-03,Still water listens,,"EFFECT: None","You keep your secrets for the shore.",
 Hollow,ARG-HLW-01,Drowning ambush,,"FIGHT: 
 5 HP
 ----------
@@ -268,33 +351,49 @@ Hollow,ARG-HLW-01,Drowning ambush,,"FIGHT:
 4 Drown (1 DMG & Player skips next roll)
 5 Strangle (2 DMG & Player skips next roll)
 6 Howl (2 DMG & Player skips next roll)",Her plea was bait; your mercy almost fatal.,
+Caesura,ARG-CA-04,Mud rinsed from hands,,"EFFECT: None","Clean is a direction, not a state.",
 Terror,ARG-TER-01,Betrayal shock,,"CHOOSE:
 Lose 8 HP
 or 
 add to DREAD",Trust cracks like peat underfoot.,
+Caesura,ARG-CA-05,Eyes on the banks,,"EFFECT: None","Patience lives here and notices everything.",
 Equipment,ARG-EQP-01,Bleeding-heart talisman,,"EQUIP:
 +1 to CHALLENGE rolls",Heightened awareness through rot and snare.,
+Caesura,ARG-CA-06,Caution widens,,"EFFECT: None","Your circle of attention grows a second edge.",
 Blessing,ARG-BLS-01,Pity for the fallen,,"EFFECT:
 Cleanse 1 Snare 
 & 
 +2 to next Heal",Compassion keeps you from becoming the swamp.,
+Caesura,ARG-CA-07,Air sweetens toward mercy,,"EFFECT: None","Bitterness remembers to breathe out.",
 Scene,ARG-SCN-01,Lay her to rest,,"REST:
 ???",You bury her with a flower; bitterness loosens.,
+Caesura,ARG-CA-01,Thorns watching,,"EFFECT: None","You pass like an apology through green teeth.",
+Caesura,ARG-CA-02,Step lifts, step sinks,,"EFFECT: None","The ground takes a vote each pace.",
+Caesura,ARG-CA-03,Still water listens,,"EFFECT: None","You keep your secrets for the shore.",
+Caesura,ARG-CA-04,Mud rinsed from hands,,"EFFECT: None","Clean is a direction, not a state.",
+Caesura,ARG-CA-05,Eyes on the banks,,"EFFECT: None","Patience lives here and notices everything.",
+Caesura,ARG-CA-06,Caution widens,,"EFFECT: None","Your circle of attention grows a second edge.",
+Caesura,ARG-CA-07,Air sweetens toward mercy,,"EFFECT: None","Bitterness remembers to breathe out.",
 Location,,Frozen Gaol,,,,
 Pit,FG-PIT-01,Fracturing ice floor,,"CHALLENGE: 
 Roll 1d6, Target: 5+, 3 successes
 Lose 3 HP for each failure
 If 3 failures, add to DREAD",Each step auditions catastrophe.,
+Caesura,FG-CA-01,Crack-lines underfoot,,"EFFECT: None","You map by sound more than sight.",
 Equipment,FG-EQP-01,Wardens ice shield,,"EQUIP:
 1 Ward (Block)",Sees what watches; refuses to be seen.,
+Caesura,FG-CA-02,Cold ward of silence,,"EFFECT: None","You choose not to disturb the held breath.",
 Snare,FG-SNR-01,Panopticon isolation,,"EFFECT: 
 -1 to FIGHT rolls",You feel watched by everyone and no one.,
+Caesura,FG-CA-03,No gaze finds you,,"EFFECT: None","You practice being ordinary as ice.",
 Scene,FG-SCN-01,Frosted garden rest,,"REST:
 ???","Hoarfrost petals, a bench of silence.",
+Caesura,FG-CA-04,Bench of frost,,"EFFECT: None","Rest is an agreement with the cold.",
 Terror,FG-TER-01,Life under judgment,,"CHOOSE:
 Lose 8 HP
 or 
 add to DREAD",Freedom a rumor; you a supporting role.,
+Caesura,FG-CA-05,Judgment like a draft,,"EFFECT: None","It passes through; you keep your warmth.",
 Hollow,FG-HLW-01,"Thyra, the Warden",,"FIGHT: 
 5 HP
 ----------
@@ -304,6 +403,7 @@ Hollow,FG-HLW-01,"Thyra, the Warden",,"FIGHT:
 4 Rime blast (3 DMG)
 5 Ice spear (3 DMG)
 6 Impale (3 DMG)","At the center, authority shivers.",
+Caesura,FG-CA-06,Bridge whitening with rime,,"EFFECT: None","Edges blur; balance does not.",
 Beast,FG-BST-01,Great white wolf,,"FIGHT:
 7 HP
 ----------
@@ -313,19 +413,32 @@ Beast,FG-BST-01,Great white wolf,,"FIGHT:
 4 Fang(3 DMG)
 5 Hamstring (3 DMG & no rerolls next round)
 6 Winter Howl (Block & 2 DMG)",It guards the fall; snow learns your color.,
+Caesura,FG-CA-07,White hush, wide as a hall,,"EFFECT: None","Noise would break; you don't.",
 Item,FG-ITM-01,Snow-Melt Tear,,"USE: 
 Full heal",Cold that frees bars behind the throne.,
+Caesura,FG-CA-08,Passage breath clouds ahead,,"EFFECT: None","The way accepts your warmth and yields.",
 Blessing,FG-BLS-01,Melted way out,,"EFFECT:
 Cleanse 1 Snare 
 & 
 Full heal",A hidden tunnel descends toward freedom.,
+Caesura,FG-CA-01,Crack-lines underfoot,,"EFFECT: None","You map by sound more than sight.",
+Caesura,FG-CA-02,Cold ward of silence,,"EFFECT: None","You choose not to disturb the held breath.",
+Caesura,FG-CA-03,No gaze finds you,,"EFFECT: None","You practice being ordinary as ice.",
+Caesura,FG-CA-04,Bench of frost,,"EFFECT: None","Rest is an agreement with the cold.",
+Caesura,FG-CA-05,Judgment like a draft,,"EFFECT: None","It passes through; you keep your warmth.",
+Caesura,FG-CA-06,Bridge whitening with rime,,"EFFECT: None","Edges blur; balance does not.",
+Caesura,FG-CA-07,White hush, wide as a hall,,"EFFECT: None","Noise would break; you don't.",
+Caesura,FG-CA-08,Passage breath clouds ahead,,"EFFECT: None","The way accepts your warmth and yields.",
 Location,,The Nightsea Expanse,,,,
 Scene,NSE-SCN-01,Find the underground river,,"REST:
 ???","A cavern river leads deeper, then becomes an underground sea.",
+Caesura,NSE-CA-01,Boat skims the dark,,"EFFECT: None","The current sets the sentence; you provide the verb.",
 Snare,NSE-SNR-01,Eroding sense of self,,"EFFECT:
 -1 to all rolls",What remains?,
+Caesura,NSE-CA-02,Self in the oar rhythm,,"EFFECT: None","Repetition forgets your edges.",
 Equipment,NSE-EQP-01,Ferryman's Bell,,"EQUIP:
 ???",The Sage rows when the bell sounds.,
+Caesura,NSE-CA-03,Oar dips, current answers,,"EFFECT: None","Call and response without a voice.",
 Beast,NSE-BST-01,Austere Leviathan,,"FIGHT:
 7 HP
 ----------
@@ -335,16 +448,20 @@ Beast,NSE-BST-01,Austere Leviathan,,"FIGHT:
 4 Wake Wall (1 DMG& +1 DMG next Breach)
 5 Pressure Fold (2 DMG)
 6 Breach (5 DMG)",A mountain of intent rises beneath your keel.,
+Caesura,NSE-CA-04,Wake stitches a path,,"EFFECT: None","Thread behind, question ahead.",
 Item,NSE-ITM-01,Pearl of opal dawn,,"USE:
 Move up to 2 cards from DREAD to RESOLVE",Drowned dawn trapped in stone.,
+Caesura,NSE-CA-05,Horizon is a sound,,"EFFECT: None","You listen until it becomes direction.",
 Pit,NSE-PIT-01,Transmuted whirlpool,,"CHALLENGE: 
 Roll 1d6, Target: 5+, 3 successes
 Lose 3 HP for each failure
 If 3 failures, add to DREAD",The sea reconsiders your path into a circle.,
+Caesura,NSE-CA-06,Water decides twice,,"EFFECT: None","Circles open when you stop arguing.",
 Terror,NSE-TER-01,Abyssal unreality,,"CHOOSE:
 Lose 8 HP
 or 
 add to DREAD",You travel timelessly; what is sloughs off like scales.,
+Caesura,NSE-CA-07,Silence with weight,,"EFFECT: None","Depth measures you back.",
 Hollow,NSE-HLW-01,Aeron the Half-Changed,,"FIGHT: 
 5 HP
 ----------
@@ -354,7 +471,16 @@ Hollow,NSE-HLW-01,Aeron the Half-Changed,,"FIGHT:
 4 Silent shout (3 DMG)
 5 Aura of pain (3 DMG)
 6 Rending sorrow (3 DMG)",Beached between selves; you finish the choice he would not.,
+Caesura,NSE-CA-08,Rock rises, then sinks,,"EFFECT: None","Land is a rumor that keeps moving.",
 Blessing,NSE-BLS-01,Acceptance,,"EFFECT:
 Cleanse 1 Snare 
 & 
 Full Heal",You sail on without guarantees; that is the door.,
+Caesura,NSE-CA-01,Boat skims the dark,,"EFFECT: None","The current sets the sentence; you provide the verb.",
+Caesura,NSE-CA-02,Self in the oar rhythm,,"EFFECT: None","Repetition forgets your edges.",
+Caesura,NSE-CA-03,Oar dips, current answers,,"EFFECT: None","Call and response without a voice.",
+Caesura,NSE-CA-04,Wake stitches a path,,"EFFECT: None","Thread behind, question ahead.",
+Caesura,NSE-CA-05,Horizon is a sound,,"EFFECT: None","You listen until it becomes direction.",
+Caesura,NSE-CA-06,Water decides twice,,"EFFECT: None","Circles open when you stop arguing.",
+Caesura,NSE-CA-07,Silence with weight,,"EFFECT: None","Depth measures you back.",
+Caesura,NSE-CA-08,Rock rises, then sinks,,"EFFECT: None","Land is a rumor that keeps moving.",
