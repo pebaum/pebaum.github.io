@@ -11,7 +11,7 @@
     <div class="app">
       <header>
         <h1>Minimal Transcriber (Web)</h1>
-        <p>Drop an audio file or click Select Audio. Transcription runs in your browser using Whisper tiny via WebAssembly.</p>
+  <p>Drop an audio file, click Select Audio, or record a quick note. Transcription runs in your browser using Whisper tiny via WebAssembly.</p>
       </header>
 
       <main>
@@ -22,6 +22,13 @@
             <button id="browse" type="button">Select Audio</button>
           </div>
         </label>
+
+        <div class="row" id="recRow">
+          <button id="record" type="button">Record</button>
+          <span id="recStatus" class="muted">Mic off</span>
+          <button id="transcribeRec" type="button" disabled>Transcribe Recording</button>
+        </div>
+        <audio id="preview" controls hidden></audio>
 
         <div class="row">
           <label class="chk">
@@ -40,6 +47,14 @@
           <div class="row">
             <button id="download" type="button" disabled>Download .txt</button>
             <a id="saveLink" download="transcript.txt" hidden></a>
+          </div>
+        </div>
+
+        <div class="log">
+          <h3>Log</h3>
+          <pre id="log" class="log-body"></pre>
+          <div class="row">
+            <button id="clearLog" type="button">Clear log</button>
           </div>
         </div>
       </main>

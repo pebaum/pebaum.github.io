@@ -20,20 +20,56 @@ const els = {
   output: document.getElementById('output'),
   download: document.getElementById('download'),
   saveLink: document.getElementById('saveLink'),
+  log: document.getElementById('log'),
+  clearLog: document.getElementById('clearLog'),
+  record: document.getElementById('record'),
+  recStatus: document.getElementById('recStatus'),
+  transcribeRec: document.getElementById('transcribeRec'),
+  preview: document.getElementById('preview'),
 };
 
 let worker = null;
 let busy = false;
 let lastObjectURL = null;
+let ticker = null;
+let mediaRecorder = null;
+let recChunks = [];
+let recBlob = null;
+let recUrl = null;
+let recActive = false;
 
 function setStatus(txt){ els.status.textContent = txt; }
+function logLine(msg){
+  const now = new Date().toLocaleTimeString();
+  if (!els.log) return;
+  els.log.textContent += `[${now}] ${msg}\n`;
+  els.log.scrollTop = els.log.scrollHeight;
+}
 function setBusy(v){ busy = v; els.stop.disabled = !v; }
 function setProgress(pct){
   const v = Math.max(0, Math.min(100, pct));
   els.bar.style.width = `${v}%`;
   if (els.pct) els.pct.textContent = `${v|0}%`;
 }
+function startTicker(from, to, ms){
+  stopTicker();
+  let v = from;
+  const step = (to - from) / Math.max(1, Math.floor(ms/150));
+  ticker = setInterval(() => {
+    v = Math.min(to, v + step);
+    setProgress(v);
+  }, 150);
+}
+function stopTicker(){ if (ticker){ clearInterval(ticker); ticker = null; } }
 function resetOutput(){ els.output.value=''; els.download.disabled = true; if(lastObjectURL){ URL.revokeObjectURL(lastObjectURL); lastObjectURL=null; } }
+
+function resetRecording(){
+  recChunks = [];
+  recBlob = null;
+  if (recUrl) { URL.revokeObjectURL(recUrl); recUrl = null; }
+  if (els.preview) { els.preview.src = ''; els.preview.hidden = true; }
+  if (els.transcribeRec) els.transcribeRec.disabled = true;
+}
 
 function pickModelName(){
   const langHint = navigator.language || '';
@@ -50,10 +86,11 @@ function ensureWorker(){
   worker = new Worker('worker.js', { type: 'module' });
   worker.onmessage = (ev) => {
     const { type, data } = ev.data || {};
-    if (type === 'status') setStatus(data);
-  else if (type === 'progress') setProgress(data);
+    if (type === 'status') { setStatus(data); logLine(String(data)); }
+    else if (type === 'progress') { setProgress(data); }
     else if (type === 'ready') {
       setStatus('Ready. Drop an audio file or click Select Audio.');
+      logLine('Worker ready.');
     } else if (type === 'result') {
       const text = data || '';
       els.output.value = text;
@@ -63,10 +100,14 @@ function ensureWorker(){
       els.saveLink.href = url;
       els.download.disabled = false;
       setBusy(false);
+      logLine('Transcription complete.');
+  stopTicker();
       setStatus('Done. You can edit or download the transcript.');
       setProgress(100);
     } else if (type === 'error') {
       setBusy(false);
+      logLine(`Error: ${data}`);
+  stopTicker();
       setStatus(`Error: ${data}`);
     }
   };
@@ -101,22 +142,29 @@ function startTranscribe(file){
   const model = pickModelName();
   setStatus(`Loading model '${model}'…`);
   setProgress(5);
+  startTicker(5, 18, 4000); // animate while model downloads
+  logLine(`Initializing model: ${model}`);
   worker.postMessage({ type: 'init', model });
   (async () => {
     try {
-      setStatus('Decoding audio…');
+  setStatus('Decoding audio…');
   setProgress(20);
+  logLine('Decoding file…');
       const { samples, sampleRate: sr, duration: durSec } = await decodeToMono(file);
   setProgress(30);
+  logLine(`Decoded mono ${sr} Hz, duration ~${durSec.toFixed(1)}s`);
       // For long files, stream in chunks to keep memory bounded
       const chunkSec = 20;        // chunk length in seconds
       const strideSec = 5;        // overlap for context
       if (durSec <= chunkSec * 1.2) {
         setStatus('Transcribing…');
-  setProgress(40);
+        setProgress(40);
+        logLine('Transcribing (single batch)…');
+        startTicker(40, 85, Math.max(4000, durSec * 400)); // animate during single-shot
         worker.postMessage({ type: 'transcribe', audio: { samples, sample_rate: sr } }, [samples.buffer]);
       } else {
         setStatus('Transcribing (chunked)…');
+        logLine('Transcribing in chunks…');
         const chunk = Math.floor(chunkSec * sr);
         const stride = Math.floor(strideSec * sr);
         const step = Math.max(1, chunk - stride);
@@ -128,6 +176,7 @@ function startTranscribe(file){
           const end = Math.min(samples.length, start + chunk);
           const slice = samples.subarray(start, end);
           worker.postMessage({ type: 'chunk', i: index, n: total, audio: { samples: slice, sample_rate: sr } }, [slice.buffer]);
+          logLine(`Sent chunk ${index+1}/${total} (${((end-start)/sr).toFixed(1)}s)`);
           index++;
           // small yield to keep UI responsive
           await new Promise(r => setTimeout(r, 0));
@@ -140,6 +189,7 @@ function startTranscribe(file){
     } catch (e) {
       setBusy(false);
       setStatus(`Failed to decode: ${e?.message || e}`);
+      logLine(`Decode failed: ${e?.message || e}`);
     }
   })();
 }
@@ -169,6 +219,7 @@ els.stop.addEventListener('click', () => {
   setBusy(false);
   terminateWorker();
   setProgress(0);
+  logLine('Stopped by user.');
 });
 
 els.speed.addEventListener('change', () => {
@@ -179,7 +230,77 @@ els.speed.addEventListener('change', () => {
 els.download.addEventListener('click', () => {
   if (els.saveLink.href) {
     els.saveLink.click();
+  logLine('Downloaded transcript.');
   }
 });
 
-setStatus('Ready. Drop an audio file or click Select Audio.');
+if (els.clearLog) els.clearLog.addEventListener('click', () => { if (els.log) els.log.textContent=''; });
+
+setStatus('Ready. Drop an audio file, click Select Audio, or press Record.');
+
+// Recording controls
+function pickRecordingMime(){
+  const candidates = [
+    'audio/webm;codecs=opus',
+    'audio/webm',
+    'audio/ogg;codecs=opus',
+    'audio/mp4',
+  ];
+  for (const m of candidates) {
+    if (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) return m;
+  }
+  return undefined; // let browser pick
+}
+
+async function startRecording(){
+  try {
+    resetRecording();
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const mimeType = pickRecordingMime();
+    mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+    recChunks = [];
+    mediaRecorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) recChunks.push(e.data); };
+    mediaRecorder.onstop = () => {
+      const outType = mediaRecorder.mimeType || mimeType || 'audio/webm';
+      recBlob = new Blob(recChunks, { type: outType });
+      recUrl = URL.createObjectURL(recBlob);
+      if (els.preview) { els.preview.src = recUrl; els.preview.hidden = false; }
+      if (els.transcribeRec) els.transcribeRec.disabled = false;
+      if (els.recStatus) els.recStatus.innerHTML = 'Mic off';
+      if (els.record) els.record.textContent = 'Record';
+      recActive = false;
+      logLine(`Recording complete: ${(recBlob.size/1024).toFixed(1)} KB`);
+    };
+    mediaRecorder.start();
+    recActive = true;
+    if (els.recStatus) els.recStatus.innerHTML = '<span class="rec-dot"></span>Recording…';
+    if (els.record) els.record.textContent = 'Stop';
+    logLine('Recording started.');
+  } catch (e) {
+    logLine(`Mic error: ${e?.message || e}`);
+    if (els.recStatus) els.recStatus.textContent = 'Mic error';
+  }
+}
+
+function stopRecording(){
+  try {
+    if (mediaRecorder && recActive) {
+      mediaRecorder.stop();
+      mediaRecorder.stream.getTracks().forEach(t => t.stop());
+    }
+  } catch (e) {
+    logLine(`Stop error: ${e?.message || e}`);
+  }
+}
+
+if (els.record) els.record.addEventListener('click', () => {
+  if (recActive) stopRecording(); else startRecording();
+});
+
+if (els.transcribeRec) els.transcribeRec.addEventListener('click', async () => {
+  if (!recBlob) { logLine('No recording available.'); return; }
+  // Wrap Blob into a File-like to reuse decodeToMono
+  const file = new File([recBlob], 'recording.webm', { type: recBlob.type || 'audio/webm' });
+  els.transcribeRec.disabled = true;
+  startTranscribe(file);
+});
