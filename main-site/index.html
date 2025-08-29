@@ -586,6 +586,7 @@
                         <div class="menu-item" data-menu="art">Visual Art</div>
                         <div class="menu-item" data-menu="poetry">Poetry</div>
                         <div class="menu-item" data-menu="magic">Magic</div>
+                        <div class="menu-item" data-menu="transcriber">Transcriber</div>
                         <div class="menu-item" data-menu="sim">FORWARD sim. [WIP]</div>
                         <div class="menu-item" data-menu="photos">Photos</div>
                         <div class="menu-item" data-menu="contact">Contact</div>
@@ -1217,6 +1218,12 @@
                 // Special handling for magic - directly open Moxfield profile
                 if (menuKey === 'magic') {
                     window.open('https://moxfield.com/users/plbaumgartner', '_blank');
+                    return;
+                }
+
+                // Special handling for transcriber - open web app
+                if (menuKey === 'transcriber') {
+                    window.open('../transcriber/web/', '_blank');
                     return;
                 }
 

@@ -1,0 +1,20 @@
+@font-face{font-family:Alexandria;src:url('../../assets/fonts/Alexandria.ttf') format('truetype');font-display:swap}
+:root{--bg:#1e1e1e;--fg:#e6e6e6;--muted:#aaa;--accent:#4ea1ff}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:Alexandria,Segoe UI,system-ui,-apple-system,sans-serif}
+.app{max-width:840px;margin:0 auto;padding:24px}
+header h1{margin:0 0 8px;font-size:22px}
+header p{margin:0 0 16px;color:var(--muted)}
+.drop{display:block;border:1px dashed #555;border-radius:8px;background:#222;padding:16px;cursor:pointer}
+.drop-inner{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.drop .status{color:#ddd}
+.drop button{background:#2a2a2a;border:1px solid #444;color:#fff;padding:8px 14px;border-radius:6px;cursor:pointer}
+.row{display:flex;align-items:center;gap:12px;margin:12px 0}
+.chk input{transform:translateY(1px)}
+.progress{height:8px;background:#2a2a2a;border-radius:4px;overflow:hidden}
+.progress #bar{height:100%;width:0;background:linear-gradient(90deg,#4796ff,#66c2ff)}
+.out{margin-top:16px}
+.out h3{margin:8px 0 8px 0}
+#output{width:100%;min-height:220px;border:1px solid #444;background:#151515;color:#ddd;border-radius:8px;padding:12px;font-family:Consolas,ui-monospace,monospace}
+button:disabled{opacity:.6;cursor:not-allowed}

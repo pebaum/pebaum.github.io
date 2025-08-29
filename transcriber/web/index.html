@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Minimal Transcriber (Web)</title>
+    <link rel="preload" href="../../assets/fonts/Alexandria.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header>
+        <h1>Minimal Transcriber (Web)</h1>
+        <p>Drop an audio file or click Select Audio. Transcription runs in your browser using Whisper tiny via WebAssembly.</p>
+      </header>
+
+      <main>
+        <label class="drop" id="drop">
+          <input id="file" type="file" accept="audio/*,video/*" hidden />
+          <div class="drop-inner">
+            <div class="status" id="status">Drop audio here or click to browse</div>
+            <button id="browse" type="button">Select Audio</button>
+          </div>
+        </label>
+
+        <div class="row">
+          <label class="chk">
+            <input id="speed" type="checkbox" checked>
+            <span>Speed mode (smaller model)</span>
+          </label>
+          <button id="stop" type="button" disabled>Stop</button>
+        </div>
+
+        <div class="progress"><div id="bar"></div></div>
+
+        <div class="out">
+          <h3>Transcript</h3>
+          <textarea id="output" spellcheck="false" placeholder="Transcript will appear here…"></textarea>
+          <div class="row">
+            <button id="download" type="button" disabled>Download .txt</button>
+            <a id="saveLink" download="transcript.txt" hidden></a>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script type="module" src="main.js"></script>
+  </body>
+</html>
