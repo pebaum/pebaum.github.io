@@ -14,6 +14,7 @@ header p{margin:0 0 16px;color:var(--muted)}
 .chk input{transform:translateY(1px)}
 .progress{height:8px;background:#2a2a2a;border-radius:4px;overflow:hidden}
 .progress #bar{height:100%;width:0;background:linear-gradient(90deg,#4796ff,#66c2ff)}
+.pct{margin-top:6px;color:#ccc;font-size:12px}
 .out{margin-top:16px}
 .out h3{margin:8px 0 8px 0}
 #output{width:100%;min-height:220px;border:1px solid #444;background:#151515;color:#ddd;border-radius:8px;padding:12px;font-family:Consolas,ui-monospace,monospace}

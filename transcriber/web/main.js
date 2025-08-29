@@ -16,6 +16,7 @@ const els = {
   speed: document.getElementById('speed'),
   stop: document.getElementById('stop'),
   bar: document.getElementById('bar'),
+  pct: document.getElementById('pct'),
   output: document.getElementById('output'),
   download: document.getElementById('download'),
   saveLink: document.getElementById('saveLink'),
@@ -27,7 +28,11 @@ let lastObjectURL = null;
 
 function setStatus(txt){ els.status.textContent = txt; }
 function setBusy(v){ busy = v; els.stop.disabled = !v; }
-function setProgress(pct){ els.bar.style.width = `${Math.max(0, Math.min(100, pct))}%`; }
+function setProgress(pct){
+  const v = Math.max(0, Math.min(100, pct));
+  els.bar.style.width = `${v}%`;
+  if (els.pct) els.pct.textContent = `${v|0}%`;
+}
 function resetOutput(){ els.output.value=''; els.download.disabled = true; if(lastObjectURL){ URL.revokeObjectURL(lastObjectURL); lastObjectURL=null; } }
 
 function pickModelName(){
@@ -46,7 +51,7 @@ function ensureWorker(){
   worker.onmessage = (ev) => {
     const { type, data } = ev.data || {};
     if (type === 'status') setStatus(data);
-    else if (type === 'progress') setProgress(data);
+  else if (type === 'progress') setProgress(data);
     else if (type === 'ready') {
       setStatus('Ready. Drop an audio file or click Select Audio.');
     } else if (type === 'result') {
@@ -69,13 +74,12 @@ function ensureWorker(){
 
 function terminateWorker(){ if(worker){ worker.terminate(); worker=null; } }
 
-async function decodeToMono16k(file){
+async function decodeToMono(file){
   const arrbuf = await file.arrayBuffer();
-  // Use WebAudio to decode and resample
   const tmpCtx = new (window.AudioContext || window.webkitAudioContext)();
   const decoded = await tmpCtx.decodeAudioData(arrbuf.slice(0));
   tmpCtx.close();
-  // Downmix to mono
+  // Downmix to mono (native sample rate)
   let mono;
   if (decoded.numberOfChannels > 1) {
     const ch0 = decoded.getChannelData(0);
@@ -86,17 +90,7 @@ async function decodeToMono16k(file){
   } else {
     mono = decoded.getChannelData(0).slice(0);
   }
-  // Resample to 16k using OfflineAudioContext
-  const duration = decoded.duration;
-  const frames = Math.max(1, Math.floor(duration * 16000));
-  const resCtx = new OfflineAudioContext(1, frames, 16000);
-  const buf = resCtx.createBuffer(1, decoded.length, decoded.sampleRate);
-  buf.copyToChannel(mono, 0);
-  const src = resCtx.createBufferSource();
-  src.buffer = buf; src.connect(resCtx.destination); src.start();
-  const resampled = await resCtx.startRendering();
-  const out = resampled.getChannelData(0).slice(0);
-  return out;
+  return { samples: mono, sampleRate: decoded.sampleRate, duration: decoded.duration };
 }
 
 function startTranscribe(file){
@@ -106,13 +100,43 @@ function startTranscribe(file){
   setBusy(true);
   const model = pickModelName();
   setStatus(`Loading model '${model}'…`);
+  setProgress(5);
   worker.postMessage({ type: 'init', model });
   (async () => {
     try {
       setStatus('Decoding audio…');
-      const samples = await decodeToMono16k(file);
-      setStatus('Transcribing…');
-      worker.postMessage({ type: 'transcribe', audio: { samples, sample_rate: 16000 } }, [samples.buffer]);
+  setProgress(20);
+      const { samples, sampleRate: sr, duration: durSec } = await decodeToMono(file);
+  setProgress(30);
+      // For long files, stream in chunks to keep memory bounded
+      const chunkSec = 20;        // chunk length in seconds
+      const strideSec = 5;        // overlap for context
+      if (durSec <= chunkSec * 1.2) {
+        setStatus('Transcribing…');
+  setProgress(40);
+        worker.postMessage({ type: 'transcribe', audio: { samples, sample_rate: sr } }, [samples.buffer]);
+      } else {
+        setStatus('Transcribing (chunked)…');
+        const chunk = Math.floor(chunkSec * sr);
+        const stride = Math.floor(strideSec * sr);
+        const step = Math.max(1, chunk - stride);
+        const total = Math.max(1, Math.ceil(Math.max(0, samples.length - stride) / step));
+        let index = 0;
+        for (let start = 0; start < samples.length; start += step) {
+          if (!busy) break; // allow Stop
+          if (start >= samples.length) break;
+          const end = Math.min(samples.length, start + chunk);
+          const slice = samples.subarray(start, end);
+          worker.postMessage({ type: 'chunk', i: index, n: total, audio: { samples: slice, sample_rate: sr } }, [slice.buffer]);
+          index++;
+          // small yield to keep UI responsive
+          await new Promise(r => setTimeout(r, 0));
+          // Update front-end progress roughly alongside worker
+          const pct = Math.max(5, Math.min(90, Math.round(5 + (index / total) * 80)));
+          setProgress(pct);
+        }
+        if (busy) worker.postMessage({ type: 'finish' });
+      }
     } catch (e) {
       setBusy(false);
       setStatus(`Failed to decode: ${e?.message || e}`);

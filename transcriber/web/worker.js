@@ -5,6 +5,7 @@ import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers
 
 let asr = null; // pipeline instance
 let currentModelId = null;
+let chunkBuffer = '';
 
 function post(type, data){ self.postMessage({ type, data }); }
 function status(s){ post('status', s); }
@@ -30,8 +31,11 @@ async function ensurePipeline(modelName){
   const modelId = mapModel(modelName);
   if (asr && currentModelId === modelId) return;
   status(`Loading model '${modelId}'…`);
+  // Nudge progress to show activity while fetching model assets
+  progress(8);
   // Quantized for speed; will fetch model + tokenizer + feature-extractor on first use
   asr = await pipeline('automatic-speech-recognition', modelId, { quantized: true });
+  progress(18);
   currentModelId = modelId;
 }
 
@@ -54,7 +58,7 @@ async function transcribePcmFloat({ samples, sample_rate }){
 }
 
 self.onmessage = async (ev) => {
-  const { type, model, audio } = ev.data || {};
+  const { type, model, audio, i, n } = ev.data || {};
   try {
     if (type === 'init') {
       await ensurePipeline(model);
@@ -62,6 +66,27 @@ self.onmessage = async (ev) => {
     } else if (type === 'transcribe') {
       // audio = { samples: Float32Array, sample_rate: number }
       await transcribePcmFloat(audio);
+    } else if (type === 'chunk') {
+      // audio = { samples: Float32Array, sample_rate: number }
+      if (!asr) throw new Error('Pipeline not initialized');
+      const opts = { sampling_rate: audio.sample_rate || 16000, return_timestamps: false };
+      status(`Transcribing chunk ${i+1}/${n}…`);
+      const res = await asr(audio.samples, opts);
+      const text = (res && (res.text || res)) || '';
+      // Simple spacing between chunks
+      if (text) {
+        if (chunkBuffer && !chunkBuffer.endsWith('\n')) chunkBuffer += ' ';
+        chunkBuffer += text.trim();
+      }
+      // Progress: map chunks to 10%..95%
+  const pct = Math.max(10, Math.min(95, Math.round(10 + ((i + 1) / n) * 80)));
+      progress(pct);
+    } else if (type === 'finish') {
+      status('Finalizing…');
+      progress(100);
+      const out = (chunkBuffer || '').trim();
+      chunkBuffer = '';
+      post('result', out);
     }
   } catch (e) {
     post('error', String(e?.message || e));
