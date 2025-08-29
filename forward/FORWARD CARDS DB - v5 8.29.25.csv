@@ -1,0 +1,360 @@
+Card_Type,Card_ID (assoc. location),Title,Image_Source // Idea,Rules_Text,Flavor_Text,?Lore_Text?
+Special,,Player,,,,
+Special,,Combat Reference,,"Combat Reference
+----------
+Both sides roll 1d6 & apply effects simultaneously.  
+
+Player:
+1 Miss (No hit)
+2 Block (Block all incoming)
+3 Hit (1 DMG)  
+4 Hit (1 DMG)  
+5 Critical (2 DMG)  
+6 Hit (1 DMG)  ",,
+Special,,Resolve,,"RESOLVE
+----------
+Place cards on top of this face up",,
+Special,,Dread,,"DREAD
+----------
+Place cards on top of this face up",,
+Special,,Order of play,,xxxxx,,
+Special,,Spare,,,,
+Special,,Spare,,,,
+Special,,Spare,,,,
+Special,,Dragon ,,"FIGHT: 
+20 HP
+----------
+Seal of Aporia: Blocks all incoming damage
+Seal of Acedia: At end of each round, the Dragon heals all damage taken this round
+Seal of Agnosia: Whenever you would deal damage, you take that much instead
+
+1 Eclipse Roar (-1 to next Player roll)
+2 Shadow Gale (Block & 1 DMG; you skip your next roll)
+3 Gloaming Wave (2 DMG; no rerolls next round)
+4 Corona Radiation (3 DMG)
+5 Devour (3 DMG, ignore Block)
+6 Black Zenith (Block & 3 DMG)",,
+Special,,Spare,,,,
+Location,,Home Villiage Termina,,,"Termina’s orchards are seized by Valthria; fields salted, parents buried; you vow vengeance.",
+Terror,HVT-TER-01,Parents slain by Magistrate Ellard,,"CHOOSE:
+-7 HP
+or
+Place card in DREAD (face down)
+",Ellard’s decree ends in blood; grief hardens into purpose.,
+Scene,HVT-SCN-01,Keep vigil at their graves,,"REST: 
+???","You rest by new earth, whispering promises to the dead.",
+Beast,HVT-BST-01,Ravenous Boar,,"FIGHT: 5 HP
+----------
+1 Miss
+2 Miss
+3 Ram (1 DMG) 
+4 Gore (1 DMG)
+5 Gore (1 DMG)
+6 Trample (1 DMG)",You wake to tusks and fury in the ruined orchard.,
+Item,HVT-ITM-01,Rations,,"USE: 
+Heal 4 HP","You gather what the raiders missed—bread, apples, salt.",
+Equipment,HVT-EQP-01,Homespun cloak,,"EQUIP:
+Rest = Heal 2 HP",Woven by Mother's hand. Smells of smoke and cider.,
+Snare,HVT-SNR-01,Stench of piled bodies,,"EFFECT: 
+Cannot spend resolve",The reek gnaws at resolve; every breath remembers.,
+Pit,HVT-PIT-01,Infiltrate the Magistrate’s manor,,"CHALLENGE - Save on 3+
+Roll 1d6 until you have 3 saves or 3 fails.
+Each fail: -2 HP.
+On 3 fails: add this card to DREAD.
+","If you fail, turned villagers force a terrible choice.",
+Hollow,HVT-HLW-01,Confront Ellard and his lackeys,,"FIGHT: 3 HP
+----------
+1 Miss
+2 Miss
+3 Pitchfork (1 DMG) 
+4 Torch (1 DMG)
+5 Kris (1 DMG)
+6 Cower ",Power bows to cruelty—until you make it otherwise.,
+Blessing,HVT-BLS-01,"Liberation, but ashes remain",,"EFFECT: 
+Cleanse 1 Snare
++1 to Player rolls next combat",Nothing left to keep you; only resolve to go forward.,
+Location,,Forgotten Shrine,,,Lightning outlines ruins; a stair yawns downward into old stone.,
+Blessing,FS-BLS-01,Providential shelter,,"EFFECT:
+Cleanse 1 Snare ","Dry stone, found by chance—or design.",
+Pit,FS-PIT-01,Trapped hallway,,"CHALLENGE: 
+Roll 1d6, Target: 3+, 3 successes
+Lose 2HP for each failure",Mechanisms still remember intruders.,
+Snare,FS-SNR-01,Supernatural darkness,,"EFFECT: 
+Automatic miss first 2 attacks each combat",Light dies mid-air; the dark has weight.,
+Terror,FS-TER-01,Crushing silence of the Grand Cathedral,,"CHOOSE: 
+Lose 7HP 
+or 
+add to DREAD","Answerless nave, breath held by centuries.",
+Item,FS-ITM-01,Ritual water basin,,"USE: 
+Heal 1d6+1",Cold as truth; eyes clear when you touch it.,
+Beast,FS-BST-01,Wraithwing Moth,,"FIGHT: 5 HP
+----------
+1 Miss
+2 Flutter (Block) 
+3 Evade (Block) 
+4 Toxic dust (1 DMG) 
+5 Wing buffet (1 DMG)
+6 Body slam (2 DMG)",Dust like winter; wings hum like lost vows.,
+Equipment,FS-EQP-01,Ancient Sword,,"EQUIP: 
+6 COUNTER → BLOCK + DEAL 1 DMG.",???,
+Hollow,FS-HLW-01,Assailed by living shadows,,"FIGHT: 3 HP
+----------
+1 Miss 
+2 Miss
+3 Unnerve (1 DMG) 
+4 Scrape (1 DMG)
+5 Cold embrace (2 DMG)
+6 Dark claw (2 DMG)",They test what the storm already found wanting.,
+Scene,FS-SCN-02,Candles and pews till morning,,"REST:
+???","Wax, wood, heartbeat; dawn negotiates your return.",
+Location,,Bannered City Valthria,,,Valthria—annexed sprawl where status is law and waste its shadow.,
+Pit,BCV-PIT-01,City Watch shakedown,,"CHALLENGE: 
+Roll 1d6, Target: 3+, 3 successes
+Lose 2 HP for each failure
+If 3 failures, add to DREAD","Pay, talk, or vanish into paperwork.",
+Scene,BCV-SCN-02,Vast markets,,"REST:
+???",A thousand cries; a thousand prices on the same soul.,
+Snare,BCV-SNR-01,Intoxicating spices,,"EFFECT: 
+Cannot spend resolve",Scent blinds judgment; excess wears a smile.,
+Item,BCV-ITM-01,Moonleaf Brandy,,"USE: 
+Heal 7 HP, then lose -1d6 HP",Warm courage in a bottle; debts arrive later.,
+Hollow,BCV-HLW-01,Assassin in the crowd,,"FIGHT: 
+3 HP
+----------
+1 Dodge (Evade)
+2 Slice (1 DMG) 
+3 Peirce (2 DMG) 
+4 Subvert (2 DMG)
+5 Eviscerate (2 DMG)
+6 Riposte (Block & 1 DMG)",Steel learns your name between two heartbeats.,
+Terror,BCV-TER-01,Out of your depth,,"CHOOSE:
+Lose 7HP
+or
+add to DREAD ",Vulnerability exposed beneath banners and gold.,
+Beast,BCV-BST-01,Refuse Ooze,,"FIGHT: 
+5 HP
+----------
+1 Sludge (Miss)
+2 Creep (Miss) 
+3 Murk (Miss) 
+4 Toxic burn (3 DMG)
+5 Rip (3 DMG)
+6 Autophagy (Heal self 1 HP)",City’s sins congeal and reach for you.,
+Equipment,BCV-EQP-01,Golden bangle,,"EQUIP: 
+???",xxx,
+Blessing,BCV-BLS-01,Humility,,"EFFECT:
+Cleanse 1 Snare 
+& 
++1 to Player rolls next combat",Smallness becomes sight; you pass gate to gate.,
+Location,,The Caelith Spiremaze,,,Spire upon spire; answers drift like dreams.,
+Pit,CSP-PIT-01,Labyrinthine ascent,,"CHALLENGE:
+Roll 1d6, Target: 3+, 3 successes
+Lose 2 HP for each failure
+If 3 failures, add to DREAD",Stairs lie; corridors argue; you get lost anyway.,
+Scene,CSP-SCN-02,Constellation shaped like a sword,,"REST:
+???",Stars arrange themselves as if remembering you.,
+Terror,CSP-TER-01,Damsel in a distant tower,,"CHOOSE:
+Lose 8 HP
+or 
+add to DREAD","Is rescue possible, or only pursuit?",
+Snare,CSP-SNR-01,Psychic malaise of questions,,"EFFECT: 
+Can not REST",Doubt multiplies like hallways.,
+Item,CSP-ITM-01,Mirror shard on a pedestal,,"USE: 
+???",It shows the cut between who you are and could be.,
+Equipment,CSP-EQP-01,Spectral lantern,,"EQUIP: 
+Once per location, peek at 2 face down cards
+Turn sideways to track use",Cold flame that lights only the honest path.,
+Hollow,CSP-HLW-01,Ghostly Princess,,"???: 
+???",The bangle remembers her pulse; She follows like a moon,
+Beast,CSP-BST-01,Scholarly sphinx at the exit,,"FIGHT: 
+7 HP
+----------
+1 Dissociate (Miss)
+2 Rebuff (Block) 
+3 Debate (2 DMG) 
+4 Refute (2 DMG)
+5 Deconstruct (3 DMG)
+6 Slander (Block & 2 DMG)",Riddles with claws; doctrine with teeth.,
+Blessing,CSP-BLS-01,Purpose: follow and protect,,"EFFECT:
+Cleanse 1 Snare 
+& 
++1 to Player rolls next combat",Her direction steadies your step.,
+Location,,Sirroco Wastes ,,,The wastes were empire once; now only distance rules.,
+Scene,SRW-SCN-02,Four days under the red sun,,"EFFECT:
+-2 HP",It never sets; neither do you.,
+Item,SRW-ITM-01,Scattered adventuring gear (ruined),,"EFFECT:
+-2 HP","Broken straps, sand-gnawed steel—warnings or gifts.",
+Equipment,SRW-EQP-01,Recovered gear pieces,,"EFFECT:
+-2 HP",Every fragment teaches economy.,
+Beast,SRW-BST-01,Sand-eaten war colossus,,"EFFECT:
+-2 HP",A battlefield remembers how to stand.,
+Snare,SRW-SNR-01,Desiccating winds,,"EFFECT:
+-2 HP",Hours peel you down to intent.,
+Terror,SRW-TER-01,Featureless expanse,,"EFFECT:
+-2 HP",Exile is the shape of a horizon.,
+Hollow,SRW-HLW-01,Mirror Knight,,"FIGHT: 
+HP = Player HP
+1 Copy player roll
+2 Copy player roll 
+3 Copy player roll
+4 Copy player roll
+5 Copy player roll
+6 Copy player roll",You brandish the shard; he lowers his blade and follows.,
+Pit,SRW-PIT-01,Wandering until treeline appears,,"CHALLENGE: 
+Roll 1d6, Target: 4+, 3 successes
+Lose 3 HP for each failure
+If 3 failures, add to DREAD","At last, green edges the sky; night follows.",
+Blessing,SRW-BLS-01,Gratitude,,"EFFECT:
+Cleanse 1 Snare 
+& 
+Full Heal","Empty hands, lighter heart.",
+Location,,Darkwood Brume,,,Mist and misdirection; meaning hides off-path.,
+Scene,DB-SCN-02,Brook in the shade,,"REST:
+???",Cold water trades heat for hope.,
+Item,DB-ITM-01,Cooling moss salve,,"ITEM
+USE: 
+Heal 6 HP",Sunburn eases; breath deepens.,
+Pit,DB-PIT-01,False trails and lost purpose,,"CHALLENGE: 
+Roll 1d6, Target: 4+, 3 successes
+Lose 3 HP for each failure
+If 3 failures, add to DREAD",The map unhelpfully becomes you.,
+Snare,DB-SNR-01,Why bother?,,"EFFECT: 
+Lose 2 HP every time a card is turned face up",Fatigue argues for surrender.,
+Beast,DB-BST-01,Mist-spun giant spider,,"FIGHT: 
+7 HP
+----------
+1 Dissipate (Miss)
+2 Veil (Block)
+3 Filament Lash (2 DMG)
+4 Needle Bite (2 DMG)
+5 Envenom (1 DMG & +1 DMG rest of fight)
+6 Fog-Feint (Block & 2 DMG)",You cut vapor and find venom.,
+Terror,DB-TER-01,"After victory, pointlessness lingers",,"CHOOSE:
+Lose 8 HP
+or 
+add to DREAD",Meaning hides behind the next step.,
+Hollow,DB-HLW-01,The robed sage appears,,"???:
+???",He follows without a word; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX,
+Equipment,DB-EQP-01,Sunstone,,"EQUIP:
+Once per location, turn 2 cards face up
+Turn sideways to track use","With it, you walk out of the fog.",
+Blessing,DB-BLS-01,Guidance,,"EFFECT:
+Cleanse 1 Snare 
+& 
++1 to Player rolls next CHALLENGE",xxxxxxxxxxxxxxxxxx,
+Location,,Amara Rot Glade,,,Resentment blooms among red rot and biting flies.,
+Item,ARG-ITM-01,Black-thorn sap,,"USE: 
+2 DMG to Human
+",Poison or remedy depends on the hand.,
+Pit,ARG-PIT-01,Tar pits and crimson vines,,"CHALLENGE: 
+Roll 1d6, Target: 5+, 3 successes
+Lose 3 HP for each failure
+If 3 failures, add to DREAD",Every step negotiates with hunger.,
+Beast,ARG-BST-01,Gravecoil Ambusher,,"FIGHT: 
+7 HP
+----------
+1 Slack (Miss)
+2 Grave Scutes (Block)
+3 Bonebind Constrict (1 DMG & Player skips next roll)
+4 Carrion Bite (3 DMG)
+5 Rot-Venom (3 DMG & +1 DMG rest of fight)
+6 Undying Coil (Block & 4 DMG)",Death coils; patience tightens.,
+Hollow,ARG-HLW-01,Drowning ambush,,"FIGHT: 
+5 HP
+----------
+1 Trudge (Miss)
+2 Collapsed veins (Block)
+3 Dredge (2 DMG) 
+4 Drown (1 DMG & Player skips next roll)
+5 Strangle (2 DMG & Player skips next roll)
+6 Howl (2 DMG & Player skips next roll)",Her plea was bait; your mercy almost fatal.,
+Terror,ARG-TER-01,Betrayal shock,,"CHOOSE:
+Lose 8 HP
+or 
+add to DREAD",Trust cracks like peat underfoot.,
+Equipment,ARG-EQP-01,Bleeding-heart talisman,,"EQUIP:
++1 to CHALLENGE rolls",Heightened awareness through rot and snare.,
+Blessing,ARG-BLS-01,Pity for the fallen,,"EFFECT:
+Cleanse 1 Snare 
+& 
++2 to next Heal",Compassion keeps you from becoming the swamp.,
+Scene,ARG-SCN-01,Lay her to rest,,"REST:
+???",You bury her with a flower; bitterness loosens.,
+Location,,Frozen Gaol,,,,
+Pit,FG-PIT-01,Fracturing ice floor,,"CHALLENGE: 
+Roll 1d6, Target: 5+, 3 successes
+Lose 3 HP for each failure
+If 3 failures, add to DREAD",Each step auditions catastrophe.,
+Equipment,FG-EQP-01,Wardens ice shield,,"EQUIP:
+1 Ward (Block)",Sees what watches; refuses to be seen.,
+Snare,FG-SNR-01,Panopticon isolation,,"EFFECT: 
+-1 to FIGHT rolls",You feel watched by everyone and no one.,
+Scene,FG-SCN-01,Frosted garden rest,,"REST:
+???","Hoarfrost petals, a bench of silence.",
+Terror,FG-TER-01,Life under judgment,,"CHOOSE:
+Lose 8 HP
+or 
+add to DREAD",Freedom a rumor; you a supporting role.,
+Hollow,FG-HLW-01,"Thyra, the Warden",,"FIGHT: 
+5 HP
+----------
+1 Ram (Block) 
+2 Ward (Block) 
+3 Stasis chain (Player skips next roll) 
+4 Rime blast (3 DMG)
+5 Ice spear (3 DMG)
+6 Impale (3 DMG)","At the center, authority shivers.",
+Beast,FG-BST-01,Great white wolf,,"FIGHT:
+7 HP
+----------
+1 Whiteout Stalk (Miss; next hit +1 DMG)
+2 Iceback (Block)
+3 Pounce (1 DMG & Player skips next roll)
+4 Fang(3 DMG)
+5 Hamstring (3 DMG & no rerolls next round)
+6 Winter Howl (Block & 2 DMG)",It guards the fall; snow learns your color.,
+Item,FG-ITM-01,Snow-Melt Tear,,"USE: 
+Full heal",Cold that frees bars behind the throne.,
+Blessing,FG-BLS-01,Melted way out,,"EFFECT:
+Cleanse 1 Snare 
+& 
+Full heal",A hidden tunnel descends toward freedom.,
+Location,,The Nightsea Expanse,,,,
+Scene,NSE-SCN-01,Find the underground river,,"REST:
+???","A cavern river leads deeper, then becomes an underground sea.",
+Snare,NSE-SNR-01,Eroding sense of self,,"EFFECT:
+-1 to all rolls",What remains?,
+Equipment,NSE-EQP-01,Ferryman's Bell,,"EQUIP:
+???",The Sage rows when the bell sounds.,
+Beast,NSE-BST-01,Austere Leviathan,,"FIGHT:
+7 HP
+----------
+1 Sounding (Miss & +1 DMG next Breach)
+2 Keelshadow (Block)
+3 Undertow Drag (1 DMG& +1 DMG next Breach)
+4 Wake Wall (1 DMG& +1 DMG next Breach)
+5 Pressure Fold (2 DMG)
+6 Breach (5 DMG)",A mountain of intent rises beneath your keel.,
+Item,NSE-ITM-01,Pearl of opal dawn,,"USE:
+Move up to 2 cards from DREAD to RESOLVE",Drowned dawn trapped in stone.,
+Pit,NSE-PIT-01,Transmuted whirlpool,,"CHALLENGE: 
+Roll 1d6, Target: 5+, 3 successes
+Lose 3 HP for each failure
+If 3 failures, add to DREAD",The sea reconsiders your path into a circle.,
+Terror,NSE-TER-01,Abyssal unreality,,"CHOOSE:
+Lose 8 HP
+or 
+add to DREAD",You travel timelessly; what is sloughs off like scales.,
+Hollow,NSE-HLW-01,Aeron the Half-Changed,,"FIGHT: 
+5 HP
+----------
+1 Wild swing (Miss) 
+2 Blink (Block) 
+3 Duelists carve (3 DMG) 
+4 Silent shout (3 DMG)
+5 Aura of pain (3 DMG)
+6 Rending sorrow (3 DMG)",Beached between selves; you finish the choice he would not.,
+Blessing,NSE-BLS-01,Acceptance,,"EFFECT:
+Cleanse 1 Snare 
+& 
+Full Heal",You sail on without guarantees; that is the door.,
