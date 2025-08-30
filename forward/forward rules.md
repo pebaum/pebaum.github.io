@@ -93,6 +93,7 @@ On your turn, perform the following; if a card contradicts these rules, follow t
 2) Resolve its text completely.
    – If it stays with you (Item/Equipment/Companion/Boon), place it in your Player Zone
      (respect limits printed on your Player card or the card itself).
+   – If it's a Snare, leave it in your Player Zone or a dedicated Snare area (see 9.1). It remains until cleansed or otherwise removed.
    – If it does not stay, place it on the Discard.
    – If it says bury, gain 1 Dread instead (discard it unless otherwise stated).
    – If it references Resolve/Dread, move your marker accordingly.
@@ -117,7 +118,7 @@ Rules notes
 • Item / Equipment / Boon — Kept in your Player Zone; may grant stats, uses, or text effects.
 • Companion / Ally — Kept in your Player Zone; abilities or single-use powers.
 • Scene / Rest — Immediate effects; usually go to Discard after resolving.
-• Hazard / Pit / Snare / Challenge — Tests that can cost HP, cards, Resolve, time, etc.
+• Hazard / Pit / Snare / Challenge — Tests that can cost HP, cards, Resolve, time, etc. Revealed Snares stay in your Player Zone until cleansed (see 9.1).
 • Combat / Beast / Hollow — Fights using the Duel System (Section 7).
 • Treasure / Reward / Blessing — Immediate benefits or persistent keepers.
 • Terror — Hard choices or escalating pressure (often interacts with Dread).
@@ -162,6 +163,10 @@ High Resolve and high Dread effects live on the cards themselves.
 • If a limit is exceeded, immediately discard down to the limit; if you would have
   buried excess cards, gain 1 Dread for each instead.
 • Spent or broken cards will say how and when they leave play.
+
+9.1 Snares
+• When revealed, a Snare stays face-up in your Player Zone or a dedicated Snare area until cleansed or otherwise removed.
+• Effects that say “Cleanse 1 Snare” let you choose one of your revealed Snares. Discard it and ignore its ongoing effects.
 
 ================================================================================
 10) RESTS, SCENES, & CHECKPOINTS
