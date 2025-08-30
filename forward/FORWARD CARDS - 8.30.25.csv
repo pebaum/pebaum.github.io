@@ -1,0 +1,455 @@
+Abs_No,Card_Type,Associated_Location,Title,Image_Source_Idea,Rules_Text,Flavor_Text
+1,Special,,Player,,,
+2,Special,,Combat Reference,,"Combat Reference
+----------
+Both sides roll 1d6 & apply effects simultaneously.  
+
+Player:
+1 Miss (No hit)
+2 Block (Block all incoming)
+3 Hit (1 DMG)  
+4 Hit (1 DMG)  
+5 Critical (2 DMG)  
+6 Hit (1 DMG)",
+3,Special,,Resolve,,RESOLVE,
+4,Special,,Dread,,DREAD,
+5,Spare,,Spare,,,
+6,Spare,,Spare,,,
+7,Spare,,Spare,,,
+8,Spare,,Spare,,,
+9,Special,,Dragon,,"FIGHT: 
+20 HP
+----------
+Seal of Aporia: Blocks all incoming damage
+Seal of Acedia: At end of each round, the Dragon heals all damage taken this round
+Seal of Agnosia: Whenever you would deal damage, you take that much instead
+
+1 Eclipse Roar (-1 to next Player roll)
+2 Shadow Gale (Block & 1 DMG; you skip your next roll)
+3 Gloaming Wave (2 DMG; no rerolls next round)
+4 Corona Radiation (3 DMG)
+5 Devour (3 DMG, ignore Block)
+6 Black Zenith (Block & 3 DMG)",
+10,Spare,,Spare,,,
+11,Location,Home Villiage Termina,Home Villiage Termina,,,"Termina’s orchards are seized by Valthria; fields salted, parents buried; you vow vengeance."
+12,Caesura,Home Villiage Termina,Smoke along the lanes,,EFFECT: None,Ash drifts; names taste like cinder.
+13,Terror,Home Villiage Termina,Parents slain by Magistrate Ellard,,"CHOOSE:
+-7 HP
+or
+Place card in DREAD (face down)",Ellard’s decree ends in blood; grief hardens into purpose.
+14,Scene,Home Villiage Termina,Keep vigil at their graves,,"REST: 
+???","You rest by new earth, whispering promises to the dead."
+15,Caesura,Home Villiage Termina,Gravel under vow,,EFFECT: None,Each step repeats the promise without words.
+16,Beast,Home Villiage Termina,Ravenous Boar,,"FIGHT: 5 HP
+----------
+1 Miss
+2 Miss
+3 Ram (1 DMG) 
+4 Gore (1 DMG)
+5 Gore (1 DMG)
+6 Trample (1 DMG)",You wake to tusks and fury in the ruined orchard.
+17,Item,Home Villiage Termina,Rations,,"USE: 
+Heal 4 HP","You gather what the raiders missed—bread, apples, salt."
+18,Equipment,Home Villiage Termina,Homespun cloak,,"EQUIP:
+Rest = Heal 2 HP",Woven by Mother's hand. Smells of smoke and cider.
+19,Snare,Home Villiage Termina,Stench of piled bodies,,"EFFECT: 
+Cannot spend resolve",The reek gnaws at resolve; every breath remembers.
+20,Caesura,Home Villiage Termina,Cold hearth shadows,,EFFECT: None,"Stone remembers warmth, not the why."
+21,Caesura,Home Villiage Termina,Orchard rows at dusk,,EFFECT: None,Trees hold still as if listening.
+22,Caesura,Home Villiage Termina,Moon on the well,,EFFECT: None,A circle of light steadies your breath.
+23,Caesura,Home Villiage Termina,Torches gutter on empty street,,EFFECT: None,Night edits the day to essentials.
+24,Caesura,Home Villiage Termina,Keeping downwind,,EFFECT: None,You move with the smoke instead of through it.
+25,Caesura,Home Villiage Termina,Back stairs holding breath,,EFFECT: None,Wood does not argue with careful feet.
+26,Pit,Home Villiage Termina,Infiltrate the Magistrate’s manor,,"CHALLENGE - Save on 3+
+Roll 1d6 until you have 3 saves or 3 fails.
+Each fail: -2 HP.
+On 3 fails: add this card to DREAD.","If you fail, turned villagers force a terrible choice."
+27,Hollow,Home Villiage Termina,Confront Ellard and his lackeys,,"FIGHT: 3 HP
+----------
+1 Miss
+2 Miss
+3 Pitchfork (1 DMG) 
+4 Torch (1 DMG)
+5 Kris (1 DMG)
+6 Cower",Power bows to cruelty—until you make it otherwise.
+28,Blessing,Home Villiage Termina,"Liberation, but ashes remain",,"EFFECT: 
+Cleanse 1 Snare
+& 
++1 to Player rolls next combat",Nothing left to keep you; only resolve to go forward.
+29,Caesura,Home Villiage Termina,Dawn over blackened rows,,EFFECT: None,Light finds what ash could not.
+30,Location,Forgotten Shrine,Forgotten Shrine,,,Lightning outlines ruins; a stair yawns downward into old stone.
+31,Blessing,Forgotten Shrine,Providential shelter,,"EFFECT:
+Cleanse 1 Snare","Dry stone, found by chance—or design."
+32,Caesura,Forgotten Shrine,Steps into the nave,,EFFECT: None,Echoes learn your name and let it fade.
+33,Pit,Forgotten Shrine,Trapped hallway,,"CHALLENGE: 
+Roll 1d6, Target: 3+, 3 successes
+Lose 2HP for each failure",Mechanisms still remember intruders.
+34,Caesura,Forgotten Shrine,Dust wakes,,EFFECT: None,Fingerprints teach the corridor a new story.
+35,Snare,Forgotten Shrine,Supernatural darkness,,"EFFECT: 
+Automatic miss first 2 attacks each combat",Light dies mid-air; the dark has weight.
+36,Caesura,Forgotten Shrine,Flame stutters,,EFFECT: None,"Light shrinks, patience grows."
+37,Terror,Forgotten Shrine,Crushing silence of the Grand Cathedral,,"CHOOSE: 
+Lose 7HP 
+or 
+add to DREAD","Answerless nave, breath held by centuries."
+38,Caesura,Forgotten Shrine,Arches counting,,EFFECT: None,You become a number the ruin can accept.
+39,Item,Forgotten Shrine,Ritual water basin,,"USE: 
+Heal 1d6+1",Cold as truth; eyes clear when you touch it.
+40,Caesura,Forgotten Shrine,Water ring on stone,,EFFECT: None,Ripples measure a silence you can stand in.
+41,Beast,Forgotten Shrine,Wraithwing Moth,,"FIGHT: 5 HP
+----------
+1 Miss
+2 Flutter (Block) 
+3 Evade (Block) 
+4 Toxic dust (1 DMG) 
+5 Wing buffet (1 DMG)
+6 Body slam (2 DMG)",Dust like winter; wings hum like lost vows.
+42,Caesura,Forgotten Shrine,Draft carries an old hymn,,EFFECT: None,You do not sing; you keep time.
+43,Equipment,Forgotten Shrine,Ancient Sword,,"EQUIP: 
+6 COUNTER → BLOCK + DEAL 1 DMG.",???
+44,Caesura,Forgotten Shrine,Carvings in pale glow,,EFFECT: None,Meaning chooses to arrive later.
+45,Hollow,Forgotten Shrine,Assailed by living shadows,,"FIGHT: 3 HP
+----------
+1 Miss 
+2 Miss
+3 Unnerve (1 DMG) 
+4 Scrape (1 DMG)
+5 Cold embrace (2 DMG)
+6 Dark claw (2 DMG)",They test what the storm already found wanting.
+46,Caesura,Forgotten Shrine,Candles take and hold,,EFFECT: None,Small fires barter with the dark.
+47,Caesura,Forgotten Shrine,Dust settles like blessing,,EFFECT: None,Stillness becomes permission.
+48,Scene,Forgotten Shrine,Candles and pews till morning,,"REST:
+???","Wax, wood, heartbeat; dawn negotiates your return."
+49,Location,Bannered City Valthria,Bannered City Valthria,,,Valthria—annexed sprawl where status is law and waste its shadow.
+50,Pit,Bannered City Valthria,City Watch shakedown,,"CHALLENGE: 
+Roll 1d6, Target: 3+, 3 successes
+Lose 2 HP for each failure
+If 3 failures, add to DREAD","Pay, talk, or vanish into paperwork."
+51,Caesura,Bannered City Valthria,Gate queue shuffles,,EFFECT: None,"Boots, stamps, and sighs share a beat."
+52,Scene,Bannered City Valthria,Vast markets,,"REST:
+???",A thousand cries; a thousand prices on the same soul.
+53,Caesura,Bannered City Valthria,Papers folded flat,,EFFECT: None,You keep your face the way walls do.
+54,Snare,Bannered City Valthria,Intoxicating spices,,"EFFECT: 
+Cannot spend resolve",Scent blinds judgment; excess wears a smile.
+55,Caesura,Bannered City Valthria,Alleys braid and unbraid,,EFFECT: None,Corners practice misdirection for sport.
+56,Item,Bannered City Valthria,Moonleaf Brandy,,"USE: 
+Heal 7 HP, then lose -1d6 HP",Warm courage in a bottle; debts arrive later.
+57,Caesura,Bannered City Valthria,Street vendor chorus,,EFFECT: None,Calls weave through you and keep going.
+58,Hollow,Bannered City Valthria,Assassin in the crowd,,"FIGHT: 
+3 HP
+----------
+1 Dodge (Evade)
+2 Slice (1 DMG) 
+3 Peirce (2 DMG) 
+4 Subvert (2 DMG)
+5 Eviscerate (2 DMG)
+6 Riposte (Block & 1 DMG)",Steel learns your name between two heartbeats.
+59,Caesura,Bannered City Valthria,Faces blur in the crowd,,EFFECT: None,You prefer it that way for now.
+60,Terror,Bannered City Valthria,Out of your depth,,"CHOOSE:
+Lose 7HP
+or
+add to DREAD",Vulnerability exposed beneath banners and gold.
+61,Caesura,Bannered City Valthria,Eyes on the banners,,EFFECT: None,You practice being less than a question.
+62,Beast,Bannered City Valthria,Refuse Ooze,,"FIGHT: 
+5 HP
+----------
+1 Sludge (Miss)
+2 Creep (Miss) 
+3 Murk (Miss) 
+4 Toxic burn (3 DMG)
+5 Rip (3 DMG)
+6 Autophagy (Heal self 1 HP)",City’s sins congeal and reach for you.
+63,Caesura,Bannered City Valthria,Gutter water finds a drain,,EFFECT: None,You follow the downhill logic.
+64,Equipment,Bannered City Valthria,Golden bangle,,"EQUIP: 
+???",xxx
+65,Caesura,Bannered City Valthria,Steps match the bells,,EFFECT: None,Time is public; you are passing through.
+66,Caesura,Bannered City Valthria,Coins click like rain,,EFFECT: None,Value passes through without staying.
+67,Blessing,Bannered City Valthria,Humility,,"EFFECT:
+Cleanse 1 Snare 
+& 
++1 to Player rolls next combat",Smallness becomes sight; you pass gate to gate.
+68,Location,The Caelith Spiremaze,The Caelith Spiremaze,,,Spire upon spire; answers drift like dreams.
+69,Pit,The Caelith Spiremaze,Labyrinthine ascent,,"CHALLENGE:
+Roll 1d6, Target: 3+, 3 successes
+Lose 2 HP for each failure
+If 3 failures, add to DREAD",Stairs lie; corridors argue; you get lost anyway.
+70,Caesura,The Caelith Spiremaze,Stairs that disagree,,EFFECT: None,Up and down negotiate underfoot.
+71,Scene,The Caelith Spiremaze,Constellation shaped like a sword,,"REST:
+???",Stars arrange themselves as if remembering you.
+72,Caesura,The Caelith Spiremaze,Star-lines rehearsed,,EFFECT: None,Constellations suggest a route without insisting.
+73,Terror,The Caelith Spiremaze,Damsel in a distant tower,,"CHOOSE:
+Lose 8 HP
+or 
+add to DREAD","Is rescue possible, or only pursuit?"
+74,Caesura,The Caelith Spiremaze,High light,far away,,EFFECT: None
+75,Snare,The Caelith Spiremaze,Psychic malaise of questions,,"EFFECT: 
+Can not REST",Doubt multiplies like hallways.
+76,Caesura,The Caelith Spiremaze,Questions thin to wind,,EFFECT: None,You walk anyway; it approves.
+77,Item,The Caelith Spiremaze,Mirror shard on a pedestal,,"USE: 
+???",It shows the cut between who you are and could be.
+78,Caesura,The Caelith Spiremaze,Palm lines itch with choices,,EFFECT: None,You close your hand and keep moving.
+79,Equipment,The Caelith Spiremaze,Spectral lantern,,"EQUIP: 
+Once per location, peek at 2 face down cards
+Turn sideways to track use",Cold flame that lights only the honest path.
+80,Caesura,The Caelith Spiremaze,Cold light at an arch,,EFFECT: None,Edges glow where paths decide.
+81,Hollow,The Caelith Spiremaze,Ghostly Princess,,"???: 
+???",The bangle remembers her pulse; She follows like a moon
+82,Caesura,The Caelith Spiremaze,Footfalls find a second rhythm,,EFFECT: None,Something unseen keeps pace without promise.
+83,Beast,The Caelith Spiremaze,Scholarly sphinx at the exit,,"FIGHT: 
+7 HP
+----------
+1 Dissociate (Miss)
+2 Rebuff (Block) 
+3 Debate (2 DMG) 
+4 Refute (2 DMG)
+5 Deconstruct (3 DMG)
+6 Slander (Block & 2 DMG)",Riddles with claws; doctrine with teeth.
+84,Caesura,The Caelith Spiremaze,Door that was not there,,EFFECT: None,You pass as if it always was.
+85,Caesura,The Caelith Spiremaze,Answer one step ahead,,EFFECT: None,You follow without insisting.
+86,Blessing,The Caelith Spiremaze,Purpose: follow and protect,,"EFFECT:
+Cleanse 1 Snare 
+& 
++1 to Player rolls next combat",Her direction steadies your step.
+87,Location,Sirroco Wastes,Sirroco Wastes,,,The wastes were empire once; now only distance rules.
+88,Scene,Sirroco Wastes,Four days under the red sun,,"EFFECT:
+-2 HP",It never sets; neither do you.
+89,Caesura,Sirroco Wastes,Heat shimmer road,,EFFECT: None,The air wears a mirage and you wear the air.
+90,Item,Sirroco Wastes,Scattered adventuring gear (ruined),,"EFFECT:
+-2 HP","Broken straps, sand-gnawed steel—warnings or gifts."
+91,Caesura,Sirroco Wastes,Sand repairs your stride,,EFFECT: None,Leather learns new compromises.
+92,Equipment,Sirroco Wastes,Recovered gear pieces,,"EFFECT:
+-2 HP",Every fragment teaches economy.
+93,Caesura,Sirroco Wastes,Sky without corners,,EFFECT: None,Your shadow signs its small agreement.
+94,Beast,Sirroco Wastes,Sand-eaten war colossus,,"EFFECT:
+-2 HP",A battlefield remembers how to stand.
+95,Caesura,Sirroco Wastes,Half-buried ribs,,EFFECT: None,Ruins make their own horizon.
+96,Snare,Sirroco Wastes,Desiccating winds,,"EFFECT:
+-2 HP",Hours peel you down to intent.
+97,Caesura,Sirroco Wastes,Wind writes in salt,,EFFECT: None,You read what you need and let the rest blow.
+98,Terror,Sirroco Wastes,Featureless expanse,,"EFFECT:
+-2 HP",Exile is the shape of a horizon.
+99,Caesura,Sirroco Wastes,Counting to the next shade,,EFFECT: None,Numbers break and you keep counting.
+100,Hollow,Sirroco Wastes,Mirror Knight,,"FIGHT: 
+HP = Player HP
+1 Copy player roll
+2 Copy player roll 
+3 Copy player roll
+4 Copy player roll
+5 Copy player roll
+6 Copy player roll",You brandish the shard; he lowers his blade and follows.
+101,Caesura,Sirroco Wastes,Long shadow keeps pace,,EFFECT: None,Distance teaches companionship without words.
+102,Pit,Sirroco Wastes,Wandering until treeline appears,,"CHALLENGE: 
+Roll 1d6, Target: 4+, 3 successes
+Lose 3 HP for each failure
+If 3 failures, add to DREAD","At last, green edges the sky; night follows."
+103,Caesura,Sirroco Wastes,Green rumor at the edge,,EFFECT: None,Hope changes color first.
+104,Caesura,Sirroco Wastes,Night cool on cracked lips,,EFFECT: None,Rest arrives as a thinner heat.
+105,Blessing,Sirroco Wastes,Gratitude,,"EFFECT:
+Cleanse 1 Snare 
+& 
+Full Heal","Empty hands, lighter heart."
+106,Location,Darkwood Brume,Darkwood Brume,,,Mist and misdirection; meaning hides off-path.
+107,Scene,Darkwood Brume,Brook in the shade,,"REST:
+???",Cold water trades heat for hope.
+108,Caesura,Darkwood Brume,Brook keeps slow time,,EFFECT: None,You tune your breath to water.
+109,Item,Darkwood Brume,Cooling moss salve,,"ITEM
+USE: 
+Heal 6 HP",Sunburn eases; breath deepens.
+110,Caesura,Darkwood Brume,Ferns brush the knee,,EFFECT: None,Touch teaches direction better than sight.
+111,Pit,Darkwood Brume,False trails and lost purpose,,"CHALLENGE: 
+Roll 1d6, Target: 4+, 3 successes
+Lose 3 HP for each failure
+If 3 failures, add to DREAD",The map unhelpfully becomes you.
+112,Caesura,Darkwood Brume,Marks blur to nothing,,EFFECT: None,The forest edits your certainty.
+113,Snare,Darkwood Brume,Why bother?,,"EFFECT: 
+Lose 2 HP every time a card is turned face up",Fatigue argues for surrender.
+114,Caesura,Darkwood Brume,Paths suggest detours,,EFFECT: None,You nod politely and continue.
+115,Beast,Darkwood Brume,Mist-spun giant spider,,"FIGHT: 
+7 HP
+----------
+1 Dissipate (Miss)
+2 Veil (Block)
+3 Filament Lash (2 DMG)
+4 Needle Bite (2 DMG)
+5 Envenom (1 DMG & +1 DMG rest of fight)
+6 Fog-Feint (Block & 2 DMG)",You cut vapor and find venom.
+116,Caesura,Darkwood Brume,Fine threads on your sleeve,,EFFECT: None,You prefer not to know their maker.
+117,Terror,Darkwood Brume,"After victory, pointlessness lingers",,"CHOOSE:
+Lose 8 HP
+or 
+add to DREAD",Meaning hides behind the next step.
+118,Caesura,Darkwood Brume,Fog blinks first,,EFFECT: None,You take the path that opens an eye.
+119,Hollow,Darkwood Brume,The robed sage appears,,"???:
+???",He follows without a word; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+120,Caesura,Darkwood Brume,Footsteps ahead,unclaimed,,EFFECT: None
+121,Equipment,Darkwood Brume,Sunstone,,"EQUIP:
+Once per location, turn 2 cards face up
+Turn sideways to track use","With it, you walk out of the fog."
+122,Caesura,Darkwood Brume,Light thickens then thins,,EFFECT: None,Somewhere is nearer than it was.
+123,Caesura,Darkwood Brume,Trail brightens by degrees,,EFFECT: None,Seeing is a verb you remember.
+124,Blessing,Darkwood Brume,Guidance,,"EFFECT:
+Cleanse 1 Snare 
+& 
++1 to Player rolls next CHALLENGE",xxxxxxxxxxxxxxxxxx
+125,Location,Amara Rot Glade,Amara Rot Glade,,,Resentment blooms among red rot and biting flies.
+126,Item,Amara Rot Glade,Black-thorn sap,,"USE: 
+2 DMG to Human",Poison or remedy depends on the hand.
+127,Caesura,Amara Rot Glade,Thorns watching,,EFFECT: None,You pass like an apology through green teeth.
+128,Pit,Amara Rot Glade,Tar pits and crimson vines,,"CHALLENGE: 
+Roll 1d6, Target: 5+, 3 successes
+Lose 3 HP for each failure
+If 3 failures, add to DREAD",Every step negotiates with hunger.
+129,Caesura,Amara Rot Glade,Step lifts,step sinks,,EFFECT: None
+130,Beast,Amara Rot Glade,Gravecoil Ambusher,,"FIGHT: 
+7 HP
+----------
+1 Slack (Miss)
+2 Grave Scutes (Block)
+3 Bonebind Constrict (1 DMG & Player skips next roll)
+4 Carrion Bite (3 DMG)
+5 Rot-Venom (3 DMG & +1 DMG rest of fight)
+6 Undying Coil (Block & 4 DMG)",Death coils; patience tightens.
+131,Caesura,Amara Rot Glade,Still water listens,,EFFECT: None,You keep your secrets for the shore.
+132,Hollow,Amara Rot Glade,Drowning ambush,,"FIGHT: 
+5 HP
+----------
+1 Trudge (Miss)
+2 Collapsed veins (Block)
+3 Dredge (2 DMG) 
+4 Drown (1 DMG & Player skips next roll)
+5 Strangle (2 DMG & Player skips next roll)
+6 Howl (2 DMG & Player skips next roll)",Her plea was bait; your mercy almost fatal.
+133,Caesura,Amara Rot Glade,Mud rinsed from hands,,EFFECT: None,"Clean is a direction, not a state."
+134,Terror,Amara Rot Glade,Betrayal shock,,"CHOOSE:
+Lose 8 HP
+or 
+add to DREAD",Trust cracks like peat underfoot.
+135,Caesura,Amara Rot Glade,Eyes on the banks,,EFFECT: None,Patience lives here and notices everything.
+136,Equipment,Amara Rot Glade,Bleeding-heart talisman,,"EQUIP:
++1 to CHALLENGE rolls",Heightened awareness through rot and snare.
+137,Caesura,Amara Rot Glade,Caution widens,,EFFECT: None,Your circle of attention grows a second edge.
+138,Blessing,Amara Rot Glade,Pity for the fallen,,"EFFECT:
+Cleanse 1 Snare 
+& 
++2 to next Heal",Compassion keeps you from becoming the swamp.
+139,Caesura,Amara Rot Glade,Air sweetens toward mercy,,EFFECT: None,Bitterness remembers to breathe out.
+140,Caesura,Amara Rot Glade,Gnats sketch circles,,EFFECT: None,The itch reminds you to move.
+141,Caesura,Amara Rot Glade,Rot offers passage,,EFFECT: None,You accept the cost and go.
+142,Scene,Amara Rot Glade,Lay her to rest,,"REST:
+???",You bury her with a flower; bitterness loosens.
+143,Location,Frozen Gaol,Frozen Gaol,,,
+144,Pit,Frozen Gaol,Fracturing ice floor,,"CHALLENGE: 
+Roll 1d6, Target: 5+, 3 successes
+Lose 3 HP for each failure
+If 3 failures, add to DREAD",Each step auditions catastrophe.
+145,Caesura,Frozen Gaol,Crack-lines underfoot,,EFFECT: None,You map by sound more than sight.
+146,Equipment,Frozen Gaol,Wardens ice shield,,"EQUIP:
+1 Ward (Block)",Sees what watches; refuses to be seen.
+147,Caesura,Frozen Gaol,Cold ward of silence,,EFFECT: None,You choose not to disturb the held breath.
+148,Snare,Frozen Gaol,Panopticon isolation,,"EFFECT: 
+-1 to FIGHT rolls",You feel watched by everyone and no one.
+149,Caesura,Frozen Gaol,No gaze finds you,,EFFECT: None,You practice being ordinary as ice.
+150,Scene,Frozen Gaol,Frosted garden rest,,"REST:
+???","Hoarfrost petals, a bench of silence."
+151,Caesura,Frozen Gaol,Bench of frost,,EFFECT: None,Rest is an agreement with the cold.
+152,Terror,Frozen Gaol,Life under judgment,,"CHOOSE:
+Lose 8 HP
+or 
+add to DREAD",Freedom a rumor; you a supporting role.
+153,Caesura,Frozen Gaol,Judgment like a draft,,EFFECT: None,It passes through; you keep your warmth.
+154,Hollow,Frozen Gaol,"Thyra, the Warden",,"FIGHT: 
+5 HP
+----------
+1 Ram (Block) 
+2 Ward (Block) 
+3 Stasis chain (Player skips next roll) 
+4 Rime blast (3 DMG)
+5 Ice spear (3 DMG)
+6 Impale (3 DMG)","At the center, authority shivers."
+155,Caesura,Frozen Gaol,Bridge whitening with rime,,EFFECT: None,Edges blur; balance does not.
+156,Beast,Frozen Gaol,Great white wolf,,"FIGHT:
+7 HP
+----------
+1 Whiteout Stalk (Miss; next hit +1 DMG)
+2 Iceback (Block)
+3 Pounce (1 DMG & Player skips next roll)
+4 Fang(3 DMG)
+5 Hamstring (3 DMG & no rerolls next round)
+6 Winter Howl (Block & 2 DMG)",It guards the fall; snow learns your color.
+157,Caesura,Frozen Gaol,White hush,wide as a hall,,EFFECT: None
+158,Item,Frozen Gaol,Snow-Melt Tear,,"USE: 
+Full heal",Cold that frees bars behind the throne.
+159,Caesura,Frozen Gaol,Passage breath clouds ahead,,EFFECT: None,The way accepts your warmth and yields.
+160,Caesura,Frozen Gaol,Keys ring somewhere far,,EFFECT: None,Patience wears a coat of frost.
+161,Blessing,Frozen Gaol,Melted way out,,"EFFECT:
+Cleanse 1 Snare 
+& 
+Full heal",A hidden tunnel descends toward freedom.
+162,Location,The Nightsea Expanse,The Nightsea Expanse,,,
+163,Scene,The Nightsea Expanse,Find the underground river,,"REST:
+???","A cavern river leads deeper, then becomes an underground sea."
+164,Caesura,The Nightsea Expanse,Boat skims the dark,,EFFECT: None,The current sets the sentence; you provide the verb.
+165,Snare,The Nightsea Expanse,Eroding sense of self,,"EFFECT:
+-1 to all rolls",What remains?
+166,Caesura,The Nightsea Expanse,Self in the oar rhythm,,EFFECT: None,Repetition forgets your edges.
+167,Equipment,The Nightsea Expanse,Ferryman's Bell,,"EQUIP:
+???",The Sage rows when the bell sounds.
+168,Caesura,The Nightsea Expanse,Oar dips,current answers,,EFFECT: None
+169,Beast,The Nightsea Expanse,Austere Leviathan,,"FIGHT:
+7 HP
+----------
+1 Sounding (Miss & +1 DMG next Breach)
+2 Keelshadow (Block)
+3 Undertow Drag (1 DMG& +1 DMG next Breach)
+4 Wake Wall (1 DMG& +1 DMG next Breach)
+5 Pressure Fold (2 DMG)
+6 Breach (5 DMG)",A mountain of intent rises beneath your keel.
+170,Caesura,The Nightsea Expanse,Wake stitches a path,,EFFECT: None,"Thread behind, question ahead."
+171,Item,The Nightsea Expanse,Pearl of opal dawn,,"USE:
+Move up to 2 cards from DREAD to RESOLVE",Drowned dawn trapped in stone.
+172,Caesura,The Nightsea Expanse,Horizon is a sound,,EFFECT: None,You listen until it becomes direction.
+173,Pit,The Nightsea Expanse,Transmuted whirlpool,,"CHALLENGE: 
+Roll 1d6, Target: 5+, 3 successes
+Lose 3 HP for each failure
+If 3 failures, add to DREAD",The sea reconsiders your path into a circle.
+174,Caesura,The Nightsea Expanse,Water decides twice,,EFFECT: None,Circles open when you stop arguing.
+175,Terror,The Nightsea Expanse,Abyssal unreality,,"CHOOSE:
+Lose 8 HP
+or 
+add to DREAD",You travel timelessly; what is sloughs off like scales.
+176,Caesura,The Nightsea Expanse,Silence with weight,,EFFECT: None,Depth measures you back.
+177,Hollow,The Nightsea Expanse,Aeron the Half-Changed,,"FIGHT: 
+5 HP
+----------
+1 Wild swing (Miss) 
+2 Blink (Block) 
+3 Duelists carve (3 DMG) 
+4 Silent shout (3 DMG)
+5 Aura of pain (3 DMG)
+6 Rending sorrow (3 DMG)",Beached between selves; you finish the choice he would not.
+178,Caesura,The Nightsea Expanse,Rock rises,then sinks,,EFFECT: None
+179,Caesura,The Nightsea Expanse,Phosphor wakes in the wake,,EFFECT: None,Small lights agree to travel.
+180,Blessing,The Nightsea Expanse,Acceptance,,"EFFECT:
+Cleanse 1 Snare 
+& 
+Full Heal",You sail on without guarantees; that is the door.
+181,Spare,The Nightsea Expanse,,,,
+182,Spare,The Nightsea Expanse,,,,
+183,Spare,The Nightsea Expanse,,,,
+184,Spare,The Nightsea Expanse,,,,
+185,Spare,The Nightsea Expanse,,,,
+186,Spare,The Nightsea Expanse,,,,
+187,Spare,The Nightsea Expanse,,,,
+188,Spare,The Nightsea Expanse,,,,
+189,Spare,The Nightsea Expanse,,,,
+190,Spare,The Nightsea Expanse,,,,
+191,Spare,The Nightsea Expanse,,,,
+192,Spare,The Nightsea Expanse,,,,
+193,Spare,The Nightsea Expanse,,,,
+194,Spare,The Nightsea Expanse,,,,
+195,Spare,The Nightsea Expanse,,,,
+196,Spare,The Nightsea Expanse,,,,
+197,Spare,The Nightsea Expanse,,,,
+198,Spare,The Nightsea Expanse,,,,
+199,Spare,The Nightsea Expanse,,,,
+200,Spare,The Nightsea Expanse,,,,
