@@ -586,6 +586,8 @@
                         
                         <div class="menu-item" data-menu="magic">Magic</div>
                         <div class="menu-item" data-menu="transcriber">Transcriber</div>
+                        <div class="menu-item" data-menu="forward">Forward</div>
+                        <div class="menu-item" data-menu="bug-hunt">Bug Hunt</div>
                         
                         <div class="menu-item" data-menu="contact">Contact</div>
                         <div class="menu-item" data-menu="save">Save & Quit</div>                    </div>
@@ -1222,6 +1224,18 @@
                 // Special handling for transcriber - open web app
                 if (menuKey === 'transcriber') {
                     window.open('../transcriber/web/', '_blank');
+                    return;
+                }
+
+                // Special handling for forward - open Forward page
+                if (menuKey === 'forward') {
+                    window.open('../forward/', '_blank');
+                    return;
+                }
+
+                // Special handling for bug-hunt - open Bug Hunt page
+                if (menuKey === 'bug-hunt') {
+                    window.open('../bug-hunt/', '_blank');
                     return;
                 }
 
