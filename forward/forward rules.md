@@ -19,7 +19,7 @@ You lose if your HP reaches 0 (or a card effect ends the game).
   (items, equipment, allies, scenes, hazards, combats, etc.).
 • Resolve card and Dread card (used together as the Resolve/Dread Track).
 • Player card, markers/tokens, and any reference cards.
-• Optional piles: BURIED (global, face-down).
+• No BURIED pile: when a card instructs you to bury, gain 1 Dread instead.
 
 ================================================================================
 2) QUICKSTART (TEACH BOX)
@@ -29,7 +29,7 @@ You lose if your HP reaches 0 (or a card effect ends the game).
 3. Take Location L1 into play (Fig. 2). Draw 3 cards face-down to the Active row.
 4. On your turn, reveal and resolve one Active card (your choice).
    • Keepers (items/equipment/companions/boons) go to your Player Zone.
-   • Others go to the Discard (or BURIED if instructed).
+   • Others go to the Discard; if instructed to bury, gain 1 Dread instead.
    • Refill the Active row back to 3 while the deck has cards.
 5. When the deck and Active row are empty, cap the discard with the Location card
    and set that stack aside, out of play.
@@ -78,7 +78,6 @@ Active row (face-down, up to three):
 2) For each Location: Location card face-up, its own shuffled deck face-down under it.
 3) Set your Player Zone nearby (HP marker, inventory limits, companions, etc.).
 4) Place Resolve over Dread to form the Track; start with the marker in the neutral gap.
-5) Reserve a space for BURIED (a global face-down pile for “bury” effects).
 
 ================================================================================
 5) LOCATION SEQUENCE & TURN STRUCTURE
@@ -95,14 +94,15 @@ On your turn, perform the following; if a card contradicts these rules, follow t
    – If it stays with you (Item/Equipment/Companion/Boon), place it in your Player Zone
      (respect limits printed on your Player card or the card itself).
    – If it does not stay, place it on the Discard.
-   – If it says bury, place it face-down in the global BURIED pile.
+   – If it says bury, gain 1 Dread instead (discard it unless otherwise stated).
    – If it references Resolve/Dread, move your marker accordingly.
 3) Refill the Active row back to three face-down cards if the deck still has cards.
 4) Effects may let you peek, reorder, scry, fish, or otherwise manipulate the deck or row.
 
 Rules notes
 • “Active cards” are only the face-down cards in the row. Once revealed and resolved,
-  they move to your Player Zone, the Discard, or BURIED as instructed.
+  they move to your Player Zone or the Discard as instructed; bury effects instead
+  cause you to gain 1 Dread.
 • If a draw/refill step is required but the deck is empty, skip that step.
 
 5.3 Finishing a Location
@@ -121,7 +121,7 @@ Rules notes
 • Combat / Beast / Hollow — Fights using the Duel System (Section 7).
 • Treasure / Reward / Blessing — Immediate benefits or persistent keepers.
 • Terror — Hard choices or escalating pressure (often interacts with Dread).
-• Bury — Send the card face-down to the BURIED pile (not the Discard) unless told otherwise.
+• Bury — Gain 1 Dread instead; discard the card unless told otherwise.
 
 If a card’s type and its rules ever disagree, the rules text wins.
 
@@ -159,8 +159,8 @@ High Resolve and high Dread effects live on the cards themselves.
 9) PLAYER ZONE & LIMITS
 ================================================================================
 • Keep Items/Equipment/Companions/Boons here.
-• If a limit is exceeded, immediately discard or bury down to the limit, as directed
-  by your Player card or the exceeding card’s text.
+• If a limit is exceeded, immediately discard down to the limit; if you would have
+  buried excess cards, gain 1 Dread for each instead.
 • Spent or broken cards will say how and when they leave play.
 
 ================================================================================
@@ -204,7 +204,7 @@ FIG. 2 — Active Location
 [Active Location card]
 [Location Deck ↓]   [Discard]
 Active row (face-down):  [?]   [?]   [?]
-Reveal and resolve one at a time; keepers → Player Zone; others → Discard or BURIED.
+Reveal and resolve one at a time; keepers → Player Zone; others → Discard (gain 1 Dread if an effect would bury).
 Refill to three while the deck remains. When deck + actives are empty, cap with the
 Location card and set the stack aside out of play.
 
