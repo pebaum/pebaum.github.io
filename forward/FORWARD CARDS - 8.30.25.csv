@@ -344,7 +344,7 @@ Lose 3 HP for each failure
 If 3 failures, move the Resolve/Dread marker down 1",Each step auditions catastrophe.
 145,Caesura,Frozen Gaol,Crack-lines underfoot,,EFFECT: None,You map by sound more than sight.
 146,Equipment,Frozen Gaol,Wardens ice shield,,"EQUIP:
-1 Ward (Block)",Sees what watches; refuses to be seen.
+1 Block",Sees what watches; refuses to be seen.
 147,Caesura,Frozen Gaol,Cold ward of silence,,EFFECT: None,You choose not to disturb the held breath.
 148,Snare,Frozen Gaol,Panopticon isolation,,"EFFECT: 
 -1 to FIGHT rolls",You feel watched by everyone and no one.
@@ -361,7 +361,7 @@ move the Resolve/Dread marker down 1",Freedom a rumor; you a supporting role.
 5 HP
 ----------
 1 Ram (Block) 
-2 Ward (Block) 
+2 Shield (Block) 
 3 Stasis chain (Player skips next roll) 
 4 Rime blast (3 DMG)
 5 Ice spear (3 DMG)
