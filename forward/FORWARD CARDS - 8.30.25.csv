@@ -31,16 +31,16 @@ Seal of Agnosia: Whenever you would deal damage, you take that much instead
 5 Devour (3 DMG, ignore Block)
 6 Black Zenith (Block & 3 DMG)",
 10,Spare,,Spare,,,
-11,Location,Home Villiage Termina,Home Villiage Termina,,,"Termina’s orchards are seized by Valthria; fields salted, parents buried; you vow vengeance."
-12,Caesura,Home Villiage Termina,Smoke along the lanes,,EFFECT: None,Ash drifts; names taste like cinder.
-13,Terror,Home Villiage Termina,Parents slain by Magistrate Ellard,,"CHOOSE:
+11,Location,Home Village Termina,Home Village Termina,,,"Termina’s orchards are seized by Valthria; fields salted, parents buried; you vow vengeance."
+12,Caesura,Home Village Termina,Smoke along the lanes,,EFFECT: None,Ash drifts; names taste like cinder.
+13,Terror,Home Village Termina,Parents slain by Magistrate Ellard,,"CHOOSE:
 -7 HP
 or
 Move the Resolve/Dread marker down 1",Ellard’s decree ends in blood; grief hardens into purpose.
-14,Scene,Home Villiage Termina,Keep vigil at their graves,,"REST: 
+14,Scene,Home Village Termina,Keep vigil at their graves,,"REST: 
 ???","You rest by new earth, whispering promises to the dead."
-15,Caesura,Home Villiage Termina,Gravel under vow,,EFFECT: None,Each step repeats the promise without words.
-16,Beast,Home Villiage Termina,Ravenous Boar,,"FIGHT: 5 HP
+15,Caesura,Home Village Termina,Gravel under vow,,EFFECT: None,Each step repeats the promise without words.
+16,Beast,Home Village Termina,Ravenous Boar,,"FIGHT: 5 HP
 ----------
 1 Miss
 2 Miss
@@ -48,23 +48,23 @@ Move the Resolve/Dread marker down 1",Ellard’s decree ends in blood; grief har
 4 Gore (1 DMG)
 5 Gore (1 DMG)
 6 Trample (1 DMG)",You wake to tusks and fury in the ruined orchard.
-17,Item,Home Villiage Termina,Rations,,"USE: 
+17,Item,Home Village Termina,Rations,,"USE: 
 Heal 4 HP","You gather what the raiders missed—bread, apples, salt."
-18,Equipment,Home Villiage Termina,Homespun cloak,,"EQUIP:
+18,Equipment,Home Village Termina,Homespun cloak,,"EQUIP:
 Rest = Heal 2 HP",Woven by Mother's hand. Smells of smoke and cider.
-19,Snare,Home Villiage Termina,Stench of piled bodies,,"EFFECT: 
+19,Snare,Home Village Termina,Stench of piled bodies,,"EFFECT: 
 Cannot spend resolve",The reek gnaws at resolve; every breath remembers.
-20,Caesura,Home Villiage Termina,Cold hearth shadows,,EFFECT: None,"Stone remembers warmth, not the why."
-21,Caesura,Home Villiage Termina,Orchard rows at dusk,,EFFECT: None,Trees hold still as if listening.
-22,Caesura,Home Villiage Termina,Moon on the well,,EFFECT: None,A circle of light steadies your breath.
-23,Caesura,Home Villiage Termina,Torches gutter on empty street,,EFFECT: None,Night edits the day to essentials.
-24,Caesura,Home Villiage Termina,Keeping downwind,,EFFECT: None,You move with the smoke instead of through it.
-25,Caesura,Home Villiage Termina,Back stairs holding breath,,EFFECT: None,Wood does not argue with careful feet.
-26,Pit,Home Villiage Termina,Infiltrate the Magistrate’s manor,,"CHALLENGE - Save on 3+
+20,Caesura,Home Village Termina,Cold hearth shadows,,EFFECT: None,"Stone remembers warmth, not the why."
+21,Caesura,Home Village Termina,Orchard rows at dusk,,EFFECT: None,Trees hold still as if listening.
+22,Caesura,Home Village Termina,Moon on the well,,EFFECT: None,A circle of light steadies your breath.
+23,Caesura,Home Village Termina,Torches gutter on empty street,,EFFECT: None,Night edits the day to essentials.
+24,Caesura,Home Village Termina,Keeping downwind,,EFFECT: None,You move with the smoke instead of through it.
+25,Caesura,Home Village Termina,Back stairs holding breath,,EFFECT: None,Wood does not argue with careful feet.
+26,Pit,Home Village Termina,Infiltrate the Magistrate’s manor,,"CHALLENGE - Save on 3+
 Roll 1d6 until you have 3 saves or 3 fails.
 Each fail: -2 HP.
 On 3 fails: move the Resolve/Dread marker down 1.","If you fail, turned villagers force a terrible choice."
-27,Hollow,Home Villiage Termina,Confront Ellard and his lackeys,,"FIGHT: 3 HP
+27,Hollow,Home Village Termina,Confront Ellard and his lackeys,,"FIGHT: 3 HP
 ----------
 1 Miss
 2 Miss
@@ -72,11 +72,11 @@ On 3 fails: move the Resolve/Dread marker down 1.","If you fail, turned villager
 4 Torch (1 DMG)
 5 Kris (1 DMG)
 6 Cower",Power bows to cruelty—until you make it otherwise.
-28,Blessing,Home Villiage Termina,"Liberation, but ashes remain",,"EFFECT: 
+28,Blessing,Home Village Termina,"Liberation, but ashes remain",,"EFFECT: 
 Cleanse 1 Snare
 & 
 +1 to Player rolls next combat",Nothing left to keep you; only resolve to go forward.
-29,Caesura,Home Villiage Termina,Dawn over blackened rows,,EFFECT: None,Light finds what ash could not.
+29,Caesura,Home Village Termina,Dawn over blackened rows,,EFFECT: None,Light finds what ash could not.
 30,Location,Forgotten Shrine,Forgotten Shrine,,,Lightning outlines ruins; a stair yawns downward into old stone.
 31,Blessing,Forgotten Shrine,Providential shelter,,"EFFECT:
 Cleanse 1 Snare","Dry stone, found by chance—or design."
