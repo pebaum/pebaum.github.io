@@ -36,7 +36,7 @@ Seal of Agnosia: Whenever you would deal damage, you take that much instead
 13,Terror,Home Villiage Termina,Parents slain by Magistrate Ellard,,"CHOOSE:
 -7 HP
 or
-Move the Resolve/Dread marker down 1",Ellard’s decree ends in blood; grief hardens into purpose.
+Place card in DREAD (face down)",Ellard’s decree ends in blood; grief hardens into purpose.
 14,Scene,Home Villiage Termina,Keep vigil at their graves,,"REST: 
 ???","You rest by new earth, whispering promises to the dead."
 15,Caesura,Home Villiage Termina,Gravel under vow,,EFFECT: None,Each step repeats the promise without words.
@@ -63,7 +63,7 @@ Cannot spend Resolve",The reek gnaws at Resolve; every breath remembers.
 26,Pit,Home Villiage Termina,Infiltrate the Magistrate’s manor,,"CHALLENGE - Save on 3+
 Roll 1d6 until you have 3 saves or 3 fails.
 Each fail: -2 HP.
-On 3 fails: move the Resolve/Dread marker down 1.","If you fail, turned villagers force a terrible choice."
+On 3 fails: add this card to DREAD.","If you fail, turned villagers force a terrible choice."
 27,Hollow,Home Villiage Termina,Confront Ellard and his lackeys,,"FIGHT: 3 HP
 ----------
 1 Miss
@@ -91,7 +91,7 @@ Automatic miss first 2 attacks each combat",Light dies mid-air; the dark has wei
 37,Terror,Forgotten Shrine,Crushing silence of the Grand Cathedral,,"CHOOSE: 
 Lose 7HP 
 or 
-move the Resolve/Dread marker down 1","Answerless nave, breath held by centuries."
+add to DREAD","Answerless nave, breath held by centuries."
 38,Caesura,Forgotten Shrine,Arches counting,,EFFECT: None,You become a number the ruin can accept.
 39,Item,Forgotten Shrine,Ritual water basin,,"USE: 
 Heal 1d6+1",Cold as truth; eyes clear when you touch it.
@@ -124,7 +124,7 @@ Heal 1d6+1",Cold as truth; eyes clear when you touch it.
 50,Pit,Bannered City Valthria,City Watch shakedown,,"CHALLENGE: 
 Roll 1d6, Target: 3+, 3 successes
 Lose 2 HP for each failure
-If 3 failures, move the Resolve/Dread marker down 1","Pay, talk, or vanish into paperwork."
+If 3 failures, add to DREAD","Pay, talk, or vanish into paperwork."
 51,Caesura,Bannered City Valthria,Gate queue shuffles,,EFFECT: None,"Boots, stamps, and sighs share a beat."
 52,Scene,Bannered City Valthria,Vast markets,,"REST:
 ???",A thousand cries; a thousand prices on the same soul.
@@ -148,7 +148,7 @@ Heal 7 HP, then lose -1d6 HP",Warm courage in a bottle; debts arrive later.
 60,Terror,Bannered City Valthria,Out of your depth,,"CHOOSE:
 Lose 7HP
 or
-move the Resolve/Dread marker down 1",Vulnerability exposed beneath banners and gold.
+add to DREAD",Vulnerability exposed beneath banners and gold.
 61,Caesura,Bannered City Valthria,Eyes on the banners,,EFFECT: None,You practice being less than a question.
 62,Beast,Bannered City Valthria,Refuse Ooze,,"FIGHT: 
 5 HP
@@ -172,7 +172,7 @@ Cleanse 1 Snare
 69,Pit,The Caelith Spiremaze,Labyrinthine ascent,,"CHALLENGE:
 Roll 1d6, Target: 3+, 3 successes
 Lose 2 HP for each failure
-If 3 failures, move the Resolve/Dread marker down 1",Stairs lie; corridors argue; you get lost anyway.
+If 3 failures, add to DREAD",Stairs lie; corridors argue; you get lost anyway.
 70,Caesura,The Caelith Spiremaze,Stairs that disagree,,EFFECT: None,Up and down negotiate underfoot.
 71,Scene,The Caelith Spiremaze,Constellation shaped like a sword,,"REST:
 ???",Stars arrange themselves as if remembering you.
@@ -180,7 +180,7 @@ If 3 failures, move the Resolve/Dread marker down 1",Stairs lie; corridors argue
 73,Terror,The Caelith Spiremaze,Damsel in a distant tower,,"CHOOSE:
 Lose 8 HP
 or 
-move the Resolve/Dread marker down 1","Is rescue possible, or only pursuit?"
+add to DREAD","Is rescue possible, or only pursuit?"
 74,Caesura,The Caelith Spiremaze,High light,far away,,EFFECT: None
 75,Snare,The Caelith Spiremaze,Psychic malaise of questions,,"EFFECT: 
 Can not REST",Doubt multiplies like hallways.
@@ -241,7 +241,7 @@ HP = Player HP
 102,Pit,Sirroco Wastes,Wandering until treeline appears,,"CHALLENGE: 
 Roll 1d6, Target: 4+, 3 successes
 Lose 3 HP for each failure
-If 3 failures, move the Resolve/Dread marker down 1","At last, green edges the sky; night follows."
+If 3 failures, add to DREAD","At last, green edges the sky; night follows."
 103,Caesura,Sirroco Wastes,Green rumor at the edge,,EFFECT: None,Hope changes color first.
 104,Caesura,Sirroco Wastes,Night cool on cracked lips,,EFFECT: None,Rest arrives as a thinner heat.
 105,Blessing,Sirroco Wastes,Gratitude,,"EFFECT:
@@ -259,7 +259,7 @@ Heal 6 HP",Sunburn eases; breath deepens.
 111,Pit,Darkwood Brume,False trails and lost purpose,,"CHALLENGE: 
 Roll 1d6, Target: 4+, 3 successes
 Lose 3 HP for each failure
-If 3 failures, move the Resolve/Dread marker down 1",The map unhelpfully becomes you.
+If 3 failures, add to DREAD",The map unhelpfully becomes you.
 112,Caesura,Darkwood Brume,Marks blur to nothing,,EFFECT: None,The forest edits your certainty.
 113,Snare,Darkwood Brume,Why bother?,,"EFFECT: 
 Lose 2 HP every time a card is turned face up",Fatigue argues for surrender.
@@ -277,7 +277,7 @@ Lose 2 HP every time a card is turned face up",Fatigue argues for surrender.
 117,Terror,Darkwood Brume,"After victory, pointlessness lingers",,"CHOOSE:
 Lose 8 HP
 or 
-move the Resolve/Dread marker down 1",Meaning hides behind the next step.
+add to DREAD",Meaning hides behind the next step.
 118,Caesura,Darkwood Brume,Fog blinks first,,EFFECT: None,You take the path that opens an eye.
 119,Hollow,Darkwood Brume,The robed sage appears,,"???:
 ???",He follows without a word; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -298,7 +298,7 @@ Cleanse 1 Snare
 128,Pit,Amara Rot Glade,Tar pits and crimson vines,,"CHALLENGE: 
 Roll 1d6, Target: 5+, 3 successes
 Lose 3 HP for each failure
-If 3 failures, move the Resolve/Dread marker down 1",Every step negotiates with hunger.
+If 3 failures, add to DREAD",Every step negotiates with hunger.
 129,Caesura,Amara Rot Glade,Step lifts,step sinks,,EFFECT: None
 130,Beast,Amara Rot Glade,Gravecoil Ambusher,,"FIGHT: 
 7 HP
@@ -323,7 +323,7 @@ If 3 failures, move the Resolve/Dread marker down 1",Every step negotiates with 
 134,Terror,Amara Rot Glade,Betrayal shock,,"CHOOSE:
 Lose 8 HP
 or 
-move the Resolve/Dread marker down 1",Trust cracks like peat underfoot.
+add to DREAD",Trust cracks like peat underfoot.
 135,Caesura,Amara Rot Glade,Eyes on the banks,,EFFECT: None,Patience lives here and notices everything.
 136,Equipment,Amara Rot Glade,Bleeding-heart talisman,,"EQUIP:
 +1 to CHALLENGE rolls",Heightened awareness through rot and snare.
@@ -341,7 +341,7 @@ Cleanse 1 Snare
 144,Pit,Frozen Gaol,Fracturing ice floor,,"CHALLENGE: 
 Roll 1d6, Target: 5+, 3 successes
 Lose 3 HP for each failure
-If 3 failures, move the Resolve/Dread marker down 1",Each step auditions catastrophe.
+If 3 failures, add to DREAD",Each step auditions catastrophe.
 145,Caesura,Frozen Gaol,Crack-lines underfoot,,EFFECT: None,You map by sound more than sight.
 146,Equipment,Frozen Gaol,Wardens ice shield,,"EQUIP:
 1 Ward (Block)",Sees what watches; refuses to be seen.
@@ -355,7 +355,7 @@ If 3 failures, move the Resolve/Dread marker down 1",Each step auditions catastr
 152,Terror,Frozen Gaol,Life under judgment,,"CHOOSE:
 Lose 8 HP
 or 
-move the Resolve/Dread marker down 1",Freedom a rumor; you a supporting role.
+add to DREAD",Freedom a rumor; you a supporting role.
 153,Caesura,Frozen Gaol,Judgment like a draft,,EFFECT: None,It passes through; you keep your warmth.
 154,Hollow,Frozen Gaol,"Thyra, the Warden",,"FIGHT: 
 5 HP
@@ -406,17 +406,17 @@ Full heal",A hidden tunnel descends toward freedom.
 6 Breach (5 DMG)",A mountain of intent rises beneath your keel.
 170,Caesura,The Nightsea Expanse,Wake stitches a path,,EFFECT: None,"Thread behind, question ahead."
 171,Item,The Nightsea Expanse,Pearl of opal dawn,,"USE:
-Move the Resolve/Dread marker up to 2 steps toward Resolve",Drowned dawn trapped in stone.
+Move up to 2 cards from DREAD to RESOLVE",Drowned dawn trapped in stone.
 172,Caesura,The Nightsea Expanse,Horizon is a sound,,EFFECT: None,You listen until it becomes direction.
 173,Pit,The Nightsea Expanse,Transmuted whirlpool,,"CHALLENGE: 
 Roll 1d6, Target: 5+, 3 successes
 Lose 3 HP for each failure
-If 3 failures, move the Resolve/Dread marker down 1",The sea reconsiders your path into a circle.
+If 3 failures, add to DREAD",The sea reconsiders your path into a circle.
 174,Caesura,The Nightsea Expanse,Water decides twice,,EFFECT: None,Circles open when you stop arguing.
 175,Terror,The Nightsea Expanse,Abyssal unreality,,"CHOOSE:
 Lose 8 HP
 or 
-move the Resolve/Dread marker down 1",You travel timelessly; what is sloughs off like scales.
+add to DREAD",You travel timelessly; what is sloughs off like scales.
 176,Caesura,The Nightsea Expanse,Silence with weight,,EFFECT: None,Depth measures you back.
 177,Hollow,The Nightsea Expanse,Aeron the Half-Changed,,"FIGHT: 
 5 HP
