@@ -53,7 +53,7 @@ Heal 4 HP","You gather what the raiders missed—bread, apples, salt."
 18,Equipment,Home Villiage Termina,Homespun cloak,,"EQUIP:
 Rest = Heal 2 HP",Woven by Mother's hand. Smells of smoke and cider.
 19,Snare,Home Villiage Termina,Stench of piled bodies,,"EFFECT: 
-Cannot spend resolve",The reek gnaws at resolve; every breath remembers.
+Cannot spend Resolve",The reek gnaws at Resolve; every breath remembers.
 20,Caesura,Home Villiage Termina,Cold hearth shadows,,EFFECT: None,"Stone remembers warmth, not the why."
 21,Caesura,Home Villiage Termina,Orchard rows at dusk,,EFFECT: None,Trees hold still as if listening.
 22,Caesura,Home Villiage Termina,Moon on the well,,EFFECT: None,A circle of light steadies your breath.
@@ -75,7 +75,7 @@ On 3 fails: move the Resolve/Dread marker down 1.","If you fail, turned villager
 28,Blessing,Home Villiage Termina,"Liberation, but ashes remain",,"EFFECT: 
 Cleanse 1 Snare
 & 
-+1 to Player rolls next combat",Nothing left to keep you; only resolve to go forward.
++1 to Player rolls next combat",Nothing left to keep you; only Resolve to go forward.
 29,Caesura,Home Villiage Termina,Dawn over blackened rows,,EFFECT: None,Light finds what ash could not.
 30,Location,Forgotten Shrine,Forgotten Shrine,,,Lightning outlines ruins; a stair yawns downward into old stone.
 31,Blessing,Forgotten Shrine,Providential shelter,,"EFFECT:
@@ -130,7 +130,7 @@ If 3 failures, move the Resolve/Dread marker down 1","Pay, talk, or vanish into 
 ???",A thousand cries; a thousand prices on the same soul.
 53,Caesura,Bannered City Valthria,Papers folded flat,,EFFECT: None,You keep your face the way walls do.
 54,Snare,Bannered City Valthria,Intoxicating spices,,"EFFECT: 
-Cannot spend resolve",Scent blinds judgment; excess wears a smile.
+Cannot spend Resolve",Scent blinds judgment; excess wears a smile.
 55,Caesura,Bannered City Valthria,Alleys braid and unbraid,,EFFECT: None,Corners practice misdirection for sport.
 56,Item,Bannered City Valthria,Moonleaf Brandy,,"USE: 
 Heal 7 HP, then lose -1d6 HP",Warm courage in a bottle; debts arrive later.
