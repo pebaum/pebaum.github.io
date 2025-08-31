@@ -62,7 +62,7 @@ Cannot spend resolve",The reek gnaws at resolve; every breath remembers.
 25,Caesura,Home Villiage Termina,Back stairs holding breath,,EFFECT: None,Wood does not argue with careful feet.
 26,Pit,Home Villiage Termina,Infiltrate the Magistrate’s manor,,"CHALLENGE - Save on 3+
 Roll 1d6 until you have 3 saves or 3 fails.
-Each fail: -2 HP.
+Each fail: lose 2 HP.
 On 3 fails: move the Resolve/Dread marker down 1.","If you fail, turned villagers force a terrible choice."
 27,Hollow,Home Villiage Termina,Confront Ellard and his lackeys,,"FIGHT: 3 HP
 ----------
@@ -132,8 +132,8 @@ If 3 failures, move the Resolve/Dread marker down 1","Pay, talk, or vanish into 
 54,Snare,Bannered City Valthria,Intoxicating spices,,"EFFECT: 
 Cannot spend resolve",Scent blinds judgment; excess wears a smile.
 55,Caesura,Bannered City Valthria,Alleys braid and unbraid,,EFFECT: None,Corners practice misdirection for sport.
-56,Item,Bannered City Valthria,Moonleaf Brandy,,"USE: 
-Heal 7 HP, then lose -1d6 HP",Warm courage in a bottle; debts arrive later.
+56,Item,Bannered City Valthria,Moonleaf Brandy,,"USE:
+Heal 7 HP, then lose 1d6 HP",Warm courage in a bottle; debts arrive later.
 57,Caesura,Bannered City Valthria,Street vendor chorus,,EFFECT: None,Calls weave through you and keep going.
 58,Hollow,Bannered City Valthria,Assassin in the crowd,,"FIGHT: 
 3 HP
