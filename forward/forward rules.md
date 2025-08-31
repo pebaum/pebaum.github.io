@@ -122,6 +122,7 @@ Rules notes
 • Combat / Beast / Hollow — Fights using the Duel System (Section 7).
 • Treasure / Reward / Blessing — Immediate benefits or persistent keepers.
 • Terror — Hard choices or escalating pressure (often interacts with Dread).
+• Caesura — Moments of exploration or calm. When revealed, read any brief text and discard. They have no major mechanics and never grant keepers, start duels, or force tests. At most they may let you peek at or reorder nearby cards or regain 1 HP or Resolve.
 • Bury — Gain 1 Dread instead; discard the card unless told otherwise.
 
 If a card’s type and its rules ever disagree, the rules text wins.
