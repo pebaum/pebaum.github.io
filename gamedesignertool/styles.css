@@ -44,6 +44,7 @@ input, select{background:#121317; border:1px solid var(--border); color:var(--te
 .board-pane{position:relative}
 .canvas-scroller{position:absolute; inset:0; overflow:auto; background:repeating-conic-gradient(from 45deg, #141821 0 25%, #0f131b 0 50%) 0/24px 24px}
 .work-canvas{position:relative; width:3000px; height:2000px}
+.work-canvas.zoomable{transform-origin: 0 0;}
 .play-area{position:absolute; top:100px; left:100px; width:1600px; height:960px; background:#fff; border:2px solid #000; box-shadow:var(--shadow)}
 .play-area::after{content:""; position:absolute; inset:0; border:2px solid rgba(0,0,0,.1); pointer-events:none}
 .play-area .grid{

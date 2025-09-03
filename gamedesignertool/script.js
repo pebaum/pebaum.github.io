@@ -19,6 +19,7 @@ const state = {
 let zCounter = 10;
 const persistKey = 'bdl-layout-v1';
 const grid = { enabled: false, sizeIn: 0.5, snap: false };
+let zoom = 1; // 1.0 = 100%
 
 // Size mapping for popular card sizes (inches)
 const CARD_SIZES = {
@@ -40,8 +41,8 @@ function centerViewOnPlayArea() {
   const rect = playArea.getBoundingClientRect();
   const scr = scroller.getBoundingClientRect();
   // Scroll so playArea is centered in view
-  const targetLeft = playArea.offsetLeft + (playArea.offsetWidth - scr.width) / 2;
-  const targetTop  = playArea.offsetTop  + (playArea.offsetHeight - scr.height) / 2;
+  const targetLeft = playArea.offsetLeft*zoom + (playArea.offsetWidth*zoom - scr.width) / 2;
+  const targetTop  = playArea.offsetTop*zoom  + (playArea.offsetHeight*zoom - scr.height) / 2;
   scroller.scrollTo({ left: Math.max(targetLeft, 0), top: Math.max(targetTop, 0), behavior: 'smooth' });
 }
 
@@ -546,6 +547,30 @@ function onReady() {
   });
 
   el('#resetViewBtn').addEventListener('click', centerViewOnPlayArea);
+
+  // Zoom controls
+  workCanvas.classList.add('zoomable');
+  const zoomPct = el('#zoomPct');
+  function applyZoom(next, focus){
+    next = Math.min(3, Math.max(0.25, next));
+    const prev = zoom; if (Math.abs(prev-next) < 0.001) return;
+    const rect = scroller.getBoundingClientRect();
+    const focusX = focus ? focus.x - rect.left + scroller.scrollLeft : scroller.scrollLeft + rect.width/2;
+    const focusY = focus ? focus.y - rect.top  + scroller.scrollTop  : scroller.scrollTop  + rect.height/2;
+    const scale = next/prev;
+    // Keep focus point stable
+    scroller.scrollLeft = (focusX)*scale - (focus ? (focus.x - rect.left) : rect.width/2);
+    scroller.scrollTop  = (focusY)*scale - (focus ? (focus.y - rect.top) : rect.height/2);
+    zoom = next;
+    workCanvas.style.transform = `scale(${zoom})`;
+    zoomPct.textContent = `${Math.round(zoom*100)}%`;
+  }
+  el('#zoomInBtn').addEventListener('click', () => applyZoom(zoom*1.25));
+  el('#zoomOutBtn').addEventListener('click', () => applyZoom(zoom/1.25));
+  el('#zoomResetBtn').addEventListener('click', () => applyZoom(1));
+  scroller.addEventListener('wheel', (e) => {
+    if (e.ctrlKey) { e.preventDefault(); applyZoom(zoom * (e.deltaY>0? 0.9 : 1.1), { x:e.clientX, y:e.clientY }); }
+  }, { passive:false });
 
   // Grid controls
   el('#gridToggle').addEventListener('change', (e) => { grid.enabled = e.target.checked; updateGrid(); saveToStorageDebounced(); });
