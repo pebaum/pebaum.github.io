@@ -585,6 +585,7 @@
                         <div class="menu-item" data-menu="music">Music</div>
                         
                         <div class="menu-item" data-menu="magic">Magic</div>
+                        <div class="menu-item" data-menu="gamedesignertool">Boardgame Design Lab</div>
                         <div class="menu-item" data-menu="transcriber">Transcriber</div>
                         <div class="menu-item" data-menu="forward">Forward</div>
                         <div class="menu-item" data-menu="bug-hunt">Bug Hunt</div>
@@ -1224,6 +1225,10 @@
                 // Special handling for transcriber - open web app
                 if (menuKey === 'transcriber') {
                     window.open('../transcriber/web/', '_blank');
+                    return;
+                }
+                if (menuKey === 'gamedesignertool') {
+                    window.open('../gamedesignertool/', '_blank');
                     return;
                 }
 
