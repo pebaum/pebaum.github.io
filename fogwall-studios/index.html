@@ -3,99 +3,24 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Fogwall Studios</title>
-  <meta name="description" content="Fogwall Studios — minimal dungeon gothic aesthetic." />
+  <title>Fogwall Studios — Text Adventure</title>
+  <meta name="description" content="Fogwall Studios interactive fiction terminal." />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <!-- Intro Fog Wall Gate -->
-  <div id="gate" class="gate" aria-label="Fog wall gate" role="dialog" aria-modal="true">
-    <div class="gate__ascii-bg" aria-hidden="true"></div>
-    <div class="gate__doorway" aria-hidden="true">
-      <div class="gate__arch">
-        <pre aria-hidden="true">
-          ______________________
-         /                      \
-        /                        \
-       /                          \
-      /                            \
-     /                              \
-    /                                \
-    |                                |
-    |                                |
-    |                                |
-    |                                |
-    |                                |
-    |                                |
-    |                                |
-    |                                |
-    |                                |
-    |                                |
-    |                                |
-    |                                |
-    |                                |
-    |                                |
-    |                                |
-    |                                |
-        </pre>
-        <div class="gate__fog" id="fog"></div>
-      </div>
-      <button class="gate__enter" id="enterBtn" aria-label="Enter">ENTER</button>
-      <div class="gate__hint">click the fog wall</div>
+  <main id="terminal" class="terminal" aria-label="Fogwall Studios Text Adventure" role="application">
+    <div id="log" class="terminal__log" aria-live="polite" aria-relevant="additions"></div>
+    <div class="terminal__inputline">
+      <span class="prompt" aria-hidden="true">&gt;</span>
+      <input id="cmd" class="terminal__input" type="text" autocomplete="off" spellcheck="false" aria-label="Command input" />
+      <span class="cursor" aria-hidden="true"></span>
     </div>
-  </div>
-
-  <!-- Main Site -->
-  <div id="site" class="site site--hidden">
-    <header class="site__header">
-  <pre class="logo" aria-label="Fogwall Studios">
-Fogwall Studios
-      </pre>
-    </header>
-
-    <main class="columns">
-      <aside class="col col--left">
-        <h2>About</h2>
-        <p>Fogwall Studios crafts moody, minimal experiences with a gothic dungeon vibe. We like quiet interfaces, ASCII grit, and mechanical depth.</p>
-        <p>Independent. Experimental. A little haunted.</p>
-      </aside>
-
-      <section class="col col--center">
-        <h2>Projects</h2>
-        <article class="card">
-          <h3>Forward</h3>
-          <p class="muted">Deck-building roguelite about momentum and consequence. (placeholder)</p>
-        </article>
-
-        <article class="card">
-          <h3>Bug Hunter</h3>
-          <p class="muted">Terminal tactics in a derelict facility teeming with horrors. (placeholder)</p>
-        </article>
-      </section>
-
-      <aside class="col col--right">
-        <h2>Contact</h2>
-        <ul class="links">
-          <li><a href="mailto:contact@fogwall.studio">contact@fogwall.studio</a></li>
-          <li><a href="https://x.com/" target="_blank" rel="noopener">X/Twitter</a></li>
-          <li><a href="https://mastodon.social/" target="_blank" rel="me noopener">Mastodon</a></li>
-          <li><a href="https://github.com/" target="_blank" rel="noopener">GitHub</a></li>
-        </ul>
-      </aside>
-    </main>
-
-    <footer class="site__footer">
-      <small>© <span id="year"></span> Fogwall Studios</small>
-    </footer>
-  </div>
-
+  </main>
+  <footer class="terminal__footer">© <span id="year"></span> Fogwall Studios — type HELP</footer>
   <script src="script.js" defer></script>
   <noscript>
-    <style>
-      /* If JS is disabled, show the site and hide the gate */
-      #gate{ display:none !important; }
-      #site{ display:block !important; }
-    </style>
+    <pre>Fogwall Studios
+(Enable JavaScript for interactive fiction)</pre>
   </noscript>
 </body>
 </html>
