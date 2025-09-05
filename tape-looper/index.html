@@ -18,7 +18,7 @@
       <p class="tagline">Asymmetrical generative Rhodes-esque tape loop engine</p>
     </header>
 
-    <section id="controls" class="panel">
+  <section id="controls" class="panel" style="display:none;">
       <div class="row">
         <label>Global Tempo (BPM)
           <input id="tempo" type="number" value="80" min="20" max="200" />
@@ -41,20 +41,23 @@
       </div>
     </section>
 
-    <section id="loops" class="panel">
+  <section id="loops" class="panel" style="display:none;">
       <h2>Loops</h2>
       <div id="loopList"></div>
     </section>
 
-    <section id="visual" class="panel">
+  <section id="visual" class="panel" style="display:none;">
       <h2>Mobile View</h2>
       <div id="mobile"></div>
       <h2>ASCII Tape Loops</h2>
       <div id="ascii"></div>
     </section>
 
-    <footer>
-      <p>Rhodes-style tone via WebAudio synthesis. Click ASCII tape to add notes.</p>
+    <section id="asciiFull" class="panel" style="background:#0a0e14;">
+      <pre id="asciiScreen" style="margin:0;font-size:12px;line-height:1.15;white-space:pre;overflow:auto;max-height:75vh;"></pre>
+    </section>
+    <footer style="text-align:center;font-size:10px;color:#555;">
+      <p>ASCII mode • Click bracketed commands • Click inside a tape to add a note • R = record</p>
     </footer>
   </div>
   <script type="module" src="script.js"></script>

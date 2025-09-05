@@ -75,7 +75,9 @@ class ToneEngine {
 
 class Loop {
   constructor(id,{lengthBeats=8, rate=1, notes=[]}={}){
-    this.id=id; this.lengthBeats=lengthBeats; this.rate=rate; this.notes=notes; // notes: [{beat:Float, midi:Int, vel:0-1, dur:beats}]
+  this.id=id; this.lengthBeats=lengthBeats; this.tapeSpeed=rate; // unified tape speed (time + pitch)
+  this.rate=rate; // scheduler playback speed mirrors tapeSpeed
+  this.notes=notes; // notes: [{beat:Float, midi:Int, vel:0-1, dur:beats}]
   this.lengthSeconds = null; // optional explicit seconds length (UI convenience)
     this.enabled=true;
     this.rotation=0; // 0..1 fractional around circle
@@ -138,8 +140,12 @@ class Scheduler {
           inWindow = (n.beat > prevPos) || (n.beat <= currPos);
         }
         if(inWindow){
-          const durSec = n.dur * bd;
-          this.engine.playNote(n.midi + (loop.transpose||0), n.vel, durSec, time);
+          // Tape speed affects both timing (already via loop.rate) and pitch.
+          // Pitch: shift in semitones = 12 * log2(tapeSpeed)
+          const durSec = n.dur * bd / loop.tapeSpeed; // faster tape shortens note length proportionally
+          const semitoneShift = (loop.transpose||0) + (12 * Math.log2(loop.tapeSpeed||1));
+          const shiftedMidi = n.midi + semitoneShift;
+          this.engine.playNote(shiftedMidi, n.vel, durSec, time);
         }
       }
     }
@@ -155,6 +161,7 @@ class Scheduler {
       loop.rotation = (loopBeatsElapsed % loop.lengthBeats)/loop.lengthBeats;
       updateLoopVisual(loop);
     }
+  if(asciiMode) renderAsciiScreen();
     requestAnimationFrame(ts2=>this._animate(ts2));
   }
 }
@@ -167,6 +174,133 @@ let loopCounter=0;
 const loopList = document.getElementById('loopList');
 const mobile = document.getElementById('mobile');
 const ascii = document.getElementById('ascii');
+const asciiScreen = document.getElementById('asciiScreen');
+let asciiMode = true; // new full ASCII interface flag
+let focusedLoopId = null; // which loop is 'selected'
+let recording = false;
+let recordStartTime = 0;
+let recordedEvents = []; // {time, midi, vel, dur}
+
+// Simple input capture for adding notes while recording (random chord placeholder)
+window.addEventListener('keydown', (e)=>{
+  if(!asciiMode) return;
+  if(e.key==='r' || e.key==='R') { toggleRecord(); }
+  if(!recording) return;
+  // Map a-z to a scale
+  const letters = 'asdfghjkl';
+  const idx = letters.indexOf(e.key.toLowerCase());
+  if(idx>=0){
+    const baseScale = [60,62,63,65,67,70,72,74,75];
+    const midi = baseScale[idx%baseScale.length];
+    const vel = 0.5 + (Math.random()*0.3);
+    const now = engine.ctx.currentTime;
+    const t = now - recordStartTime;
+    recordedEvents.push({time:t,midi,vel,dur:0.6});
+    engine.playNote(midi,vel,0.6,null);
+    renderAsciiScreen();
+  }
+});
+
+function toggleRecord(){
+  if(!recording){
+    recording=true; recordedEvents=[]; recordStartTime=engine.ctx.currentTime; 
+  } else {
+    recording=false; // convert to loop
+    if(recordedEvents.length){
+      // derive loop length = ceil to nearest beat length using current bpm
+      const lastT = Math.max(...recordedEvents.map(r=>r.time));
+      const beatDur = 60/scheduler.bpm;
+      const lengthBeats = Math.max(1, Math.round(lastT/beatDur));
+      const notes = recordedEvents.map(r=>({beat:+(r.time/beatDur).toFixed(2), midi:r.midi, vel:+r.vel.toFixed(2), dur:+(r.dur/beatDur).toFixed(2)}));
+      const loop = addLoop({lengthBeats, rate:1, notes});
+      focusedLoopId = loop.id;
+    }
+  }
+  renderAsciiScreen();
+}
+
+function formatLoopLine(loop){
+  const sel = (loop.id===focusedLoopId)?'*':' ';
+  const secs = loop.lengthSeconds || +(loop.lengthBeats * (60/scheduler.bpm)).toFixed(2);
+  const rateStr = loop.tapeSpeed.toFixed(2).padStart(4,' ');
+  const lenStr = loop.lengthBeats.toString().padStart(4,' ');
+  return `${sel} L${loop.id.toString().padStart(2,'0')} | LEN ${lenStr}b ~${secs}s | TAPE ${rateStr}x | NOTES ${loop.notes.length.toString().padStart(2,' ')} | ${loop.enabled? 'ON ':'OFF'}`;
+}
+
+function buildTape(loop, width){
+  const cols = width;
+  const chars = new Array(cols).fill('-');
+  for(const n of loop.notes){
+    const pos = Math.max(0, Math.min(cols-1, Math.round((n.beat/loop.lengthBeats)*cols)));
+    const label = midiToNoteName(n.midi);
+    for(let i=0;i<label.length && pos+i<cols;i++) chars[pos+i]=label[i];
+  }
+  // playhead
+  let head = Math.round(loop.rotation*cols)%cols; if(head>cols-4) head=cols-4;
+  chars[head]='['; chars[head+1]='>'; chars[head+2]='>'; chars[head+3]=']';
+  return chars.join('');
+}
+
+function renderAsciiScreen(){
+  if(!asciiMode || !asciiScreen) return;
+  const width = 78; // typical console width target
+  let out=[];
+  out.push(`TAPE LOOPER  BPM:${scheduler.bpm}  SWING:${scheduler.swing}%  MASTER:${engine.master.gain.value.toFixed(2)}  ${recording?'[REC]':'[   ]'}`);
+  out.push('Commands: [SPACE start/stop] [A add loop] [R rec] [UP/DOWN select] [+/- rate] [DEL remove] [E export] [I import]');
+  out.push('-'.repeat(width));
+  if(!scheduler.loops.length){
+    out.push('(no loops) Press A to add a random loop or R to record keystrokes.');
+  }
+  for(const loop of scheduler.loops){
+  out.push(formatLoopLine(loop));
+  out.push('  '+buildTape(loop,width-2));
+  }
+  out.push('-'.repeat(width));
+  if(recording){
+    out.push('Recording... type ASDFGHJKL to add notes. Press R to stop.');
+  } else {
+    out.push('Tip: Select a loop then + / - to change rate, SPACE to start/stop.');
+  }
+  asciiScreen.textContent = out.join('\n');
+}
+
+window.addEventListener('keydown', (e)=>{
+  if(!asciiMode) return;
+  if(e.target && ['INPUT','TEXTAREA'].includes(e.target.tagName)) return;
+  const key = e.key;
+  if(key===' '){ e.preventDefault(); if(scheduler.isRunning) scheduler.stop(); else { scheduler.setParams({bpm:scheduler.bpm,swing:scheduler.swing}); scheduler.start(); } renderAsciiScreen(); }
+  else if(key==='a' || key==='A'){ addLoop(randomLoop()); renderAsciiScreen(); }
+  else if(key==='ArrowUp'){
+    const ids = scheduler.loops.map(l=>l.id);
+    if(ids.length){
+      if(focusedLoopId==null) focusedLoopId=ids[0];
+      else { const idx = ids.indexOf(focusedLoopId); focusedLoopId = ids[(idx-1+ids.length)%ids.length]; }
+      renderAsciiScreen();
+    }
+  }
+  else if(key==='ArrowDown'){
+    const ids = scheduler.loops.map(l=>l.id);
+    if(ids.length){
+      if(focusedLoopId==null) focusedLoopId=ids[0];
+      else { const idx = ids.indexOf(focusedLoopId); focusedLoopId = ids[(idx+1)%ids.length]; }
+      renderAsciiScreen();
+    }
+  }
+  else if(key==='+' || key==='='){
+  const loop = scheduler.loops.find(l=>l.id===focusedLoopId); if(loop){ loop.tapeSpeed= Math.min(4, +(loop.tapeSpeed+0.05).toFixed(2)); loop.rate=loop.tapeSpeed; }
+    renderAsciiScreen();
+  }
+  else if(key==='-' || key==='_'){
+  const loop = scheduler.loops.find(l=>l.id===focusedLoopId); if(loop){ loop.tapeSpeed= Math.max(0.25, +(loop.tapeSpeed-0.05).toFixed(2)); loop.rate=loop.tapeSpeed; }
+    renderAsciiScreen();
+  }
+  else if(key==='Delete' || key==='Backspace'){
+    const loop = scheduler.loops.find(l=>l.id===focusedLoopId); if(loop){ scheduler.removeLoop(loop.id); focusedLoopId=null; }
+    renderAsciiScreen();
+  }
+  else if(key==='e' || key==='E'){ exportPreset(); }
+  else if(key==='i' || key==='I'){ document.getElementById('importBtn').click(); }
+});
 
 function createLoopCard(loop){
   const card=document.createElement('div'); card.className='loopCard'; card.dataset.id=loop.id;
@@ -175,7 +309,10 @@ function createLoopCard(loop){
   <div class="loopRow">
     <label>Length (beats)<input class="lenInput" type="number" min="1" value="${loop.lengthBeats}"></label>
     <label>Length (sec)<input class="lenSecInput" type="number" min="0.5" step="0.1" value="${estSeconds}"></label>
-    <label>Rate <input class="rateInput" type="number" step="0.01" value="${loop.rate}"></label>
+    <label style="flex:1 1 140px;">Tape Speed
+      <input class="tapeSpeedInput" type="range" min="0.25" max="4" step="0.01" value="${loop.tapeSpeed}">
+      <span class="tapeSpeedVal" style="font-size:10px;display:block;text-align:center;">${loop.tapeSpeed.toFixed(2)}x</span>
+    </label>
     <label>Transp <input class="transpInput" type="number" value="0"></label>
   </div>
   <div class="noteList"></div>
@@ -194,7 +331,8 @@ function createLoopCard(loop){
 
   card.querySelector('.lenInput').addEventListener('change',e=>{ loop.lengthBeats= +e.target.value; buildAscii(loop); });
   card.querySelector('.lenSecInput').addEventListener('change',e=>{ const secs= +e.target.value; loop.lengthSeconds=secs; loop.lengthBeats = +(secs * (scheduler.bpm/60)).toFixed(2); card.querySelector('.lenInput').value=loop.lengthBeats; buildAscii(loop); });
-  card.querySelector('.rateInput').addEventListener('change',e=>{ loop.rate= +e.target.value; });
+  const speedSlider = card.querySelector('.tapeSpeedInput');
+  speedSlider.addEventListener('input', e=>{ const v= +e.target.value; loop.tapeSpeed=v; loop.rate=v; card.querySelector('.tapeSpeedVal').textContent=v.toFixed(2)+'x'; renderAsciiScreen(); });
   card.querySelector('.transpInput').addEventListener('change',e=>{ loop.transpose= +e.target.value; });
   card.querySelector('.addNoteBtn').addEventListener('click',()=>{
     const val = card.querySelector('.noteInput').value.trim();
@@ -207,8 +345,8 @@ function createLoopCard(loop){
     renderNotes(); buildAscii(loop);
   });
   card.querySelector('.toggleBtn').addEventListener('click',e=>{ loop.enabled=!loop.enabled; e.target.textContent= loop.enabled? 'On':'Off'; e.target.style.background = loop.enabled? '#6e40c9':'#30363d';});
-  card.querySelector('.speedInc').addEventListener('click',()=>{ loop.rate= +(loop.rate + 0.05).toFixed(2); card.querySelector('.rateInput').value=loop.rate; });
-  card.querySelector('.speedDec').addEventListener('click',()=>{ loop.rate= Math.max(0.05, +(loop.rate - 0.05).toFixed(2)); card.querySelector('.rateInput').value=loop.rate; });
+  card.querySelector('.speedInc').addEventListener('click',()=>{ loop.tapeSpeed= Math.min(4, +(loop.tapeSpeed + 0.05).toFixed(2)); loop.rate=loop.tapeSpeed; speedSlider.value=loop.tapeSpeed; card.querySelector('.tapeSpeedVal').textContent=loop.tapeSpeed.toFixed(2)+'x'; renderAsciiScreen(); });
+  card.querySelector('.speedDec').addEventListener('click',()=>{ loop.tapeSpeed= Math.max(0.25, +(loop.tapeSpeed - 0.05).toFixed(2)); loop.rate=loop.tapeSpeed; speedSlider.value=loop.tapeSpeed; card.querySelector('.tapeSpeedVal').textContent=loop.tapeSpeed.toFixed(2)+'x'; renderAsciiScreen(); });
   card.querySelector('.delBtn').addEventListener('click',()=>{ if(confirm('Delete loop?')){ scheduler.removeLoop(loop.id); card.remove(); removeVisual(loop); }});
   return card;
 }
@@ -311,7 +449,7 @@ function updateAscii(loop){
 // Preset + Randomization
 function randomLoop(){
   const lengthBeats = [5,7,9,11,13,8,12][Math.floor(Math.random()*7)];
-  const rate = parseFloat((Math.random()*1.5+0.5).toFixed(2));
+  const rate = parseFloat((Math.random()*1.5+0.5).toFixed(2)); // also used as tapeSpeed
   const noteCount = Math.ceil(Math.random()*4+2);
   const scale = [60,62,63,65,67,70,72];
   const notes=[];
@@ -327,7 +465,7 @@ function randomLoop(){
 
 // Export / Import
 function exportPreset(){
-  const data = { bpm:scheduler.bpm, swing:scheduler.swing, loops:scheduler.loops.map(l=>({lengthBeats:l.lengthBeats, rate:l.rate, notes:l.notes})) };
+  const data = { bpm:scheduler.bpm, swing:scheduler.swing, loops:scheduler.loops.map(l=>({lengthBeats:l.lengthBeats, rate:l.tapeSpeed, notes:l.notes})) };
   const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='tape-loops-preset.json'; a.click();
 }
@@ -364,6 +502,8 @@ importFile.addEventListener('change',e=>{ const file=e.target.files[0]; if(!file
 addLoop({lengthBeats:8, rate:1, notes:[{beat:0,midi:60,vel:0.5,dur:1},{beat:2,midi:64,vel:0.5,dur:1},{beat:4,midi:67,vel:0.5,dur:1},{beat:6,midi:72,vel:0.5,dur:1}]});
 addLoop({lengthBeats:12, rate:0.75, notes:[{beat:0,midi:55,vel:0.4,dur:2.5},{beat:5.5,midi:50,vel:0.35,dur:3}]});
 addLoop({lengthBeats:10, rate:1.33, notes:[{beat:1,midi:72,vel:0.35,dur:.8},{beat:5.2,midi:74,vel:0.35,dur:.8}]});
+
+renderAsciiScreen();
 
 // Utility for mobile friendly resume/resume audio
 window.addEventListener('click',()=>{ if(engine.ctx.state==='suspended') engine.ctx.resume(); }, {once:true});
