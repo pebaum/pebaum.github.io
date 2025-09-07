@@ -178,24 +178,42 @@ const asciiScreen = document.getElementById('asciiScreen');
 const noteOverlay = document.getElementById('noteOverlay');
 const noteForm = document.getElementById('noteForm');
 const cancelAddBtn = document.getElementById('cancelAdd');
-let asciiMode = true; // new full ASCII interface flag
-let focusedLoopId = null; // which loop is 'selected'
+let asciiMode = true; // full ASCII interface
+let focusedLoopId = null;
 let recording = false;
 let recordStartTime = 0;
 let recordedEvents = []; // {time, midi, vel, dur}
+let currentOctave = 4; // typing octave
+let speedSpans = []; // interactive spans for tape speed
+let noteSpans = []; // interactive spans for notes
+let dragState = null; // current drag {type, loopId, noteIndex?, startY, origValue}
+let lastDragTime = 0;
+let currentRenderLine = 0; // used while rendering
+const charMetrics = { width: 8, lineHeight: 16 };
+
+function measureCharMetrics(){
+  if(!asciiScreen) return;
+  const s = document.createElement('span'); s.textContent='M'; s.style.visibility='hidden'; s.style.font='inherit';
+  asciiScreen.appendChild(s);
+  const r = s.getBoundingClientRect();
+  if(r.width>0) charMetrics.width = r.width;
+  const lh = parseFloat(getComputedStyle(asciiScreen).lineHeight); if(lh) charMetrics.lineHeight = lh;
+  s.remove();
+}
+measureCharMetrics();
 
 // Simple input capture for adding notes while recording (random chord placeholder)
 window.addEventListener('keydown', (e)=>{
   if(!asciiMode) return;
-  if(e.key==='r' || e.key==='R') { toggleRecord(); }
+  if(e.key==='r' || e.key==='R') { toggleRecord(); return; }
   if(!recording) return;
-  // Map a-z to a scale
   const letters = 'asdfghjkl';
   const idx = letters.indexOf(e.key.toLowerCase());
   if(idx>=0){
-    const baseScale = [60,62,63,65,67,70,72,74,75];
-    const midi = baseScale[idx%baseScale.length];
-    const vel = 0.5 + (Math.random()*0.3);
+    const baseScale = [0,2,3,5,7,10,12,14,15]; // relative to tonic
+    const root = 60 + (currentOctave-4)*12; // C root octave
+    const midi = root + baseScale[idx];
+    const vel = 0.55 + (Math.random()*0.25);
     const now = engine.ctx.currentTime;
     const t = now - recordStartTime;
     recordedEvents.push({time:t,midi,vel,dur:0.6});
@@ -225,20 +243,27 @@ function toggleRecord(){
 function formatLoopLine(loop){
   const sel = (loop.id===focusedLoopId)?'*':' ';
   const secs = loop.lengthSeconds || +(loop.lengthBeats * (60/scheduler.bpm)).toFixed(2);
-  const rateStr = loop.tapeSpeed.toFixed(2).padStart(4,' ');
-  const lenStr = loop.lengthBeats.toString().padStart(4,' ');
-  return `${sel} L${loop.id.toString().padStart(2,'0')} | LEN ${lenStr}b ~${secs}s | TAPE ${rateStr}x | NOTES ${loop.notes.length.toString().padStart(2,' ')} | ${loop.enabled? 'ON ':'OFF'}`;
+  const speedStr = loop.tapeSpeed.toFixed(2)+'x';
+  const line = `${sel} L${loop.id.toString().padStart(2,'0')} | LEN ${secs.toString().padStart(5,' ')}s | TAPE ${speedStr} | NOTES ${loop.notes.length.toString().padStart(2,' ')} | ${loop.enabled? 'ON ':'OFF'}`;
+  const idx = line.indexOf('TAPE ');
+  if(idx>=0){
+    const start = idx + 5;
+    speedSpans.push({loopId:loop.id,line:currentRenderLine,start,end:start+speedStr.length-1});
+  }
+  return line;
 }
 
-function buildTape(loop, width){
+function buildTape(loop,width){
   const cols = width;
   const chars = new Array(cols).fill('-');
-  for(const n of loop.notes){
+  loop.notes.forEach((n,i)=>{
     const pos = Math.max(0, Math.min(cols-1, Math.round((n.beat/loop.lengthBeats)*cols)));
     const label = midiToNoteName(n.midi);
-    for(let i=0;i<label.length && pos+i<cols;i++) chars[pos+i]=label[i];
-  }
-  // playhead
+    for(let j=0;j<label.length && pos+j<cols;j++){
+      chars[pos+j]=label[j];
+      noteSpans.push({loopId:loop.id,line:currentRenderLine+1,colStart:pos,colEnd:pos+label.length-1,noteIndex:i});
+    }
+  });
   let head = Math.round(loop.rotation*cols)%cols; if(head>cols-4) head=cols-4;
   chars[head]='['; chars[head+1]='>'; chars[head+2]='>'; chars[head+3]=']';
   return chars.join('');
@@ -246,64 +271,48 @@ function buildTape(loop, width){
 
 function renderAsciiScreen(){
   if(!asciiMode || !asciiScreen) return;
-  const width = 90; // expand workspace
-  let out=[];
-  out.push(`TAPE LOOPER  BPM:${scheduler.bpm}  SWING:${scheduler.swing}%  MASTER:${engine.master.gain.value.toFixed(2)}  ${recording?'[REC]':'[   ]'}`);
-  out.push('Commands: [SPACE start/stop] [A add loop] [R rec] [UP/DOWN select] [+/- speed] [DEL remove] [E export] [I import]  (Click tape)');
+  speedSpans=[]; noteSpans=[];
+  const width=90; let out=[];
+  out.push(`TAPE LOOPER  BPM:${scheduler.bpm}  OCT:${currentOctave}  MASTER:${engine.master.gain.value.toFixed(2)}  ${recording?'[REC]':'[   ]'}`);
+  out.push('Keys: [SPACE start/stop] [N new loop(sec)] [R rec] [UP/DOWN select] [+/- speed] [DEL] [E export] [I import] [ [oct-] ] [oct+]');
   out.push('-'.repeat(width));
-  if(!scheduler.loops.length){
-    out.push('(no loops) Press A to add a random loop or R to record keystrokes.');
-  }
-  for(const loop of scheduler.loops){
-    out.push(formatLoopLine(loop));
-    out.push('  '+buildTape(loop,width-2));
+  if(!scheduler.loops.length){ out.push('No loops. Press N to create (seconds) then R to record typing.'); }
+  scheduler.loops.forEach(loop=>{
+    currentRenderLine = out.length; out.push(formatLoopLine(loop));
+    currentRenderLine = out.length; out.push('  '+buildTape(loop,width-2));
     out.push('');
-  }
+  });
   out.push('-'.repeat(width));
-  if(recording){
-    out.push('Recording... type ASDFGHJKL to add notes. Press R to stop.');
-  } else {
-    out.push('Tip: Click a tape position to add note; right-click to delete nearest.');
-  }
-  asciiScreen.textContent = out.join('\n');
+  if(recording) out.push('Recording: type ASDFGHJKL. R=stop. Use [ / ] to change octave.');
+  else out.push('Tip: Click tape to add note; drag/wheel over speed or note label to tweak.');
+  asciiScreen.textContent=out.join('\n');
 }
 
 // Mouse interaction over ASCII screen for adding/removing notes
-asciiScreen.addEventListener('click', (e)=>{
+asciiScreen.addEventListener('click',e=>{
   if(!scheduler.loops.length) return;
+  if(Date.now()-lastDragTime < 150) return; // ignore after drag
   const rect = asciiScreen.getBoundingClientRect();
-  const y = e.clientY - rect.top;
-  const lineHeight = parseFloat(getComputedStyle(asciiScreen).lineHeight) || 16;
-  const lineIndex = Math.floor(y / lineHeight);
-  const headerLines = 3; // title, commands, separator
-  const blockSize = 3; // loop line, tape line, blank
-  if(lineIndex < headerLines) return;
-  const rel = lineIndex - headerLines;
-  const loopIdx = Math.floor(rel / blockSize);
-  if(loopIdx < 0 || loopIdx >= scheduler.loops.length) return;
-  const within = rel % blockSize;
-  if(within !==1) return; // only tape line
-  const loop = scheduler.loops[loopIdx];
-  focusedLoopId = loop.id;
-  const tapeLineElementWidth = rect.width; // approximate full width
-  const x = e.clientX - rect.left - 24; // subtract indent approximation
-  const frac = Math.min(1, Math.max(0, x / tapeLineElementWidth));
+  const y = e.clientY - rect.top; const x = e.clientX - rect.left;
+  const line = Math.floor(y / charMetrics.lineHeight);
+  const col = Math.floor(x / charMetrics.width);
+  // Determine loop from line
+  const headerLines=3; const blockSize=3;
+  if(line < headerLines) return;
+  const rel = line - headerLines; const loopIdx = Math.floor(rel/blockSize); const within = rel%blockSize;
+  if(loopIdx<0||loopIdx>=scheduler.loops.length) return; if(within!==1) return;
+  const loop = scheduler.loops[loopIdx]; focusedLoopId=loop.id;
+  const frac = Math.min(1, Math.max(0,(col-2)/( (90-2) ))); // -2 indent
   const beat = +(frac * loop.lengthBeats).toFixed(2);
-  // show overlay
-  noteOverlay.style.left = (e.clientX - rect.left + 8) + 'px';
-  noteOverlay.style.top = (e.clientY - rect.top + 8) + 'px';
-  noteOverlay.style.display='block';
-  noteOverlay.dataset.loopId = loop.id;
-  noteOverlay.dataset.beat = beat;
-  renderAsciiScreen();
+  noteOverlay.style.left = (x+10)+'px'; noteOverlay.style.top = (y+10)+'px';
+  noteOverlay.style.display='block'; noteOverlay.dataset.loopId=loop.id; noteOverlay.dataset.beat=beat; renderAsciiScreen();
 });
 
 asciiScreen.addEventListener('contextmenu',(e)=>{
   e.preventDefault();
   const rect = asciiScreen.getBoundingClientRect();
   const y = e.clientY - rect.top;
-  const lineHeight = parseFloat(getComputedStyle(asciiScreen).lineHeight) || 16;
-  const lineIndex = Math.floor(y/lineHeight);
+  const lineIndex = Math.floor(y/charMetrics.lineHeight);
   const headerLines=3; const blockSize=3;
   if(lineIndex < headerLines) return;
   const rel = lineIndex - headerLines;
@@ -311,8 +320,9 @@ asciiScreen.addEventListener('contextmenu',(e)=>{
   if(loopIdx<0||loopIdx>=scheduler.loops.length) return;
   const within = rel%blockSize; if(within!==1) return;
   const loop = scheduler.loops[loopIdx];
-  const x = e.clientX - rect.left - 24;
-  const frac = Math.min(1, Math.max(0, x / rect.width));
+  const x = e.clientX - rect.left;
+  const col = Math.floor(x/charMetrics.width)-2;
+  const frac = Math.min(1, Math.max(0, col/(90-2))); // width assumption
   const targetBeat = frac*loop.lengthBeats;
   if(loop.notes.length){
     let bestIdx=0; let bestDist=Infinity;
@@ -320,6 +330,55 @@ asciiScreen.addEventListener('contextmenu',(e)=>{
     if(bestDist < loop.lengthBeats*0.1){ loop.notes.splice(bestIdx,1); buildAscii(loop); renderAsciiScreen(); }
   }
 });
+
+function findSpanAtPointer(e){
+  const rect = asciiScreen.getBoundingClientRect();
+  const y = e.clientY - rect.top; const x = e.clientX - rect.left;
+  const line = Math.floor(y/charMetrics.lineHeight);
+  const col = Math.floor(x/charMetrics.width);
+  for(const s of speedSpans){ if(s.line===line && col>=s.start && col<=s.end) return {type:'speed', data:s}; }
+  for(const n of noteSpans){ if(n.line===line && col>=n.colStart && col<=n.colEnd) return {type:'note', data:n}; }
+  return null;
+}
+
+asciiScreen.addEventListener('mousedown',e=>{
+  const span = findSpanAtPointer(e);
+  if(span){
+    const loop = scheduler.loops.find(l=>l.id===span.data.loopId); if(!loop) return;
+    dragState = {type:span.type, loopId:span.data.loopId, noteIndex:span.data.noteIndex, startY:e.clientY, origValue: span.type==='speed'? loop.tapeSpeed : loop.notes[span.data.noteIndex].midi};
+    e.preventDefault();
+  }
+});
+window.addEventListener('mousemove',e=>{
+  if(!dragState) return;
+  const dy = dragState.startY - e.clientY;
+  if(dragState.type==='speed'){
+    const loop = scheduler.loops.find(l=>l.id===dragState.loopId); if(!loop) return;
+    let val = dragState.origValue + dy/80; // scale
+    val = Math.min(4, Math.max(0.25,val));
+    loop.tapeSpeed = +(val.toFixed(2)); loop.rate=loop.tapeSpeed;
+  } else if(dragState.type==='note'){
+    const loop = scheduler.loops.find(l=>l.id===dragState.loopId); if(!loop) return;
+    const steps = Math.round(dy/14);
+    const n = loop.notes[dragState.noteIndex];
+    n.midi = Math.min(127, Math.max(0, dragState.origValue + steps));
+  }
+  lastDragTime = Date.now();
+  renderAsciiScreen();
+});
+window.addEventListener('mouseup',()=>{ dragState=null; });
+
+asciiScreen.addEventListener('wheel',e=>{
+  const span = findSpanAtPointer(e); if(!span) return; e.preventDefault();
+  const delta = e.deltaY>0? -1:1;
+  const loop = scheduler.loops.find(l=>l.id===span.data.loopId); if(!loop) return;
+  if(span.type==='speed'){
+    loop.tapeSpeed = Math.min(4, Math.max(0.25, +(loop.tapeSpeed + 0.05*delta).toFixed(2))); loop.rate=loop.tapeSpeed;
+  } else if(span.type==='note'){
+    const n = loop.notes[span.data.noteIndex]; n.midi = Math.min(127, Math.max(0, n.midi + delta));
+  }
+  lastDragTime=Date.now(); renderAsciiScreen();
+},{passive:false});
 
 cancelAddBtn?.addEventListener('click',()=>{ noteOverlay.style.display='none'; });
 noteForm?.addEventListener('submit',(e)=>{
@@ -344,6 +403,11 @@ window.addEventListener('keydown', (e)=>{
   if(e.target && ['INPUT','TEXTAREA'].includes(e.target.tagName)) return;
   const key = e.key;
   if(key===' '){ e.preventDefault(); if(scheduler.isRunning) scheduler.stop(); else { scheduler.setParams({bpm:scheduler.bpm,swing:scheduler.swing}); scheduler.start(); } renderAsciiScreen(); }
+  else if(key==='n' || key==='N'){
+    const secsStr = prompt('Loop length in seconds','8'); if(!secsStr) return; const secs = parseFloat(secsStr); if(!isFinite(secs)||secs<=0) return;
+    const beats = +(secs * (scheduler.bpm/60)).toFixed(2);
+    const loop = addLoop({lengthBeats:beats, rate:1, notes:[], lengthSeconds:secs}); focusedLoopId=loop.id; renderAsciiScreen();
+  }
   else if(key==='a' || key==='A'){ addLoop(randomLoop()); renderAsciiScreen(); }
   else if(key==='ArrowUp'){
     const ids = scheduler.loops.map(l=>l.id);
@@ -369,6 +433,8 @@ window.addEventListener('keydown', (e)=>{
   const loop = scheduler.loops.find(l=>l.id===focusedLoopId); if(loop){ loop.tapeSpeed= Math.max(0.25, +(loop.tapeSpeed-0.05).toFixed(2)); loop.rate=loop.tapeSpeed; }
     renderAsciiScreen();
   }
+  else if(key==='['){ currentOctave = Math.max(0,currentOctave-1); renderAsciiScreen(); }
+  else if(key===']'){ currentOctave = Math.min(8,currentOctave+1); renderAsciiScreen(); }
   else if(key==='Delete' || key==='Backspace'){
     const loop = scheduler.loops.find(l=>l.id===focusedLoopId); if(loop){ scheduler.removeLoop(loop.id); focusedLoopId=null; }
     renderAsciiScreen();
@@ -576,11 +642,7 @@ const importBtn=document.getElementById('importBtn');
 importBtn.addEventListener('click',()=>importFile.click());
 importFile.addEventListener('change',e=>{ const file=e.target.files[0]; if(!file) return; file.text().then(txt=>{ try{ const obj=JSON.parse(txt); importPreset(obj);}catch(err){ alert('Invalid preset'); } }); });
 
-// Initial loops
-addLoop({lengthBeats:8, rate:1, notes:[{beat:0,midi:60,vel:0.5,dur:1},{beat:2,midi:64,vel:0.5,dur:1},{beat:4,midi:67,vel:0.5,dur:1},{beat:6,midi:72,vel:0.5,dur:1}]});
-addLoop({lengthBeats:12, rate:0.75, notes:[{beat:0,midi:55,vel:0.4,dur:2.5},{beat:5.5,midi:50,vel:0.35,dur:3}]});
-addLoop({lengthBeats:10, rate:1.33, notes:[{beat:1,midi:72,vel:0.35,dur:.8},{beat:5.2,midi:74,vel:0.35,dur:.8}]});
-
+// Start empty; user adds loops with N
 renderAsciiScreen();
 
 // Utility for mobile friendly resume/resume audio
