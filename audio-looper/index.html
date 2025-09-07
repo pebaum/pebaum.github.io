@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Audio Clip Looper</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;500;700&display=swap" rel="stylesheet">
+<style>
+  body{background:#0d1117;color:#e6edf3;font-family:'IBM Plex Mono',monospace;margin:0;padding:0}
+  #app{max-width:1400px;margin:0 auto;padding:1rem}
+  h1{margin:0 0 .5rem;font-size:1.6rem;font-weight:500}
+  .panel{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1rem;margin-bottom:1rem}
+  #asciiScreen{white-space:pre;font-size:13px;line-height:1.25;min-height:60vh;cursor:crosshair;user-select:none;overflow:auto;font-family:'IBM Plex Mono',monospace}
+  #overlay{position:absolute;display:none;background:#161b22;border:1px solid #30363d;border-radius:6px;padding:6px;font-size:11px;box-shadow:0 2px 8px #000a;}
+  button{background:#238636;border:1px solid #2ea043;color:#fff;padding:.4rem .7rem;font-size:.75rem;border-radius:4px;cursor:pointer;font-family:inherit}
+  button.secondary{background:#30363d;border:1px solid #484f58;color:#e6edf3}
+  a, a:visited{color:#79c0ff}
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>Audio Clip Looper</h1>
+  <div class="panel" style="position:relative;">
+    <div id="asciiScreen"></div>
+    <div id="overlay">
+      <form id="clipForm" style="display:flex;flex-direction:column;gap:4px;min-width:180px;">
+        <label style="display:flex;flex-direction:column;gap:2px;font-size:10px;">Start (s)<input name="start" type="number" step="0.01" value="0" style="background:#0d1117;color:#e6edf3;border:1px solid #30363d;border-radius:3px;padding:2px 4px;font-size:11px;"></label>
+        <label style="display:flex;flex-direction:column;gap:2px;font-size:10px;">End (s)<input name="end" type="number" step="0.01" value="1" style="background:#0d1117;color:#e6edf3;border:1px solid #30363d;border-radius:3px;padding:2px 4px;font-size:11px;"></label>
+        <label style="display:flex;flex-direction:column;gap:2px;font-size:10px;">Gain<input name="gain" type="number" step="0.05" min="0" max="4" value="1" style="background:#0d1117;color:#e6edf3;border:1px solid #30363d;border-radius:3px;padding:2px 4px;font-size:11px;"></label>
+        <div style="display:flex;gap:6px;justify-content:flex-end;">
+          <button type="submit">Add</button>
+          <button type="button" id="cancelBtn" class="secondary">X</button>
+        </div>
+        <div style="font-size:10px;color:#8b949e;">Wheel/drag over SPEED or clip markers to edit. R = record.</div>
+      </form>
+    </div>
+  </div>
+  <p style="font-size:11px;color:#8b949e;">Create loops that play recorded microphone clips. Everything is ASCII + mouse adjustable.</p>
+</div>
+<script type="module" src="script.js"></script>
+</body>
+</html>
