@@ -53,8 +53,22 @@
       <div id="ascii"></div>
     </section>
 
-    <section id="asciiFull" class="panel" style="background:#0a0e14;">
-      <pre id="asciiScreen" style="margin:0;font-size:12px;line-height:1.15;white-space:pre;overflow:auto;max-height:75vh;"></pre>
+    <section id="asciiFull" class="panel" style="background:#0a0e14; position:relative;">
+      <div id="asciiScreen" style="margin:0;font-size:13px;line-height:1.2;white-space:pre;overflow:auto;max-height:75vh;font-family:'IBM Plex Mono',monospace; cursor:crosshair; user-select:none;"></div>
+      <div id="noteOverlay" style="position:absolute;display:none;background:#161b22;border:1px solid #30363d;border-radius:6px;padding:6px;font-size:11px;font-family:'IBM Plex Mono',monospace;box-shadow:0 2px 8px #000a;min-width:160px;">
+        <form id="noteForm" style="display:flex;flex-direction:column;gap:4px;">
+          <div style="display:flex;gap:4px;">
+            <label style="flex:1;display:flex;flex-direction:column;gap:2px;">Note<input name="note" style="background:#0d1117;color:#e6edf3;border:1px solid #30363d;border-radius:3px;padding:2px 4px;font-size:11px;" placeholder="C4"/></label>
+            <label style="flex:1;display:flex;flex-direction:column;gap:2px;">Vel<input name="vel" type="number" step="0.01" min="0" max="1" value="0.6" style="background:#0d1117;color:#e6edf3;border:1px solid #30363d;border-radius:3px;padding:2px 4px;font-size:11px;"/></label>
+            <label style="flex:1;display:flex;flex-direction:column;gap:2px;">Dur<input name="dur" type="number" step="0.05" min="0.05" value="0.75" style="background:#0d1117;color:#e6edf3;border:1px solid #30363d;border-radius:3px;padding:2px 4px;font-size:11px;"/></label>
+          </div>
+          <div style="display:flex;gap:4px;justify-content:flex-end;">
+            <button type="submit" style="background:#238636;border:1px solid #2ea043;padding:2px 8px;border-radius:4px;color:#fff;font-size:11px;cursor:pointer;">Add</button>
+            <button type="button" id="cancelAdd" style="background:#30363d;border:1px solid #484f58;padding:2px 8px;border-radius:4px;color:#e6edf3;font-size:11px;cursor:pointer;">X</button>
+          </div>
+          <div style="font-size:10px;color:#8b949e;">Right-click tape to delete nearest note.</div>
+        </form>
+      </div>
     </section>
     <footer style="text-align:center;font-size:10px;color:#555;">
       <p>ASCII mode • Click bracketed commands • Click inside a tape to add a note • R = record</p>
