@@ -28,7 +28,7 @@ except Exception:
 # Default to a public, available model; can override via TRANSCRIBER_MODEL
 # Output format: txt, md, srt, vtt, tsv, json
 OUTPUT_FORMAT = (os.environ.get("TRANSCRIBER_OUTPUT_FORMAT", "md") or "md").strip().lower()
-WHISPER_MODEL = os.environ.get("TRANSCRIBER_MODEL", "large-v3")
+WHISPER_MODEL = os.environ.get("TRANSCRIBER_MODEL", "large-v3")  # UI picks this by default; user can change
 # Optional fixed language (e.g., "en") to skip autodetect and speed up a bit
 FIXED_LANGUAGE = os.environ.get("TRANSCRIBER_LANG")
 # Speed up model downloads when available (requires 'hf_transfer' package)
@@ -356,17 +356,25 @@ class AppState:
 
 class TranscriberApp:
     def __init__(self, root: tk.Tk):
+        # State & variables
         self.root = root
         self.state = AppState()
         self._last_output_path = None  # type: ignore[assignment]
+        self._model_cache = {}
+
+        # User-configurable
         self.speed_var = tk.BooleanVar(value=bool(int(os.environ.get("TRANSCRIBER_SPEED_MODE", "0") or "0")))
-        # Enhanced settings (UI-bound)
         self.model_var = tk.StringVar(value=WHISPER_MODEL)
         self.format_var = tk.StringVar(value=OUTPUT_FORMAT)
         self.lang_var = tk.StringVar(value=(FIXED_LANGUAGE or ""))
-        # Modes: Speed, Balanced, Accuracy
         default_mode = "Speed" if self.speed_var.get() else "Balanced"
         self.mode_var = tk.StringVar(value=default_mode)
+        # Advanced toggles
+        self.word_ts_var = tk.BooleanVar(value=False)
+        self.vad_var = tk.BooleanVar(value=True)
+        self.diarize_var = tk.BooleanVar(value=False)
+        self.stream_var = tk.BooleanVar(value=True)
+
         try:
             log("App starting…")
             log(f"Python: {sys.version}")
@@ -375,67 +383,59 @@ class TranscriberApp:
         except Exception:
             pass
 
+        # Window
         self.root.title("Minimal Transcriber")
-        self.root.geometry("700x520")
-        self.root.minsize(640, 420)
+        self.root.geometry("700x560")
+        self.root.minsize(660, 460)
 
-        # UI
+        # Layout
         self.frame = tk.Frame(self.root, padx=16, pady=16)
         self.frame.pack(fill=tk.BOTH, expand=True)
 
-        # Controls row
         controls = tk.Frame(self.frame)
         controls.pack(fill=tk.X, pady=(0, 8))
-
-        # Model selector
         tk.Label(controls, text="Model:").pack(side=tk.LEFT)
-        self.model_combo = ttk.Combobox(controls, textvariable=self.model_var, width=18, state="normal")
-        self.model_combo['values'] = (
-            'tiny', 'tiny.en', 'base', 'base.en', 'small', 'small.en', 'medium', 'large-v3'
-        )
+        self.model_combo = ttk.Combobox(controls, textvariable=self.model_var, width=16, state="normal")
+        self.model_combo['values'] = ('tiny', 'tiny.en', 'base', 'base.en', 'small', 'small.en', 'medium', 'large-v3')
         self.model_combo.pack(side=tk.LEFT, padx=(4, 12))
-
-        # Mode selector
         tk.Label(controls, text="Mode:").pack(side=tk.LEFT)
-        self.mode_combo = ttk.Combobox(controls, textvariable=self.mode_var, width=12, state="readonly")
+        self.mode_combo = ttk.Combobox(controls, textvariable=self.mode_var, width=10, state="readonly")
         self.mode_combo['values'] = ('Speed', 'Balanced', 'Accuracy')
         self.mode_combo.pack(side=tk.LEFT, padx=(4, 12))
-
-        # Output format selector
         tk.Label(controls, text="Format:").pack(side=tk.LEFT)
-        self.format_combo = ttk.Combobox(controls, textvariable=self.format_var, width=10, state="readonly")
+        self.format_combo = ttk.Combobox(controls, textvariable=self.format_var, width=8, state="readonly")
         self.format_combo['values'] = ('txt', 'md', 'srt', 'vtt', 'tsv', 'json')
         self.format_combo.pack(side=tk.LEFT, padx=(4, 12))
-
-        # Language entry
-        tk.Label(controls, text="Language:").pack(side=tk.LEFT)
-        self.lang_entry = ttk.Entry(controls, textvariable=self.lang_var, width=10)
+        tk.Label(controls, text="Lang:").pack(side=tk.LEFT)
+        self.lang_entry = ttk.Entry(controls, textvariable=self.lang_var, width=6)
         self.lang_entry.pack(side=tk.LEFT, padx=(4, 0))
+
+        adv = tk.Frame(self.frame)
+        adv.pack(fill=tk.X, pady=(0, 6))
+        ttk.Checkbutton(adv, text="Word TS", variable=self.word_ts_var).pack(side=tk.LEFT, padx=(0, 8))
+        ttk.Checkbutton(adv, text="VAD", variable=self.vad_var).pack(side=tk.LEFT, padx=(0, 8))
+        ttk.Checkbutton(adv, text="Diarize", variable=self.diarize_var).pack(side=tk.LEFT, padx=(0, 8))
+        ttk.Checkbutton(adv, text="Stream", variable=self.stream_var).pack(side=tk.LEFT, padx=(0, 8))
+        tk.Button(adv, text="Batch Folder…", command=self.pick_folder_batch).pack(side=tk.RIGHT)
 
         self.label = tk.Label(
             self.frame,
             text=self.state.status,
             anchor="center",
             justify="center",
-            wraplength=620,
+            wraplength=640,
             fg="#e0e0e0",
             bg="#222222",
             relief=tk.RIDGE,
             padx=16,
-            pady=24,
+            pady=20,
             font=("Segoe UI", 11),
         )
-        self.label.pack(fill=tk.BOTH, expand=True)
+        self.label.pack(fill=tk.X, pady=(0, 10))
 
-        self.button = tk.Button(
-            self.frame,
-            text="Select Audio",
-            command=self.pick_file,
-            width=18,
-        )
-        self.button.pack(pady=12)
+        self.button = tk.Button(self.frame, text="Select Audio", command=self.pick_file, width=16)
+        self.button.pack(pady=(0, 10))
 
-        # Live preview box
         preview_frame = tk.Frame(self.frame)
         preview_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 8))
         tk.Label(preview_frame, text="Live Preview:").pack(anchor="w")
@@ -443,39 +443,20 @@ class TranscriberApp:
         self.preview.configure(state=tk.DISABLED)
         self.preview.pack(fill=tk.BOTH, expand=True)
 
-        # Progress bar
         self.progress = ttk.Progressbar(self.frame, orient=tk.HORIZONTAL, length=560, mode='determinate')
-        self.progress.pack(pady=(0, 8))
+        self.progress.pack(pady=(4, 8))
         self.progress['value'] = 0
 
-        # Open folder button (enabled after transcription completes)
         btns = tk.Frame(self.frame)
-        btns.pack()
-        self.open_btn = tk.Button(
-            btns,
-            text="Open Output Folder",
-            command=self.open_output_folder,
-            state=tk.DISABLED,
-        )
+        btns.pack(pady=(0, 4))
+        self.open_btn = tk.Button(btns, text="Open Output Folder", command=self.open_output_folder, state=tk.DISABLED)
         self.open_btn.pack(side=tk.LEFT, padx=(0, 8))
-
-        self.copy_btn = tk.Button(
-            btns,
-            text="Copy Preview",
-            command=self.copy_preview,
-            state=tk.NORMAL,
-        )
+        self.copy_btn = tk.Button(btns, text="Copy Preview", command=self.copy_preview, state=tk.NORMAL)
         self.copy_btn.pack(side=tk.LEFT)
 
-        # Open Logs button
-        self.logs_btn = tk.Button(
-            self.frame,
-            text="Open Logs",
-            command=self.open_logs,
-        )
-        self.logs_btn.pack(pady=(6, 0))
+        self.logs_btn = tk.Button(self.frame, text="Open Logs", command=self.open_logs)
+        self.logs_btn.pack(pady=(4, 0))
 
-        # Drag-and-drop
         if DND_AVAILABLE and isinstance(self.root, TkinterDnD.Tk):
             self.label.drop_target_register(DND_FILES)
             self.label.dnd_bind('<<Drop>>', self.on_drop)
@@ -512,6 +493,15 @@ class TranscriberApp:
                 self.preview.see(tk.END)
                 self.preview.configure(state=tk.DISABLED)
             self.root.after(0, apply)
+        except Exception:
+            pass
+
+    def copy_preview(self):
+        try:
+            text = self.preview.get("1.0", tk.END).strip()
+            self.root.clipboard_clear()
+            if text:
+                self.root.clipboard_append(text)
         except Exception:
             pass
 
@@ -579,15 +569,18 @@ class TranscriberApp:
             return
         self.state.busy = True
         # Reset UI state
+        # Reset live preview
+        self.clear_preview()
+        # Resolve settings from UI (fall back to env defaults)
         def _ext_for(fmt: str) -> str:
             f = (fmt or "md").strip().lower()
             return f if f in {"txt","md","srt","vtt","tsv","json"} else "md"
-        out_ext = _ext_for(OUTPUT_FORMAT)
-        self._last_output_path = audio_path.with_suffix(f".{out_ext}")
+        chosen_format = _ext_for(self.format_var.get() if hasattr(self, 'format_var') else OUTPUT_FORMAT)
+        self._last_output_path = audio_path.with_suffix(f".{chosen_format}")
         self.open_btn.config(state=tk.DISABLED)
         self.set_progress(0)
         self.set_status(
-            f"Loading model '{WHISPER_MODEL}' and preparing…\n"
+            f"Loading model '{self.model_var.get()}' and preparing…\n"
             f"Audio: {audio_path}\n"
             f"Output will be saved to: {self._last_output_path}"
         )
@@ -598,21 +591,109 @@ class TranscriberApp:
         except Exception:
             pass
 
-        thread = threading.Thread(target=self._transcribe_worker, args=(audio_path,), daemon=True)
+        thread = threading.Thread(target=self._transcribe_worker, args=(audio_path, chosen_format), daemon=True)
         thread.start()
 
-    def _transcribe_worker(self, audio_path: Path):
+    # ---------------- Batch Processing -----------------
+    def pick_folder_batch(self):
+        if self.state.busy:
+            return
+        folder = filedialog.askdirectory(title="Select folder containing audio files")
+        if not folder:
+            return
+        exts = {'.mp3','.wav','.m4a','.flac','.ogg','.aac','.wma','.mp4','.mkv'}
+        files = [p for p in Path(folder).iterdir() if p.is_file() and p.suffix.lower() in exts]
+        if not files:
+            messagebox.showinfo("Batch", "No supported audio files found in selected folder.")
+            return
+        self.state.busy = True
+        self.clear_preview()
+        self.set_status(f"Batch starting: {len(files)} files…")
+        threading.Thread(target=self._batch_worker, args=(files,), daemon=True).start()
+
+    def _batch_worker(self, files: list[Path]):
+        completed = 0
+        total = len(files)
+        for f in files:
+            self.set_status(f"Batch {completed+1}/{total}: {f.name}")
+            try:
+                # Reuse internal worker logic (non-batch path) by calling _transcribe_worker directly
+                # Provide currently selected format
+                fmt = (self.format_var.get() or OUTPUT_FORMAT).strip().lower()
+                self._transcribe_worker(f, fmt, batch_mode=True)
+            except Exception as e:
+                log(f"Batch file error {f}: {e}")
+            completed += 1
+        self.set_status(f"Batch complete: {completed}/{total} files processed.")
+        self.state.busy = False
+
+    # ---------------- Formatting Helpers -----------------
+    @staticmethod
+    def _format_timestamp(seconds: float, *, for_vtt: bool = False) -> str:
+        ms = int(round(seconds * 1000))
+        hrs, rem = divmod(ms, 3600_000)
+        mins, rem = divmod(rem, 60_000)
+        secs, ms = divmod(rem, 1000)
+        sep = '.' if for_vtt else ','
+        if hrs > 0:
+            return f"{hrs:02d}:{mins:02d}:{secs:02d}{sep}{ms:03d}"
+        return f"00:{mins:02d}:{secs:02d}{sep}{ms:03d}"
+
+    @classmethod
+    def _render_output(cls, out_format: str, seg_items: list[tuple[float,float,str]], meta: dict) -> str:
+        out_format = out_format.lower()
+        if out_format in {"txt", "md"}:
+            # md identical to txt for now; could add headings.
+            return "\n".join(t for _,_,t in seg_items)
+        if out_format == "srt":
+            lines = []
+            for i, (st, en, txt) in enumerate(seg_items, start=1):
+                lines.append(str(i))
+                lines.append(f"{cls._format_timestamp(st)} --> {cls._format_timestamp(en)}")
+                lines.append(txt.strip())
+                lines.append("")
+            return "\n".join(lines).strip() + "\n"
+        if out_format == "vtt":
+            lines = ["WEBVTT", ""]
+            for (st, en, txt) in seg_items:
+                lines.append(f"{cls._format_timestamp(st, for_vtt=True)} --> {cls._format_timestamp(en, for_vtt=True)}")
+                lines.append(txt.strip())
+                lines.append("")
+            return "\n".join(lines).strip() + "\n"
+        if out_format == "tsv":
+            lines = ["start\tend\ttext"]
+            for (st, en, txt) in seg_items:
+                safe = txt.replace('\t',' ').replace('\n',' ').strip()
+                lines.append(f"{st:.3f}\t{en:.3f}\t{safe}")
+            return "\n".join(lines) + "\n"
+        if out_format == "json":
+            try:
+                return json.dumps({
+                    "metadata": meta,
+                    "segments": [
+                        {"start": round(st,3), "end": round(en,3), "text": txt.strip()} for (st,en,txt) in seg_items
+                    ]
+                }, ensure_ascii=False, indent=2) + "\n"
+            except Exception:
+                # Fallback: minimal JSON lines
+                return "\n".join(json.dumps({"start":st, "end":en, "text":txt}, ensure_ascii=False) for (st,en,txt) in seg_items)
+        # default plain text
+        return "\n".join(t for _,_,t in seg_items)
+
+    def _transcribe_worker(self, audio_path: Path, out_format: str, batch_mode: bool = False):
         try:
             # Decide accelerator first (affects which subdir we pick)
             device, compute_type, accel_note, cpu_threads = detect_accelerator()
             log(f"Accelerator: {accel_note}")
             # Ensure model present (show spinner while downloading)
             # Choose model dynamically when Speed mode is enabled
-            chosen_model = WHISPER_MODEL
-            if self.speed_var.get() and device == "cpu":
-                # Prefer English-only small if language fixed to English
-                lang = (FIXED_LANGUAGE or "").strip().lower() if FIXED_LANGUAGE else ""
-                chosen_model = "small.en" if lang in ("en", "english") else "small"
+            ui_model = self.model_var.get().strip() or WHISPER_MODEL
+            chosen_model = ui_model
+            # Mode-based automatic downsizing for speed if user picked a large model but wants Speed on CPU
+            if self.mode_var.get() == "Speed" and device == "cpu":
+                lang_ui = (self.lang_var.get() or FIXED_LANGUAGE or "").strip().lower()
+                if ui_model in {"large-v3", "medium"}:  # downscale automatically
+                    chosen_model = "small.en" if lang_ui in {"en", "english"} else "small"
             self.set_status(f"Checking model '{chosen_model}'…")
             self.set_progress(indeterminate=True)
             local_model_dir = None
@@ -627,25 +708,26 @@ class TranscriberApp:
             picked = _pick_best_model_dir(snapshot_root, compute_type)
             local_model_dir = picked or snapshot_root
             log(f"Picked model dir: {local_model_dir}")
-            from faster_whisper import WhisperModel  # heavy import
-
-            model: "WhisperModel"
-            if local_model_dir and _is_valid_ct2_model_dir(local_model_dir):
+            # -------- Model load with caching ---------
+            def _load_model() -> object:
+                from faster_whisper import WhisperModel  # type: ignore
+                ct_key = (chosen_model, device, compute_type)
+                if ct_key in self._model_cache:
+                    return self._model_cache[ct_key]
+                base_cpu_threads = cpu_threads if (device == "cuda") else max(1, int(cpu_threads or (os.cpu_count() or 4)))
+                num_workers = 2 if device == "cpu" else 1
                 try:
-                    # Respect detected cpu_threads (None on CUDA)
-                    cpu_threads = cpu_threads if (device == "cuda") else max(1, int(cpu_threads or (os.cpu_count() or 4)))
-                    # Modest workers to avoid thrash
-                    num_workers = 2 if device == "cpu" else 1
-                    model = WhisperModel(
-                        str(local_model_dir),
-                        device=device,
-                        compute_type=compute_type,
-                        cpu_threads=cpu_threads,
-                        num_workers=num_workers,
-                    )
+                    if local_model_dir and _is_valid_ct2_model_dir(local_model_dir):
+                        mdl = WhisperModel(
+                            str(local_model_dir), device=device, compute_type=compute_type,
+                            cpu_threads=base_cpu_threads, num_workers=num_workers
+                        )
+                        self._model_cache[ct_key] = mdl
+                        return mdl
                 except Exception:
-                    log("WhisperModel load failed; attempting cache repair…")
-                    # If the local cache looks valid but still fails to open, force refresh and retry once.
+                    log("Primary load failed; attempting repair path…")
+                # Attempt repair if local path failed
+                if local_model_dir and _is_valid_ct2_model_dir(local_model_dir):
                     try:
                         from huggingface_hub import snapshot_download
                         self.set_status("Repairing model cache…")
@@ -659,57 +741,63 @@ class TranscriberApp:
                             )
                         )
                         repaired_dir = _pick_best_model_dir(repaired_root, compute_type) or repaired_root
-                        log(f"Repaired model dir: {repaired_dir}")
-                        cpu_threads = cpu_threads if (device == "cuda") else max(1, int(cpu_threads or (os.cpu_count() or 4)))
-                        num_workers = 2 if device == "cpu" else 1
-                        model = WhisperModel(
+                        mdl = WhisperModel(
                             str(repaired_dir), device=device, compute_type=compute_type,
-                            cpu_threads=cpu_threads, num_workers=num_workers
+                            cpu_threads=base_cpu_threads, num_workers=num_workers
                         )
+                        self._model_cache[ct_key] = mdl
+                        return mdl
                     except Exception:
-                        # Final fallback to direct identifier
-                        self.set_status("Falling back to direct model download…")
-                        log("Falling back to direct identifier in WhisperModel…")
-                        cpu_threads = cpu_threads if (device == "cuda") else max(1, int(cpu_threads or (os.cpu_count() or 4)))
-                        num_workers = 2 if device == "cpu" else 1
-                        model = WhisperModel(
-                            _fallback_model_name(chosen_model), device=device, compute_type=compute_type,
-                            cpu_threads=cpu_threads, num_workers=num_workers
-                        )
-            else:
-                # Fallback to library-managed download using the alias (lets faster-whisper decide the best source)
-                # This can recover from a broken HF cache.
+                        log("Repair attempt failed; falling back to alias load…")
+                # Fallback alias load
                 self.set_status("Falling back to direct model download…")
-                log("No valid local model dir; using alias in WhisperModel…")
-                cpu_threads = cpu_threads if (device == "cuda") else max(1, int(cpu_threads or (os.cpu_count() or 4)))
-                num_workers = 2 if device == "cpu" else 1
-                model = WhisperModel(
+                mdl = WhisperModel(
                     _fallback_model_name(chosen_model), device=device, compute_type=compute_type,
-                    cpu_threads=cpu_threads, num_workers=num_workers
+                    cpu_threads=base_cpu_threads, num_workers=num_workers
                 )
+                self._model_cache[ct_key] = mdl
+                return mdl
 
-            self.set_status(f"Transcribing on {device} ({compute_type})…\n{audio_path.name}")
+            model = _load_model()
+
+            # Transcription parameter presets by mode
+            mode = self.mode_var.get()
+            preset = {
+                "Speed": dict(beam_size=1, temperature=0.0, condition_on_previous_text=False, vad=False),
+                "Balanced": dict(beam_size=1, temperature=0.0, condition_on_previous_text=True, vad=True),
+                "Accuracy": dict(beam_size=5, temperature=[0.0,0.2,0.4], condition_on_previous_text=True, vad=True),
+            }.get(mode, {"beam_size":1, "temperature":0.0, "condition_on_previous_text":False, "vad":True})
+            # Environment can force VAD
+            env_vad = os.environ.get("TRANSCRIBER_VAD")
+            if env_vad is not None:
+                try:
+                    preset["vad"] = bool(int(env_vad))
+                except Exception:
+                    pass
+            user_lang = (self.lang_var.get() or "").strip() or (FIXED_LANGUAGE or "").strip() or None
+            self.set_status(f"Transcribing ({mode}) on {device} ({compute_type})…\n{audio_path.name}")
             # Switch to determinate once we start getting duration info
             self.set_progress(0, indeterminate=False)
 
             log("Starting model.transcribe()…")
-            # Greedy decoding and reduced cross-segment conditioning for speed
-            # Allow simple environment overrides
-            env_vad = os.environ.get("TRANSCRIBER_VAD")
-            vad = bool(int(env_vad)) if env_vad is not None else (False if self.speed_var.get() else True)
             try:
                 env_workers = os.environ.get("TRANSCRIBER_NUM_WORKERS")
                 if env_workers is not None:
                     num_workers = max(1, int(env_workers))
             except Exception:
                 pass
-            segments, info = model.transcribe(
+            # Word timestamps only when JSON and not Speed (accuracy cost otherwise)
+            # Word timestamps user toggle overrides default (JSON enables by default if toggle off)
+            want_word_ts = bool(self.word_ts_var.get()) or ((out_format.lower() == 'json') and (mode != 'Speed') and not self.word_ts_var.get())
+            segments, info = model.transcribe(  # type: ignore[attr-defined]
                 str(audio_path),
-                vad_filter=vad,
-                beam_size=1,
-                temperature=0.0,
-                condition_on_previous_text=False,
-                language=FIXED_LANGUAGE if (FIXED_LANGUAGE and FIXED_LANGUAGE.strip()) else None,
+                vad_filter=bool(self.vad_var.get()) if self.vad_var is not None else bool(preset.get("vad", True)),
+                beam_size=preset.get("beam_size", 1),
+                temperature=preset.get("temperature", 0.0),
+                condition_on_previous_text=bool(preset.get("condition_on_previous_text", False)),
+                language=user_lang,
+                word_timestamps=want_word_ts,
+                patience=1.0 if preset.get("beam_size",1) > 1 else None,
             )
             try:
                 log(f"Transcribe info: duration={getattr(info, 'duration', None)} language={getattr(info, 'language', None)}")
@@ -717,8 +805,21 @@ class TranscriberApp:
                 pass
 
             # Progress tracking based on segment end time
-            collected: list[str] = []
-            seg_items: list[tuple[float, float, str]] = []
+            collected: list[str] = []  # only for JSON or post-processing
+            seg_items: list[tuple[float, float, str]] = []  # for JSON
+            # Prepare streaming writer if enabled and not JSON
+            streaming = bool(self.stream_var.get()) and out_format.lower() != 'json'
+            out_path_stream = self._last_output_path if not batch_mode else audio_path.with_suffix(f".{out_format}")
+            srt_index = 1
+            if streaming:
+                try:
+                    with out_path_stream.open('w', encoding='utf-8', newline='\n') as sf:
+                        if out_format == 'vtt':
+                            sf.write('WEBVTT\n\n')
+                        if out_format == 'tsv':
+                            sf.write('start\tend\ttext\n')
+                except Exception as e:
+                    log(f"Failed to init streaming file: {e}")
             last_pct = 0.0
             total = max(1.0, float(getattr(info, 'duration', 0.0) or 0.0))
             for seg in segments:
@@ -730,7 +831,30 @@ class TranscriberApp:
                         en = float(getattr(seg, 'end', 0.0) or 0.0)
                     except Exception:
                         st = 0.0; en = 0.0
-                    seg_items.append((st, en, text))
+                    # Optional diarization speaker assignment will happen later; placeholder
+                    seg_text_for_write = text
+                    seg_items.append((st, en, seg_text_for_write))
+                    self.append_preview(seg_text_for_write)
+                    # Stream write
+                    if streaming:
+                        try:
+                            with out_path_stream.open('a', encoding='utf-8', newline='\n') as sf:
+                                if out_format in {'txt','md'}:
+                                    sf.write(seg_text_for_write + '\n')
+                                elif out_format == 'srt':
+                                    from_ts = self._format_timestamp(st)
+                                    to_ts = self._format_timestamp(en)
+                                    sf.write(f"{srt_index}\n{from_ts} --> {to_ts}\n{seg_text_for_write}\n\n")
+                                    srt_index += 1
+                                elif out_format == 'vtt':
+                                    from_ts = self._format_timestamp(st, for_vtt=True)
+                                    to_ts = self._format_timestamp(en, for_vtt=True)
+                                    sf.write(f"{from_ts} --> {to_ts}\n{seg_text_for_write}\n\n")
+                                elif out_format == 'tsv':
+                                    safe = seg_text_for_write.replace('\t',' ').replace('\n',' ').strip()
+                                    sf.write(f"{st:.3f}\t{en:.3f}\t{safe}\n")
+                        except Exception as e:
+                            log(f"Stream write error: {e}")
                 # Update progress
                 try:
                     end = float(getattr(seg, 'end', 0.0) or 0.0)
@@ -739,24 +863,84 @@ class TranscriberApp:
                         last_pct = pct
                         self.set_progress(pct)
                         self.set_status(
-                            f"Transcribing on {device} ({compute_type})… {pct:0.1f}%\n{audio_path.name}\n"
+                            f"Transcribing ({mode}) on {device} ({compute_type})… {pct:0.1f}%\n{audio_path.name}\n"
                             f"Output: {self._last_output_path}"
                         )
                 except Exception:
                     pass
 
-            # Write plain text file
-            out_txt = self._last_output_path
-            self.set_status(f"Saving transcript…\n{out_txt}")
-            with out_txt.open("w", encoding="utf-8", newline="\n") as f:
-                for line in collected:
-                    f.write(line)
-                    f.write("\n")
+            # Assemble output in requested format
+            meta = {
+                "audio": audio_path.name,
+                "model": chosen_model,
+                "device": device,
+                "compute_type": compute_type,
+                "mode": mode,
+                "language": getattr(info, 'language', user_lang),
+                "duration": getattr(info, 'duration', None),
+                "generated_at": datetime.utcnow().isoformat() + 'Z',
+                "word_timestamps": want_word_ts,
+            }
+            # Optional diarization pass (only if user requested and library available)
+            if self.diarize_var.get():
+                try:
+                    token = os.environ.get('PYANNOTE_TOKEN')
+                    from pyannote.audio import Pipeline  # type: ignore
+                    if token:
+                        diar_pipe = Pipeline.from_pretrained("pyannote/speaker-diarization", use_auth_token=token)
+                    else:
+                        diar_pipe = Pipeline.from_pretrained("pyannote/speaker-diarization")
+                    diar = diar_pipe(str(audio_path))
+                    # Build speaker timeline list for fast lookup
+                    speaker_segments = []
+                    for turn, _, speaker in diar.itertracks(yield_label=True):
+                        speaker_segments.append((turn.start, turn.end, speaker))
+                    # Assign speaker by maximal overlap
+                    def assign_speaker(st: float, en: float) -> str:
+                        best = None
+                        best_ov = 0.0
+                        for ds, de, sp in speaker_segments:
+                            ov = max(0.0, min(en, de) - max(st, ds))
+                            if ov > best_ov:
+                                best_ov = ov; best = sp
+                        return best or "Speaker?"
+                    new_seg_items = []
+                    for (st,en,txt) in seg_items:
+                        spk = assign_speaker(st,en)
+                        new_seg_items.append((st,en,f"{spk}: {txt}"))
+                    seg_items = new_seg_items
+                    # If streaming already wrote plain lines without speaker, we won't rewrite; future improvement could patch file.
+                except Exception as e:
+                    log(f"Diarization failed: {e}")
+            if not streaming or out_format.lower() == 'json':
+                rendered = self._render_output(out_format, seg_items, meta)
+                out_path = self._last_output_path if not batch_mode else audio_path.with_suffix(f".{out_format}")
+                self.set_status(f"Saving transcript…\n{out_path}")
+                try:
+                    with out_path.open("w", encoding="utf-8", newline="\n") as f:
+                        f.write(rendered)
+                except Exception as e:
+                    log(f"Failed writing output: {e}")
+                    try:
+                        alt = out_path.with_suffix('.txt')
+                        with alt.open('w', encoding='utf-8', newline='\n') as f:
+                            f.write("\n".join(t for _,_,t in seg_items))
+                        self._last_output_path = alt
+                    except Exception:
+                        pass
+                else:
+                    self._last_output_path = out_path
+            else:
+                # streaming already wrote file; set final path (batch aware)
+                if batch_mode:
+                    self._last_output_path = audio_path.with_suffix(f".{out_format}")
 
             # Finish
-            self._last_output_path = out_txt
             self.set_progress(100)
-            self.set_status(f"Done. Saved: {self._last_output_path}")
+            if batch_mode:
+                self.set_status(f"Done (batch item). Saved: {self._last_output_path}")
+            else:
+                self.set_status(f"Done. Saved: {self._last_output_path}")
             def enable_open():
                 try:
                     self.open_btn.config(state=tk.NORMAL)
