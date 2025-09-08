@@ -22,6 +22,8 @@ const els = {
   saveLink: document.getElementById('saveLink'),
   log: document.getElementById('log'),
   clearLog: document.getElementById('clearLog'),
+  format: document.getElementById('format'),
+  modelSel: document.getElementById('model'),
   record: document.getElementById('record'),
   recStatus: document.getElementById('recStatus'),
   transcribeRec: document.getElementById('transcribeRec'),
@@ -74,12 +76,65 @@ function resetRecording(){
 }
 
 function pickModelName(){
+  // Honor explicit model selection if provided; otherwise pick based on locale + speed
+  const sel = els.modelSel && els.modelSel.value || 'auto';
+  if (sel && sel !== 'auto') return sel;
   const langHint = navigator.language || '';
   const english = /^(en\b|en-)/i.test(langHint);
   const speed = els.speed.checked;
-  // tiny for speed, base for quality; if English and speed, prefer tiny.en
   if (speed) return english ? 'tiny.en' : 'tiny';
   return english ? 'base.en' : 'base';
+}
+
+function pickFormat(){
+  const f = (els.format && els.format.value) || 'txt';
+  return (f === 'srt' || f === 'vtt') ? f : 'txt';
+}
+
+function setDownloadUIForFormat(fmt){
+  const btn = els.download;
+  const a = els.saveLink;
+  if (!btn || !a) return;
+  const ext = fmt === 'srt' ? 'srt' : fmt === 'vtt' ? 'vtt' : 'txt';
+  btn.textContent = `Download .${ext}`;
+  a.download = `transcript.${ext}`;
+}
+
+function tsToString(sec, useComma){
+  const s = Math.max(0, Number(sec) || 0);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const ss = Math.floor(s % 60);
+  const ms = Math.floor((s - Math.floor(s)) * 1000);
+  const pad = (n, l=2) => String(n).padStart(l, '0');
+  const sepMs = useComma ? ',' : '.';
+  return `${pad(h)}:${pad(m)}:${pad(ss)}${sepMs}${pad(ms,3)}`;
+}
+
+function chunksToSRT(chunks){
+  if (!Array.isArray(chunks)) return '';
+  const lines = [];
+  let i = 1;
+  for (const ch of chunks){
+    const ts = ch && ch.timestamp;
+    const text = (ch && ch.text || '').trim();
+    if (!text) continue;
+    const start = Array.isArray(ts) ? ts[0] : 0;
+    const end = Array.isArray(ts) ? ts[1] : start;
+    lines.push(String(i++));
+    lines.push(`${tsToString(start, true)} --> ${tsToString(end, true)}`);
+    lines.push(text);
+    lines.push('');
+  }
+  return lines.join('\n');
+}
+
+function chunksToVTT(chunks){
+  const body = chunksToSRT(chunks).split('\n').map((line) => {
+    if (/-->/.test(line)) return line.replace(/,(\d{3})/g, '.$1');
+    return line;
+  }).join('\n');
+  return `WEBVTT\n\n${body}`;
 }
 
 // Create worker lazily so we can swap models on toggle if needed
@@ -96,9 +151,27 @@ function ensureWorker(){
       setStatus('Ready. Drop an audio file or click Select Audio.');
       logLine('Worker ready.');
     } else if (type === 'result') {
-      const text = data || '';
-      els.output.value = text;
-      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+      const fmt = pickFormat();
+      let outText = '';
+      let blob;
+      if (typeof data === 'string') {
+        outText = data;
+        blob = new Blob([outText], { type: 'text/plain;charset=utf-8' });
+      } else {
+        const fullText = (data && data.text) || '';
+        const chunks = (data && data.chunks) || [];
+        if (fmt === 'srt') {
+          outText = chunksToSRT(chunks);
+          blob = new Blob([outText], { type: 'text/plain;charset=utf-8' });
+        } else if (fmt === 'vtt') {
+          outText = chunksToVTT(chunks);
+          blob = new Blob([outText], { type: 'text/vtt;charset=utf-8' });
+        } else {
+          outText = fullText;
+          blob = new Blob([outText], { type: 'text/plain;charset=utf-8' });
+        }
+      }
+      els.output.value = outText;
       const url = URL.createObjectURL(blob);
       lastObjectURL = url;
       els.saveLink.href = url;

@@ -1472,5 +1472,42 @@
             }
         });
     </script>
+</script>
+<!-- Injected: retarget tape/audio looper links to Four-Track -->
+<script>
+  (function() {
+    function retarget(selector, newHref) {
+      document.querySelectorAll(selector).forEach(function(a){
+        a.href = newHref;
+        a.removeAttribute('target');
+        a.textContent = 'Open Four-Track';
+      });
+    }
+    retarget('a[href="../tape-looper/index.html"]', '../four-track/index.html');
+    retarget('a[href="../audio-looper/index.html"]', '../four-track/index.html');
+    document.querySelectorAll('h3').forEach(function(h){
+      if(/Tape Looper|Audio Clip Looper/i.test(h.textContent)) h.textContent = 'Porta-4Track';
+    });
+  })();
+</script>
 </body>
 </html>
+<!-- Patch: Update old looper links to Four-Track without touching large template blocks -->
+<script>
+  (function() {
+    function retarget(selector, newHref) {
+      document.querySelectorAll(selector).forEach(function(a){
+        a.href = newHref;
+        a.removeAttribute('target');
+        a.textContent = 'Open Four-Track';
+      });
+    }
+    window.addEventListener('DOMContentLoaded', function(){
+      retarget('a[href="../tape-looper/index.html"]', '../four-track/index.html');
+      retarget('a[href="../audio-looper/index.html"]', '../four-track/index.html');
+      document.querySelectorAll('h3').forEach(function(h){
+        if(/Tape Looper|Audio Clip Looper/i.test(h.textContent)) h.textContent = 'Porta-4Track';
+      });
+    });
+  })();
+  </script>
