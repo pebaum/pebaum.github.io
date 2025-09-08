@@ -19,4 +19,10 @@ else {
 # Print device info hint
 Write-Host 'If you have a GPU, consider installing the appropriate ctranslate2 wheels for CUDA/DML.'
 
-python "$PSScriptRoot\app.py"
+# Run Python for dev or the built EXE if present
+$exe = Join-Path $PSScriptRoot 'dist/MinimalTranscriber.exe'
+if (Test-Path $exe) {
+    & $exe
+} else {
+    python "$PSScriptRoot\app.py"
+}

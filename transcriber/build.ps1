@@ -29,6 +29,9 @@ $Name = 'MinimalTranscriber'
 $App = Join-Path $PSScriptRoot 'app.py'
 
 pyinstaller --onefile --noconsole --name $Name `
+    --distpath "$PSScriptRoot/dist" `
+    --workpath "$PSScriptRoot/build" `
+    --specpath "$PSScriptRoot" `
     --collect-all tkinterdnd2 `
     --collect-all faster_whisper `
     --collect-all ctranslate2 `
@@ -36,4 +39,4 @@ pyinstaller --onefile --noconsole --name $Name `
     --add-binary "$(Join-Path $PSScriptRoot 'ffmpeg/ffmpeg.exe');ffmpeg" `
     $App
 
-Write-Host "Built dist/$Name.exe"
+Write-Host "Built $PSScriptRoot/dist/$Name.exe"
