@@ -787,12 +787,12 @@
                             </div>
                         `
                                         },                    tapelooper: {
-                                                title: 'Tape Looper',
+                                                title: 'Porta-4Track',
                                                 content: `
                                                         <div style="text-align:center;">
-                                                            <h3 style="margin-bottom:10px;">🎛️ Tape Looper</h3>
+                                                            <h3 style="margin-bottom:10px;">Porta-4Track</h3>
                                                             <p style="margin-bottom:12px; font-size:12px;">Asymmetrical generative tape loop engine with ambient Rhodes-style synthesis.</p>
-                                                            <a href="./tape-looper/index.html" style="display:inline-block; padding:8px 14px; background:#2F2F2F; border:1px solid #B0B0B0; border-radius:4px; color:#E6D060; text-decoration:none; font-size:12px;">Open Tape Looper ↗</a>
+                                                            <a href="./four-track/index.html" style="display:inline-block; padding:8px 14px; background:#2F2F2F; border:1px solid #B0B0B0; border-radius:4px; color:#E6D060; text-decoration:none; font-size:12px;">Open Four-Track</a>
                                                             <p style="margin-top:14px; font-size:11px; color:#A0A0A0;">Tip: add loops, click ASCII tape to insert notes, export presets.</p>
                                                         </div>
                                                 `
@@ -1502,30 +1502,5 @@
             }
         });
     </script>
-</script>
-<!-- Injected: retarget Tape/Audio Looper links to Four-Track -->
-<script>
-  (function(){
-    function retarget(selector, href){
-      document.querySelectorAll(selector).forEach(function(a){ a.href=href; a.textContent='Open Four-Track'; a.removeAttribute('target'); });
-    }
-    retarget('a[href="./tape-looper/index.html"]', './four-track/index.html');
-    retarget('a[href="./audio-looper/index.html"]', './four-track/index.html');
-    document.querySelectorAll('h3').forEach(function(h){ if(/Tape Looper|Audio Clip Looper/i.test(h.textContent)) h.textContent='Porta-4Track'; });
-  })();
-</script>
-</body>
-</html>
-<!-- Patch: Redirect Tape/Audio Looper links on the landing page to Four-Track -->
-<script>
-  (function(){
-    function retarget(selector, href){
-      document.querySelectorAll(selector).forEach(function(a){ a.href=href; a.textContent='Open Four-Track'; a.removeAttribute('target'); });
-    }
-    window.addEventListener('DOMContentLoaded', function(){
-      retarget('a[href="./tape-looper/index.html"]', './four-track/index.html');
-      retarget('a[href="./audio-looper/index.html"]', './four-track/index.html');
-      document.querySelectorAll('h3').forEach(function(h){ if(/Tape Looper|Audio Clip Looper/i.test(h.textContent)) h.textContent='Porta-4Track'; });
-    });
-  })();
-  </script>
+  </body>
+  </html>

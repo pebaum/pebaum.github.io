@@ -74,7 +74,7 @@ async function ensurePipeline(modelName){
   currentModelId = modelId;
 }
 
-async function transcribePcmFloat({ samples, sample_rate }){
+async function transcribePcmFloat({ samples, sample_rate }, withTimestamps = false){
   if (!asr) throw new Error('Pipeline not initialized');
   status('Preprocessing…');
   progress(40);
@@ -84,8 +84,8 @@ async function transcribePcmFloat({ samples, sample_rate }){
     // Smaller chunks for web; adjust if needed
     chunk_length_s: 20,
     stride_length_s: 5,
-    // Disable timestamps for speed
-    return_timestamps: false,
+    // Enable timestamps only when requested (slower)
+    return_timestamps: !!withTimestamps,
   };
   // Note: Transformers.js accepts Float32Array directly.
   // Inference
@@ -94,7 +94,12 @@ async function transcribePcmFloat({ samples, sample_rate }){
   const res = await asr(samples, opts);
   const text = (res && (res.text || res)) || '';
   progress(95);
-  post('result', text);
+  if (withTimestamps) {
+    const chunks = (res && res.chunks) || [];
+    post('result', { text, chunks });
+  } else {
+    post('result', text);
+  }
 }
 
 self.onmessage = async (ev) => {
@@ -105,7 +110,7 @@ self.onmessage = async (ev) => {
       post('ready');
     } else if (type === 'transcribe') {
       // audio = { samples: Float32Array, sample_rate: number }
-      await transcribePcmFloat(audio);
+      await transcribePcmFloat(audio, !!ev.data.timestamps);
     } else if (type === 'chunk') {
       // audio = { samples: Float32Array, sample_rate: number }
       if (!asr) throw new Error('Pipeline not initialized');

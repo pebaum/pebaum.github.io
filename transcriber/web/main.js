@@ -216,7 +216,7 @@ function startTranscribe(file){
   resetOutput();
   setProgress(0);
   setBusy(true);
-  const model = pickModelName();
+  const model = pickModelName(); const fmt = pickFormat(); setDownloadUIForFormat(fmt);
   setStatus(`Loading model '${model}'…`);
   setProgress(5);
   startTicker(5, 18, 4000); // animate while model downloads
@@ -234,6 +234,15 @@ function startTranscribe(file){
   logLine(`Decoded mono ${sr} Hz, duration ~${durSec.toFixed(1)}s`);
       // Ensure model is fully initialized before sending audio
       await modelReady;
+      const wantTimestamps = (fmt === 'srt' || fmt === 'vtt');
+      if (wantTimestamps) {
+        setStatus('Transcribing (with timestamps).');
+        setProgress(40);
+        logLine('Transcribing with timestamps.');
+        startTicker(40, 90, Math.max(4000, durSec * 400));
+        worker.postMessage({ type: 'transcribe', audio: { samples, sample_rate: sr }, timestamps: true }, [samples.buffer]);
+        return;
+      }
       // For long files, stream in chunks to keep memory bounded
       const chunkSec = 20;        // chunk length in seconds
       const strideSec = 5;        // overlap for context
@@ -310,6 +319,19 @@ els.speed.addEventListener('change', () => {
   if (!busy) terminateWorker();
 });
 
+if (els.modelSel) els.modelSel.addEventListener('change', () => {
+  const specific = els.modelSel.value && els.modelSel.value !== 'auto';
+  if (els.speed) {
+    els.speed.disabled = specific;
+    if (els.speed.parentElement) els.speed.parentElement.style.opacity = specific ? 0.6 : 1;
+  }
+  if (!busy) terminateWorker();
+});
+
+if (els.format) els.format.addEventListener('change', () => {
+  setDownloadUIForFormat(pickFormat());
+});
+
 els.download.addEventListener('click', () => {
   if (els.saveLink.href) {
     els.saveLink.click();
@@ -320,6 +342,7 @@ els.download.addEventListener('click', () => {
 if (els.clearLog) els.clearLog.addEventListener('click', () => { if (els.log) els.log.textContent=''; });
 
 setStatus('Ready. Drop an audio file, click Select Audio, or press Record.');
+setDownloadUIForFormat(pickFormat());
 
 // Recording controls
 function pickRecordingMime(){
