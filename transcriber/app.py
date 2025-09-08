@@ -360,6 +360,13 @@ class TranscriberApp:
         self.state = AppState()
         self._last_output_path = None  # type: ignore[assignment]
         self.speed_var = tk.BooleanVar(value=bool(int(os.environ.get("TRANSCRIBER_SPEED_MODE", "0") or "0")))
+        # Enhanced settings (UI-bound)
+        self.model_var = tk.StringVar(value=WHISPER_MODEL)
+        self.format_var = tk.StringVar(value=OUTPUT_FORMAT)
+        self.lang_var = tk.StringVar(value=(FIXED_LANGUAGE or ""))
+        # Modes: Speed, Balanced, Accuracy
+        default_mode = "Speed" if self.speed_var.get() else "Balanced"
+        self.mode_var = tk.StringVar(value=default_mode)
         try:
             log("App starting…")
             log(f"Python: {sys.version}")
@@ -369,19 +376,48 @@ class TranscriberApp:
             pass
 
         self.root.title("Minimal Transcriber")
-        self.root.geometry("520x260")
-        self.root.minsize(480, 220)
+        self.root.geometry("700x520")
+        self.root.minsize(640, 420)
 
         # UI
         self.frame = tk.Frame(self.root, padx=16, pady=16)
         self.frame.pack(fill=tk.BOTH, expand=True)
+
+        # Controls row
+        controls = tk.Frame(self.frame)
+        controls.pack(fill=tk.X, pady=(0, 8))
+
+        # Model selector
+        tk.Label(controls, text="Model:").pack(side=tk.LEFT)
+        self.model_combo = ttk.Combobox(controls, textvariable=self.model_var, width=18, state="normal")
+        self.model_combo['values'] = (
+            'tiny', 'tiny.en', 'base', 'base.en', 'small', 'small.en', 'medium', 'large-v3'
+        )
+        self.model_combo.pack(side=tk.LEFT, padx=(4, 12))
+
+        # Mode selector
+        tk.Label(controls, text="Mode:").pack(side=tk.LEFT)
+        self.mode_combo = ttk.Combobox(controls, textvariable=self.mode_var, width=12, state="readonly")
+        self.mode_combo['values'] = ('Speed', 'Balanced', 'Accuracy')
+        self.mode_combo.pack(side=tk.LEFT, padx=(4, 12))
+
+        # Output format selector
+        tk.Label(controls, text="Format:").pack(side=tk.LEFT)
+        self.format_combo = ttk.Combobox(controls, textvariable=self.format_var, width=10, state="readonly")
+        self.format_combo['values'] = ('txt', 'md', 'srt', 'vtt', 'tsv', 'json')
+        self.format_combo.pack(side=tk.LEFT, padx=(4, 12))
+
+        # Language entry
+        tk.Label(controls, text="Language:").pack(side=tk.LEFT)
+        self.lang_entry = ttk.Entry(controls, textvariable=self.lang_var, width=10)
+        self.lang_entry.pack(side=tk.LEFT, padx=(4, 0))
 
         self.label = tk.Label(
             self.frame,
             text=self.state.status,
             anchor="center",
             justify="center",
-            wraplength=460,
+            wraplength=620,
             fg="#e0e0e0",
             bg="#222222",
             relief=tk.RIDGE,
@@ -399,29 +435,37 @@ class TranscriberApp:
         )
         self.button.pack(pady=12)
 
-        # Speed Mode toggle
-        self.speed_chk = tk.Checkbutton(
-            self.frame,
-            text="Speed mode (smaller model on CPU, fewer checks)",
-            variable=self.speed_var,
-            onvalue=True,
-            offvalue=False,
-        )
-        self.speed_chk.pack(pady=(0, 8))
+        # Live preview box
+        preview_frame = tk.Frame(self.frame)
+        preview_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 8))
+        tk.Label(preview_frame, text="Live Preview:").pack(anchor="w")
+        self.preview = tk.Text(preview_frame, height=10, wrap="word", font=("Segoe UI", 10))
+        self.preview.configure(state=tk.DISABLED)
+        self.preview.pack(fill=tk.BOTH, expand=True)
 
         # Progress bar
-        self.progress = ttk.Progressbar(self.frame, orient=tk.HORIZONTAL, length=420, mode='determinate')
+        self.progress = ttk.Progressbar(self.frame, orient=tk.HORIZONTAL, length=560, mode='determinate')
         self.progress.pack(pady=(0, 8))
         self.progress['value'] = 0
 
         # Open folder button (enabled after transcription completes)
+        btns = tk.Frame(self.frame)
+        btns.pack()
         self.open_btn = tk.Button(
-            self.frame,
+            btns,
             text="Open Output Folder",
             command=self.open_output_folder,
             state=tk.DISABLED,
         )
-        self.open_btn.pack()
+        self.open_btn.pack(side=tk.LEFT, padx=(0, 8))
+
+        self.copy_btn = tk.Button(
+            btns,
+            text="Copy Preview",
+            command=self.copy_preview,
+            state=tk.NORMAL,
+        )
+        self.copy_btn.pack(side=tk.LEFT)
 
         # Open Logs button
         self.logs_btn = tk.Button(
@@ -446,6 +490,29 @@ class TranscriberApp:
             self.root.after(0, apply)
         except Exception:
             # In some shutdown races, just ignore
+            pass
+
+    def clear_preview(self):
+        try:
+            def apply():
+                self.preview.configure(state=tk.NORMAL)
+                self.preview.delete("1.0", tk.END)
+                self.preview.configure(state=tk.DISABLED)
+            self.root.after(0, apply)
+        except Exception:
+            pass
+
+    def append_preview(self, text: str):
+        if not text:
+            return
+        try:
+            def apply():
+                self.preview.configure(state=tk.NORMAL)
+                self.preview.insert(tk.END, text + "\n")
+                self.preview.see(tk.END)
+                self.preview.configure(state=tk.DISABLED)
+            self.root.after(0, apply)
+        except Exception:
             pass
 
     def set_progress(self, value: float | None = None, indeterminate: bool = False):
@@ -679,7 +746,7 @@ class TranscriberApp:
                     pass
 
             # Write plain text file
-            out_txt = audio_path.with_suffix(".txt")
+            out_txt = self._last_output_path
             self.set_status(f"Saving transcript…\n{out_txt}")
             with out_txt.open("w", encoding="utf-8", newline="\n") as f:
                 for line in collected:
@@ -689,7 +756,7 @@ class TranscriberApp:
             # Finish
             self._last_output_path = out_txt
             self.set_progress(100)
-            self.set_status(f"Done. Saved: {out_txt}")
+            self.set_status(f"Done. Saved: {self._last_output_path}")
             def enable_open():
                 try:
                     self.open_btn.config(state=tk.NORMAL)
