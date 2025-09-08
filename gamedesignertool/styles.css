@@ -81,6 +81,7 @@ input, select{background:#121317; border:1px solid var(--border); color:var(--te
 .draggable{cursor:grab}
 .dragging{cursor:grabbing; opacity:.95}
 .snapped{outline:1px dashed rgba(0,0,0,.25)}
+.selected{outline:2px solid var(--accent); outline-offset:0}
 
 .token{display:flex; align-items:center; justify-content:center; color:#111; font-weight:700; text-shadow:0 1px 0 rgba(255,255,255,.3)}
 .token.round{border-radius:999px}
@@ -104,3 +105,12 @@ input, select{background:#121317; border:1px solid var(--border); color:var(--te
 
 /* helpers */
 .hidden{display:none!important}
+
+/* Print: focus on the play area */
+@media print{
+  .app-header, .sidebar { display:none !important; }
+  .app-main { display:block; }
+  .canvas-scroller { overflow:visible; background:none; }
+  .work-canvas { transform:none !important; width:auto; height:auto; }
+  .play-area { position:relative; left:0; top:0; box-shadow:none; }
+}

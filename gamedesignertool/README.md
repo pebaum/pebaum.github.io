@@ -12,9 +12,10 @@ Open `index.html` directly or serve the repo root and visit `/gamedesignertool/`
   - Drawn cards are individual, draggable, double-click to rotate, inline label editing.
 - CSV import and search; select rows and spawn matching labeled cards.
 - Tokens: round/square/hex with color, size, and label.
-- Dice: quick roll d4–d20 in sidebar; place a draggable d6 on the board and click to roll.
+- Dice: quick roll d4–d20 in sidebar; place a draggable die on the board and click to roll.
+- Selection + keyboard: click to select, Delete to remove, arrows to nudge (Shift for 10px, Ctrl for grid size), Ctrl+[ and Ctrl+] to adjust layering.
+- Print: print just the play area; autosave to localStorage; Save/Load as JSON.
 
 ## Notes
 - Everything runs client-side; CSV never leaves the browser.
-- No persistence yet (save/load is a good next step).
 - Measurements are approximate visual aids, not print-accurate.

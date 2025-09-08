@@ -281,6 +281,8 @@ function enableDrag(node) {
   const onPointerDown = (e) => {
     if (e.button !== 0) return; // left only
     e.preventDefault();
+    // select on grab
+    try { selectItem(node); } catch {}
     node.setPointerCapture(e.pointerId);
     start = { x: e.clientX, y: e.clientY, left: node.offsetLeft, top: node.offsetTop };
     node.classList.add('dragging');
@@ -547,6 +549,8 @@ function onReady() {
   });
 
   el('#resetViewBtn').addEventListener('click', centerViewOnPlayArea);
+  const printBtn = el('#printBtn');
+  if (printBtn) printBtn.addEventListener('click', () => window.print());
 
   // Zoom controls
   workCanvas.classList.add('zoomable');
@@ -594,6 +598,55 @@ function onReady() {
 }
 
 document.addEventListener('DOMContentLoaded', onReady);
+
+// Selection & keyboard interactions
+let selected = null;
+function selectItem(node){
+  if (selected === node) return;
+  clearSelection();
+  selected = node;
+  if (selected) selected.classList.add('selected');
+}
+function clearSelection(){
+  if (selected) selected.classList.remove('selected');
+  selected = null;
+}
+function getSelected(){ return selected; }
+
+playArea.addEventListener('click', (e) => {
+  // Click on empty play area clears selection
+  if (e.target === playArea || e.target.classList.contains('grid')) clearSelection();
+});
+
+document.addEventListener('keydown', (e) => {
+  const node = getSelected();
+  if (!node) return;
+  const isArrow = ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key);
+  if (e.key === 'Delete' || e.key === 'Backspace') {
+    e.preventDefault(); node.remove(); clearSelection(); saveToStorageDebounced(); return;
+  }
+  if (isArrow) {
+    e.preventDefault();
+    const stepBase = e.shiftKey ? 10 : 1;
+    const step = e.ctrlKey ? inchesToPx(grid.sizeIn) : stepBase;
+    let x = node.offsetLeft, y = node.offsetTop;
+    if (e.key === 'ArrowLeft') x -= step;
+    if (e.key === 'ArrowRight') x += step;
+    if (e.key === 'ArrowUp') y -= step;
+    if (e.key === 'ArrowDown') y += step;
+    node.style.left = `${x}px`;
+    node.style.top  = `${y}px`;
+    saveToStorageDebounced();
+  }
+  // Bring to front/back
+  if ((e.ctrlKey || e.metaKey) && (e.key === ']' || e.key === '[')) {
+    e.preventDefault();
+    let z = Number(node.style.zIndex || 0) || 0;
+    if (e.key === ']') z += 1; else z = Math.max(0, z - 1);
+    node.style.zIndex = String(z);
+    saveToStorageDebounced();
+  }
+});
 
 // Persistence
 function serializeLayout() {

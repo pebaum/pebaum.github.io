@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Bug Hunt — Tokens Sheet</title>
+<title>Bug Hunt – Tokens Sheet</title>
 <style>
   :root {
     --bg: #0d0f12;
@@ -35,10 +35,11 @@
   <header>
     <div class="controls">
       <label>Hex Size (mm) <input type="number" id="hexMM" min="10" max="60" step="1"></label>
-      <label>Counts — Small <input type="number" id="countS" value="10" min="0" max="99"></label>
+      <label>Counts: Small <input type="number" id="countS" value="10" min="0" max="99"></label>
       <label>Medium <input type="number" id="countM" value="5" min="0" max="99"></label>
       <label>Large <input type="number" id="countL" value="3" min="0" max="99"></label>
       <button id="gen">Generate</button>
+      <button id="print">Print</button>
       <span class="preview">Uses Hex Size (mm) from map if available.</span>
     </div>
   </header>
@@ -76,37 +77,37 @@
     circle.setAttribute('r', (diamMM/2) - 0.6);
     circle.setAttribute('fill', '#fff');
     circle.setAttribute('stroke', '#000');
-  circle.setAttribute('stroke-width', '0.5');
+    circle.setAttribute('stroke-width', '0.5');
 
-  // derive stats
-  const stats = label === 'S' ? {hit:'4+', pts:'1'} : label === 'M' ? {hit:'5+', pts:'2'} : {hit:'6+', pts:'3'};
-  const cx = diamMM/2;
-  // font sizes in mm for consistent print scaling (compact)
-  const fsTop = (diamMM * 0.11).toFixed(2);   // center letter size
-  const fsBot = (diamMM * 0.055).toFixed(2);  // tiniest info line
+    // derive stats
+    const stats = label === 'S' ? {hit:'4+', pts:'1'} : label === 'M' ? {hit:'5+', pts:'2'} : {hit:'6+', pts:'3'};
+    const cx = diamMM/2;
+    // font sizes in mm for consistent print scaling (compact)
+    const fsTop = (diamMM * 0.11).toFixed(2);   // center letter size
+    const fsBot = (diamMM * 0.055).toFixed(2);  // tiniest info line
 
-  // center: S/M/L
-  const tTop = document.createElementNS(svgNS, 'text');
-  tTop.setAttribute('x', cx);
-  tTop.setAttribute('y', (diamMM * 0.52).toFixed(2));
-  tTop.setAttribute('text-anchor', 'middle');
-  tTop.setAttribute('dominant-baseline', 'middle');
-  tTop.setAttribute('font-size', `${fsTop}mm`);
-  tTop.textContent = label;
+    // center: S/M/L
+    const tTop = document.createElementNS(svgNS, 'text');
+    tTop.setAttribute('x', cx);
+    tTop.setAttribute('y', (diamMM * 0.52).toFixed(2));
+    tTop.setAttribute('text-anchor', 'middle');
+    tTop.setAttribute('dominant-baseline', 'middle');
+    tTop.setAttribute('font-size', `${fsTop}mm`);
+    tTop.textContent = label;
 
-  // bottom line under center: "X+ Npt" (hit first, then points; always 'pt' to save space)
-  const tBot = document.createElementNS(svgNS, 'text');
-  tBot.setAttribute('x', cx);
-  tBot.setAttribute('y', (diamMM * 0.76).toFixed(2));
-  tBot.setAttribute('text-anchor', 'middle');
-  tBot.setAttribute('dominant-baseline', 'middle');
-  tBot.setAttribute('font-size', `${fsBot}mm`);
-  tBot.setAttribute('font-weight', 'normal');
-  tBot.textContent = `${stats.hit} ${stats.pts}pt`;
+    // bottom line under center: "X+ Npt" (hit first, then points; always 'pt' to save space)
+    const tBot = document.createElementNS(svgNS, 'text');
+    tBot.setAttribute('x', cx);
+    tBot.setAttribute('y', (diamMM * 0.76).toFixed(2));
+    tBot.setAttribute('text-anchor', 'middle');
+    tBot.setAttribute('dominant-baseline', 'middle');
+    tBot.setAttribute('font-size', `${fsBot}mm`);
+    tBot.setAttribute('font-weight', 'normal');
+    tBot.textContent = `${stats.hit} ${stats.pts}pt`;
 
-  svg.appendChild(circle);
-  svg.appendChild(tTop);
-  svg.appendChild(tBot);
+    svg.appendChild(circle);
+    svg.appendChild(tTop);
+    svg.appendChild(tBot);
     return svg;
   }
 
@@ -169,6 +170,8 @@
   genBtn.addEventListener('click', generate);
   mmInput.addEventListener('change', generate);
   window.addEventListener('load', generate);
+  document.getElementById('print').addEventListener('click', () => window.print());
 </script>
 </body>
 </html>
+

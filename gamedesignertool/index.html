@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Boardgame Design Lab</title>
   <link rel="stylesheet" href="styles.css" />
+  <meta name="description" content="Prototype board games in the browser: play area, boards, cards, CSV import, tokens, dice." />
+  <meta name="color-scheme" content="dark light">
 </head>
 <body>
   <header class="app-header">
@@ -16,10 +18,12 @@
         <button id="zoomInBtn" class="btn" title="Zoom In">+</button>
         <button id="zoomResetBtn" class="btn" title="Reset Zoom">Reset</button>
       </div>
-  <button id="newBoardBtn" class="btn">New</button>
-  <button id="saveBtn" class="btn">Save</button>
-  <button id="loadBtn" class="btn">Load</button>
-  <input id="loadFile" type="file" accept="application/json" class="hidden" />
+      <button id="newBoardBtn" class="btn">New</button>
+      <button id="saveBtn" class="btn">Save</button>
+      <button id="loadBtn" class="btn">Load</button>
+      <input id="loadFile" type="file" accept="application/json" class="hidden" />
+      <button id="printBtn" class="btn" title="Print the play area">Print</button>
+      <a class="btn" href="../bug-hunt/tokens.html" target="_blank" rel="noopener">Tokens Sheet</a>
       <button id="newPlayAreaBtn" class="btn">Set Play Area</button>
       <button id="resetViewBtn" class="btn">Center View</button>
     </div>
@@ -85,7 +89,7 @@
             <button id="addStackBtn" class="btn btn-small">Create Stack</button>
           </div>
         </div>
-        <div class="hint">Drag stacks and cards. Click a stack for actions. Double‑click a card to rotate. Click labels to edit.</div>
+        <div class="hint">Drag stacks and cards. Click a stack for actions. Double-click a card to rotate. Click labels to edit.</div>
       </section>
 
       <section class="tool-section">
@@ -95,7 +99,7 @@
         </div>
         <div class="field-row">
           <label>Search</label>
-          <input id="csvSearch" type="search" placeholder="name, type, text…" />
+          <input id="csvSearch" type="search" placeholder="name, type, text..." />
         </div>
         <div class="field-row">
           <button id="spawnSelectedBtn" class="btn btn-small" disabled>Spawn Selected</button>
@@ -172,9 +176,9 @@
     <div class="stack-menu">
       <button data-action="draw1">Draw 1</button>
       <button data-action="draw5">Draw 5</button>
-      <button data-action="drawN">Draw N…</button>
+      <button data-action="drawN">Draw N...</button>
       <button data-action="shuffle">Shuffle</button>
-      <button data-action="setCount">Set Count…</button>
+      <button data-action="setCount">Set Count...</button>
       <button data-action="delete" class="danger">Delete</button>
     </div>
   </template>
