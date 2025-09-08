@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import shutil
 import traceback
 from datetime import datetime
+import json
 
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
@@ -25,6 +26,8 @@ except Exception:
 
 # Defer heavy import until we start transcribing to keep UI snappy
 # Default to a public, available model; can override via TRANSCRIBER_MODEL
+# Output format: txt, md, srt, vtt, tsv, json
+OUTPUT_FORMAT = (os.environ.get("TRANSCRIBER_OUTPUT_FORMAT", "md") or "md").strip().lower()
 WHISPER_MODEL = os.environ.get("TRANSCRIBER_MODEL", "large-v3")
 # Optional fixed language (e.g., "en") to skip autodetect and speed up a bit
 FIXED_LANGUAGE = os.environ.get("TRANSCRIBER_LANG")
@@ -509,7 +512,11 @@ class TranscriberApp:
             return
         self.state.busy = True
         # Reset UI state
-        self._last_output_path = audio_path.with_suffix(".txt")
+        def _ext_for(fmt: str) -> str:
+            f = (fmt or "md").strip().lower()
+            return f if f in {"txt","md","srt","vtt","tsv","json"} else "md"
+        out_ext = _ext_for(OUTPUT_FORMAT)
+        self._last_output_path = audio_path.with_suffix(f".{out_ext}")
         self.open_btn.config(state=tk.DISABLED)
         self.set_progress(0)
         self.set_status(
@@ -644,12 +651,19 @@ class TranscriberApp:
 
             # Progress tracking based on segment end time
             collected: list[str] = []
+            seg_items: list[tuple[float, float, str]] = []
             last_pct = 0.0
             total = max(1.0, float(getattr(info, 'duration', 0.0) or 0.0))
             for seg in segments:
                 text = (seg.text or '').strip()
                 if text:
                     collected.append(text)
+                    try:
+                        st = float(getattr(seg, 'start', 0.0) or 0.0)
+                        en = float(getattr(seg, 'end', 0.0) or 0.0)
+                    except Exception:
+                        st = 0.0; en = 0.0
+                    seg_items.append((st, en, text))
                 # Update progress
                 try:
                     end = float(getattr(seg, 'end', 0.0) or 0.0)

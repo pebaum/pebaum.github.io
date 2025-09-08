@@ -120,9 +120,15 @@ class Transport {
   _tick(){
     const nowPos = this._transportNow();
     if(nowPos >= this.length){ this.stop(); return; }
-    // Auto Punch logic
+    // Auto punch + mid-play record enable logic
     if(this.recordEnabled && this.playing && !this._recording && this._armedIndex()>=0){
-      if(this.punch.enabled && nowPos>=this.punch.in && nowPos<this.punch.out){ this._startRecording(this._armedIndex()); }
+      if(!this.punch.enabled){
+        // If punch disabled, begin recording immediately when record toggled on mid-play
+        this._startRecording(this._armedIndex());
+      } else if(nowPos>=this.punch.in && nowPos<this.punch.out){
+        // Auto punch window
+        this._startRecording(this._armedIndex());
+      }
     }
     if(this._recording && this.punch.enabled && nowPos>=this.punch.out){ this._stopRecording(true); }
     // Schedule clips whose start falls into [nowPos, nowPos+lookahead]
