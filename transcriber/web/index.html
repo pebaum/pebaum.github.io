@@ -35,6 +35,24 @@
             <input id="speed" type="checkbox" checked>
             <span>Speed mode (smaller model)</span>
           </label>
+          <label>
+            <span style="margin-right:6px">Format</span>
+            <select id="format">
+              <option value="txt" selected>Text (.txt)</option>
+              <option value="srt">SubRip (.srt)</option>
+              <option value="vtt">WebVTT (.vtt)</option>
+            </select>
+          </label>
+          <label>
+            <span style="margin: 0 6px 0 12px">Model</span>
+            <select id="model">
+              <option value="auto" selected>Auto (tiny/base)</option>
+              <option value="tiny.en">tiny.en</option>
+              <option value="tiny">tiny</option>
+              <option value="base.en">base.en</option>
+              <option value="base">base</option>
+            </select>
+          </label>
           <button id="stop" type="button" disabled>Stop</button>
         </div>
 
@@ -45,7 +63,7 @@
           <h3>Transcript</h3>
           <textarea id="output" spellcheck="false" placeholder="Transcript will appear here…"></textarea>
           <div class="row">
-            <button id="download" type="button" disabled>Download .txt</button>
+            <button id="download" type="button" disabled>Download</button>
             <a id="saveLink" download="transcript.txt" hidden></a>
           </div>
         </div>
