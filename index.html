@@ -589,7 +589,7 @@
                         <div class="menu-item" data-menu="forward">Forward</div>
                         <div class="menu-item" data-menu="bughunt">Bug Hunt</div>
                         <div class="menu-item" data-menu="gamedesignertool">Boardgame Design Lab</div>
-                        <div class="menu-item" data-menu="tapelooper">Tape Looper</div>
+                        <div class="menu-item" data-menu="fourtrack">Four-Track</div>
                         <div class="menu-item" data-menu="photos">Photos</div>
                         <div class="menu-item" data-menu="contact">Contact</div>
                         <div class="menu-item" data-menu="save">Save & Quit</div>                    </div>
@@ -785,16 +785,6 @@
                                 </div>
                             </div>
                         `
-                                        },                    tapelooper: {
-                                                title: 'Porta-4Track',
-                                                content: `
-                                                        <div style="text-align:center;">
-                                                            <h3 style="margin-bottom:10px;">Porta-4Track</h3>
-                                                            <p style="margin-bottom:12px; font-size:12px;">Asymmetrical generative tape loop engine with ambient Rhodes-style synthesis.</p>
-                                                            <a href="./four-track/index.html" style="display:inline-block; padding:8px 14px; background:#2F2F2F; border:1px solid #B0B0B0; border-radius:4px; color:#E6D060; text-decoration:none; font-size:12px;">Open Four-Track</a>
-                                                            <p style="margin-top:14px; font-size:11px; color:#A0A0A0;">Tip: add loops, click ASCII tape to insert notes, export presets.</p>
-                                                        </div>
-                                                `
                                         },                    music: {
                         title: 'Music',
                         content: `
@@ -1282,6 +1272,10 @@
                 }
                 if (menuKey === 'gamedesignertool') {
                     window.location.href = 'gamedesignertool/index.html';
+                    return;
+                }
+                if (menuKey === 'fourtrack') {
+                    window.location.href = 'four-track/index.html';
                     return;
                 }
 
