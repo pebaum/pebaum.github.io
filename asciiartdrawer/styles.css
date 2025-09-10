@@ -90,7 +90,7 @@ body {
   grid-template-columns: repeat(var(--cols), var(--cell-size));
   grid-auto-rows: var(--cell-size);
   gap: 0;
-  background: var(--grid-bg);
+  background: #fff; /* no gaps between cells */
   border: 1px solid var(--grid-border);
   user-select: none;
   /* Strongly enforce monospace rendering */
@@ -110,13 +110,9 @@ body {
   line-height: 1;
   font-variant-ligatures: none;
   letter-spacing: 0;
-  border-right: 1px solid var(--grid-border);
-  border-bottom: 1px solid var(--grid-border);
   color: #222;
   background: transparent;
 }
-.cell:nth-child(var(--cols)n + 1) { border-left: none; }
-.cell:nth-child(-n + var(--cols)) { border-top: none; }
 .cell:focus { outline: none; }
 
 .cursor-preview {

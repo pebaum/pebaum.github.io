@@ -31,6 +31,7 @@ const colorPreviewEl = document.getElementById("currentColorPreview");
 const bgSwatchesEl = document.getElementById("bgSwatches");
 const bgColorPickerEl = document.getElementById("bgColorPicker");
 const bgColorPreviewEl = document.getElementById("currentBgPreview");
+const fillBgBtn = document.getElementById("fillBgBtn");
 const brushModesEl = document.getElementById("brushModes");
 const clearBtn = document.getElementById("clearBtn");
 const exportTxtBtn = document.getElementById("exportTxtBtn");
@@ -329,6 +330,14 @@ function setActiveBgColor(hex) {
   bgColorPreviewEl.style.background = hex;
 }
 
+function fillEntireBackground() {
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      setCell(x, y, undefined, undefined, activeBgColor);
+    }
+  }
+}
+
 function toColorInputHex(hex) {
   const h = hex.replace('#','');
   if (h.length === 3) return '#' + h.split('').map(c => c + c).join('');
@@ -406,6 +415,7 @@ colorPickerEl.addEventListener("input", (e) => setActiveColor(e.target.value));
 bgColorPickerEl.addEventListener("input", (e) => setActiveBgColor(e.target.value));
 exportTxtBtn.addEventListener("click", exportPlainText);
 exportHtmlBtn.addEventListener("click", exportHTML);
+if (fillBgBtn) fillBgBtn.addEventListener("click", fillEntireBackground);
 
 // Init
 function init() {
@@ -420,4 +430,3 @@ function init() {
 }
 
 init();
-
