@@ -17,7 +17,8 @@
       <label class="size-label">Cols <input type="number" id="colsInput" min="4" max="256" value="64"></label>
       <label class="size-label">Rows <input type="number" id="rowsInput" min="4" max="256" value="64"></label>
       <button id="resizeBtn" title="Resize grid">Resize</button>
-      <button id="exportBtn" title="Export as plain text">Export TXT</button>
+      <button id="exportTxtBtn" title="Export as plain text">Export TXT</button>
+      <button id="exportHtmlBtn" title="Export as HTML page">Export HTML</button>
     </div>
   </header>
 
@@ -27,11 +28,25 @@
       <div id="symbolPalette" class="symbol-palette" aria-label="ASCII Symbols"></div>
       <div class="hint">Tip: Press a digit (1–0) to select slot. Alt+digit assigns selected symbol to that slot.</div>
 
-      <h2>Color</h2>
+      <h2>Text Color</h2>
       <div class="color-row" id="colorSwatches"></div>
       <div class="color-row">
         <input id="colorPicker" type="color" value="#222222" />
-        <span id="currentColorPreview" class="color-preview" title="Current color"></span>
+        <span id="currentColorPreview" class="color-preview" title="Current text color"></span>
+      </div>
+
+      <h2>Background</h2>
+      <div class="color-row" id="bgSwatches"></div>
+      <div class="color-row">
+        <input id="bgColorPicker" type="color" value="#ffffff" />
+        <span id="currentBgPreview" class="color-preview" title="Current background color"></span>
+      </div>
+
+      <h2>Brush</h2>
+      <div class="brush-modes" id="brushModes">
+        <button data-mode="text" class="brush-btn active" title="Paint text only">Text</button>
+        <button data-mode="bg" class="brush-btn" title="Paint background only">Background</button>
+        <button data-mode="both" class="brush-btn" title="Paint text and background">Both</button>
       </div>
     </section>
 

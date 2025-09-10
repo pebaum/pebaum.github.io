@@ -1,0 +1,60 @@
+// ASCII Art Drawer
+
+// Allowed symbols (unique) + blank
+const SYMBOLS = [
+  // Shades
+  '░','▒','▓',
+  // Box drawing light
+  '─','│','┌','┐','└','┘','┬','┴','├','┤','┼',
+  // Double
+  '═','║','╔','╗','╚','╝','╦','╩','╠','╣','╬',
+  // Blank as explicit last entry (represented separately in UI)
+];
+const BLANK = ' ';
+
+// Default swatch colors
+const SWATCHES = [
+  '#000000', '#222222', '#666666', '#999999', '#cccccc', '#ffffff',
+  '#e11d48', '#ef4444', '#f59e0b', '#fbbf24', '#10b981', '#14b8a6', '#06b6d4', '#3b82f6', '#8b5cf6', '#a855f7', '#d946ef', '#b45309'
+];
+
+// Quick slot digits mapping order 1..9,0
+const SLOT_KEYS = ['1','2','3','4','5','6','7','8','9','0'];
+
+// Elements
+const gridEl = document.getElementById('grid');
+const slotsEl = document.getElementById('slots');
+const symbolPaletteEl = document.getElementById('symbolPalette');
+const colorSwatchesEl = document.getElementById('colorSwatches');
+const colorPickerEl = document.getElementById('colorPicker');
+const colorPreviewEl = document.getElementById('currentColorPreview');
+const clearBtn = document.getElementById('clearBtn');
+const exportBtn = document.getElementById('exportBtn');
+const colsInput = document.getElementById('colsInput');
+const rowsInput = document.getElementById('rowsInput');
+const resizeBtn = document.getElementById('resizeBtn');
+const cursorPreview = document.getElementById('cursorPreview');
+
+// State
+let cols = parseInt(colsInput.value, 10) || 64;
+let rows = parseInt(rowsInput.value, 10) || 64; // default 64x64 -> 1024px square with 16px cells
+let activeColor = colorPickerEl.value;
+let activeSymbol = '─';
+let isDrawing = false;
+let grid = []; // 2D array { ch, color }
+
+// Slots: mapping from index 0..9 to assigned symbol
+let slots = [
+  '─','│','┌','┐','└','┘','┼','═','║', BLANK
+];
+let activeSlotIndex = 0;
+
+function setCSSVar(name, value) {
+  document.documentElement.style.setProperty(name, value);
+}
+
+function initGridData(c = cols, r = rows) {
+  grid = new Array(r).fill(null).map(() => new Array(c).fill(null).map(() => ({ ch: BLANK, color: '#222222' })));
+}
+
+function buildGrid(c = cols, r = rows) {
