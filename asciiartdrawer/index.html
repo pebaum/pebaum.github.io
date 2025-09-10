@@ -14,9 +14,10 @@
     <div class="slots" id="slots" aria-label="Quick Slots 1-0"></div>
     <div class="actions">
       <button id="clearBtn" title="Clear canvas">Clear</button>
-      <label class="size-label">Cols <input type="number" id="colsInput" min="4" max="160" value="64"></label>
-      <label class="size-label">Rows <input type="number" id="rowsInput" min="4" max="100" value="24"></label>
+      <label class="size-label">Cols <input type="number" id="colsInput" min="4" max="256" value="64"></label>
+      <label class="size-label">Rows <input type="number" id="rowsInput" min="4" max="256" value="64"></label>
       <button id="resizeBtn" title="Resize grid">Resize</button>
+      <button id="exportBtn" title="Export as plain text">Export TXT</button>
     </div>
   </header>
 
@@ -50,4 +51,3 @@
   <script src="app.js"></script>
 </body>
 </html>
-

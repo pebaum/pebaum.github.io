@@ -29,6 +29,7 @@ const colorSwatchesEl = document.getElementById('colorSwatches');
 const colorPickerEl = document.getElementById('colorPicker');
 const colorPreviewEl = document.getElementById('currentColorPreview');
 const clearBtn = document.getElementById('clearBtn');
+const exportBtn = document.getElementById('exportBtn');
 const colsInput = document.getElementById('colsInput');
 const rowsInput = document.getElementById('rowsInput');
 const resizeBtn = document.getElementById('resizeBtn');
@@ -36,7 +37,7 @@ const cursorPreview = document.getElementById('cursorPreview');
 
 // State
 let cols = parseInt(colsInput.value, 10) || 64;
-let rows = parseInt(rowsInput.value, 10) || 24;
+let rows = parseInt(rowsInput.value, 10) || 64; // default 64x64 -> 1024px square with 16px cells
 let activeColor = colorPickerEl.value;
 let activeSymbol = '─';
 let isDrawing = false;
@@ -94,6 +95,28 @@ function clearGrid() {
       setCell(x, y, BLANK, '#222222');
     }
   }
+}
+
+function exportPlainText() {
+  const lines = [];
+  for (let y = 0; y < rows; y++) {
+    let line = '';
+    for (let x = 0; x < cols; x++) {
+      const ch = grid[y][x].ch;
+      line += ch === BLANK ? ' ' : ch;
+    }
+    lines.push(line);
+  }
+  const txt = lines.join('\n');
+  const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `ascii-art-${cols}x${rows}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 }
 
 function onCellPointerDown(e) {
@@ -272,11 +295,12 @@ function resizeGrid(newCols, newRows) {
 // Controls
 clearBtn.addEventListener('click', clearGrid);
 resizeBtn.addEventListener('click', () => {
-  const c = Math.max(4, Math.min(160, parseInt(colsInput.value, 10) || cols));
-  const r = Math.max(4, Math.min(100, parseInt(rowsInput.value, 10) || rows));
+  const c = Math.max(4, Math.min(256, parseInt(colsInput.value, 10) || cols));
+  const r = Math.max(4, Math.min(256, parseInt(rowsInput.value, 10) || rows));
   resizeGrid(c, r);
 });
 colorPickerEl.addEventListener('input', (e) => setActiveColor(e.target.value));
+exportBtn.addEventListener('click', exportPlainText);
 
 // Init
 function init() {
@@ -296,4 +320,3 @@ if (SYMBOLS.length === 0) {
 }
 
 init();
-
