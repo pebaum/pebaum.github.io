@@ -17,8 +17,10 @@
       <label class="size-label">Cols <input type="number" id="colsInput" min="4" max="256" value="64"></label>
       <label class="size-label">Rows <input type="number" id="rowsInput" min="4" max="256" value="64"></label>
       <button id="resizeBtn" title="Resize grid">Resize</button>
+      <button id="textModeBtn" title="Toggle text entry mode">Text Mode</button>
       <button id="exportTxtBtn" title="Export as plain text">Export TXT</button>
       <button id="exportHtmlBtn" title="Export as HTML page">Export HTML</button>
+      <button id="themeToggle" title="Toggle dark mode">Toggle Theme</button>
     </div>
   </header>
 
@@ -49,10 +51,14 @@
         <button data-mode="bg" class="brush-btn" title="Paint background only">Background</button>
         <button data-mode="both" class="brush-btn" title="Paint text and background">Both</button>
       </div>
+      <div class="brush-modes">
+        <button id="typingToggle" class="brush-btn" title="Type letters on the grid">Type Text</button>
+      </div>
     </section>
 
     <section class="canvas-wrap">
       <div id="grid" class="grid" tabindex="0" aria-label="ASCII grid drawing surface"></div>
+      <div id="caret" class="caret" aria-hidden="true"></div>
       <div id="cursorPreview" class="cursor-preview" aria-hidden="true"></div>
     </section>
   </main>

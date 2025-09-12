@@ -40,6 +40,8 @@ const colsInput = document.getElementById("colsInput");
 const rowsInput = document.getElementById("rowsInput");
 const resizeBtn = document.getElementById("resizeBtn");
 const cursorPreview = document.getElementById("cursorPreview");
+const textModeBtn = document.getElementById("textModeBtn");
+const themeToggle = document.getElementById("themeToggle");
 
 // State
 let cols = parseInt(colsInput.value, 10) || 64;
@@ -49,6 +51,8 @@ let activeBgColor = bgColorPickerEl.value;
 let activeSymbol = "\u2500"; // '─'
 let isDrawing = false;
 let brushMode = "text"; // 'text' | 'bg' | 'both'
+let typingMode = false;  // when true, clicking sets caret and typing inserts text
+let caretX = 0, caretY = 0;
 let grid = []; // 2D array of { ch, color, bg }
 
 // Slots: mapping from index 0..9 to assigned symbol
@@ -87,6 +91,8 @@ function buildGrid(c = cols, r = rows) {
       gridEl.appendChild(cell);
     }
   }
+  // Ensure caret remains visible after rebuild
+  updateCaretVisual();
 }
 
 function setCell(x, y, ch, color, bg) {
@@ -145,7 +151,7 @@ function exportPlainText() {
 }
 
 function exportHTML() {
-  const cellPx = 16; // matches styles.css
+  const cellPx = 16; // export at 16px cells
   const widthPx = cols * cellPx;
   const heightPx = rows * cellPx;
 
@@ -204,12 +210,17 @@ function onCellPointerDown(e) {
   e.preventDefault();
   const x = parseInt(e.currentTarget.dataset.x, 10);
   const y = parseInt(e.currentTarget.dataset.y, 10);
-  isDrawing = true;
-  applyBrush(x, y);
+  if (typingMode) {
+    setCaret(x, y);
+    gridEl.focus();
+  } else {
+    isDrawing = true;
+    applyBrush(x, y);
+  }
 }
 
 function onCellPointerEnter(e) {
-  if (!isDrawing) return;
+  if (!isDrawing || typingMode) return;
   const x = parseInt(e.currentTarget.dataset.x, 10);
   const y = parseInt(e.currentTarget.dataset.y, 10);
   applyBrush(x, y);
@@ -346,6 +357,10 @@ function toColorInputHex(hex) {
 
 function handleKeydown(e) {
   const key = e.key;
+  if (typingMode) {
+    handleTypingKey(e);
+    return;
+  }
   const idx = SLOT_KEYS.indexOf(key);
   if (idx !== -1) {
     if (e.altKey) {
@@ -369,7 +384,7 @@ function attachGlobalHandlers() {
     cursorPreview.style.left = `${e.clientX - rect.left}px`;
     cursorPreview.style.top = `${e.clientY - rect.top}px`;
   });
-  gridEl.addEventListener("mouseenter", () => { cursorPreview.style.display = "block"; updateCursorPreview(); });
+  gridEl.addEventListener("mouseenter", () => { if (!typingMode) { cursorPreview.style.display = "block"; updateCursorPreview(); } });
   gridEl.addEventListener("mouseleave", () => { cursorPreview.style.display = "none"; });
 
   // Brush mode buttons
@@ -382,6 +397,29 @@ function attachGlobalHandlers() {
     [...brushModesEl.children].forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
   });
+
+  // Typing toggle
+  if (textModeBtn) {
+    textModeBtn.addEventListener("click", () => {
+      typingMode = !typingMode;
+      textModeBtn.classList.toggle("active", typingMode);
+      cursorPreview.style.display = typingMode ? "none" : cursorPreview.style.display;
+      if (typingMode) gridEl.focus();
+    });
+  }
+
+  // Theme toggle
+  if (themeToggle) {
+    const applyTheme = (t) => document.documentElement.setAttribute("data-theme", t);
+    const nextTheme = () => (localStorage.getItem("theme") === "dark" ? "light" : "dark");
+    const init = localStorage.getItem("theme");
+    if (init) applyTheme(init);
+    themeToggle.addEventListener("click", () => {
+      const t = nextTheme();
+      localStorage.setItem("theme", t);
+      applyTheme(t);
+    });
+  }
 }
 
 function updateCursorPreview() {
@@ -402,6 +440,10 @@ function resizeGrid(newCols, newRows) {
     }
   }
   buildGrid(cols, rows);
+  // Keep caret within bounds
+  caretX = Math.min(caretX, cols - 1);
+  caretY = Math.min(caretY, rows - 1);
+  updateCaretVisual();
 }
 
 // Controls
@@ -430,3 +472,49 @@ function init() {
 }
 
 init();
+
+// Typing mode helpers
+function handleTypingKey(e) {
+  const key = e.key;
+  if (key === "ArrowLeft") { e.preventDefault(); moveCaret(-1, 0); return; }
+  if (key === "ArrowRight") { e.preventDefault(); moveCaret(1, 0); return; }
+  if (key === "ArrowUp") { e.preventDefault(); moveCaret(0, -1); return; }
+  if (key === "ArrowDown") { e.preventDefault(); moveCaret(0, 1); return; }
+  if (key === "Enter") { e.preventDefault(); setCaret(0, Math.min(rows - 1, caretY + 1)); return; }
+  if (key === "Home") { e.preventDefault(); setCaret(0, caretY); return; }
+  if (key === "End") { e.preventDefault(); setCaret(cols - 1, caretY); return; }
+  if (key === "Backspace") {
+    e.preventDefault();
+    moveCaret(-1, 0);
+    setCell(caretX, caretY, BLANK, undefined, undefined);
+    return;
+  }
+  if (key === "Delete") { e.preventDefault(); setCell(caretX, caretY, BLANK, undefined, undefined); return; }
+
+  if (key.length === 1) {
+    e.preventDefault();
+    const ch = key;
+    setCell(caretX, caretY, ch, activeColor, brushMode === "both" ? activeBgColor : undefined);
+    moveCaret(1, 0);
+  }
+}
+
+function moveCaret(dx, dy) {
+  setCaret(
+    Math.max(0, Math.min(cols - 1, caretX + dx)),
+    Math.max(0, Math.min(rows - 1, caretY + dy))
+  );
+}
+
+function setCaret(x, y) {
+  caretX = x; caretY = y;
+  updateCaretVisual();
+}
+
+function updateCaretVisual() {
+  // Remove existing
+  [...gridEl.children].forEach(c => c.classList && c.classList.remove("caret"));
+  const idx = caretY * cols + caretX;
+  const el = gridEl.children[idx];
+  if (el) el.classList.add("caret");
+}

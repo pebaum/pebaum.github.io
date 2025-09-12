@@ -1,9 +1,32 @@
 :root {
-  --cell-size: 16px; /* 64 cols/rows => 1024px square */
+  /* Size based on font metrics for perfect alignment */
+  --cell-w: 1ch;   /* width of one monospace character */
+  --cell-h: 1em;   /* height of one line */
   --grid-bg: #f7f7f8;
+  --panel-bg: #ffffff;
   --grid-border: #e5e7eb;
   --accent: #3b82f6;
-  --text: #222;
+  --text: #222222;
+}
+
+/* Dark theme */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --grid-bg: #0f1115;
+    --panel-bg: #0b0d11;
+    --grid-border: #1f2430;
+    --accent: #60a5fa;
+    --text: #e5e7eb;
+  }
+}
+
+/* Manual theme toggle support */
+[data-theme="dark"] {
+  --grid-bg: #0f1115;
+  --panel-bg: #0b0d11;
+  --grid-border: #1f2430;
+  --accent: #60a5fa;
+  --text: #e5e7eb;
 }
 
 * { box-sizing: border-box; }
@@ -11,9 +34,9 @@ html, body { height: 100%; }
 body {
   margin: 0;
   /* Enforce monospace across the app */
-  font-family: "Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace;
+  font-family: "Fira Code", "Cascadia Mono", Consolas, monaco, "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace;
   color: var(--text);
-  background: #fff;
+  background: var(--grid-bg);
 }
 
 .topbar {
@@ -23,7 +46,7 @@ body {
   gap: 16px;
   padding: 10px 12px;
   border-bottom: 1px solid var(--grid-border);
-  background: #fff;
+  background: var(--panel-bg);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -38,7 +61,7 @@ body {
   border: 1px solid var(--grid-border);
   border-radius: 6px;
   cursor: pointer;
-  background: #fff;
+  background: var(--panel-bg);
 }
 .slot.active { outline: 2px solid var(--accent); outline-offset: 1px; }
 .slot .num { opacity: 0.7; min-width: 10px; }
@@ -84,13 +107,13 @@ body {
 }
 .brush-btn.active { outline: 2px solid var(--accent); outline-offset: 1px; }
 
-.canvas-wrap { position: relative; padding: 12px; overflow: auto; background: #fafafa; }
+.canvas-wrap { position: relative; padding: 12px; overflow: auto; background: var(--grid-bg); }
 .grid {
   display: grid;
-  grid-template-columns: repeat(var(--cols), var(--cell-size));
-  grid-auto-rows: var(--cell-size);
+  grid-template-columns: repeat(var(--cols), var(--cell-w));
+  grid-auto-rows: var(--cell-h);
   gap: 0;
-  background: #fff; /* no gaps between cells */
+  background: var(--panel-bg); /* no gaps between cells */
   border: 1px solid var(--grid-border);
   user-select: none;
   /* Strongly enforce monospace rendering */
@@ -100,20 +123,25 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 .cell {
-  width: var(--cell-size);
-  height: var(--cell-size);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: var(--cell-w);
+  height: var(--cell-h);
+  display: block;           /* avoid centering that breaks joins */
+  white-space: pre;         /* preserve spaces */
+  line-height: 1em;         /* exact line box -> perfect vertical joins */
   font-family: inherit;
   font-size: 16px;
-  line-height: 1;
   font-variant-ligatures: none;
   letter-spacing: 0;
-  color: #222;
+  color: var(--text);
   background: transparent;
 }
 .cell:focus { outline: none; }
+
+.cell.caret {
+  outline: 1px dashed var(--accent);
+  outline-offset: -1px;
+  background: rgba(96, 165, 250, 0.10); /* accent at ~10% */
+}
 
 .cursor-preview {
   position: absolute; pointer-events: none; z-index: 5;
@@ -124,7 +152,16 @@ body {
   display: none;
 }
 
+/* Absolute overlay caret for text mode */
+.caret {
+  position: absolute;
+  pointer-events: none;
+  z-index: 6;
+  border: 1px dashed var(--accent);
+  display: none;
+}
+
 .footer {
   border-top: 1px solid var(--grid-border);
-  padding: 8px 12px; font-size: 12px; color: #666; background: #fff;
+  padding: 8px 12px; font-size: 12px; color: #9aa4b2; background: var(--panel-bg);
 }
