@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Bug Hunt – Tokens Sheet</title>
+<style>
+  :root {
+    --bg: #0d0f12;
+    --panel: #11161c;
+    --text: #e6edf3;
+    --muted: #9aa7b2;
+  }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, Segoe UI, Arial, sans-serif; }
+  header { padding: 12px 16px; background: var(--panel); border-bottom: 1px solid #1f2a34; position: sticky; top: 0; z-index: 5; }
+  .controls { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  input, button { background: #0c1218; color: var(--text); border: 1px solid #243241; border-radius: 6px; padding: 6px 8px; }
+  button { cursor: pointer; }
+  main { padding: 12px; display: grid; grid-template-columns: 1fr; gap: 12px; }
+  .sheet { background: white; color: black; padding: 10mm; }
+  .row { display: flex; flex-wrap: wrap; gap: 6mm; margin-bottom: 8mm; }
+  .label { font-size: 12px; color: #333; margin-bottom: 4mm; }
+  svg { background: white; }
+  .preview { color: var(--muted); font-size: 13px; }
+
+  @page { size: Letter; margin: 10mm; }
+  @media print {
+    header { display: none; }
+    main { padding: 0; }
+    .sheet { box-shadow: none; padding: 0; }
+  }
+</style>
+</head>
+<body>
+  <header>
+    <div class="controls">
+      <label>Hex Size (mm) <input type="number" id="hexMM" min="10" max="60" step="1"></label>
+      <label>Counts: Small <input type="number" id="countS" value="10" min="0" max="99"></label>
+      <label>Medium <input type="number" id="countM" value="5" min="0" max="99"></label>
+      <label>Large <input type="number" id="countL" value="3" min="0" max="99"></label>
+      <button id="gen">Generate</button>
+      <button id="print">Print</button>
+      <span class="preview">Uses Hex Size (mm) from map if available.</span>
+    </div>
+  </header>
+  <main>
+    <div class="sheet" id="sheet">
+      <div class="label">Bug Tokens</div>
+      <div class="row" id="bugs"></div>
+      <div class="label">Player Hexes (x4)</div>
+      <div class="row" id="players"></div>
+    </div>
+  </main>
+
+<script>
+  const mmInput = document.getElementById('hexMM');
+  const countS = document.getElementById('countS');
+  const countM = document.getElementById('countM');
+  const countL = document.getElementById('countL');
+  const genBtn = document.getElementById('gen');
+  const bugsRow = document.getElementById('bugs');
+  const playersRow = document.getElementById('players');
+
+  // pull saved hex size from map designer
+  const savedMM = localStorage.getItem('bughunt_hex_mm');
+  mmInput.value = savedMM ? savedMM : 14;
+
+  function makeCircleToken(diamMM, label) {
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('width', `${diamMM}mm`);
+    svg.setAttribute('height', `${diamMM}mm`);
+    svg.setAttribute('viewBox', `0 0 ${diamMM} ${diamMM}`);
+    const circle = document.createElementNS(svgNS, 'circle');
+    circle.setAttribute('cx', diamMM/2);
+    circle.setAttribute('cy', diamMM/2);
+    circle.setAttribute('r', (diamMM/2) - 0.6);
+    circle.setAttribute('fill', '#fff');
+    circle.setAttribute('stroke', '#000');
+    circle.setAttribute('stroke-width', '0.5');
+
+    // derive stats
+    const stats = label === 'S' ? {hit:'4+', pts:'1'} : label === 'M' ? {hit:'5+', pts:'2'} : {hit:'6+', pts:'3'};
+    const cx = diamMM/2;
+    // font sizes in mm for consistent print scaling (compact)
+    const fsTop = (diamMM * 0.11).toFixed(2);   // center letter size
+    const fsBot = (diamMM * 0.055).toFixed(2);  // tiniest info line
+
+    // center: S/M/L
+    const tTop = document.createElementNS(svgNS, 'text');
+    tTop.setAttribute('x', cx);
+    tTop.setAttribute('y', (diamMM * 0.52).toFixed(2));
+    tTop.setAttribute('text-anchor', 'middle');
+    tTop.setAttribute('dominant-baseline', 'middle');
+    tTop.setAttribute('font-size', `${fsTop}mm`);
+    tTop.textContent = label;
+
+    // bottom line under center: "X+ Npt" (hit first, then points; always 'pt' to save space)
+    const tBot = document.createElementNS(svgNS, 'text');
+    tBot.setAttribute('x', cx);
+    tBot.setAttribute('y', (diamMM * 0.76).toFixed(2));
+    tBot.setAttribute('text-anchor', 'middle');
+    tBot.setAttribute('dominant-baseline', 'middle');
+    tBot.setAttribute('font-size', `${fsBot}mm`);
+    tBot.setAttribute('font-weight', 'normal');
+    tBot.textContent = `${stats.hit} ${stats.pts}pt`;
+
+    svg.appendChild(circle);
+    svg.appendChild(tTop);
+    svg.appendChild(tBot);
+    return svg;
+  }
+
+  function hexPointsAt(cx, cy, r) {
+    const pts = [];
+    for (let i = 0; i < 6; i++) {
+      const angle = Math.PI/180 * (60 * i - 30);
+      pts.push([cx + r*Math.cos(angle), cy + r*Math.sin(angle)]);
+    }
+    return pts.map(p => p.join(',')).join(' ');
+  }
+
+  function makeHexToken(hexRadiusMM, label) {
+    const size = hexRadiusMM; // circumradius in mm
+    const w = Math.sqrt(3) * size; // across-flat width
+    const h = 2 * size;           // height corner-to-corner
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('width', `${w}mm`);
+    svg.setAttribute('height', `${h}mm`);
+    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+
+    const poly = document.createElementNS(svgNS, 'polygon');
+    poly.setAttribute('points', hexPointsAt(w/2, h/2, size-0.3));
+    poly.setAttribute('fill', '#fff');
+    poly.setAttribute('stroke', '#000');
+    poly.setAttribute('stroke-width', '0.6');
+
+    const text = document.createElementNS(svgNS, 'text');
+    text.setAttribute('x', w/2);
+    text.setAttribute('y', h/2 + 1);
+    text.setAttribute('text-anchor', 'middle');
+    text.setAttribute('dominant-baseline', 'middle');
+    text.setAttribute('font-size', `${size/2.5}px`);
+    text.textContent = label;
+
+    svg.appendChild(poly);
+    svg.appendChild(text);
+    return svg;
+  }
+
+  function generate() {
+    const hexMM = +mmInput.value; // circumradius in mm
+    localStorage.setItem('bughunt_hex_mm', String(hexMM));
+    // Across-flats of the hex interior
+    const acrossFlats = 2 * hexMM * Math.cos(Math.PI/6); // ≈ 1.732 * hexMM
+    const diamL = Math.round(acrossFlats * 0.97); // large just inside one hex
+    const diamM = Math.round(acrossFlats * 0.78);
+    const diamS = Math.round(acrossFlats * 0.60);
+
+    bugsRow.innerHTML = '';
+    for (let i=0; i<+countS.value; i++) bugsRow.appendChild(makeCircleToken(diamS, 'S'));
+    for (let i=0; i<+countM.value; i++) bugsRow.appendChild(makeCircleToken(diamM, 'M'));
+    for (let i=0; i<+countL.value; i++) bugsRow.appendChild(makeCircleToken(diamL, 'L'));
+
+    playersRow.innerHTML = '';
+    for (let i=1; i<=4; i++) playersRow.appendChild(makeHexToken(hexMM, `P${i}`));
+  }
+
+  genBtn.addEventListener('click', generate);
+  mmInput.addEventListener('change', generate);
+  window.addEventListener('load', generate);
+  document.getElementById('print').addEventListener('click', () => window.print());
+</script>
+</body>
+</html>
+
