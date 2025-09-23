@@ -585,11 +585,7 @@
                         <div class="menu-item" data-menu="music">Music</div>
                         
                         <div class="menu-item" data-menu="magic">Magic</div>
-                        <div class="menu-item" data-menu="gamedesignertool">Boardgame Design Lab</div>
-                        <div class="menu-item" data-menu="fourtrack">Four-Track</div>
                         <div class="menu-item" data-menu="asciiart">ASCII Art Drawer</div>
-                        <div class="menu-item" data-menu="transcriber">Transcriber</div>
-                        <div class="menu-item" data-menu="forward">Forward</div>
                         <div class="menu-item" data-menu="bug-hunt">Bug Hunt</div>
                         
                         <div class="menu-item" data-menu="contact">Contact</div>
@@ -1224,29 +1220,11 @@
                     return;
                 }
 
-                // Special handling for transcriber - open web app
-                if (menuKey === 'transcriber') {
-                    window.open('../transcriber/web/', '_blank');
-                    return;
-                }
-                if (menuKey === 'gamedesignertool') {
-                    window.open('../gamedesignertool/', '_blank');
-                    return;
-                }
-                if (menuKey === 'fourtrack') {
-                    window.open('../four-track/', '_blank');
-                    return;
-                }
                 if (menuKey === 'asciiart') {
                     window.open('../asciiartdrawer/', '_blank');
                     return;
                 }
 
-                // Special handling for forward - open Forward page
-                if (menuKey === 'forward') {
-                    window.open('../forward/', '_blank');
-                    return;
-                }
 
                 // Special handling for bug-hunt - open Bug Hunt page
                 if (menuKey === 'bug-hunt') {
