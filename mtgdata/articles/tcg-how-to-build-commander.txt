@@ -1,0 +1,140 @@
+TITLE: How to Build and Play Commander (EDH): A Guide to MTG's Casual Multiplayer Format | TCGplayer
+SOURCE: https://www.tcgplayer.com/content/article/How-to-Build-and-Play-Commander-EDH-A-Guide-to-MTG-s-Casual-Multiplayer-Format/620ada09-5abe-457f-875b-816898539040/
+
+============================================================
+
+Commander is the most popular way to play Magic: The Gathering casually, attracting fans both seasoned and green. However, with a huge card pool, exclusive rules, and a unique deckbuilding approach, understanding how to play this fun format can be challenging. This comprehensive guide will cover everything you need to know about Commander, from building a deck to playing a game.
+
+## How to Play and Build Commander in Magic: The Gathering
+
+### Commander Deck Construction Rules
+
+Commander decks consist of 100 cards total, including your commander(s), compared to the traditional 60 of Constructed formats like Standard or Modern. The 100-card rule is firm, no more, no less. Additionally, every card must be unique, except for basic lands and cards that specify otherwise, like , Slime Against Humanity , or Hare Apparent .
+
+Market Price: $21.36 Market Price: $0.28 Market Price: $25.11
+
+Market Price: $21.36
+
+Market Price: $0.28
+
+Market Price: $25.11
+
+Your deck must use a legendary creature, known as your "commander." These commanders help determine the theme of your deck and are a consistent resource to access. Decks must also be built with a "color identity" that adheres to the colors on the commander's card. In the most basic example, a commander like Atraxa, Praetors' Voice can use white, blue, black, and green cards. However, color identity goes beyond the commander's actual colors — a card like Tazri, Beacon of Unity , for example, is a white card, but color identity references anything in its text box, meaning a Tazri deck can be all five colors.
+
+The same is true for the cards in the deck. Even though a card like Burning-Tree Emissary is castable in an Atraxa deck, it still has red in the mana cost, so it can't be played there. Also, keep in mind that reminder text doesn't count towards color identity — the extort reminder text on a Crypt Ghast has a black and white symbol on it, but since it's just reminder text, Crypt Ghast can be played in a mono-black deck, black/green deck, and so on.
+
+Market Price: $0.95 Market Price: $0.19 Market Price: $1.20
+
+Market Price: $0.95
+
+Market Price: $0.19
+
+Market Price: $1.20
+
+Outside of creatures, legendary Vehicles and Spacecraft can also be your commander. Any card that states it can be your commander, like Daretti, Scrap Savant , can obviously be used too.
+
+Market Price: $23.12 Market Price: $0.32 Market Price: $0.55
+
+Market Price: $23.12
+
+Market Price: $0.32
+
+Market Price: $0.55
+
+Some commanders allow for a special "partner" rule that lets them be played alongside another creature as your commander. Cards like Tymna the Weaver can be used alongside any other commander that has just "partner", like Thrasios, Triton Hero or Rograkh, Son of Rohgahh . "Partner with" creatures like only allow a specific partner — in this case, Sam, Loyal Attendant .
+
+Finally, (non-changeling) Time Lord Doctor creatures to be played alongside any creature that has "Doctor's companion", so The Fourteenth Doctor can sit in the command zone with Rose Tyler . Do note that if you use a companion, you'll have to take a card out of your deck to make sure it's still 100 cards total.
+
+Like Constructed formats, Commander also has a banlist and you can find this below:
+
+• Everything We Know About MTG's Banned and Restricted List - Standard, Modern, and More!
+Finally, there's a set of "brackets" players are suggested to follow to ensure decks are on the same power level. You can read about them, and the associated "game changer" cards that bump your deck up a level, in these articles:
+
+• Commander Brackets Are the New Way to Judge Your Magic: The Gathering Deck
+• What are Game Changers in Magic: The Gathering's Commander Format?
+
+### In-Game Commander Rules
+
+Each game of Commander is intended to be played with four players. Turn order goes clockwise, and each player uses the same mulligan rules as Constructed formats, but their first mulligan is free, and they keep seven cards in hand.
+
+Each player starts with 40 life and draws on their first turn. However, poison is not adjusted, so 10 poison counters will still kill a player. Commander also has an exclusive "commander damage" rule, which states that any player who is dealt at least 21 combat damage from one commander loses.
+
+Y'shtola, Night's Blessed Commander: FINAL FANTASY , mythic Buy Product Mana Cost: Vigilance
+
+At the beginning of each end step, if a player lost 4 or more life this turn, you draw a card.
+
+Whenever you cast a noncreature spell with mana value 3 or greater, Y'shtola deals 2 damage to each opponent and you gain 2 life. Market Price $3.01 $0.60 Listed Median Price $3.21 $0.93
+
+## Y'shtola, Night's Blessed
+
+Commander: FINAL FANTASY , mythic
+
+Mana Cost:
+
+Vigilance
+
+At the beginning of each end step, if a player lost 4 or more life this turn, you draw a card.
+
+Whenever you cast a noncreature spell with mana value 3 or greater, Y'shtola deals 2 damage to each opponent and you gain 2 life.
+
+Players keep their commanders in the "command zone" outside of their deck and shuffle up. Anyone may cast their commander for its casting cost, and whenever it moves zones — whether that be to the graveyard, exile, hand, or library — its owner may opt to put it into the command zone instead. Once it's back into the command zone, a commander costs an additional two generic mana for each time it's put there. For example, Y'shtola, Night's Blessed can be played for its casting cost of 1WUB (a white, a blue, and a black mana) and once it's back in the command zone, it'll cost 3WUB. Commander tax is an additional cost, so it doesn't adjust the mana value of your commander, and you can always choose to let it go to whatever zone it was originally going to. Additionally, commanders going to the graveyard but the player decides to put the card in the command zone instead will trigger any "dies" triggers, like Grim Haruspex . Don't ask how it works, it just does.
+
+Otherwise, Commander is played like a regular game of Magic — players draw a card each turn (including the starting player's first turn), can play a land each turn, and have the same phases. While the multiplayer aspect definitely changes the game's dynamic, it's still just good ol' Magic.
+
+### General Commander Deckbuilding Tips
+
+Mana bases, like in any other format, are dependent on deck size, curve, and strategy. A Limited deck often runs 17 lands, while a Constructed deck will run in the 20s. Commander has a much larger deck size, and with the singleton rule, it can be tricky to balance your colors, curve, and core mechanics.
+
+Article Spotlight What's an Optimal Mana Curve and Land/Ramp Count for Commander? Wait, you're playing 36 lands in a Commander deck!? Frank Karsten's crunched the numbers on building an optimal mana curve in Commander!
+
+Article Spotlight
+
+### What's an Optimal Mana Curve and Land/Ramp Count for Commander?
+
+Wait, you're playing 36 lands in a Commander deck!? Frank Karsten's crunched the numbers on building an optimal mana curve in Commander!
+
+Frank Karsten's breakdown on mana bases is the most in-depth approach to balancing your mana ramp with your land count, but to simplify it, Frank suggests between 38 to 42 lands, depending on your curve. With so many great utility lands, like Boseiju, Who Endures , and modal double-faced cards (MDFCs), like Hagra Mauling , it's easy to reach that 42-land mark without flooding too much.
+
+Market Price: $0.45 Market Price: $0.35 Market Price: $1.13
+
+Market Price: $0.45
+
+Market Price: $0.35
+
+Market Price: $1.13
+
+Most Commander decks will want to accelerate their mana. With games going significantly longer than Constructed, players have plenty of time to ramp up and cast big spells. How much ramp you'll need differs from deck to deck, but most creators will suggest anywhere from five to 10 pieces of ramp.
+
+Market Price: $1.07 Market Price: $0.72 Market Price: $16.95
+
+Market Price: $1.07
+
+Market Price: $0.72
+
+Market Price: $16.95
+
+Commander is also full of scary threats. When players have access to tons of mana and almost every Magic card printed, the sky's the limit on what you might see. Don't leave home without packing some removal spells, and with the extensive card pool, you get the best of the best. Board wipes are particularly more common here — with three opponents, the odds of your board wipe getting more value goes way up. Artifacts and enchantments are rather common as well. Between ramp spells like the staple Sol Ring and powerful enchantments like Rhystic Study , there's always a target for a Nature's Claim or .
+
+Finally, remember to have fun! Commander is casual and about self-expression and trying the crazy things that won't quite cut it in Constructed. Throw your pet cards in there, try a crazy strategy, and choose your favorite legendary creatures (and beyond).
+
+### Wrapping Up
+
+Commander is a fun format that appeals to all Magic players. Seasoned veterans get to play some of their favorite cards from the past, while newer players can enjoy a more relaxed, board game-esque environment without the burden of prizing and competition. The rules can be complex, and the card pool can be overwhelming, but with the right resources, it's easy to enjoy the game at any level.
+
+Make sure to check out the Commander Bestiary for more information. It'll get you started on building your own deck, or even just ordering one here at TCGplayer.com. There's also plenty of Commander content here to give you a leg up on every set hitting the shelves!
+
+Written By
+
+Harry has been playing Magic casually since Onslaught and picked up Commander in 2014. He considers himself a fan of any strategy involving High Tide and is the biggest proponent of Gar... View Full Bio
+
+#### Wizards of the Coast Names TCGplayer the Preferred Online Marketplace for Wizards Play Network
+
+#### The Biggest Price Spikes in Magic: The Gathering This Week - 11/20/2025
+
+#### Why Cube is the Best Way to Play Magic: The Gathering - Yes, Better Than Commander
+
+#### Top 10 Bestselling MTG Cards of the Week - 11/21/2025
+
+#### Top 10 Bestselling Secret Lair MTG Cards of the Month (November 2025)
+
+#### The Ultimate Holiday Magic: Gathering Gift Guide 2025

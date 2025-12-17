@@ -1,0 +1,161 @@
+TITLE: Commander Philosophy | Corry Frydlewicz | Corry Frydlewicz
+SOURCE: https://corryfrydlewicz.com/commander-philosophy/
+
+============================================================
+
+I prefer casual multiplayer Commander because it is unique among Magic: The Gathering formats.
+
+Every other popular format in Magic is competitive and most are 1-on-1. These formats are zero sum environments where the primary objective is to win, and essentially make everyone else lose. This is thrilling and fun too, but after playing that way for twenty years it’s refreshing to know I can use some of these same cards to play in a totally different way.
+
+Multiplayer Commander allows for what we call politics . In 1v1 formats there are no negotiations, alliances, or deals to be made. Everything is cutthroat. Having 3+ players in a game opens a world where we now have to understand things like:
+
+• Threat Assessment: Which opponent is the biggest and baddest?
+• Concealment of Intent: If I make my plans too obvious, one of my opponents may focus their resources on stopping me instead of stopping the others at the table.
+• Social Engineering: How can I convince the other players to play in ways that will give me a window to do what I want to do?
+• Deck Building Differences: Targeting a single player is less powerful than affecting each opponent. Symmetrical effects are more powerful with more battlefields to affect.
+
+> Multiplayer Commander Tip: One of the first things I learned about Commander politics is the first player to do something scary rarely wins . Other players will assess them as a high threat and focus their resources on stopping them, and then the next player(s) to be scary will have more opportunities to take advantage of.
+
+Multiplayer Commander Tip: One of the first things I learned about Commander politics is the first player to do something scary rarely wins . Other players will assess them as a high threat and focus their resources on stopping them, and then the next player(s) to be scary will have more opportunities to take advantage of.
+
+Casual Magic doesn’t have tournaments where we get paired against people randomly. We only play with who we want to, when we want to. This creates considerations beyond what we have at paid-entry events like Friday Night Magic :
+
+• Community Impact: Will other people want to play another game with me after this one?
+• 🧂 Salt: Each player has a unique perspective about what is fun or un-fun in Commander, but some cards and play styles make people salty . In competitive games, this is irrelevant or possibly even the point (tilting an opponent can provide a tactical advantage), but in casual gaming it hits different.
+• Proxies: Most casual play groups are okay with proxies under certain conditions, which can help keep costs low or reduce wear on our collection without enforcing restrictions on creativity or power level in deck building.
+• Budget: Some play groups build their decks within specific budget amounts to keep costs low and encourage more unique and affordable card choices.
+• House Rules: If we’re playing with new people, it’s always best to work within established official rules. But if we know our play group and clear it in the Rule Zero step before each game starts, we can do things like ignore the ban list or make up our own rules.
+Even though I don’t partake myself, I like that Competitive Commander (cEDH) exists too. Here’s what I see as benefits to this style:
+
+• Perfect Clarity: As long as all players know when they sit down to play that the game is competitive, there’s no need for a Rule Zero discussion. Everyone is trying to win as quickly as possible and following the letter of the law in the format rules.
+• Testing Grounds: Competitive Commander is an excellent format for evaluating which cards and strategies are most effective or oppressive. These observations inform ban list decisions and can aid casual players in deciding which strategies do and don’t fit into their play groups.
+• Magic Economy: If any Commander format allows for tournaments it’s this one, and competition drives card prices for better or worse. It helps Casual Commander players know the Commander-centered collection we’ve built up over the years will retain or gain value over time. Obviously, we don’t need competitive events to have this value, but tournaments generally don’t allow proxies, so it drives real card value in that aspect.
+• Attracts the Try-hards: Because cEDH exists, we don’t have competitive players joining our casual games and running amok! Everyone gets to play the way they want.
+I don’t hold these as rules for anyone else to follow, but I may choose who I play with based on people who share my views.
+
+I don’t restrict my budget at all unless our group decides to challenge ourselves to do so and I want to be part of the activity.
+
+I like my decks to be eternal, and the market fluctuates so rapidly that it would be hard to maintain a budget ceiling accurately over time. I prefer different design constraints instead.
+
+I believe any player can proxy any card they want for any reason , as long as the proxy is clearly marked.
+
+Some groups don’t allow proxies unless the person owns a real version of the card, but I don’t want anyone to be excluded from playing Commander because they can’t afford the cards they want to play with. Hasbro or the secondary card market making money are not precedents for me enjoying the game.
+
+I prefer my games to last between 10-20 turns , so I don’t aim to ramp and combo out by turn four like many competitive players do. I have a deck or two capable of winning faster, but I also modify the way I play each game to achieve an experience everyone wants.
+
+> Yes, this means I play “sub-optimally” from a competitive perspective. No, this doesn’t diminish my enjoyment of the game. 😁
+
+Yes, this means I play “sub-optimally” from a competitive perspective. No, this doesn’t diminish my enjoyment of the game. 😁
+
+I don’t compromise on mana bases. The variance of being mana screwed or flooded ruins many games and has no positive benefit, so I don’t limit myself in that way.
+
+The only exception to this is I don’t play off-color fetch lands , because I think it goes against the spirit of the format rules.
+
+> Anyone who wants to see my preferences for mana base design can check out My Commander Spreadsheet . Specifically the tabs for Lands and Ramp.
+
+Anyone who wants to see my preferences for mana base design can check out My Commander Spreadsheet . Specifically the tabs for Lands and Ramp.
+
+For everything else, I choose the most niche solution to the current metagame in my play group. If I’m more powerful than the average deck I’m up against lately, I’ll try to find less powerful card options to swap in.
+
+I try to keep the spirit, theme, and flavor of my decks intact, but there are tens of thousands of cards in Magic; I can find something interesting.
+
+I also try not to use tutors often. This isn’t so much a power concern as a deck diversity preference. I’d rather have 99 unique cards in my deck than 90 with nine cards only there to find the others. I’d rather throw in an Abundance or Dig Through Time than a tutor.
+
+When I was a young Magic player, I delighted in torturing my brother with control decks . My favorite one used mana rocks, Armageddon , Wrath of God, Howling Mine , counterspells, and Gaea’s Blessing to slowly grind my opponent into conceding or milling out. I was a fucking monster , and my brother quit the game entirely after a couple years of my abuse.
+
+This is obviously not a sustainable way to play casual Magic. Stopping other people from doing fun things is a good way to stop being invited to play with them. As an adult player, I generally avoid decks that lock people out of their game plans.
+
+I don’t play indiscriminate mass land destruction like Armageddon . I do play targeted land destructio n like Wasteland and Strip Mine though.
+
+Land ramp is a huge tactic in Commander, and the common policy against mass land destruction has allowed it to grow into a bit of an exploit. Because of this, I’m okay with conditional or Balance -type land destruction effects.
+
+Non-basic Land hate is also okay to some degree. I think Ruination is borderline not okay, but From the Ashes is perfectly fine.
+
+Back to Basics and Blood Moon can even be okay because removing the enchantment releases the lands from lockdown. As long as the person playing these spells has a way to quickly win the game ready, it’s not going to make me too salty.
+
+The most hated strategy in all of Magic is often referred to as “Stax” referencing the Smokestacks decks once prevalent in competitive formats.
+
+I don’t build with these strategies and I will usually scoop (concede) against an opponent who locks down the entire table without winning within a turn or two. It’s just a waste of time to have three people watch someone goldfish their deck, and I’d rather move on to the next game.
+
+Countering spells is a perfectly valid and important part of Magic . They are arguably less oppressive in multiplayer games than in 1v1 formats because they are 1-for-1 card advantage actions.
+
+They are also our best defense against some threats , so if we were to give them up we’d see oppressive mechanics rise up in their place.
+
+I try not to counter fun spells. I reserve them for major events like overloaded Cyclonic Rifts or game-ending combo pieces, or to protect my own win conditions.
+
+“Free” counterspells are on the cusp for me. One of the ways we counterplay against instant-speed interaction is by watching our opponents’ mana and waiting for them to tap out before trying our big play. Free counterspells are nearly impossible to play around.
+
+I haven’t stopped using them entirely yet, but I’m aware of how salty they make people and I may stop using them entirely in the near future.
+
+Other “free” spells that don’t counter are fine in my opinion, because they are narrower in their applications.
+
+A turn should never last longer than 2-3 minutes unless the active player is winning that turn or there’s a complex combat phase to detangle.
+
+Cantrips and tutors are, of course, fine cards to play. Players who choose to use them are hopefully taking measures to reduce the amount of time they spend “browsing” to be as quick as possible.
+
+• Spend other players’ turns planning our turn. Don’t distract ourselves with things outside of the game until we know our next play.
+• Don’t wait until the end of the previous player’s turn to use instant speed effects like fetch lands. If we know what we want and secrecy is relevant, we can find the card and place it face-down on the table until we want it to enter the battlefield. Then we can still browse and shuffle while others are taking their turns. If we don’t know what we want yet, we can find the 3-4 options to choose between and set them aside. We’ll still have to shuffle after we choose, but at least the browsing part is faster.
+• If we know what we want and secrecy is relevant, we can find the card and place it face-down on the table until we want it to enter the battlefield. Then we can still browse and shuffle while others are taking their turns.
+• If we don’t know what we want yet, we can find the 3-4 options to choose between and set them aside. We’ll still have to shuffle after we choose, but at least the browsing part is faster.
+• Learn our deck’s lines of play. If it’s our first time playing a new list, a learning curve is understandable, but after a few games we should know how we interact and win.
+
+> There was someone in my play group whose decks were based around re-casting Fact or Fiction effects repeatedly until they found combo pieces to win. There was something so irritating about them forcing the other players at the table to participate in their durdling . Taking ten minute turns and then winning with the same infinite combo every game with redundant countermagic to back it up is probably my least favorite play style. Commander Anecdote
+
+There was someone in my play group whose decks were based around re-casting Fact or Fiction effects repeatedly until they found combo pieces to win. There was something so irritating about them forcing the other players at the table to participate in their durdling .
+
+Taking ten minute turns and then winning with the same infinite combo every game with redundant countermagic to back it up is probably my least favorite play style.
+
+I generally don’t take more than one extra turn in a row, unless I’m winning quickly. Taking over another player’s entire turn is also a no-no for me. This falls under preventing other players from enjoying the game, and I just don’t do it.
+
+Time Stop is entirely acceptable and often awesome though. 😇
+
+All this being said, I continue to monitor each game state independently and change my policies with the times as I find tactics to be fun or un-fun. Control decks are fun for lots of people, and sometimes an Armageddon isn’t so bad if the player using it can end the game quickly after. Context matters!
+
+When I’m not sure how people will react to deck building and gameplay decisions I make, I ask them. We have a Discord server and group chats in my play groups we can use to ask each other about these things.
+
+> 🧂 EDHREC has a wonderful salt meter they use to show the most salt-inspiring card in Commander. The ratings are based on all their users, so any local vibe may differ.
+
+🧂 EDHREC has a wonderful salt meter they use to show the most salt-inspiring card in Commander. The ratings are based on all their users, so any local vibe may differ.
+
+I believe the official Ban List should focus on Competitive Commander, rather than attempting to police the casual metagame. Casual Commander players use Rule Zero to bend or break the official rules anyway.
+
+If anyone reading this plays Competitive Commander and thinks I’m way off-base for wanting to unban some of these cards, let me know in the comments.
+
+Here are some cards I choose not to use in my decks. I don’t hold other players to these standards, but I do evangelize them on occasion in my play groups.
+
+When each player performs any normal game action, like casting a spell or drawing a card, these permanents invoke the question “Will you pay the tax?”. This interaction is annoying and usually provides way too much advantage for its cost, so I don’t play them unless my meta is already full of others doing it.
+
+I have no problem with effects that check the status of the board before triggering an action, or tax effects that only affect combat or other parts of the game that don’t presumably happen every single turn or more .
+
+I believe it’s against the spirit of the Commander format to have a Commander who doesn’t contribute to the theme of their deck. For example, five-color legendary creatures used only to allow a deck to have every color.
+
+I don’t believe every deck needs to completely hinge on their Commander, but I do believe players should cast their Commander at least once per game. At the very least, the Commander’s rules text should contribute to the strategy or flavor of the deck .
+
+Annihilator is an un-fun mechanic. It puts one player incredibly far behind everyone else, usually without finishing them off, and games rarely stay fun after that in my experience.
+
+I often consider removing this personal ban, but I have yet to experience a single game where I thought an Annihilator trigger made it more fun.
+
+When I win the game too many times with a certain card, I retire it from my rotation for a while. Sometimes I retire an entire deck, which is fine too.
+
+Some cards are too broadly powerful or flexible. I don’t think they should be banned, but skipping them allows our decks to be more unique.
+
+Lots of Commander staples are played too often , and I make it my goal to reduce my reliance on them too, but if they aren’t overly powerful I think they’re okay.
+
+I try to build my decks with English versions that don’t obscure their rules text, mana costs, names, or power/toughness. Smartphones allow us to look up the Oracle Text of any card, but…
+
+• No guarantee everyone at the table has signal and battery power
+• Slows the game down
+• Makes it harder to lend a deck to another player
+• Encouraging players at the table to look at their phones can be a gateway to distraction
+I have friends who love their Japanese, Russian, or German cards and I get the aesthetic appeal. I prefer the simplicity of knowing what a card does just by looking at it , at any time, in any zone.
+
+This is just a pet peeve of mine. If the deck creates tokens, bring tokens. There are even cool dry erase cards you can use to make custom tokens for any occasion. Just bring something that represents our board clearly.
+
+Same goes for special coins, dice, life total keepers, etc.
+
+Here are some great content creators for Magic Commander stuff:
+
+• Command Zone (Podcast and YouTube)
+• EDHREC ( Podcast and Website )
+• Tolarian Community College (YouTube)
+• My Commander Spreadsheet

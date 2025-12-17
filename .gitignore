@@ -1,0 +1,10 @@
+# Large data files (exceed GitHub's 100MB limit)
+mtgdata/AllPrintingsCSVFiles.zip
+mtgdata/card data 12.6.25/cardForeignData.csv
+
+# Python virtual environment
+.venv/
+
+# Server logs
+*.out
+*.err
