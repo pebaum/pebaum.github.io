@@ -8,3 +8,7 @@ mtgdata/card data 12.6.25/cardForeignData.csv
 # Server logs
 *.out
 *.err
+
+# Browser data (contains sensitive info, caches, etc.)
+lightphone-notes/browser_data/
+*.exe

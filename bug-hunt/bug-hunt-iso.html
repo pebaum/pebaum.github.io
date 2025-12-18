@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bug Hunt: 16-bit Isometric</title>
+  <style>
+    /* 16-bit inspired palette and pixel edges */
+    :root {
+      --bg: #0d1017;
+      --panel: #1a1f2d;
+      --panel-2: #232b3c;
+      --accent: #ffb347;
+      --accent-2: #6ee7b7;
+      --hp: #ff6b8f;
+      --text: #eef2ff;
+      --muted: #9ca3af;
+      --tile-trail: #44505f;
+      --tile-thicket: #32424f;
+      --tile-bog: #2a353f;
+      --tile-camp: #5ba36a;
+      --bug-s: #f9865b;
+      --bug-m: #5cbef4;
+      --bug-l: #c777ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Press Start 2P", "VT323", "Courier New", monospace;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+    #ui {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 10px;
+      pointer-events: none;
+    }
+    .panel {
+      background: var(--panel);
+      border: 2px solid #2f3747;
+      border-radius: 8px;
+      padding: 10px 12px;
+      pointer-events: auto;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+    }
+    .row { display: flex; gap: 8px; align-items: center; }
+    .col { display: flex; flex-direction: column; gap: 6px; }
+    .btn {
+      padding: 10px 14px;
+      border: 2px solid #2f3747;
+      border-radius: 8px;
+      background: var(--panel-2);
+      color: var(--text);
+      cursor: pointer;
+      font: inherit;
+      text-transform: uppercase;
+    }
+    .btn.primary { background: var(--accent); color: #0d0d0d; }
+    .btn.warning { background: var(--hp); color: #0d0d0d; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .stat-label { color: var(--muted); font-size: 12px; }
+    .stat-value { font-size: 18px; }
+    .hp-bar { width: 160px; height: 10px; background: #2d1a24; border: 2px solid #3f2633; }
+    .hp-fill { height: 100%; background: var(--hp); }
+    .log { height: 120px; overflow-y: auto; font-size: 11px; line-height: 1.4; color: var(--muted); }
+    #instructions { position: absolute; bottom: 12px; right: 12px; width: 280px; }
+    #canvas-wrap { width: 100vw; height: 100vh; }
+    canvas { width: 100%; height: 100%; display: block; background: #0b0f18; }
+    #day-overlay {
+      position: absolute; inset: 0;
+      display: none; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.65);
+      font-size: 32px; text-align: center;
+    }
+    #day-overlay.active { display: flex; }
+  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="canvas-wrap"><canvas id="game"></canvas></div>
+  <div id="ui">
+    <div class="panel col">
+      <div class="row" style="gap:12px;">
+        <div class="col">
+          <span class="stat-label">Health</span>
+          <div class="hp-bar"><div id="hp-fill" class="hp-fill" style="width:100%"></div></div>
+          <span class="stat-value" id="hp-text">10 / 10</span>
+        </div>
+        <div class="col">
+          <span class="stat-label">Points</span>
+          <span class="stat-value" id="points-text">0</span>
+          <span class="stat-label">Movement</span>
+          <span class="stat-value" id="move-text">0</span>
+        </div>
+      </div>
+      <div class="row" style="gap:6px; flex-wrap:wrap;">
+        <span class="stat-label">Bugs</span>
+        <span style="color:var(--bug-s);">S:<span id="bug-s">0</span></span>
+        <span style="color:var(--bug-m);">M:<span id="bug-m">0</span></span>
+        <span style="color:var(--bug-l);">L:<span id="bug-l">0</span></span>
+      </div>
+    </div>
+    <div class="panel col" style="min-width:180px; text-align:center;">
+      <span class="stat-label">Day</span>
+      <span class="stat-value" id="day-text">1 / 3</span>
+      <span class="stat-label">Timer</span>
+      <span class="stat-value" id="timer-text">2:00</span>
+    </div>
+    <div class="panel col" style="gap:8px; min-width:220px;">
+      <div class="row" style="gap:8px; flex-wrap:wrap;">
+        <button class="btn primary" id="btn-start">Start</button>
+        <button class="btn" id="btn-roll" disabled>Roll Move</button>
+        <button class="btn" id="btn-pause" disabled>Pause</button>
+        <button class="btn warning" id="btn-new">New</button>
+      </div>
+      <div class="log" id="log"></div>
+    </div>
+  </div>
+  <div id="instructions" class="panel">
+    <strong>How to Play</strong>
+    <ul style="padding-left:16px; line-height:1.4; font-size:12px;">
+      <li>Roll movement, click tile to move.</li>
+      <li>Enter bug tile to fight (S 4+, M 5+, L 6+; L needs 2 hits).</li>
+      <li>Roll 1-3 = take 1 damage.</li>
+      <li>At 0 HP, respawn at Camp (heal to full).</li>
+      <li>3 Days. Highest points wins.</li>
+    </ul>
+  </div>
+  <div id="day-overlay"></div>
+<script>
+(() => {
+  // ==========================
+  // CONFIG
+  // ==========================
+  const CONFIG = {
+    MAP_RADIUS: 6,
+    TILE_W: 64,
+    TILE_H: 32,
+    LAYERS: 3,
+    DAY_LENGTH: 120,
+    TOTAL_DAYS: 3,
+    PLAYER_MAX_HP: 10,
+    BUGS: { S: {count: 12, target: 4, points: 1, hits: 1, color: '#f9865b'},
+            M: {count: 6, target: 5, points: 2, hits: 1, color: '#5cbef4'},
+            L: {count: 4, target: 6, points: 5, hits: 2, color: '#c777ff'} },
+    TERRAIN: {
+      CAMP: { cost: 0, color: '#5ba36a' },
+      TRAIL: { cost: 1, color: '#44505f' },
+      THICKET: { cost: 2, color: '#32424f' },
+      BOG: { cost: 3, color: '#2a353f' }
+    }
+  };
+
+  // ==========================
+  // STATE
+  // ==========================
+  const state = {
+    day: 1,
+    timeRemaining: CONFIG.DAY_LENGTH,
+    isRunning: false,
+    isPaused: false,
+    lastTick: null,
+    player: {
+      hp: CONFIG.PLAYER_MAX_HP,
+      points: 0,
+      movePoints: 0,
+      pos: { q: 0, r: 0 },
+      bugs: { S:0, M:0, L:0 }
+    },
+    hexes: new Map(),
+    bugs: new Map(),
+    reachable: new Set(),
+    combat: { active: false, bugId: null },
+  };
+
+  // ==========================
+  // CANVAS SETUP
+  // ==========================
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  resize();
+  window.addEventListener('resize', resize);
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    draw();
+  }
+
+  // ==========================
+  // MAP GENERATION
+  // ==========================
+  function hexKey(q,r){ return `${q},${r}`; }
+  function axialToIso(q,r){
+    const x = (q - r) * CONFIG.TILE_W/2;
+    const y = (q + r) * CONFIG.TILE_H/2;
+    return {x, y};
+  }
+  function buildMap(){
+    state.hexes.clear();
+    for(let q=-CONFIG.MAP_RADIUS; q<=CONFIG.MAP_RADIUS; q++){
+      for(let r=-CONFIG.MAP_RADIUS; r<=CONFIG.MAP_RADIUS; r++){
+        const s = -q - r;
+        if(Math.abs(s) > CONFIG.MAP_RADIUS) continue;
+        const key = hexKey(q,r);
+        let terrain;
+        if(q===0 && r===0) terrain='CAMP';
+        else {
+          const roll = Math.random();
+          if(roll<0.5) terrain='TRAIL';
+          else if(roll<0.8) terrain='THICKET';
+          else terrain='BOG';
+        }
+        state.hexes.set(key,{q,r,terrain,bugId:null});
+      }
+    }
+  }
+
+  function placeBugs(){
+    state.bugs.clear();
+    state.hexes.forEach(h=>h.bugId=null);
+    const candidates = Array.from(state.hexes.values()).filter(h=>h.terrain!=='CAMP');
+    shuffle(candidates);
+    let id=0;
+    for(const [size,cfg] of Object.entries(CONFIG.BUGS)){
+      for(let i=0;i<cfg.count && candidates.length;i++){
+        const hex=candidates.pop();
+        const bug={ id:`bug_${id++}`, size, target:cfg.target, points:cfg.points, hits:cfg.hits, hitsLeft:cfg.hits, color:cfg.color, q:hex.q, r:hex.r };
+        state.bugs.set(bug.id,bug);
+        hex.bugId=bug.id;
+      }
+    }
+    updateBugCounts();
+  }
+
+  // ==========================
+  // GAME FLOW
+  // ==========================
+  function startGame(){
+    state.day=1;
+    state.player={ hp:CONFIG.PLAYER_MAX_HP, points:0, movePoints:0, pos:{q:0,r:0}, bugs:{S:0,M:0,L:0} };
+    state.timeRemaining=CONFIG.DAY_LENGTH;
+    state.isRunning=false;
+    state.isPaused=false;
+    state.combat={active:false, bugId:null};
+    state.reachable.clear();
+    buildMap();
+    placeBugs();
+    logClear();
+    logMsg('Welcome to Bug Hunt 16-bit!');
+    draw();
+    updateUI();
+  }
+
+  function startDay(){
+    if(state.isRunning) return;
+    state.isRunning=true;
+    state.isPaused=false;
+    state.lastTick=null;
+    document.getElementById('btn-start').disabled=true;
+    document.getElementById('btn-roll').disabled=false;
+    document.getElementById('btn-pause').disabled=false;
+    logMsg(`Day ${state.day} started!`);
+    requestAnimationFrame(loop);
+  }
+
+  function loop(ts){
+    if(!state.isRunning) return;
+    if(state.lastTick===null) state.lastTick=ts;
+    const dt=(ts-state.lastTick)/1000;
+    state.lastTick=ts;
+    if(!state.isPaused){
+      state.timeRemaining -= dt;
+      if(state.timeRemaining<=0){ endDay(); return; }
+    }
+    draw();
+    updateUI();
+    requestAnimationFrame(loop);
+  }
+
+  function endDay(){
+    state.isRunning=false;
+    if(state.day>=CONFIG.TOTAL_DAYS){ endGame(); return; }
+    state.day++;
+    state.timeRemaining=CONFIG.DAY_LENGTH;
+    state.player.movePoints=0;
+    if(state.combat.active) endCombat();
+    placeBugs();
+    showOverlay(`Day ${state.day}`);
+    document.getElementById('btn-start').disabled=false;
+    document.getElementById('btn-roll').disabled=true;
+    document.getElementById('btn-pause').disabled=true;
+    logMsg(`Day ${state.day} ready.`);
+    updateUI();
+    draw();
+  }
+
+  function endGame(){
+    state.isRunning=false;
+    showOverlay(`Final Score\n${state.player.points} pts`);
+    logMsg('Hunt complete!');
+    document.getElementById('btn-start').disabled=true;
+    document.getElementById('btn-roll').disabled=true;
+    document.getElementById('btn-pause').disabled=true;
+  }
+
+  // ==========================
+  // MOVEMENT & COMBAT
+  // ==========================
+  function rollMove(){
+    if(!state.isRunning || state.isPaused || state.combat.active) return;
+    if(state.player.movePoints>0) return;
+    const roll = Math.floor(Math.random()*6)+1;
+    state.player.movePoints = roll;
+    logMsg(`Rolled ${roll} move`);
+    computeReachable();
+    updateUI();
+    draw();
+  }
+
+  function computeReachable(){
+    state.reachable.clear();
+    if(state.player.movePoints<=0) return;
+    const start = state.player.pos;
+    const qStart=start.q, rStart=start.r;
+    const queue=[{q:qStart,r:rStart,cost:0}];
+    const best=new Map([[hexKey(qStart,rStart),0]]);
+    while(queue.length){
+      const cur=queue.shift();
+      for(const [dq,dr] of [[1,0],[1,-1],[0,-1],[-1,0],[-1,1],[0,1]]){
+        const q=cur.q+dq, r=cur.r+dr; const k=hexKey(q,r);
+        const hex=state.hexes.get(k); if(!hex) continue;
+        const cost=cur.cost + CONFIG.TERRAIN[hex.terrain].cost;
+        if(cost<=state.player.movePoints && (!best.has(k) || best.get(k)>cost)){
+          best.set(k,cost);
+          queue.push({q,r,cost});
+          if(!(q===qStart && r===rStart)) state.reachable.add(k);
+        }
+      }
+    }
+  }
+
+  function moveTo(q,r){
+    const k=hexKey(q,r);
+    if(!state.reachable.has(k)) return;
+    const hex=state.hexes.get(k); if(!hex) return;
+    const cost=CONFIG.TERRAIN[hex.terrain].cost;
+    state.player.movePoints -= cost;
+    state.player.pos = {q,r};
+    logMsg(`Moved to ${hex.terrain} (cost ${cost})`);
+    if(hex.terrain==='CAMP' && state.player.hp<CONFIG.PLAYER_MAX_HP){
+      const healed = CONFIG.PLAYER_MAX_HP - state.player.hp;
+      state.player.hp = CONFIG.PLAYER_MAX_HP;
+      logMsg(`Healed +${healed} HP at Camp`);
+    }
+    if(hex.bugId){ startCombat(hex.bugId); }
+    else { computeReachable(); draw(); updateUI(); }
+  }
+
+  function startCombat(bugId){
+    const bug=state.bugs.get(bugId); if(!bug) return;
+    state.combat={active:true, bugId};
+    state.player.movePoints=0;
+    logMsg(`Engaged ${bug.size} bug (hit ${bug.target}+)`);
+    updateUI();
+  }
+
+  function rollAttack(){
+    if(!state.combat.active || !state.isRunning || state.isPaused) return;
+    const bug=state.bugs.get(state.combat.bugId); if(!bug) return;
+    const roll=Math.floor(Math.random()*6)+1;
+    if(roll>=bug.target){
+      bug.hitsLeft--;
+      logMsg(`Hit! (${bug.hitsLeft} left)`);
+      if(bug.hitsLeft<=0){
+        logMsg(`Defeated ${bug.size} bug +${bug.points}pts`);
+        state.player.points += bug.points;
+        state.player.bugs[bug.size]++;
+        const hex = state.hexes.get(hexKey(bug.q,bug.r));
+        if(hex) hex.bugId=null;
+        state.bugs.delete(bug.id);
+        endCombat();
+        updateBugCounts();
+      }
+    } else {
+      if(roll<=3){
+        state.player.hp--;
+        logMsg(`Stung! -1 HP (${state.player.hp})`);
+        if(state.player.hp<=0){
+          logMsg('Knocked out! Back to Camp');
+          state.player.hp=CONFIG.PLAYER_MAX_HP;
+          state.player.pos={q:0,r:0};
+          endCombat();
+        }
+      } else {
+        logMsg('Miss!');
+      }
+    }
+    draw();
+    updateUI();
+  }
+
+  function endCombat(){
+    state.combat={active:false, bugId:null};
+    state.reachable.clear();
+    computeReachable();
+    draw();
+    updateUI();
+  }
+
+  // ==========================
+  // RENDERING
+  // ==========================
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    const cx = canvas.width/2;
+    const cy = canvas.height/3;
+
+    // Sort tiles by draw order
+    const tiles = Array.from(state.hexes.values()).sort((a,b)=>{
+      return (a.q+a.r) - (b.q+b.r);
+    });
+
+    for(const hex of tiles){
+      const {x,y}=axialToIso(hex.q,hex.r);
+      drawTile(cx+x, cy+y, hex);
+    }
+
+    // Draw bugs
+    for(const bug of state.bugs.values()){
+      const {x,y}=axialToIso(bug.q,bug.r);
+      drawBug(cx+x, cy+y, bug);
+    }
+
+    // Draw player
+    const {q,r}=state.player.pos;
+    const {x,y}=axialToIso(q,r);
+    drawPlayer(cx+x, cy+y);
+
+    // Highlight reachable
+    state.reachable.forEach(k=>{
+      const h=state.hexes.get(k); if(!h) return;
+      const p=axialToIso(h.q,h.r);
+      drawHighlight(cx+p.x, cy+p.y);
+    });
+
+    // Combat prompt
+    if(state.combat.active){
+      ctx.fillStyle='rgba(0,0,0,0.6)';
+      ctx.fillRect(20, canvas.height-120, 280, 100);
+      ctx.strokeStyle='#444'; ctx.strokeRect(20, canvas.height-120, 280, 100);
+      ctx.fillStyle='#fff'; ctx.font='16px VT323';
+      ctx.fillText('In combat: press R to roll attack', 32, canvas.height-90);
+    }
+  }
+
+  function drawTile(x,y,hex){
+    const w=CONFIG.TILE_W, h=CONFIG.TILE_H;
+    const col = CONFIG.TERRAIN[hex.terrain].color;
+    const pts=[
+      [x, y],
+      [x+w/2, y+h/2],
+      [x, y+h],
+      [x-w/2, y+h/2]
+    ];
+    ctx.fillStyle=col;
+    ctx.beginPath();
+    ctx.moveTo(pts[0][0],pts[0][1]);
+    for(let i=1;i<pts.length;i++) ctx.lineTo(pts[i][0],pts[i][1]);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,0.25)';
+    ctx.stroke();
+
+    // Camp marker
+    if(hex.terrain==='CAMP'){
+      ctx.fillStyle='#f7b500';
+      ctx.fillRect(x-6, y+h/2-6, 12, 12);
+    }
+  }
+
+  function drawBug(x,y,bug){
+    const h=CONFIG.TILE_H;
+    ctx.fillStyle=bug.color;
+    ctx.beginPath();
+    ctx.ellipse(x, y+h/2-6, 10, 6, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle='#000';
+    ctx.font='12px VT323';
+    ctx.fillText(bug.size, x-6, y+h/2-10);
+  }
+
+  function drawPlayer(x,y){
+    const h=CONFIG.TILE_H;
+    ctx.fillStyle='#6ee7b7';
+    ctx.fillRect(x-6, y+h/2-14, 12, 14);
+    ctx.fillStyle='#f5d0a9';
+    ctx.fillRect(x-5, y+h/2-20, 10, 8);
+  }
+
+  function drawHighlight(x,y){
+    const w=CONFIG.TILE_W, h=CONFIG.TILE_H;
+    ctx.strokeStyle='rgba(255,255,255,0.6)';
+    ctx.setLineDash([4,4]);
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x+w/2, y+h/2);
+    ctx.lineTo(x, y+h);
+    ctx.lineTo(x-w/2, y+h/2);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // ==========================
+  // UI
+  // ==========================
+  function updateUI(){
+    const hpPct = state.player.hp / CONFIG.PLAYER_MAX_HP * 100;
+    document.getElementById('hp-fill').style.width = hpPct+'%';
+    document.getElementById('hp-text').textContent = `${state.player.hp} / ${CONFIG.PLAYER_MAX_HP}`;
+    document.getElementById('points-text').textContent = state.player.points;
+    document.getElementById('move-text').textContent = state.player.movePoints;
+    document.getElementById('day-text').textContent = `${state.day} / ${CONFIG.TOTAL_DAYS}`;
+    const m=Math.max(0,Math.floor(state.timeRemaining/60));
+    const s=Math.max(0,Math.floor(state.timeRemaining%60)).toString().padStart(2,'0');
+    document.getElementById('timer-text').textContent = `${m}:${s}`;
+    document.getElementById('btn-roll').disabled = !state.isRunning || state.isPaused || state.combat.active || state.player.movePoints>0;
+  }
+
+  function updateBugCounts(){
+    let s=0,m=0,l=0;
+    state.bugs.forEach(b=>{ if(b.size==='S') s++; else if(b.size==='M') m++; else l++; });
+    document.getElementById('bug-s').textContent=s;
+    document.getElementById('bug-m').textContent=m;
+    document.getElementById('bug-l').textContent=l;
+  }
+
+  function showOverlay(text){
+    const el=document.getElementById('day-overlay');
+    el.textContent=text;
+    el.classList.add('active');
+    setTimeout(()=>el.classList.remove('active'), 1500);
+  }
+
+  // ==========================
+  // INPUT
+  // ==========================
+  canvas.addEventListener('click', (e)=>{
+    if(!state.isRunning || state.isPaused || state.combat.active) return;
+    const {q,r}=screenToHex(e.clientX, e.clientY);
+    moveTo(q,r);
+  });
+
+  function screenToHex(px,py){
+    const cx=canvas.width/2, cy=canvas.height/3;
+    const x=px-cx, y=py-cy;
+    // approximate inverse for diamond isometric
+    const q=Math.round((x/(CONFIG.TILE_W/2) + y/(CONFIG.TILE_H/2))/2);
+    const r=Math.round((y/(CONFIG.TILE_H/2) - (x/(CONFIG.TILE_W/2)))/2);
+    return {q,r};
+  }
+
+  document.addEventListener('keydown', (e)=>{
+    if(e.code==='Space'){ e.preventDefault(); if(!state.isRunning) startDay(); else rollMove(); }
+    if(e.code==='KeyR'){ rollAttack(); }
+    if(e.code==='KeyP'){ state.isPaused=!state.isPaused; logMsg(state.isPaused?'Paused':'Resumed'); }
+  });
+
+  // Buttons
+  document.getElementById('btn-start').onclick=startDay;
+  document.getElementById('btn-roll').onclick=rollMove;
+  document.getElementById('btn-pause').onclick=()=>{ state.isPaused=!state.isPaused; logMsg(state.isPaused?'Paused':'Resumed'); updateUI(); };
+  document.getElementById('btn-new').onclick=startGame;
+
+  // ==========================
+  // LOG
+  // ==========================
+  function logMsg(msg){
+    const log=document.getElementById('log');
+    const el=document.createElement('div');
+    el.textContent = `[${timestamp()}] ${msg}`;
+    log.prepend(el);
+    while(log.children.length>50) log.lastChild.remove();
+  }
+  function logClear(){ document.getElementById('log').innerHTML=''; }
+  function timestamp(){
+    const t=Math.max(0,Math.floor(state.timeRemaining));
+    const m=Math.floor(t/60); const s=(t%60).toString().padStart(2,'0');
+    return `${m}:${s}`;
+  }
+
+  // ==========================
+  // UTIL
+  // ==========================
+  function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
+
+  // ==========================
+  // INIT
+  // ==========================
+  startGame();
+})();
+</script>
+</body>
+</html>

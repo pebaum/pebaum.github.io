@@ -1,0 +1,2134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bug Hunt 3D</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0a0a12;
+      color: #e8edf5;
+      overflow: hidden;
+    }
+    
+    #game-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+    }
+    
+    #canvas-container {
+      width: 100%;
+      height: 100%;
+    }
+    
+    /* HUD Overlay */
+    #hud {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      pointer-events: none;
+    }
+    
+    #hud > * {
+      pointer-events: auto;
+    }
+    
+    .hud-panel {
+      background: rgba(15, 22, 40, 0.9);
+      border: 1px solid rgba(94, 224, 181, 0.3);
+      border-radius: 12px;
+      padding: 12px 18px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+    
+    .hud-left {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .hud-center {
+      text-align: center;
+    }
+    
+    .hud-right {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      align-items: flex-end;
+    }
+    
+    /* Day & Timer */
+    #day-display {
+      font-size: 14px;
+      color: #9da9bd;
+      margin-bottom: 4px;
+    }
+    
+    #timer-display {
+      font-size: 42px;
+      font-weight: 700;
+      color: #5ee0b5;
+      text-shadow: 0 0 20px rgba(94, 224, 181, 0.5);
+      font-variant-numeric: tabular-nums;
+    }
+    
+    #timer-display.warning {
+      color: #f7b500;
+      text-shadow: 0 0 20px rgba(247, 181, 0, 0.5);
+    }
+    
+    #timer-display.critical {
+      color: #ff6b6b;
+      text-shadow: 0 0 20px rgba(255, 107, 107, 0.5);
+      animation: pulse 0.5s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    
+    /* Player Stats */
+    .player-stats {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    
+    .stat-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .stat-label {
+      font-size: 11px;
+      color: #9da9bd;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+    }
+    
+    .stat-value.hp {
+      color: #ff6b8f;
+    }
+    
+    .stat-value.points {
+      color: #f7b500;
+    }
+    
+    /* Health Bar */
+    .health-bar-container {
+      width: 120px;
+      height: 8px;
+      background: rgba(255, 107, 143, 0.2);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+    
+    .health-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #ff6b8f, #ff8fa8);
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+    
+    /* Movement Display */
+    #movement-display {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .move-points {
+      font-size: 24px;
+      font-weight: 700;
+      color: #6ba7ff;
+    }
+    
+    /* Action Buttons */
+    .action-buttons {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      max-width: 300px;
+    }
+    
+    .btn {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #5ee0b5, #3bc49a);
+      color: #0a1a14;
+      box-shadow: 0 4px 15px rgba(94, 224, 181, 0.3);
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(94, 224, 181, 0.4);
+    }
+    
+    .btn-secondary {
+      background: rgba(107, 167, 255, 0.2);
+      color: #6ba7ff;
+      border: 1px solid rgba(107, 167, 255, 0.3);
+    }
+    
+    .btn-secondary:hover {
+      background: rgba(107, 167, 255, 0.3);
+    }
+    
+    .btn-warning {
+      background: linear-gradient(135deg, #f7b500, #f59e0b);
+      color: #1a1500;
+    }
+    
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+    
+    /* Combat Panel */
+    #combat-panel {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: none;
+      z-index: 100;
+    }
+    
+    #combat-panel.active {
+      display: block;
+      animation: slideUp 0.3s ease;
+    }
+    
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+    
+    .combat-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      min-width: 320px;
+    }
+    
+    .bug-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    
+    .bug-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+    }
+    
+    .bug-icon.small { background: linear-gradient(135deg, #f9865b, #f97316); }
+    .bug-icon.medium { background: linear-gradient(135deg, #5cbef4, #0ea5e9); }
+    .bug-icon.large { background: linear-gradient(135deg, #c777ff, #a855f7); }
+    
+    .bug-details h3 {
+      font-size: 18px;
+      margin-bottom: 4px;
+    }
+    
+    .bug-details p {
+      font-size: 13px;
+      color: #9da9bd;
+    }
+    
+    .dice-area {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    
+    .dice {
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, #1a2744, #0f1a2e);
+      border: 2px solid #2d3f5e;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      font-weight: 700;
+      transition: all 0.2s ease;
+    }
+    
+    .dice.rolling {
+      animation: diceRoll 0.1s ease infinite;
+    }
+    
+    @keyframes diceRoll {
+      0%, 100% { transform: rotate(-5deg) scale(1.05); }
+      50% { transform: rotate(5deg) scale(1.05); }
+    }
+    
+    .dice.hit {
+      border-color: #5ee0b5;
+      box-shadow: 0 0 20px rgba(94, 224, 181, 0.5);
+      color: #5ee0b5;
+    }
+    
+    .dice.miss {
+      border-color: #ff6b6b;
+      box-shadow: 0 0 20px rgba(255, 107, 107, 0.5);
+      color: #ff6b6b;
+    }
+    
+    .combat-result {
+      font-size: 14px;
+      text-align: center;
+    }
+    
+    /* Bug Counter */
+    .bug-counter {
+      display: flex;
+      gap: 12px;
+    }
+    
+    .bug-count {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 20px;
+    }
+    
+    .bug-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+    
+    .bug-dot.small { background: #f9865b; }
+    .bug-dot.medium { background: #5cbef4; }
+    .bug-dot.large { background: #c777ff; }
+    
+    /* Game Over Screen */
+    #game-over {
+      position: absolute;
+      inset: 0;
+      background: rgba(10, 10, 18, 0.95);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+    }
+    
+    #game-over.active {
+      display: flex;
+    }
+    
+    .game-over-content {
+      text-align: center;
+      animation: fadeIn 0.5s ease;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    
+    .game-over-content h1 {
+      font-size: 48px;
+      margin-bottom: 16px;
+      color: #f7b500;
+      text-shadow: 0 0 40px rgba(247, 181, 0, 0.5);
+    }
+    
+    .final-score {
+      font-size: 72px;
+      font-weight: 700;
+      color: #5ee0b5;
+      margin-bottom: 24px;
+    }
+    
+    .score-breakdown {
+      font-size: 16px;
+      color: #9da9bd;
+      margin-bottom: 32px;
+    }
+    
+    /* Instructions Panel */
+    #instructions {
+      position: absolute;
+      bottom: 24px;
+      right: 24px;
+      max-width: 280px;
+      font-size: 13px;
+      color: #9da9bd;
+    }
+    
+    #instructions h4 {
+      color: #e8edf5;
+      margin-bottom: 8px;
+    }
+    
+    #instructions ul {
+      list-style: none;
+      padding: 0;
+    }
+    
+    #instructions li {
+      margin-bottom: 6px;
+      padding-left: 16px;
+      position: relative;
+    }
+    
+    #instructions li::before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      color: #5ee0b5;
+    }
+    
+    /* Log Panel */
+    #log-panel {
+      position: absolute;
+      bottom: 24px;
+      left: 24px;
+      width: 300px;
+      max-height: 200px;
+      overflow-y: auto;
+      font-size: 12px;
+    }
+    
+    .log-entry {
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      color: #9da9bd;
+    }
+    
+    .log-entry.combat { color: #ff6b8f; }
+    .log-entry.capture { color: #5ee0b5; }
+    .log-entry.move { color: #6ba7ff; }
+    .log-entry.system { color: #f7b500; }
+    
+    /* Floating Damage Numbers */
+    .floating-text {
+      position: absolute;
+      pointer-events: none;
+      font-weight: 700;
+      font-size: 24px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+      animation: floatUp 1s ease-out forwards;
+      z-index: 150;
+    }
+    
+    .floating-text.damage { color: #ff6b8f; }
+    .floating-text.heal { color: #5ee0b5; }
+    .floating-text.points { color: #f7b500; font-size: 32px; }
+    .floating-text.hit { color: #5ee0b5; }
+    .floating-text.miss { color: #9da9bd; }
+    
+    @keyframes floatUp {
+      0% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-60px) scale(1.2); }
+    }
+    
+    /* Screen shake */
+    .shake {
+      animation: shake 0.3s ease-out;
+    }
+    
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-5px) rotate(-0.5deg); }
+      40% { transform: translateX(5px) rotate(0.5deg); }
+      60% { transform: translateX(-3px) rotate(-0.3deg); }
+      80% { transform: translateX(3px) rotate(0.3deg); }
+    }
+    
+    /* Day transition overlay */
+    #day-transition {
+      position: absolute;
+      inset: 0;
+      background: rgba(10, 10, 18, 0.95);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 180;
+      flex-direction: column;
+    }
+    
+    #day-transition.active {
+      display: flex;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    #day-transition h2 {
+      font-size: 64px;
+      color: #f7b500;
+      margin-bottom: 16px;
+      text-shadow: 0 0 40px rgba(247, 181, 0, 0.5);
+    }
+    
+    #day-transition p {
+      font-size: 24px;
+      color: #9da9bd;
+    }
+    
+    /* Camera controls hint */
+    #camera-hint {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 12px;
+      color: #6a7a8a;
+      pointer-events: none;
+      opacity: 0.7;
+    }
+    
+    /* Sound toggle */
+    #sound-toggle {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      z-index: 100;
+    }
+    
+    .sound-btn {
+      background: rgba(15, 22, 40, 0.9);
+      border: 1px solid rgba(94, 224, 181, 0.3);
+      color: #9da9bd;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 18px;
+    }
+    
+    .sound-btn:hover {
+      border-color: #5ee0b5;
+      color: #5ee0b5;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <div id="canvas-container"></div>
+    
+    <!-- HUD Overlay -->
+    <div id="hud">
+      <!-- Left: Player Stats -->
+      <div class="hud-left">
+        <div class="hud-panel player-stats">
+          <div class="stat-group">
+            <span class="stat-label">Health</span>
+            <span class="stat-value hp" id="hp-value">10</span>
+            <div class="health-bar-container">
+              <div class="health-bar" id="health-bar" style="width: 100%"></div>
+            </div>
+          </div>
+          <div class="stat-group">
+            <span class="stat-label">Points</span>
+            <span class="stat-value points" id="points-value">0</span>
+          </div>
+        </div>
+        
+        <div class="hud-panel" id="movement-display">
+          <span class="stat-label">Movement</span>
+          <span class="move-points" id="move-points">0</span>
+          <span style="color: #9da9bd">pts</span>
+        </div>
+      </div>
+      
+      <!-- Center: Day & Timer -->
+      <div class="hud-center">
+        <div class="hud-panel">
+          <div id="day-display">Day 1 of 3</div>
+          <div id="timer-display">2:00</div>
+        </div>
+        <div class="hud-panel bug-counter" style="margin-top: 12px;">
+          <div class="bug-count">
+            <div class="bug-dot small"></div>
+            <span id="bugs-small">0</span>
+          </div>
+          <div class="bug-count">
+            <div class="bug-dot medium"></div>
+            <span id="bugs-medium">0</span>
+          </div>
+          <div class="bug-count">
+            <div class="bug-dot large"></div>
+            <span id="bugs-large">0</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Right: Actions -->
+      <div class="hud-right">
+        <div class="hud-panel action-buttons">
+          <button class="btn btn-primary" id="btn-start">Start Day</button>
+          <button class="btn btn-secondary" id="btn-roll" disabled>Roll Move</button>
+          <button class="btn btn-secondary" id="btn-pause" disabled>Pause</button>
+          <button class="btn btn-warning" id="btn-new-game">New Game</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Combat Panel -->
+    <div id="combat-panel" class="hud-panel">
+      <div class="combat-content">
+        <div class="bug-info">
+          <div class="bug-icon" id="combat-bug-icon">🪲</div>
+          <div class="bug-details">
+            <h3 id="combat-bug-name">Bug Name</h3>
+            <p id="combat-bug-stats">Hit on 4+ • 1 Point</p>
+          </div>
+        </div>
+        <div class="dice-area">
+          <div class="dice" id="combat-dice">-</div>
+          <button class="btn btn-primary" id="btn-attack">Roll Attack!</button>
+        </div>
+        <div class="combat-result" id="combat-result"></div>
+      </div>
+    </div>
+    
+    <!-- Instructions -->
+    <div id="instructions" class="hud-panel">
+      <h4>How to Play</h4>
+      <ul>
+        <li>Roll for movement, click hex to move</li>
+        <li>Enter a bug's hex to fight</li>
+        <li>Roll 4+ for Small, 5+ for Medium, 6+ for Large</li>
+        <li>Roll 1-3 = take 1 damage</li>
+        <li>Large bugs need 2 hits to defeat</li>
+        <li>At 0 HP, respawn at Camp</li>
+      </ul>
+    </div>
+    
+    <!-- Log Panel -->
+    <div id="log-panel" class="hud-panel">
+      <div id="log-content"></div>
+    </div>
+    
+    <!-- Day Transition -->
+    <div id="day-transition">
+      <h2 id="day-transition-title">Day 2</h2>
+      <p id="day-transition-subtitle">Bugs have respawned!</p>
+    </div>
+    
+    <!-- Game Over Screen -->
+    <div id="game-over">
+      <div class="game-over-content">
+        <h1>🏆 Hunt Complete!</h1>
+        <div class="final-score" id="final-score">0</div>
+        <div class="score-breakdown" id="score-breakdown">
+          Small: 0 • Medium: 0 • Large: 0
+        </div>
+        <button class="btn btn-primary" id="btn-play-again" style="font-size: 18px; padding: 16px 32px;">
+          Hunt Again
+        </button>
+      </div>
+    </div>
+    
+    <!-- Sound Toggle -->
+    <div id="sound-toggle">
+      <button class="sound-btn" id="btn-sound" title="Toggle Sound">🔊</button>
+    </div>
+    
+    <!-- Camera Hint -->
+    <div id="camera-hint">🖱️ Drag to rotate • Scroll to zoom • Middle-click to pan</div>
+  </div>
+
+  <!-- Three.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    // ============================================
+    // GAME CONFIGURATION
+    // ============================================
+    const CONFIG = {
+      MAP_RADIUS: 5,
+      DAY_LENGTH: 120, // seconds
+      TOTAL_DAYS: 3,
+      PLAYER_MAX_HP: 10,
+      BUGS: {
+        SMALL: { count: 12, target: 4, points: 1, hits: 1, color: 0xf9865b, emoji: '🦟' },
+        MEDIUM: { count: 6, target: 5, points: 2, hits: 1, color: 0x5cbef4, emoji: '🪲' },
+        LARGE: { count: 4, target: 6, points: 5, hits: 2, color: 0xc777ff, emoji: '🦂' }
+      },
+      TERRAIN: {
+        CAMP: { cost: 0, color: 0x2d4a3e, height: 0.1 },
+        TRAIL: { cost: 1, color: 0x3d5c47, height: 0.15 },
+        THICKET: { cost: 2, color: 0x2a4a35, height: 0.25 },
+        BOG: { cost: 3, color: 0x1a3a2a, height: 0.08 }
+      },
+      HEX_SIZE: 1,
+      HEX_GAP: 0.05
+    };
+
+    // ============================================
+    // GAME STATE
+    // ============================================
+    const state = {
+      day: 1,
+      timeRemaining: CONFIG.DAY_LENGTH,
+      isRunning: false,
+      isPaused: false,
+      
+      player: {
+        hp: CONFIG.PLAYER_MAX_HP,
+        points: 0,
+        position: { q: 0, r: 0 },
+        movePoints: 0,
+        bugsCollected: { small: 0, medium: 0, large: 0 }
+      },
+      
+      hexes: new Map(),
+      bugs: new Map(),
+      
+      combat: {
+        active: false,
+        bugId: null,
+        hitsLanded: 0
+      },
+      
+      reachableHexes: new Set()
+    };
+
+    // Timing
+    let lastTick = null;
+
+    // ============================================
+    // THREE.JS SETUP
+    // ============================================
+    let scene, camera, renderer, raycaster, mouse;
+    let playerMesh, campMesh;
+    let hexMeshes = new Map();
+    let bugMeshes = new Map();
+    let highlightMeshes = [];
+    
+    // Camera controls (isometric orthographic)
+    let cameraControls = {
+      isPanning: false,
+      lastX: 0,
+      lastY: 0,
+      target: null, // Will be initialized after THREE.js loads
+      panSpeed: 0.02,
+      zoom: 1,
+      minZoom: 0.6,
+      maxZoom: 2,
+      isoOffset: { x: 14, y: 18, z: 14 }
+    };
+    
+    // Particle system
+    let particles = [];
+    let particleGeometry, particleMaterial, particleSystem;
+    
+    // Audio system
+    const audioContext = typeof AudioContext !== 'undefined' ? new AudioContext() : null;
+    let soundEnabled = true;
+    
+    // Floating text elements
+    let floatingTexts = [];
+
+    function initThree() {
+      // Initialize camera target now that THREE is loaded
+      cameraControls.target = new THREE.Vector3(0, 0, 0);
+      
+      // Scene
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0a1a14);
+      scene.fog = new THREE.Fog(0x0a1a14, 25, 55);
+      
+      // Camera (orthographic isometric)
+      const aspect = window.innerWidth / window.innerHeight;
+      const viewSize = 28;
+      camera = new THREE.OrthographicCamera(
+        (-viewSize * aspect) / 2,
+        (viewSize * aspect) / 2,
+        viewSize / 2,
+        -viewSize / 2,
+        0.1,
+        200
+      );
+      updateCameraPosition();
+      
+      // Renderer
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      document.getElementById('canvas-container').appendChild(renderer.domElement);
+      
+      // Raycaster for mouse picking
+      raycaster = new THREE.Raycaster();
+      mouse = new THREE.Vector2();
+      
+      // Lighting
+      setupLighting();
+      
+      // Environment
+      createEnvironment();
+      
+      // Event listeners
+      window.addEventListener('resize', onWindowResize);
+      renderer.domElement.addEventListener('click', onCanvasClick);
+      renderer.domElement.addEventListener('mousemove', onCanvasHover);
+      
+      // Camera control events
+      renderer.domElement.addEventListener('mousedown', onCameraMouseDown);
+      renderer.domElement.addEventListener('mousemove', onCameraMouseMove);
+      renderer.domElement.addEventListener('mouseup', onCameraMouseUp);
+      renderer.domElement.addEventListener('mouseleave', onCameraMouseUp);
+      renderer.domElement.addEventListener('wheel', onCameraWheel, { passive: false });
+      renderer.domElement.addEventListener('contextmenu', e => e.preventDefault());
+      
+      // Initialize particle system
+      initParticles();
+      
+      // Update camera position
+      updateCameraPosition();
+    }
+
+    function setupLighting() {
+      // Ambient light
+      const ambient = new THREE.AmbientLight(0x4a6a5a, 0.6);
+      scene.add(ambient);
+      
+      // Main directional light (sun)
+      const sun = new THREE.DirectionalLight(0xfff5e0, 1.0);
+      sun.position.set(5, 15, 5);
+      sun.castShadow = true;
+      sun.shadow.mapSize.width = 2048;
+      sun.shadow.mapSize.height = 2048;
+      sun.shadow.camera.near = 0.5;
+      sun.shadow.camera.far = 50;
+      sun.shadow.camera.left = -15;
+      sun.shadow.camera.right = 15;
+      sun.shadow.camera.top = 15;
+      sun.shadow.camera.bottom = -15;
+      scene.add(sun);
+      
+      // Fill light
+      const fill = new THREE.DirectionalLight(0x5ee0b5, 0.3);
+      fill.position.set(-5, 5, -5);
+      scene.add(fill);
+      
+      // Point light at camp
+      const campLight = new THREE.PointLight(0xf7b500, 1, 5);
+      campLight.position.set(0, 1.5, 0);
+      scene.add(campLight);
+    }
+
+    function createEnvironment() {
+      // Ground plane (under hexes)
+      const groundGeo = new THREE.PlaneGeometry(50, 50);
+      const groundMat = new THREE.MeshStandardMaterial({ 
+        color: 0x0a1a14,
+        roughness: 1
+      });
+      const ground = new THREE.Mesh(groundGeo, groundMat);
+      ground.rotation.x = -Math.PI / 2;
+      ground.position.y = -0.1;
+      ground.receiveShadow = true;
+      scene.add(ground);
+      
+      // Add some scattered trees in background
+      for (let i = 0; i < 30; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 12 + Math.random() * 8;
+        const x = Math.cos(angle) * dist;
+        const z = Math.sin(angle) * dist;
+        createTree(x, z);
+      }
+    }
+
+    function createTree(x, z) {
+      const trunkGeo = new THREE.CylinderGeometry(0.1, 0.15, 1.5, 6);
+      const trunkMat = new THREE.MeshStandardMaterial({ color: 0x3d2817 });
+      const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+      trunk.position.set(x, 0.75, z);
+      trunk.castShadow = true;
+      scene.add(trunk);
+      
+      const foliageGeo = new THREE.ConeGeometry(0.8, 2, 6);
+      const foliageMat = new THREE.MeshStandardMaterial({ color: 0x1a4a2a });
+      const foliage = new THREE.Mesh(foliageGeo, foliageMat);
+      foliage.position.set(x, 2.2 + Math.random() * 0.5, z);
+      foliage.castShadow = true;
+      scene.add(foliage);
+    }
+    
+    // ============================================
+    // PARTICLE SYSTEM
+    // ============================================
+    function initParticles() {
+      // Create particle geometry
+      particleGeometry = new THREE.BufferGeometry();
+      const positions = new Float32Array(500 * 3);
+      const colors = new Float32Array(500 * 3);
+      const sizes = new Float32Array(500);
+      
+      for (let i = 0; i < 500; i++) {
+        positions[i * 3] = 0;
+        positions[i * 3 + 1] = -100; // Hidden below scene
+        positions[i * 3 + 2] = 0;
+        colors[i * 3] = 1;
+        colors[i * 3 + 1] = 1;
+        colors[i * 3 + 2] = 1;
+        sizes[i] = 0;
+      }
+      
+      particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      particleGeometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+      
+      particleMaterial = new THREE.PointsMaterial({
+        size: 0.15,
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.8,
+        sizeAttenuation: true
+      });
+      
+      particleSystem = new THREE.Points(particleGeometry, particleMaterial);
+      scene.add(particleSystem);
+    }
+    
+    function spawnParticles(x, y, z, color, count = 20, spread = 0.5) {
+      const positions = particleGeometry.attributes.position.array;
+      const colors = particleGeometry.attributes.color.array;
+      
+      const r = ((color >> 16) & 255) / 255;
+      const g = ((color >> 8) & 255) / 255;
+      const b = (color & 255) / 255;
+      
+      for (let i = 0; i < count; i++) {
+        const idx = particles.length % 500;
+        
+        const particle = {
+          idx,
+          x: x + (Math.random() - 0.5) * spread,
+          y: y + Math.random() * spread,
+          z: z + (Math.random() - 0.5) * spread,
+          vx: (Math.random() - 0.5) * 0.1,
+          vy: Math.random() * 0.15 + 0.05,
+          vz: (Math.random() - 0.5) * 0.1,
+          life: 1.0,
+          decay: 0.02 + Math.random() * 0.02
+        };
+        
+        positions[idx * 3] = particle.x;
+        positions[idx * 3 + 1] = particle.y;
+        positions[idx * 3 + 2] = particle.z;
+        colors[idx * 3] = r;
+        colors[idx * 3 + 1] = g;
+        colors[idx * 3 + 2] = b;
+        
+        particles.push(particle);
+      }
+      
+      particleGeometry.attributes.position.needsUpdate = true;
+      particleGeometry.attributes.color.needsUpdate = true;
+    }
+    
+    function updateParticles() {
+      const positions = particleGeometry.attributes.position.array;
+      
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.z += p.vz;
+        p.vy -= 0.005; // gravity
+        p.life -= p.decay;
+        
+        positions[p.idx * 3] = p.x;
+        positions[p.idx * 3 + 1] = p.y;
+        positions[p.idx * 3 + 2] = p.z;
+        
+        if (p.life <= 0) {
+          positions[p.idx * 3 + 1] = -100; // Hide
+          particles.splice(i, 1);
+        }
+      }
+      
+      particleGeometry.attributes.position.needsUpdate = true;
+    }
+    
+    // ============================================
+    // CAMERA CONTROLS
+    // ============================================
+    function updateCameraPosition() {
+      if (!cameraControls.target || !camera) return;
+      const { target, isoOffset, zoom } = cameraControls;
+      camera.position.set(
+        target.x + isoOffset.x,
+        target.y + isoOffset.y,
+        target.z + isoOffset.z
+      );
+      camera.zoom = zoom;
+      camera.updateProjectionMatrix();
+      camera.lookAt(target);
+    }
+    
+    function onCameraMouseDown(event) {
+      if (event.button === 0 || event.button === 1 || event.button === 2) {
+        cameraControls.isPanning = true;
+        cameraControls.lastX = event.clientX;
+        cameraControls.lastY = event.clientY;
+      }
+    }
+    
+    function onCameraMouseMove(event) {
+      if (!cameraControls.isPanning) return;
+      const deltaX = event.clientX - cameraControls.lastX;
+      const deltaY = event.clientY - cameraControls.lastY;
+      
+      cameraControls.target.x -= deltaX * cameraControls.panSpeed;
+      cameraControls.target.z += deltaY * cameraControls.panSpeed;
+      
+      updateCameraPosition();
+      cameraControls.lastX = event.clientX;
+      cameraControls.lastY = event.clientY;
+    }
+    
+    function onCameraMouseUp() {
+      cameraControls.isPanning = false;
+    }
+    
+    function onCameraWheel(event) {
+      event.preventDefault();
+      cameraControls.zoom += (event.deltaY > 0 ? -0.1 : 0.1);
+      cameraControls.zoom = Math.max(cameraControls.minZoom, Math.min(cameraControls.maxZoom, cameraControls.zoom));
+      updateCameraPosition();
+    }
+    
+    function focusOnPlayer() {
+      const { q, r } = state.player.position;
+      const { x, z } = hexToWorld(q, r);
+      const startPos = cameraControls.target.clone();
+      const targetPos = new THREE.Vector3(x, 0, z);
+      const duration = 400;
+      const start = performance.now();
+      
+      function step(ts) {
+        const t = Math.min((ts - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - t, 3);
+        cameraControls.target.lerpVectors(startPos, targetPos, eased);
+        updateCameraPosition();
+        if (t < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+
+    // ============================================
+    // HEX GRID UTILITIES
+    // ============================================
+    function hexKey(q, r) {
+      return `${q},${r}`;
+    }
+
+    function parseHexKey(key) {
+      const [q, r] = key.split(',').map(Number);
+      return { q, r };
+    }
+
+    function hexToWorld(q, r) {
+      const size = CONFIG.HEX_SIZE;
+      const x = size * Math.sqrt(3) * (q + r / 2);
+      const z = size * 1.5 * r;
+      return { x, z };
+    }
+
+    function getHexNeighbors(q, r) {
+      const directions = [
+        [1, 0], [1, -1], [0, -1],
+        [-1, 0], [-1, 1], [0, 1]
+      ];
+      return directions.map(([dq, dr]) => ({ q: q + dq, r: r + dr }));
+    }
+
+    function hexDistance(q1, r1, q2, r2) {
+      return (Math.abs(q1 - q2) + Math.abs(q1 + r1 - q2 - r2) + Math.abs(r1 - r2)) / 2;
+    }
+
+    function createHexGeometry(size) {
+      const shape = new THREE.Shape();
+      for (let i = 0; i < 6; i++) {
+        const angle = (Math.PI / 3) * i - Math.PI / 6;
+        const x = size * Math.cos(angle);
+        const y = size * Math.sin(angle);
+        if (i === 0) shape.moveTo(x, y);
+        else shape.lineTo(x, y);
+      }
+      shape.closePath();
+      
+      const extrudeSettings = { depth: 0.1, bevelEnabled: false };
+      return new THREE.ExtrudeGeometry(shape, extrudeSettings);
+    }
+
+    // ============================================
+    // MAP GENERATION
+    // ============================================
+    function generateMap() {
+      state.hexes.clear();
+      hexMeshes.forEach(mesh => scene.remove(mesh));
+      hexMeshes.clear();
+      
+      const hexGeo = createHexGeometry(CONFIG.HEX_SIZE - CONFIG.HEX_GAP);
+      
+      for (let q = -CONFIG.MAP_RADIUS; q <= CONFIG.MAP_RADIUS; q++) {
+        for (let r = -CONFIG.MAP_RADIUS; r <= CONFIG.MAP_RADIUS; r++) {
+          const s = -q - r;
+          if (Math.abs(s) > CONFIG.MAP_RADIUS) continue;
+          
+          const key = hexKey(q, r);
+          const isCamp = q === 0 && r === 0;
+          
+          // Determine terrain type
+          let terrain;
+          if (isCamp) {
+            terrain = 'CAMP';
+          } else {
+            const roll = Math.random();
+            if (roll < 0.5) terrain = 'TRAIL';
+            else if (roll < 0.8) terrain = 'THICKET';
+            else terrain = 'BOG';
+          }
+          
+          const terrainData = CONFIG.TERRAIN[terrain];
+          
+          state.hexes.set(key, {
+            q, r, terrain,
+            cost: terrainData.cost,
+            bugId: null
+          });
+          
+          // Create mesh
+          const material = new THREE.MeshStandardMaterial({
+            color: terrainData.color,
+            roughness: 0.8,
+            metalness: 0.1
+          });
+          
+          const mesh = new THREE.Mesh(hexGeo, material);
+          const { x, z } = hexToWorld(q, r);
+          mesh.position.set(x, terrainData.height / 2, z);
+          mesh.rotation.x = -Math.PI / 2;
+          mesh.receiveShadow = true;
+          mesh.userData = { type: 'hex', key, q, r };
+          
+          scene.add(mesh);
+          hexMeshes.set(key, mesh);
+        }
+      }
+      
+      // Create camp marker
+      createCampMarker();
+    }
+
+    function createCampMarker() {
+      const geometry = new THREE.CylinderGeometry(0.3, 0.4, 0.5, 6);
+      const material = new THREE.MeshStandardMaterial({
+        color: 0xf7b500,
+        emissive: 0xf7b500,
+        emissiveIntensity: 0.3
+      });
+      campMesh = new THREE.Mesh(geometry, material);
+      campMesh.position.set(0, 0.35, 0);
+      campMesh.castShadow = true;
+      scene.add(campMesh);
+    }
+
+    // ============================================
+    // PLAYER
+    // ============================================
+    function createPlayer() {
+      // Simple character: body + head
+      const group = new THREE.Group();
+      
+      // Body (cylinder + top sphere to avoid CapsuleGeometry availability issues)
+      const bodyMat = new THREE.MeshStandardMaterial({ color: 0x5ee0b5 });
+      const bodyCylinder = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.2, 0.2, 0.6, 12),
+        bodyMat
+      );
+      bodyCylinder.position.y = 0.5;
+      bodyCylinder.castShadow = true;
+      group.add(bodyCylinder);
+
+      const bodyCap = new THREE.Mesh(
+        new THREE.SphereGeometry(0.2, 16, 12),
+        bodyMat
+      );
+      bodyCap.position.y = bodyCylinder.position.y + 0.3;
+      bodyCap.castShadow = true;
+      group.add(bodyCap);
+      
+      // Head
+      const headGeo = new THREE.SphereGeometry(0.18, 16, 16);
+      const headMat = new THREE.MeshStandardMaterial({ color: 0xf5d0a9 });
+      const head = new THREE.Mesh(headGeo, headMat);
+      head.position.y = 0.85;
+      head.castShadow = true;
+      group.add(head);
+      
+      // Spear
+      const spearGeo = new THREE.CylinderGeometry(0.03, 0.03, 1.2, 8);
+      const spearMat = new THREE.MeshStandardMaterial({ color: 0x8b4513 });
+      const spear = new THREE.Mesh(spearGeo, spearMat);
+      spear.position.set(0.25, 0.6, 0);
+      spear.rotation.z = Math.PI / 6;
+      group.add(spear);
+      
+      // Spear tip
+      const tipGeo = new THREE.ConeGeometry(0.06, 0.15, 8);
+      const tipMat = new THREE.MeshStandardMaterial({ color: 0xcccccc });
+      const tip = new THREE.Mesh(tipGeo, tipMat);
+      tip.position.set(0.45, 1.1, 0);
+      tip.rotation.z = Math.PI / 6;
+      group.add(tip);
+      
+      playerMesh = group;
+      scene.add(playerMesh);
+      updatePlayerPosition();
+    }
+
+    function updatePlayerPosition(animate = false) {
+      const { q, r } = state.player.position;
+      const { x, z } = hexToWorld(q, r);
+      
+      if (animate && playerMesh) {
+        // Simple animation
+        const startX = playerMesh.position.x;
+        const startZ = playerMesh.position.z;
+        const duration = 300;
+        const startTime = Date.now();
+        
+        function animateStep() {
+          const elapsed = Date.now() - startTime;
+          const t = Math.min(elapsed / duration, 1);
+          const eased = 1 - Math.pow(1 - t, 3); // ease out cubic
+          
+          playerMesh.position.x = startX + (x - startX) * eased;
+          playerMesh.position.z = startZ + (z - startZ) * eased;
+          playerMesh.position.y = 0.1 + Math.sin(t * Math.PI) * 0.2; // hop
+          
+          if (t < 1) requestAnimationFrame(animateStep);
+          else playerMesh.position.y = 0.1;
+        }
+        animateStep();
+      } else if (playerMesh) {
+        playerMesh.position.set(x, 0.1, z);
+      }
+    }
+
+    // ============================================
+    // BUGS
+    // ============================================
+    function spawnBugs() {
+      // Clear existing bugs
+      state.bugs.clear();
+      bugMeshes.forEach(mesh => scene.remove(mesh));
+      bugMeshes.clear();
+      state.hexes.forEach(hex => hex.bugId = null);
+      
+      // Get available hexes (not camp)
+      const availableHexes = Array.from(state.hexes.values())
+        .filter(hex => hex.terrain !== 'CAMP');
+      shuffle(availableHexes);
+      
+      let bugId = 0;
+      let hexIndex = 0;
+      
+      // Spawn each bug type
+      for (const [size, config] of Object.entries(CONFIG.BUGS)) {
+        for (let i = 0; i < config.count && hexIndex < availableHexes.length; i++) {
+          const hex = availableHexes[hexIndex++];
+          const id = `bug_${bugId++}`;
+          
+          state.bugs.set(id, {
+            id,
+            size,
+            ...config,
+            hitsRemaining: config.hits,
+            hex: hexKey(hex.q, hex.r)
+          });
+          
+          hex.bugId = id;
+          createBugMesh(id, hex.q, hex.r, size, config);
+        }
+      }
+      
+      updateBugCounts();
+    }
+
+    function createBugMesh(id, q, r, size, config) {
+      const { x, z } = hexToWorld(q, r);
+      
+      // Bug body
+      const scale = size === 'SMALL' ? 0.2 : size === 'MEDIUM' ? 0.3 : 0.45;
+      const bodyGeo = new THREE.SphereGeometry(scale, 16, 12);
+      const bodyMat = new THREE.MeshStandardMaterial({
+        color: config.color,
+        roughness: 0.4,
+        metalness: 0.2
+      });
+      
+      const group = new THREE.Group();
+      const body = new THREE.Mesh(bodyGeo, bodyMat);
+      body.position.y = scale;
+      body.castShadow = true;
+      group.add(body);
+      
+      // Legs (simple cylinders)
+      const legMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a });
+      for (let i = 0; i < 6; i++) {
+        const angle = (Math.PI / 3) * i;
+        const legGeo = new THREE.CylinderGeometry(0.02, 0.02, scale * 0.8, 4);
+        const leg = new THREE.Mesh(legGeo, legMat);
+        leg.position.set(
+          Math.cos(angle) * scale * 0.8,
+          scale * 0.3,
+          Math.sin(angle) * scale * 0.8
+        );
+        leg.rotation.z = Math.PI / 4 * (i % 2 ? 1 : -1);
+        group.add(leg);
+      }
+      
+      // Eyes
+      const eyeMat = new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 0.5 });
+      const eyeGeo = new THREE.SphereGeometry(scale * 0.15, 8, 8);
+      const eye1 = new THREE.Mesh(eyeGeo, eyeMat);
+      eye1.position.set(scale * 0.5, scale * 1.2, scale * 0.3);
+      group.add(eye1);
+      const eye2 = new THREE.Mesh(eyeGeo, eyeMat);
+      eye2.position.set(scale * 0.5, scale * 1.2, -scale * 0.3);
+      group.add(eye2);
+      
+      group.position.set(x, 0.1, z);
+      group.userData = { type: 'bug', id };
+      
+      scene.add(group);
+      bugMeshes.set(id, group);
+      
+      // Idle animation
+      animateBug(group, scale);
+    }
+
+    function animateBug(group, scale) {
+      const startY = group.position.y;
+      const speed = 0.002 + Math.random() * 0.001;
+      const offset = Math.random() * Math.PI * 2;
+      
+      function animate() {
+        if (!bugMeshes.has(group.userData.id)) return;
+        group.position.y = startY + Math.sin(Date.now() * speed + offset) * 0.05;
+        group.rotation.y += 0.005;
+        requestAnimationFrame(animate);
+      }
+      animate();
+    }
+
+    // ============================================
+    // AUDIO SYSTEM
+    // ============================================
+    function playSound(type) {
+      if (!soundEnabled || !audioContext) return;
+      
+      // Resume audio context if suspended
+      if (audioContext.state === 'suspended') {
+        audioContext.resume();
+      }
+      
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      const now = audioContext.currentTime;
+      
+      switch(type) {
+        case 'hit':
+          oscillator.frequency.setValueAtTime(880, now);
+          oscillator.frequency.exponentialRampToValueAtTime(440, now + 0.1);
+          gainNode.gain.setValueAtTime(0.3, now);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+          oscillator.start(now);
+          oscillator.stop(now + 0.15);
+          break;
+          
+        case 'miss':
+          oscillator.frequency.setValueAtTime(200, now);
+          oscillator.frequency.exponentialRampToValueAtTime(100, now + 0.15);
+          gainNode.gain.setValueAtTime(0.2, now);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+          oscillator.start(now);
+          oscillator.stop(now + 0.15);
+          break;
+          
+        case 'damage':
+          oscillator.type = 'sawtooth';
+          oscillator.frequency.setValueAtTime(150, now);
+          gainNode.gain.setValueAtTime(0.25, now);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+          oscillator.start(now);
+          oscillator.stop(now + 0.2);
+          break;
+          
+        case 'capture':
+          oscillator.frequency.setValueAtTime(523, now);
+          oscillator.frequency.setValueAtTime(659, now + 0.1);
+          oscillator.frequency.setValueAtTime(784, now + 0.2);
+          gainNode.gain.setValueAtTime(0.3, now);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+          oscillator.start(now);
+          oscillator.stop(now + 0.4);
+          break;
+          
+        case 'move':
+          oscillator.frequency.setValueAtTime(330, now);
+          oscillator.frequency.exponentialRampToValueAtTime(440, now + 0.05);
+          gainNode.gain.setValueAtTime(0.15, now);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+          oscillator.start(now);
+          oscillator.stop(now + 0.08);
+          break;
+          
+        case 'roll':
+          oscillator.type = 'square';
+          oscillator.frequency.setValueAtTime(220, now);
+          oscillator.frequency.setValueAtTime(330, now + 0.05);
+          oscillator.frequency.setValueAtTime(440, now + 0.1);
+          gainNode.gain.setValueAtTime(0.2, now);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+          oscillator.start(now);
+          oscillator.stop(now + 0.15);
+          break;
+          
+        case 'dayEnd':
+          oscillator.frequency.setValueAtTime(440, now);
+          oscillator.frequency.setValueAtTime(349, now + 0.2);
+          oscillator.frequency.setValueAtTime(262, now + 0.4);
+          gainNode.gain.setValueAtTime(0.3, now);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+          oscillator.start(now);
+          oscillator.stop(now + 0.6);
+          break;
+          
+        case 'victory':
+          const osc2 = audioContext.createOscillator();
+          const gain2 = audioContext.createGain();
+          osc2.connect(gain2);
+          gain2.connect(audioContext.destination);
+          
+          oscillator.frequency.setValueAtTime(523, now);
+          oscillator.frequency.setValueAtTime(659, now + 0.15);
+          oscillator.frequency.setValueAtTime(784, now + 0.3);
+          oscillator.frequency.setValueAtTime(1047, now + 0.45);
+          
+          osc2.frequency.setValueAtTime(262, now);
+          osc2.frequency.setValueAtTime(330, now + 0.15);
+          osc2.frequency.setValueAtTime(392, now + 0.3);
+          osc2.frequency.setValueAtTime(523, now + 0.45);
+          
+          gainNode.gain.setValueAtTime(0.25, now);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
+          gain2.gain.setValueAtTime(0.2, now);
+          gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
+          
+          oscillator.start(now);
+          oscillator.stop(now + 0.8);
+          osc2.start(now);
+          osc2.stop(now + 0.8);
+          break;
+      }
+    }
+    
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      document.getElementById('btn-sound').textContent = soundEnabled ? '🔊' : '🔇';
+    }
+    
+    // ============================================
+    // FLOATING TEXT
+    // ============================================
+    function showFloatingText(worldX, worldZ, text, type) {
+      // Convert world position to screen position
+      const vector = new THREE.Vector3(worldX, 1, worldZ);
+      vector.project(camera);
+      
+      const x = (vector.x * 0.5 + 0.5) * window.innerWidth;
+      const y = (-(vector.y * 0.5) + 0.5) * window.innerHeight;
+      
+      const el = document.createElement('div');
+      el.className = `floating-text ${type}`;
+      el.textContent = text;
+      el.style.left = x + 'px';
+      el.style.top = y + 'px';
+      
+      document.getElementById('game-container').appendChild(el);
+      
+      setTimeout(() => el.remove(), 1000);
+    }
+    
+    // ============================================
+    // SCREEN EFFECTS
+    // ============================================
+    function screenShake() {
+      const container = document.getElementById('canvas-container');
+      container.classList.add('shake');
+      setTimeout(() => container.classList.remove('shake'), 300);
+    }
+    
+    function removeBug(id) {
+      const mesh = bugMeshes.get(id);
+      if (mesh) {
+        // Spawn death particles
+        const bug = state.bugs.get(id);
+        if (bug) {
+          spawnParticles(mesh.position.x, mesh.position.y + 0.3, mesh.position.z, bug.color, 30, 0.8);
+        }
+        scene.remove(mesh);
+        bugMeshes.delete(id);
+      }
+      state.bugs.delete(id);
+    }
+
+    // ============================================
+    // MOVEMENT & PATHFINDING
+    // ============================================
+    function calculateReachableHexes() {
+      state.reachableHexes.clear();
+      clearHighlights();
+      
+      if (state.player.movePoints <= 0 || state.combat.active) return;
+      
+      const { q: startQ, r: startR } = state.player.position;
+      const visited = new Map();
+      const queue = [{ q: startQ, r: startR, cost: 0 }];
+      visited.set(hexKey(startQ, startR), 0);
+      
+      while (queue.length > 0) {
+        const current = queue.shift();
+        
+        for (const neighbor of getHexNeighbors(current.q, current.r)) {
+          const key = hexKey(neighbor.q, neighbor.r);
+          const hex = state.hexes.get(key);
+          
+          if (!hex) continue;
+          
+          const totalCost = current.cost + hex.cost;
+          
+          if (totalCost <= state.player.movePoints) {
+            if (!visited.has(key) || visited.get(key) > totalCost) {
+              visited.set(key, totalCost);
+              queue.push({ ...neighbor, cost: totalCost });
+              
+              if (key !== hexKey(startQ, startR)) {
+                state.reachableHexes.add(key);
+              }
+            }
+          }
+        }
+      }
+      
+      // Highlight reachable hexes
+      highlightReachableHexes();
+    }
+
+    function highlightReachableHexes() {
+      clearHighlights();
+      
+      state.reachableHexes.forEach(key => {
+        const hex = state.hexes.get(key);
+        const { x, z } = hexToWorld(hex.q, hex.r);
+        
+        const ringGeo = new THREE.RingGeometry(CONFIG.HEX_SIZE * 0.7, CONFIG.HEX_SIZE * 0.85, 6);
+        const ringMat = new THREE.MeshBasicMaterial({
+          color: hex.bugId ? 0xff6b8f : 0x5ee0b5,
+          transparent: true,
+          opacity: 0.6,
+          side: THREE.DoubleSide
+        });
+        
+        const ring = new THREE.Mesh(ringGeo, ringMat);
+        ring.position.set(x, 0.25, z);
+        ring.rotation.x = -Math.PI / 2;
+        ring.userData = { type: 'highlight', key };
+        
+        scene.add(ring);
+        highlightMeshes.push(ring);
+      });
+    }
+
+    function clearHighlights() {
+      highlightMeshes.forEach(mesh => scene.remove(mesh));
+      highlightMeshes = [];
+    }
+
+    function movePlayer(targetQ, targetR) {
+      const targetKey = hexKey(targetQ, targetR);
+      const hex = state.hexes.get(targetKey);
+      
+      if (!hex || !state.reachableHexes.has(targetKey)) return;
+      
+      // Calculate path and cost
+      const cost = hex.cost;
+      state.player.movePoints -= cost;
+      state.player.position = { q: targetQ, r: targetR };
+      
+      updatePlayerPosition(true);
+      playSound('move');
+      addLog(`Moved to ${hex.terrain} (cost ${cost})`, 'move');
+      
+      // Check for camp healing
+      if (hex.terrain === 'CAMP' && state.player.hp < CONFIG.PLAYER_MAX_HP) {
+        const healed = CONFIG.PLAYER_MAX_HP - state.player.hp;
+        state.player.hp = CONFIG.PLAYER_MAX_HP;
+        const { x, z } = hexToWorld(targetQ, targetR);
+        showFloatingText(x, z, `+${healed} HP`, 'heal');
+        spawnParticles(x, 0.5, z, 0x5ee0b5, 25, 0.6);
+        playSound('capture');
+        addLog('Healed to full HP at Camp!', 'system');
+        updateUI();
+      }
+      
+      // Check for bug encounter
+      if (hex.bugId) {
+        startCombat(hex.bugId);
+      } else {
+        calculateReachableHexes();
+      }
+      
+      updateUI();
+    }
+
+    // ============================================
+    // COMBAT
+    // ============================================
+    function startCombat(bugId) {
+      const bug = state.bugs.get(bugId);
+      if (!bug) return;
+      
+      state.combat = {
+        active: true,
+        bugId,
+        hitsLanded: 0
+      };
+      
+      state.player.movePoints = 0;
+      clearHighlights();
+      
+      // Update combat panel
+      const panel = document.getElementById('combat-panel');
+      const icon = document.getElementById('combat-bug-icon');
+      const name = document.getElementById('combat-bug-name');
+      const stats = document.getElementById('combat-bug-stats');
+      
+      icon.className = `bug-icon ${bug.size.toLowerCase()}`;
+      icon.textContent = bug.emoji;
+      name.textContent = `${bug.size} Bug`;
+      stats.textContent = `Hit on ${bug.target}+ • ${bug.points} Point${bug.points > 1 ? 's' : ''} • ${bug.hitsRemaining} hit${bug.hitsRemaining > 1 ? 's' : ''} left`;
+      
+      document.getElementById('combat-dice').textContent = '-';
+      document.getElementById('combat-dice').className = 'dice';
+      document.getElementById('combat-result').textContent = '';
+      
+      panel.classList.add('active');
+      
+      addLog(`Engaged ${bug.size} bug!`, 'combat');
+    }
+
+    function rollAttack() {
+      if (!state.combat.active || !state.isRunning) return;
+      
+      const bug = state.bugs.get(state.combat.bugId);
+      if (!bug) return;
+      
+      const dice = document.getElementById('combat-dice');
+      const result = document.getElementById('combat-result');
+      const btn = document.getElementById('btn-attack');
+      
+      btn.disabled = true;
+      dice.classList.add('rolling');
+      
+      // Roll animation
+      let rolls = 0;
+      const rollInterval = setInterval(() => {
+        dice.textContent = Math.floor(Math.random() * 6) + 1;
+        rolls++;
+        if (rolls > 10) {
+          clearInterval(rollInterval);
+          
+          const roll = Math.floor(Math.random() * 6) + 1;
+          dice.textContent = roll;
+          dice.classList.remove('rolling');
+          
+          const { q, r } = state.player.position;
+          const { x, z } = hexToWorld(q, r);
+          
+          if (roll >= bug.target) {
+            // Hit!
+            dice.classList.add('hit');
+            state.combat.hitsLanded++;
+            bug.hitsRemaining--;
+            playSound('hit');
+            showFloatingText(x, z, 'HIT!', 'hit');
+            spawnParticles(x, 0.5, z, bug.color, 15, 0.4);
+            
+            // Shake the bug
+            const bugMesh = bugMeshes.get(bug.id);
+            if (bugMesh) {
+              const origX = bugMesh.position.x;
+              let shakeTime = 0;
+              const shakeInterval = setInterval(() => {
+                bugMesh.position.x = origX + (Math.random() - 0.5) * 0.2;
+                shakeTime += 50;
+                if (shakeTime > 200) {
+                  bugMesh.position.x = origX;
+                  clearInterval(shakeInterval);
+                }
+              }, 50);
+            }
+            
+            if (bug.hitsRemaining <= 0) {
+              // Bug defeated!
+              result.innerHTML = `<span style="color: #5ee0b5">💥 DEFEATED! +${bug.points} points</span>`;
+              addLog(`Defeated ${bug.size} bug! +${bug.points} points`, 'capture');
+              playSound('capture');
+              showFloatingText(x, z, `+${bug.points}`, 'points');
+              
+              state.player.points += bug.points;
+              state.player.bugsCollected[bug.size.toLowerCase()]++;
+              
+              // Remove bug
+              const hexKey = bug.hex;
+              const hex = state.hexes.get(hexKey);
+              if (hex) hex.bugId = null;
+              removeBug(bug.id);
+              
+              endCombat();
+            } else {
+              result.innerHTML = `<span style="color: #5ee0b5">✓ Hit! ${bug.hitsRemaining} more hit${bug.hitsRemaining > 1 ? 's' : ''} needed</span>`;
+              document.getElementById('combat-bug-stats').textContent = 
+                `Hit on ${bug.target}+ • ${bug.points} Point${bug.points > 1 ? 's' : ''} • ${bug.hitsRemaining} hit${bug.hitsRemaining > 1 ? 's' : ''} left`;
+              btn.disabled = false;
+            }
+          } else {
+            // Miss - take damage on 1-3
+            dice.classList.add('miss');
+            if (roll <= 3) {
+              state.player.hp--;
+              playSound('damage');
+              showFloatingText(x, z, '-1 HP', 'damage');
+              screenShake();
+              result.innerHTML = `<span style="color: #ff6b8f">✗ Stung! -1 HP (${state.player.hp} remaining)</span>`;
+              addLog(`Stung! -1 HP`, 'combat');
+              
+              if (state.player.hp <= 0) {
+                // Knocked out!
+                result.innerHTML = `<span style="color: #ff6b8f">💀 Knocked out! Returning to camp...</span>`;
+                addLog('Knocked out! Respawning at camp...', 'system');
+                spawnParticles(x, 0.5, z, 0xff6b8f, 40, 1.0);
+                
+                setTimeout(() => {
+                  state.player.hp = CONFIG.PLAYER_MAX_HP;
+                  state.player.position = { q: 0, r: 0 };
+                  updatePlayerPosition(true);
+                  focusOnPlayer();
+                  endCombat();
+                  updateUI();
+                }, 1500);
+                return;
+              }
+            } else {
+              playSound('miss');
+              showFloatingText(x, z, 'MISS', 'miss');
+              result.innerHTML = `<span style="color: #f7b500">✗ Miss! Need ${bug.target}+</span>`;
+            }
+            btn.disabled = false;
+          }
+          
+          updateUI();
+        }
+      }, 50);
+    }
+
+    function endCombat() {
+      state.combat = { active: false, bugId: null, hitsLanded: 0 };
+      document.getElementById('combat-panel').classList.remove('active');
+      updateBugCounts();
+      updateUI();
+    }
+
+    // ============================================
+    // GAME FLOW
+    // ============================================
+    function startGame() {
+      state.day = 1;
+      state.player = {
+        hp: CONFIG.PLAYER_MAX_HP,
+        points: 0,
+        position: { q: 0, r: 0 },
+        movePoints: 0,
+        bugsCollected: { small: 0, medium: 0, large: 0 }
+      };
+      
+      generateMap();
+      createPlayer();
+      spawnBugs();
+      
+      state.timeRemaining = CONFIG.DAY_LENGTH;
+      state.isRunning = false;
+      state.isPaused = false;
+      
+      document.getElementById('game-over').classList.remove('active');
+      clearLog();
+      addLog('Welcome to Bug Hunt! Click Start Day to begin.', 'system');
+      
+      updateUI();
+    }
+
+    function startDay() {
+      if (state.isRunning) return;
+      
+      state.isRunning = true;
+      state.isPaused = false;
+      lastTick = null;
+      
+      document.getElementById('btn-start').disabled = true;
+      document.getElementById('btn-roll').disabled = false;
+      document.getElementById('btn-pause').disabled = false;
+      
+      addLog(`Day ${state.day} started!`, 'system');
+      
+      requestAnimationFrame(gameLoop);
+    }
+
+    function pauseGame() {
+      state.isPaused = !state.isPaused;
+      document.getElementById('btn-pause').textContent = state.isPaused ? 'Resume' : 'Pause';
+      addLog(state.isPaused ? 'Game paused' : 'Game resumed', 'system');
+    }
+
+    function gameLoop(timestamp) {
+      if (!state.isRunning) return;
+      if (lastTick === null) lastTick = timestamp;
+      const delta = (timestamp - lastTick) / 1000;
+      lastTick = timestamp;
+      
+      if (!state.isPaused) {
+        state.timeRemaining -= delta;
+        
+        if (state.timeRemaining <= 0) {
+          endDay();
+          return;
+        }
+      } else {
+        // Prevent large jumps after pause
+        lastTick = timestamp;
+      }
+      
+      updateUI();
+      requestAnimationFrame(gameLoop);
+    }
+
+    function endDay() {
+      state.isRunning = false;
+      playSound('dayEnd');
+      addLog(`Day ${state.day} ended!`, 'system');
+      
+      if (state.day >= CONFIG.TOTAL_DAYS) {
+        endGame();
+      } else {
+        // Show day transition
+        const transition = document.getElementById('day-transition');
+        state.day++;
+        document.getElementById('day-transition-title').textContent = `Day ${state.day}`;
+        document.getElementById('day-transition-subtitle').textContent = 
+          `Score: ${state.player.points} points • Bugs respawning...`;
+        transition.classList.add('active');
+        
+        setTimeout(() => {
+          transition.classList.remove('active');
+          
+          state.timeRemaining = CONFIG.DAY_LENGTH;
+          state.player.movePoints = 0;
+          
+          // Respawn bugs
+          spawnBugs();
+          
+          // End any active combat
+          if (state.combat.active) {
+            endCombat();
+          }
+          
+          clearHighlights();
+          focusOnPlayer();
+          
+          document.getElementById('btn-start').disabled = false;
+          document.getElementById('btn-roll').disabled = true;
+          document.getElementById('btn-pause').disabled = true;
+          
+          addLog(`Day ${state.day} ready. Click Start Day!`, 'system');
+          updateUI();
+        }, 2000);
+      }
+    }
+
+    function endGame() {
+      playSound('victory');
+      
+      // Spawn celebration particles
+      for (let i = 0; i < 5; i++) {
+        setTimeout(() => {
+          const angle = Math.random() * Math.PI * 2;
+          const dist = 2 + Math.random() * 3;
+          spawnParticles(
+            Math.cos(angle) * dist,
+            1 + Math.random(),
+            Math.sin(angle) * dist,
+            [0xf7b500, 0x5ee0b5, 0xff6b8f, 0x6ba7ff][Math.floor(Math.random() * 4)],
+            30,
+            1.0
+          );
+        }, i * 200);
+      }
+      
+      document.getElementById('game-over').classList.add('active');
+      document.getElementById('final-score').textContent = state.player.points;
+      document.getElementById('score-breakdown').textContent = 
+        `Small: ${state.player.bugsCollected.small} • Medium: ${state.player.bugsCollected.medium} • Large: ${state.player.bugsCollected.large}`;
+    }
+
+    function rollMovement() {
+      if (!state.isRunning || state.isPaused || state.combat.active) return;
+      if (state.player.movePoints > 0) return; // Must use current movement first
+      
+      const roll = Math.floor(Math.random() * 6) + 1;
+      state.player.movePoints = roll;
+      
+      playSound('roll');
+      
+      // Show floating roll result
+      const { q, r } = state.player.position;
+      const { x, z } = hexToWorld(q, r);
+      showFloatingText(x, z, `🎲 ${roll}`, 'hit');
+      
+      addLog(`Rolled ${roll} movement points`, 'move');
+      calculateReachableHexes();
+      updateUI();
+    }
+
+    // ============================================
+    // UI UPDATES
+    // ============================================
+    function updateUI() {
+      // HP
+      document.getElementById('hp-value').textContent = state.player.hp;
+      document.getElementById('health-bar').style.width = `${(state.player.hp / CONFIG.PLAYER_MAX_HP) * 100}%`;
+      
+      // Points
+      document.getElementById('points-value').textContent = state.player.points;
+      
+      // Movement
+      document.getElementById('move-points').textContent = state.player.movePoints;
+      
+      // Timer
+      const minutes = Math.floor(state.timeRemaining / 60);
+      const seconds = Math.floor(state.timeRemaining % 60);
+      const timerEl = document.getElementById('timer-display');
+      timerEl.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+      
+      timerEl.classList.remove('warning', 'critical');
+      if (state.timeRemaining <= 30) timerEl.classList.add('critical');
+      else if (state.timeRemaining <= 60) timerEl.classList.add('warning');
+      
+      // Day
+      document.getElementById('day-display').textContent = `Day ${state.day} of ${CONFIG.TOTAL_DAYS}`;
+      
+      // Buttons
+      document.getElementById('btn-roll').disabled = 
+        !state.isRunning || state.isPaused || state.combat.active || state.player.movePoints > 0;
+    }
+
+    function updateBugCounts() {
+      let small = 0, medium = 0, large = 0;
+      state.bugs.forEach(bug => {
+        if (bug.size === 'SMALL') small++;
+        else if (bug.size === 'MEDIUM') medium++;
+        else large++;
+      });
+      document.getElementById('bugs-small').textContent = small;
+      document.getElementById('bugs-medium').textContent = medium;
+      document.getElementById('bugs-large').textContent = large;
+    }
+
+    function addLog(message, type = '') {
+      const log = document.getElementById('log-content');
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      entry.textContent = `[${formatTime(state.timeRemaining)}] ${message}`;
+      log.insertBefore(entry, log.firstChild);
+    }
+
+    function clearLog() {
+      document.getElementById('log-content').innerHTML = '';
+    }
+
+    function formatTime(seconds) {
+      const m = Math.floor(seconds / 60);
+      const s = Math.floor(seconds % 60);
+      return `${m}:${s.toString().padStart(2, '0')}`;
+    }
+
+    // ============================================
+    // INPUT HANDLING
+    // ============================================
+    function onCanvasClick(event) {
+      updateMouse(event);
+      raycaster.setFromCamera(mouse, camera);
+      
+      const intersects = raycaster.intersectObjects(scene.children, true);
+      
+      for (const intersect of intersects) {
+        let obj = intersect.object;
+        while (obj && !obj.userData.type) obj = obj.parent;
+        
+        if (obj?.userData.type === 'hex' || obj?.userData.type === 'highlight') {
+          const key = obj.userData.key;
+          if (state.reachableHexes.has(key)) {
+            const { q, r } = parseHexKey(key);
+            movePlayer(q, r);
+          }
+          break;
+        }
+      }
+    }
+
+    function onCanvasHover(event) {
+      updateMouse(event);
+      // Could add hover effects here
+    }
+
+    function updateMouse(event) {
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    }
+
+    function onWindowResize() {
+      const aspect = window.innerWidth / window.innerHeight;
+      const viewSize = 28;
+      camera.left = (-viewSize * aspect) / 2;
+      camera.right = (viewSize * aspect) / 2;
+      camera.top = viewSize / 2;
+      camera.bottom = -viewSize / 2;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    // ============================================
+    // UTILITIES
+    // ============================================
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    // ============================================
+    // ANIMATION LOOP
+    // ============================================
+    function animate() {
+      requestAnimationFrame(animate);
+      
+      // Update particles
+      updateParticles();
+      
+      // Animate camp fire glow
+      if (campMesh) {
+        campMesh.material.emissiveIntensity = 0.3 + Math.sin(Date.now() * 0.005) * 0.1;
+      }
+      
+      // Animate hex highlights
+      highlightMeshes.forEach((mesh, i) => {
+        mesh.material.opacity = 0.4 + Math.sin(Date.now() * 0.003 + i * 0.5) * 0.2;
+      });
+      
+      renderer.render(scene, camera);
+    }
+
+    // ============================================
+    // INITIALIZATION
+    // ============================================
+    function init() {
+      initThree();
+      startGame();
+      animate();
+      
+      // Button event listeners
+      document.getElementById('btn-start').addEventListener('click', startDay);
+      document.getElementById('btn-roll').addEventListener('click', rollMovement);
+      document.getElementById('btn-pause').addEventListener('click', pauseGame);
+      document.getElementById('btn-new-game').addEventListener('click', startGame);
+      document.getElementById('btn-attack').addEventListener('click', rollAttack);
+      document.getElementById('btn-play-again').addEventListener('click', startGame);
+      document.getElementById('btn-sound').addEventListener('click', toggleSound);
+      
+      // Keyboard shortcuts
+      document.addEventListener('keydown', (e) => {
+        if (e.code === 'Space' && !state.combat.active) {
+          e.preventDefault();
+          if (!state.isRunning) startDay();
+          else rollMovement();
+        }
+        if (e.code === 'KeyR' && state.combat.active) {
+          document.getElementById('btn-attack').click();
+        }
+        if (e.code === 'KeyP') {
+          pauseGame();
+        }
+        if (e.code === 'KeyC') {
+          focusOnPlayer();
+        }
+      });
+    }
+
+    init();
+  </script>
+</body>
+</html>

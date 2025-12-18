@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PS1 Snow Rider</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: linear-gradient(180deg, #0d1424 0%, #1c2438 35%, #25324a 70%, #1b1f2f 100%);
+      --text: #e7f0ff;
+      --accent: #9ff3ff;
+      --hud: rgba(12, 22, 36, 0.65);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Space Grotesk", "Press Start 2P", monospace;
+    }
+    canvas {
+      width: 100vw;
+      height: 100vh;
+      display: block;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+    #hud {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      mix-blend-mode: screen;
+      pointer-events: none;
+      gap: 12px;
+    }
+    #panel {
+      background: var(--hud);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 10px 12px;
+      border-radius: 10px;
+      backdrop-filter: blur(6px);
+      max-width: 340px;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    #title {
+      font-family: "Press Start 2P", monospace;
+      font-size: 13px;
+      letter-spacing: 1px;
+      color: var(--accent);
+      margin-bottom: 8px;
+      text-shadow: 0 0 12px rgba(159, 243, 255, 0.5);
+    }
+    #stats { text-align: right; font-size: 12px; }
+    #footer {
+      position: fixed;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      background: var(--hud);
+      padding: 8px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(6px);
+      mix-blend-mode: screen;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="hud">
+    <div id="panel">
+      <div id="title">PS1 SNOW RIDER</div>
+      <div>Arrow / A-D: carve</div>
+      <div>Space: pop a jump</div>
+      <div>R: reset run</div>
+      <div>Infinite mountain • Low-poly drift</div>
+    </div>
+    <div id="stats"></div>
+  </div>
+  <div id="footer">lo-fi downhill • endless ridge • ps1 hearts</div>
+  <canvas id="c"></canvas>
+
+  <script type="module">
+    import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
+
+    const canvas = document.getElementById('c');
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: false });
+    renderer.setPixelRatio(1.5);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(0x0b1020, 1);
+
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x0d1325, 0.035);
+
+    const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 500);
+    camera.position.set(0, 8, 18);
+
+    const hemi = new THREE.HemisphereLight(0x9ad8ff, 0x2c2c38, 0.8);
+    const sun = new THREE.DirectionalLight(0xf9f5e6, 0.8);
+    sun.position.set(20, 60, 10);
+    const ambient = new THREE.AmbientLight(0x7485a2, 0.25);
+    scene.add(hemi, sun, ambient);
+
+    const mountainMat = new THREE.MeshLambertMaterial({ color: 0xd8e7ff, flatShading: true });
+    const rockMat = new THREE.MeshLambertMaterial({ color: 0x3b414f, flatShading: true });
+    const treeMat = new THREE.MeshLambertMaterial({ color: 0x274d35, flatShading: true });
+    const boardMat = new THREE.MeshLambertMaterial({ color: 0xff5277, flatShading: true });
+    const riderMat = new THREE.MeshLambertMaterial({ color: 0x3ce0c2, flatShading: true });
+
+    const SEGMENTS = 18;
+    const SEG_LEN = 55;
+    const WIDTH = 120;
+    const GRID_W = 18;
+    const GRID_L = 10;
+    const TURN_RATE = 1.8;
+    const SLOPE_GRAD = 0.018;
+    const segments = [];
+    let leadZ = -SEG_LEN;
+
+    function makeSegment() {
+      const geo = new THREE.PlaneGeometry(WIDTH, SEG_LEN, GRID_W, GRID_L);
+      geo.rotateX(-Math.PI / 2);
+      const mesh = new THREE.Mesh(geo, mountainMat);
+      mesh.receiveShadow = true;
+      segmentNoise(mesh);
+      scene.add(mesh);
+      return mesh;
+    }
+
+    function segmentNoise(mesh) {
+      const pos = mesh.geometry.attributes.position;
+      for (let i = 0; i < pos.count; i++) {
+        const vx = pos.getX(i);
+        const vz = pos.getZ(i);
+        const worldZ = mesh.position.z + vz;
+        const slopeBase = worldZ * SLOPE_GRAD; // downhill bias along run
+        const ridge = Math.sin((vx + mesh.position.x) * 0.05 + worldZ * 0.07) * 1.8;
+        const und = Math.cos((vz + mesh.position.z) * 0.08 + vx * 0.03) * 1.6;
+        const bump = Math.sin((vx + vz) * 0.12) * 0.8;
+        const jitter = (Math.random() - 0.5) * 0.4;
+        pos.setY(i, 1.6 + slopeBase + ridge + und + bump + jitter);
+      }
+      pos.needsUpdate = true;
+      mesh.geometry.computeVertexNormals();
+    }
+
+    function respawnSegment(mesh, zPos) {
+      mesh.position.set(0, 0, zPos);
+      segmentNoise(mesh);
+      mesh.userData.decals?.forEach(d => mesh.remove(d));
+      mesh.userData.decals = buildProps(mesh);
+    }
+
+    function buildProps(parent) {
+      const decals = [];
+      const propCount = 6 + Math.floor(Math.random() * 6);
+      for (let i = 0; i < propCount; i++) {
+        const x = (Math.random() - 0.5) * WIDTH * 0.8;
+        const z = (Math.random() - 0.5) * SEG_LEN;
+        const type = Math.random();
+        let mesh;
+        if (type > 0.65) {
+          const cone = new THREE.ConeGeometry(1.6, 6, 5);
+          mesh = new THREE.Mesh(cone, treeMat);
+        } else if (type > 0.35) {
+          const rock = new THREE.DodecahedronGeometry(1.4, 0);
+          mesh = new THREE.Mesh(rock, rockMat);
+        } else {
+          const bump = new THREE.BoxGeometry(2, 0.6 + Math.random() * 1.6, 2);
+          mesh = new THREE.Mesh(bump, mountainMat);
+        }
+        mesh.position.set(x, 0.5, z);
+        parent.add(mesh);
+        decals.push(mesh);
+      }
+      return decals;
+    }
+
+    for (let i = 0; i < SEGMENTS; i++) {
+      const mesh = makeSegment();
+      respawnSegment(mesh, i * -SEG_LEN);
+      segments.push(mesh);
+      leadZ = Math.min(leadZ, mesh.position.z);
+    }
+
+    function sampleTriangleHeight(p1, p2, p3, x, z) {
+      const denom = ((p2.z - p3.z) * (p1.x - p3.x) + (p3.x - p2.x) * (p1.z - p3.z));
+      if (Math.abs(denom) < 1e-5) return { y: p1.y, normal: new THREE.Vector3(0, 1, 0) };
+      const w1 = ((p2.z - p3.z) * (x - p3.x) + (p3.x - p2.x) * (z - p3.z)) / denom;
+      const w2 = ((p3.z - p1.z) * (x - p3.x) + (p1.x - p3.x) * (z - p3.z)) / denom;
+      const w3 = 1 - w1 - w2;
+      const y = w1 * p1.y + w2 * p2.y + w3 * p3.y;
+      const normal = new THREE.Vector3().subVectors(p2, p1).cross(new THREE.Vector3().subVectors(p3, p1)).normalize();
+      return { y, normal };
+    }
+
+    function sampleSegment(mesh, x, z) {
+      const halfW = WIDTH * 0.5;
+      const halfL = SEG_LEN * 0.5;
+      const localX = x - mesh.position.x;
+      const localZ = z - mesh.position.z;
+      if (localX < -halfW || localX > halfW || localZ < -halfL || localZ > halfL) return null;
+
+      const geo = mesh.geometry;
+      const pos = geo.attributes.position;
+      const wSeg = geo.parameters.widthSegments;
+      const lSeg = geo.parameters.heightSegments;
+      const u = (localX + halfW) / WIDTH;
+      const v = (localZ + halfL) / SEG_LEN;
+      const xi = THREE.MathUtils.clamp(Math.floor(u * wSeg), 0, wSeg - 1);
+      const zi = THREE.MathUtils.clamp(Math.floor(v * lSeg), 0, lSeg - 1);
+      const fx = u * wSeg - xi;
+      const fz = v * lSeg - zi;
+      const stride = wSeg + 1;
+      const a = zi * stride + xi;
+      const b = a + 1;
+      const c = a + stride;
+      const d = c + 1;
+      const tri = (fx + fz < 1) ? [a, b, c] : [d, c, b];
+
+      const v1 = new THREE.Vector3(pos.getX(tri[0]) + mesh.position.x, pos.getY(tri[0]) + mesh.position.y, pos.getZ(tri[0]) + mesh.position.z);
+      const v2 = new THREE.Vector3(pos.getX(tri[1]) + mesh.position.x, pos.getY(tri[1]) + mesh.position.y, pos.getZ(tri[1]) + mesh.position.z);
+      const v3 = new THREE.Vector3(pos.getX(tri[2]) + mesh.position.x, pos.getY(tri[2]) + mesh.position.y, pos.getZ(tri[2]) + mesh.position.z);
+
+      return sampleTriangleHeight(v1, v2, v3, x, z);
+    }
+
+    function sampleTerrain(x, z) {
+      for (const seg of segments) {
+        const hit = sampleSegment(seg, x, z);
+        if (hit) return hit;
+      }
+      return null;
+    }
+
+    const rider = new THREE.Group();
+    const board = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.18, 3.8), boardMat);
+    board.position.y = 0.2;
+    const body = new THREE.Mesh(new THREE.ConeGeometry(0.7, 2.6, 4), riderMat);
+    body.position.y = 1.5;
+    const head = new THREE.Mesh(new THREE.DodecahedronGeometry(0.55, 0), riderMat);
+    head.position.y = 2.7;
+    rider.add(board, body, head);
+    scene.add(rider);
+
+    const snowGeo = new THREE.BufferGeometry();
+    const SNOW = 800;
+    const snowPos = new Float32Array(SNOW * 3);
+    for (let i = 0; i < SNOW; i++) {
+      snowPos[i * 3] = (Math.random() - 0.5) * WIDTH;
+      snowPos[i * 3 + 1] = Math.random() * 30;
+      snowPos[i * 3 + 2] = (Math.random() - 0.5) * 120;
+    }
+    snowGeo.setAttribute('position', new THREE.BufferAttribute(snowPos, 3));
+    const snowMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.16, sizeAttenuation: false, transparent: true, opacity: 0.8 });
+    const snow = new THREE.Points(snowGeo, snowMat);
+    scene.add(snow);
+
+    const state = {
+      speed: 18,
+      carve: 0,
+      maxCarve: 18,
+      heading: 0,
+      velY: 0,
+      gravity: -32,
+      jumpImpulse: 11,
+      grounded: false,
+      distance: 0,
+      time: 0
+    };
+
+    function resetRun() {
+      state.speed = 19;
+      state.carve = 0;
+      state.velY = 0;
+      state.heading = 0;
+      state.distance = 0;
+      state.time = 0;
+      rider.position.set(0, 2.2, 8);
+      camera.position.set(0, 7, 16);
+      leadZ = -SEG_LEN;
+      for (let i = 0; i < segments.length; i++) {
+        respawnSegment(segments[i], -i * SEG_LEN);
+        leadZ = Math.min(leadZ, segments[i].position.z);
+      }
+    }
+
+    resetRun();
+
+    const keys = new Set();
+    window.addEventListener('keydown', (e) => {
+      keys.add(e.code);
+      if (e.code === 'Space' && state.grounded) {
+        state.velY = state.jumpImpulse;
+        state.grounded = false;
+      }
+      if (e.code === 'KeyR') resetRun();
+    });
+    window.addEventListener('keyup', (e) => keys.delete(e.code));
+
+    const headingVec = new THREE.Vector3();
+    const downhill = new THREE.Vector3();
+    const rightVec = new THREE.Vector3();
+
+    function update(dt) {
+      state.time += dt;
+      const targetCarve = (keys.has('ArrowLeft') || keys.has('KeyA') ? 1 : 0) - (keys.has('ArrowRight') || keys.has('KeyD') ? 1 : 0);
+      state.carve = THREE.MathUtils.damp(state.carve, targetCarve * state.maxCarve, 6, dt);
+
+      state.heading += THREE.MathUtils.degToRad(state.carve) * dt * TURN_RATE;
+      headingVec.set(Math.sin(state.heading), 0, -Math.cos(state.heading)).normalize();
+
+      state.velY += state.gravity * dt;
+      rider.position.y += state.velY * dt;
+
+      rider.position.addScaledVector(headingVec, state.speed * dt);
+      rider.position.x = THREE.MathUtils.clamp(rider.position.x, -WIDTH * 0.48, WIDTH * 0.48);
+
+      const ground = sampleTerrain(rider.position.x, rider.position.z);
+      if (ground) {
+        const boardHeight = 0.6;
+        const targetY = ground.y + boardHeight;
+        if (rider.position.y <= targetY) {
+          rider.position.y = THREE.MathUtils.damp(rider.position.y, targetY, 18, dt);
+          state.velY = 0;
+          state.grounded = true;
+        } else {
+          state.grounded = false;
+        }
+
+        downhill.set(0, -1, 0).projectOnPlane(ground.normal);
+        const slopeMag = downhill.length();
+        if (slopeMag > 1e-4) {
+          downhill.normalize();
+          const accel = downhill.dot(headingVec) * 24;
+          state.speed = THREE.MathUtils.clamp(state.speed + accel * dt, 10, 40);
+        }
+
+        const forwardAligned = headingVec.clone().projectOnPlane(ground.normal);
+        if (forwardAligned.lengthSq() < 1e-4) forwardAligned.copy(headingVec);
+        forwardAligned.normalize();
+        rightVec.copy(forwardAligned).cross(ground.normal).normalize();
+        const basis = new THREE.Matrix4().makeBasis(rightVec, ground.normal, forwardAligned);
+        rider.quaternion.setFromRotationMatrix(basis);
+        rider.rotateZ(THREE.MathUtils.degToRad(-state.carve * 0.45));
+      } else {
+        state.grounded = false;
+      }
+
+      const flatDrag = state.grounded ? 0.85 : 0.25;
+      state.speed = THREE.MathUtils.damp(state.speed, 18, flatDrag, dt);
+
+      state.distance += state.speed * dt;
+
+      camera.position.x = THREE.MathUtils.damp(camera.position.x, rider.position.x + headingVec.x * -4, 3, dt);
+      camera.position.y = THREE.MathUtils.damp(camera.position.y, 6 + rider.position.y * 0.5, 2.5, dt);
+      camera.position.z = THREE.MathUtils.damp(camera.position.z, rider.position.z + headingVec.z * -8, 4, dt);
+      const camLook = rider.position.clone().addScaledVector(headingVec, 10);
+      camera.lookAt(camLook.x, camLook.y + 1.2, camLook.z);
+
+      for (const mesh of segments) {
+        if (mesh.position.z - rider.position.z > 30) {
+          leadZ -= SEG_LEN;
+          respawnSegment(mesh, leadZ);
+        }
+      }
+
+      const p = snow.geometry.attributes.position;
+      for (let i = 0; i < SNOW; i++) {
+        const idx = i * 3;
+        p.array[idx] -= headingVec.x * state.speed * dt * 1.6;
+        p.array[idx + 2] -= headingVec.z * state.speed * dt * 1.6;
+        p.array[idx] += Math.sin(state.time * 0.6 + i) * 0.02;
+        const relX = p.array[idx] - rider.position.x;
+        const relZ = p.array[idx + 2] - rider.position.z;
+        const relDot = relX * headingVec.x + relZ * headingVec.z;
+        if (relDot < -90) {
+          p.array[idx] = rider.position.x + headingVec.x * 90 + (Math.random() - 0.5) * WIDTH * 0.6;
+          p.array[idx + 2] = rider.position.z + headingVec.z * 90 + (Math.random() - 0.5) * SEG_LEN;
+          p.array[idx + 1] = Math.random() * 30;
+        }
+      }
+      p.needsUpdate = true;
+    }
+
+    const statsEl = document.getElementById('stats');
+    let last = performance.now();
+    function frame(now) {
+      const dt = Math.min((now - last) / 1000, 0.05);
+      last = now;
+      update(dt);
+      renderer.render(scene, camera);
+      statsEl.textContent = `speed ${(state.speed).toFixed(0)} u/s | dist ${(state.distance / 10).toFixed(1)} km | airtime ${(Math.max(0, state.velY)).toFixed(1)}`;
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>
