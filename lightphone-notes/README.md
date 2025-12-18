@@ -1,6 +1,6 @@
 # Light Phone Notes Exporter
 
-A Python tool to export and delete notes from your Light Phone dashboard.
+A standalone tool to export and delete notes from your Light Phone dashboard.
 
 ## What it does
 
@@ -9,35 +9,32 @@ A Python tool to export and delete notes from your Light Phone dashboard.
 3. Exports each note (title, date, full body text) to a markdown file
 4. Deletes each note after export
 
-## Requirements
-
-- Python 3.11+
-- Playwright
-
-## Setup
-
-```bash
-pip install playwright
-playwright install chromium
-```
-
 ## Usage
 
-### Executable
+### Executable (Recommended)
 
-Just run the executable and enter your credentials when prompted:
+Just download and run the executable:
 
 ```
 .\lightphone-notes-exporter.exe
 ```
 
+**On first run**, it will automatically:
+- Install Playwright (if not present)
+- Download Chromium browser (~150MB, one-time download)
+- Then start the export process
+
+You'll be prompted to enter your Light Phone dashboard email and password.
+
 ### Python script
 
+If you prefer running from source:
+
 ```bash
+pip install playwright
+playwright install chromium
 python export_notes.py
 ```
-
-You'll be prompted to enter your email and password.
 
 ## Output
 
