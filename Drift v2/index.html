@@ -1271,6 +1271,7 @@
         let isPlaying = false;
         let driftIntervals = [];
         let startTime = null;
+        let timeDisplayInterval = null;
         
         // Noise layer state (Disasterpeace style)
         let noiseSource = null;
@@ -2503,6 +2504,7 @@
                 const useDetunedLayers = Math.random() < disasterpeaceChances.detunedLayers;
                 const oscCount = useDetunedLayers ? 2 + Math.floor(Math.random() * 2) : 1;
                 const oscillators = [];
+                const cleanupNodes = [];
                 
                 for (let i = 0; i < oscCount; i++) {
                     const osc = this.audioCtx.createOscillator();
@@ -2519,6 +2521,7 @@
                     }
                     osc.frequency.setValueAtTime(freq, now);
                     oscillators.push(osc);
+                    cleanupNodes.push(osc);
                 }
                 
                 if (useDetunedLayers) {
@@ -2533,6 +2536,18 @@
                 const weatherVolume = baseVolume * wx.volumeMultiplier;
                 const volumeScale = isOctaveDouble ? 0.4 : (useDetunedLayers ? 1 / oscCount : 1);
 
+                // Dynamic swell: Eno-style breathing envelope
+                const useSwell = !isOctaveDouble && Math.random() < disasterpeaceChances.dynamicSwell;
+                
+                // Weather: Low presence + low breath = "breath entrance" (fade in from nothing)
+                const useBreathEntrance = !isOctaveDouble && weather.presence < 0.4 && weather.breath < 0.3;
+                let breathInTime = 0;
+                if (useBreathEntrance) {
+                    breathInTime = 3 + Math.random() * 4; // 3-7 seconds fade in
+                }
+                const envelopeEnd = now + noteDuration + breathInTime;
+                const envelopeTail = 0.02;
+
                 // Vibrato: Weather drift affects intensity
                 oscillators.forEach(osc => {
                     if (fx.vibratoDepth > 0 && fx.vibratoAmount > 0) {
@@ -2544,27 +2559,22 @@
                         vibratoLfo.connect(vibratoGain);
                         vibratoGain.connect(osc.frequency);
                         vibratoLfo.start(now);
-                        vibratoLfo.stop(now + noteDuration + 0.1);
+                        vibratoLfo.stop(envelopeEnd + 0.1);
+                        cleanupNodes.push(vibratoLfo, vibratoGain);
                     }
                 });
 
                 // Envelope - with optional dynamic swell
                 const gainNode = this.audioCtx.createGain();
+                cleanupNodes.push(gainNode);
                 const volume = weatherVolume * volumeScale;
-                
-                // Dynamic swell: Eno-style breathing envelope
-                const useSwell = !isOctaveDouble && Math.random() < disasterpeaceChances.dynamicSwell;
-                
-                // Weather: Low presence + low breath = "breath entrance" (fade in from nothing)
-                const useBreathEntrance = !isOctaveDouble && weather.presence < 0.4 && weather.breath < 0.3;
                 
                 if (useBreathEntrance) {
                     // Breath entrance: ultra-slow fade in ("The Note You Almost Missed")
-                    const breathInTime = 3 + Math.random() * 4; // 3-7 seconds fade in
                     gainNode.gain.setValueAtTime(0.0001, now);
                     gainNode.gain.exponentialRampToValueAtTime(volume * 0.7, now + breathInTime);
                     gainNode.gain.setValueAtTime(volume * 0.7, now + breathInTime + 1);
-                    gainNode.gain.exponentialRampToValueAtTime(0.0001, now + noteDuration + breathInTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.0001, envelopeEnd);
                     streamLog(this.config.synthType, 'effect', '~breath~');
                 } else if (useSwell) {
                     // Swell envelope: slow rise, peak, slow fall
@@ -2576,7 +2586,7 @@
                     // Slow fade in to peak
                     gainNode.gain.exponentialRampToValueAtTime(peakVolume, peakTime);
                     // Slow fade out
-                    gainNode.gain.exponentialRampToValueAtTime(0.001, now + noteDuration);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, envelopeEnd);
                     
                     streamLog(this.config.synthType, 'effect', '~swell~');
                 } else {
@@ -2591,8 +2601,9 @@
                     // Make sure sustain hold and release don't overlap
                     const sustainEnd = Math.max(decayEnd + 0.1, now + noteDuration - release);
                     gainNode.gain.setValueAtTime(sustainLevel, sustainEnd);
-                    gainNode.gain.exponentialRampToValueAtTime(0.001, now + noteDuration);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, envelopeEnd);
                 }
+                gainNode.gain.linearRampToValueAtTime(0, envelopeEnd + envelopeTail);
 
                 // Tremolo: all parameters from channel effects
                 let tremoloNode = null;
@@ -2607,7 +2618,8 @@
                     tremoloGainMod.connect(tremoloNode.gain);
                     tremoloNode.gain.value = 1 - effectiveDepth / 2;
                     tremoloLfo.start(now);
-                    tremoloLfo.stop(now + noteDuration + 0.1);
+                    tremoloLfo.stop(envelopeEnd + 0.1);
+                    cleanupNodes.push(tremoloNode, tremoloLfo, tremoloGainMod);
                 }
 
                 // Filter - use channel's sweeping filter value
@@ -2616,12 +2628,14 @@
                 const filterFreq = Math.min(this.config.filterFreq, fx.filterSweep || 4000);
                 filter.frequency.setValueAtTime(filterFreq, now);
                 filter.Q.setValueAtTime(0.7, now);
+                cleanupNodes.push(filter);
 
                 // Panner - use channel pan position with slight random variation
                 const panner = this.audioCtx.createStereoPanner();
                 const panVariation = (Math.random() - 0.5) * 0.15;
                 const finalPan = Math.max(-1, Math.min(1, fx.pan + panVariation));
                 panner.pan.setValueAtTime(finalPan, now);
+                cleanupNodes.push(panner);
 
                 // Connect all oscillators through per-channel effect chains
                 oscillators.forEach(osc => {
@@ -2652,6 +2666,7 @@
                 
                 const delayOut = this.audioCtx.createGain();
                 delayOut.gain.value = delayBoost;
+                cleanupNodes.push(dryOut, reverbOut, delayOut);
                 
                 // Weather: Pre-delay for distant notes ("Tenderness at Distance")
                 if (wx.preDelay > 0.05) {
@@ -2661,6 +2676,7 @@
                     preDelayNode.connect(dryOut);
                     preDelayNode.connect(reverbOut);
                     preDelayNode.connect(delayOut);
+                    cleanupNodes.push(preDelayNode);
                     
                     if (wx.preDelay > 0.2) {
                         streamLog(this.config.synthType, 'effect', `distant`);
@@ -2676,9 +2692,30 @@
                 delayOut.connect(this.delaySend);
                 reverbOut.connect(this.reverbSend);
 
+                const oscStopTime = envelopeEnd + 0.5;
+                let cleaned = false;
+                const cleanup = () => {
+                    if (cleaned) return;
+                    cleaned = true;
+                    cleanupNodes.forEach(node => {
+                        try {
+                            node.disconnect();
+                        } catch (e) {}
+                    });
+                };
+                let ended = 0;
+                oscillators.forEach(osc => {
+                    osc.onended = () => {
+                        ended += 1;
+                        if (ended >= oscillators.length) cleanup();
+                    };
+                });
+                const cleanupDelayMs = Math.max(0, (oscStopTime - now + 0.2) * 1000);
+                setTimeout(cleanup, cleanupDelayMs);
+
                 oscillators.forEach(osc => {
                     osc.start(now);
-                    osc.stop(now + noteDuration + 0.5);
+                    osc.stop(oscStopTime);
                 });
             }
         }
@@ -3005,8 +3042,11 @@
             }
             noiseEvolveTimeouts.forEach(t => clearTimeout(t));
             noiseEvolveTimeouts = [];
-            if (noiseGain) {
-                noiseGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5);
+            if (noiseGain && audioCtx) {
+                const now = audioCtx.currentTime;
+                noiseGain.gain.cancelScheduledValues(now);
+                noiseGain.gain.setValueAtTime(noiseGain.gain.value, now);
+                noiseGain.gain.linearRampToValueAtTime(0, now + 0.5);
             }
         }
 
@@ -3345,6 +3385,9 @@
         // ═══════════════════════════════════════════════════════════════
         
         function initialize() {
+            if (isPlaying) {
+                stopPlayback();
+            }
             log('system', '═══════════════════════════════════════');
             log('system', 'INITIALIZING DRIFT');
             log('system', '═══════════════════════════════════════');
@@ -3490,7 +3533,8 @@
             scheduleNextChord();
             
             // Update time display
-            setInterval(() => {
+            if (timeDisplayInterval) clearInterval(timeDisplayInterval);
+            timeDisplayInterval = setInterval(() => {
                 if (isPlaying && startTime) {
                     const elapsed = Math.floor((Date.now() - startTime) / 1000);
                     const mins = Math.floor(elapsed / 60).toString().padStart(2, '0');
@@ -3510,6 +3554,11 @@
             stopWeatherSystem();
             stopKeyModulation();
             
+            if (timeDisplayInterval) {
+                clearInterval(timeDisplayInterval);
+                timeDisplayInterval = null;
+            }
+
             if (chordChangeInterval) {
                 clearTimeout(chordChangeInterval);
                 chordChangeInterval = null;
