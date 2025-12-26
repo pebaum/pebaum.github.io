@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Drift v2</title>
+    <title>Drift - Generative Music</title>
     <style>
         @font-face {
             font-family: 'IBM';
@@ -176,7 +176,7 @@
             height: 100%;
             background: #b8b3a8;
             width: 0%;
-            transition: width 2s cubic-bezier(0.4, 0, 0.2, 1), background 1s ease;
+            transition: width var(--fx-duration, 2s) cubic-bezier(0.4, 0, 0.2, 1), background 1s ease;
         }
 
         /* Pan bar with center marker */
@@ -202,7 +202,7 @@
             background: #d4cfc4;
             left: 50%;
             transform: translateX(-50%);
-            transition: left 2.5s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: left var(--pan-duration, 2.5s) cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         /* Echo and Reverb specific colors */
@@ -243,7 +243,7 @@
             height: 100%;
             left: 50%;
             transform: translateX(-50%);
-            transition: left 2.5s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: left var(--eq-duration, 2.5s) cubic-bezier(0.4, 0, 0.2, 1);
         }
         .eq-low { background: #8c8880; }
         .eq-mid { background: #a8a49c; }
@@ -546,7 +546,7 @@
             height: 100%;
             background: linear-gradient(90deg, #4a4640, #7a756c);
             width: var(--wx-level, 50%);
-            transition: width 4s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: width var(--wx-duration, 4s) cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         /* Effects Bar */
@@ -839,11 +839,12 @@
         <!-- Right: Controls & Logs -->
         <div class="control-panel" title="System controls, composition data, and activity log">
             <!-- ASCII Art Header -->
-            <div class="ascii-header" title="Drift v2 - Generative ambient music synthesizer">
-<span class="highlight">┌───────────────────────┐</span>
-<span class="highlight">│</span>   DRIFT <span style="color:#6a6560">v2</span>            <span class="highlight">│</span>
-<span class="highlight">│</span>   <span style="color:#4a4540">generative ambient</span>   <span class="highlight">│</span>
-<span class="highlight">└───────────────────────┘</span>
+            <div class="ascii-header" title="Drift - Generative ambient music synthesizer">
+<span class="highlight">┌─────────────────────────────┐</span>
+<span class="highlight">│</span>   Drift <span style="color:#6a6560">- generative music</span>  <span class="highlight">│</span>
+<span class="highlight">│</span>   <span style="color:#4a4540">by Peter Baumgartner</span>      <span class="highlight">│</span>
+<span class="highlight">│</span>   <a href="README.md" style="color:#5a5550;text-decoration:none;" title="Read the documentation">README.md</a>                   <span class="highlight">│</span>
+<span class="highlight">└─────────────────────────────┘</span>
             </div>
 
             <!-- Ticket-style Info -->
@@ -1441,7 +1442,7 @@
         }
         
         function updateWeatherDisplay() {
-            // Update per-channel weather bars
+            // Update per-channel weather bars with random transitions
             const channelMap = {
                 cello: 'cello',
                 celeste: 'celeste', 
@@ -1455,6 +1456,9 @@
                 Object.keys(defaultWeather).forEach(param => {
                     const el = document.getElementById(`${prefix}-wx-${param}`);
                     if (el) {
+                        // Set random transition duration for organic movement
+                        const duration = getRandomTransitionDuration();
+                        el.style.setProperty('--wx-duration', `${duration}s`);
                         el.style.setProperty('--wx-level', `${channelWeather[channel][param] * 100}%`);
                     }
                 });
@@ -3007,15 +3011,45 @@
         }
 
         // Drift a parameter toward a new random value within its range
-        function driftParam(current, range, speed = 0.1) {
+        // Speed is now randomized each call for organic movement
+        function driftParam(current, range, baseSpeed = 0.1) {
+            // Randomize the speed - sometimes tiny, sometimes bigger movements
+            const speedVariation = Math.random();
+            let speed;
+            if (speedVariation < 0.3) {
+                // 30% chance: very subtle drift
+                speed = baseSpeed * (0.1 + Math.random() * 0.3);
+            } else if (speedVariation > 0.9) {
+                // 10% chance: larger drift
+                speed = baseSpeed * (1.5 + Math.random() * 1.5);
+            } else {
+                // 60% chance: normal range with variation
+                speed = baseSpeed * (0.5 + Math.random() * 1.0);
+            }
+            
             const drift = (Math.random() - 0.5) * speed * (range.max - range.min);
             return Math.max(range.min, Math.min(range.max, current + drift));
+        }
+        
+        // Get a random transition duration for fluid, organic UI movement
+        function getRandomTransitionDuration() {
+            const roll = Math.random();
+            if (roll < 0.2) {
+                // 20%: quick transition (1-2s)
+                return 1 + Math.random() * 1;
+            } else if (roll > 0.85) {
+                // 15%: very slow transition (5-10s)
+                return 5 + Math.random() * 5;
+            } else {
+                // 65%: medium transition (2-5s)
+                return 2 + Math.random() * 3;
+            }
         }
         
         // Store individual drift timeouts for each channel/parameter group
         let driftTimeouts = {};
         
-        // Update UI for a single instrument
+        // Update UI for a single instrument with randomized transition speeds
         function updateEffectUI(inst) {
             const fx = channelEffects[inst];
             const instId = inst === 'vibraphone' ? 'vibes' : inst;
@@ -3023,52 +3057,68 @@
             // Helper to normalize value to percentage
             const norm = (val, range) => ((val - range.min) / (range.max - range.min)) * 100;
             
+            // Helper to set fill bars with random transition duration via CSS variable
+            const setFillWithTransition = (el, value) => {
+                if (!el) return;
+                const duration = getRandomTransitionDuration();
+                el.style.setProperty('--fx-duration', `${duration}s`);
+                el.style.width = value + '%';
+            };
+            
+            // Helper for pan/eq markers
+            const setMarkerWithTransition = (el, value, varName) => {
+                if (!el) return;
+                const duration = getRandomTransitionDuration();
+                el.style.setProperty(varName, `${duration}s`);
+                el.style.left = value + '%';
+            };
+            
             // Vibrato bars
             const vibDepthEl = document.getElementById(`${instId}-vib-depth`);
-            if (vibDepthEl) vibDepthEl.style.width = norm(fx.vibratoDepth, effectRanges.vibratoDepth) + '%';
+            setFillWithTransition(vibDepthEl, norm(fx.vibratoDepth, effectRanges.vibratoDepth));
             const vibEl = document.getElementById(`${instId}-vib`);
-            if (vibEl) vibEl.style.width = (fx.vibratoAmount * 100) + '%';
+            setFillWithTransition(vibEl, fx.vibratoAmount * 100);
             const vibSpeedEl = document.getElementById(`${instId}-vib-speed`);
-            if (vibSpeedEl) vibSpeedEl.style.width = norm(fx.vibratoSpeed, effectRanges.vibratoSpeed) + '%';
+            setFillWithTransition(vibSpeedEl, norm(fx.vibratoSpeed, effectRanges.vibratoSpeed));
             
             // Tremolo bars
             const trmDepthEl = document.getElementById(`${instId}-trm-depth`);
-            if (trmDepthEl) trmDepthEl.style.width = norm(fx.tremoloDepth, effectRanges.tremoloDepth) + '%';
+            setFillWithTransition(trmDepthEl, norm(fx.tremoloDepth, effectRanges.tremoloDepth));
             const trmEl = document.getElementById(`${instId}-trm`);
-            if (trmEl) trmEl.style.width = (fx.tremoloAmount * 100) + '%';
+            setFillWithTransition(trmEl, fx.tremoloAmount * 100);
             const trmSpeedEl = document.getElementById(`${instId}-trm-speed`);
-            if (trmSpeedEl) trmSpeedEl.style.width = norm(fx.tremoloSpeed, effectRanges.tremoloSpeed) + '%';
+            setFillWithTransition(trmSpeedEl, norm(fx.tremoloSpeed, effectRanges.tremoloSpeed));
             
             // Delay bars
             const delayTimeEl = document.getElementById(`${instId}-delay-time`);
-            if (delayTimeEl) delayTimeEl.style.width = norm(fx.delayTime, effectRanges.delayTime) + '%';
+            setFillWithTransition(delayTimeEl, norm(fx.delayTime, effectRanges.delayTime));
             const echoEl = document.getElementById(`${instId}-echo`);
-            if (echoEl) echoEl.style.width = norm(fx.delayAmount, effectRanges.delayAmount) + '%';
+            setFillWithTransition(echoEl, norm(fx.delayAmount, effectRanges.delayAmount));
             const delayFbEl = document.getElementById(`${instId}-delay-fb`);
-            if (delayFbEl) delayFbEl.style.width = norm(fx.delayFeedback, effectRanges.delayFeedback) + '%';
+            setFillWithTransition(delayFbEl, norm(fx.delayFeedback, effectRanges.delayFeedback));
             
             // Reverb bars
             const reverbEl = document.getElementById(`${instId}-reverb`);
-            if (reverbEl) reverbEl.style.width = norm(fx.reverbAmount, effectRanges.reverbAmount) + '%';
+            setFillWithTransition(reverbEl, norm(fx.reverbAmount, effectRanges.reverbAmount));
             const reverbDecayEl = document.getElementById(`${instId}-reverb-decay`);
-            if (reverbDecayEl) reverbDecayEl.style.width = norm(fx.reverbDecay, effectRanges.reverbDecay) + '%';
+            setFillWithTransition(reverbDecayEl, norm(fx.reverbDecay, effectRanges.reverbDecay));
             const reverbToneEl = document.getElementById(`${instId}-reverb-tone`);
-            if (reverbToneEl) reverbToneEl.style.width = norm(fx.reverbTone, effectRanges.reverbTone) + '%';
+            setFillWithTransition(reverbToneEl, norm(fx.reverbTone, effectRanges.reverbTone));
             
             // EQ markers (centered at 50%, range -12 to +12 dB)
             const eqToPercent = (val) => ((val + 12) / 24) * 100;
             const eqLowEl = document.getElementById(`${instId}-eq-low`);
-            if (eqLowEl) eqLowEl.style.left = eqToPercent(fx.eqLow) + '%';
+            setMarkerWithTransition(eqLowEl, eqToPercent(fx.eqLow), '--eq-duration');
             const eqMidEl = document.getElementById(`${instId}-eq-mid`);
-            if (eqMidEl) eqMidEl.style.left = eqToPercent(fx.eqMid) + '%';
+            setMarkerWithTransition(eqMidEl, eqToPercent(fx.eqMid), '--eq-duration');
             const eqHighEl = document.getElementById(`${instId}-eq-high`);
-            if (eqHighEl) eqHighEl.style.left = eqToPercent(fx.eqHigh) + '%';
+            setMarkerWithTransition(eqHighEl, eqToPercent(fx.eqHigh), '--eq-duration');
             
             // Pan marker (full -1 to +1 range)
             const panEl = document.getElementById(`${instId}-pan`);
             if (panEl) {
                 const panPercent = ((fx.pan + 1) / 2) * 100;
-                panEl.style.left = panPercent + '%';
+                setMarkerWithTransition(panEl, panPercent, '--pan-duration');
             }
         }
         
@@ -3296,7 +3346,7 @@
         
         function initialize() {
             log('system', '═══════════════════════════════════════');
-            log('system', 'INITIALIZING AMBIENT DRIFT v2');
+            log('system', 'INITIALIZING DRIFT');
             log('system', '═══════════════════════════════════════');
             
             if (audioCtx) audioCtx.close();
@@ -3495,7 +3545,7 @@
         });
 
         // Initial log
-        log('system', 'AMBIENT DRIFT v2 loaded');
+        log('system', 'DRIFT loaded');
         log('system', 'Click [▶] INIT to begin');
     </script>
 </body>
