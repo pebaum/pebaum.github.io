@@ -55,7 +55,7 @@ Each instrument can operate in three modes:
 - **MELODY (MEL)**: Plays single-note melodic lines
 - **OFF**: Silent, resting
 
-Mode changes happen automatically every ~10 seconds (30% chance per instrument).
+Approximately every 10 seconds, the system checks each instrument for a possible mode change; each check has a 30% chance to change that instrument’s mode (so actual mode changes per instrument typically occur every ~30–35 seconds on average).
 
 ---
 
