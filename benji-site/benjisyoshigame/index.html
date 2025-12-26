@@ -1,0 +1,4766 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Benji's Yoshi Adventure</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito+Sans:wght@400;600;700&display=swap');
+
+        :root {
+            --ink: #2a221b;
+            --ink-soft: #605449;
+            --panel: #fff7e6;
+            --panel-edge: #f3cb76;
+            --panel-strong: #ffefc9;
+            --accent-green: #2fa85f;
+            --accent-orange: #f4b54d;
+            --accent-red: #ef6161;
+            --accent-blue: #4aa3f0;
+            --shadow-soft: 0 14px 26px rgba(33, 24, 16, 0.14);
+            --shadow-hard: 0 20px 40px rgba(20, 14, 8, 0.24);
+            --radius-xl: 28px;
+            --radius-lg: 22px;
+            --radius-md: 16px;
+            --radius-sm: 12px;
+            --font-title: 'Fredoka', sans-serif;
+            --font-ui: 'Nunito Sans', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            font-family: var(--font-ui);
+            color: var(--ink);
+            background:
+                radial-gradient(circle at 12% 12%, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0) 50%),
+                radial-gradient(circle at 88% 18%, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 48%),
+                radial-gradient(circle at 50% 85%, rgba(255, 232, 201, 0.7) 0%, rgba(255, 232, 201, 0) 55%),
+                linear-gradient(180deg, #9cdcff 0%, #c9f6df 48%, #ffe8c4 100%);
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(circle at 18% 35%, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0) 58%),
+                radial-gradient(circle at 78% 70%, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0) 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                radial-gradient(rgba(255, 255, 255, 0.25) 1px, transparent 0),
+                radial-gradient(rgba(255, 255, 255, 0.18) 1px, transparent 0);
+            background-size: 36px 36px, 72px 72px;
+            opacity: 0.45;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page {
+            width: min(1180px, 94vw);
+            padding: 28px 0 40px;
+            display: grid;
+            gap: 20px;
+            position: relative;
+            z-index: 1;
+            animation: floatIn 0.7s ease both;
+        }
+
+        .titlebar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 18px;
+            padding: 18px 26px;
+            border-radius: var(--radius-xl);
+            background: linear-gradient(135deg, #fff8ea 0%, #fff0cf 55%, #ffe5b7 100%);
+            border: 2px solid rgba(241, 190, 99, 0.85);
+            box-shadow: var(--shadow-soft);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .titlebar::before {
+            content: '';
+            position: absolute;
+            inset: -55% 0 0 42%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0));
+            opacity: 0.75;
+        }
+
+        h1 {
+            font-family: var(--font-title);
+            font-size: clamp(2.2rem, 3.2vw, 3.4rem);
+            letter-spacing: 0.4px;
+            color: var(--ink);
+            text-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+        }
+
+        .subtitle {
+            color: var(--ink-soft);
+            font-size: 1.05rem;
+            margin-top: 4px;
+        }
+
+        .title-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .title-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.92);
+            border: 2px solid rgba(241, 199, 116, 0.9);
+            border-radius: 999px;
+            padding: 6px 16px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: #4c3c2e;
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .badge::before {
+            content: '';
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            box-shadow: 0 0 0 3px rgba(47, 168, 95, 0.2);
+        }
+
+        .badge-alt {
+            background: #fff0d6;
+        }
+
+        .badge-alt::before {
+            background: var(--accent-red);
+            box-shadow: 0 0 0 3px rgba(239, 97, 97, 0.25);
+        }
+
+        .game-shell {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 300px;
+            gap: 20px;
+            align-items: start;
+        }
+
+        #gameContainer {
+            position: relative;
+            border-radius: var(--radius-xl);
+            background: linear-gradient(180deg, #fffdf8 0%, #ffecc9 100%);
+            border: 3px solid #2f241c;
+            box-shadow: var(--shadow-hard);
+            padding: 12px;
+            max-width: 100%;
+            overflow: hidden;
+        }
+
+        #gameContainer::before {
+            content: '';
+            position: absolute;
+            inset: 8px;
+            border-radius: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.7);
+            box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.04);
+            pointer-events: none;
+        }
+
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            border-radius: 18px;
+            background: #ffffff;
+            box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.65);
+        }
+
+        #ui {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            right: 16px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 8px;
+            padding: 8px 10px;
+            border-radius: var(--radius-md);
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.65);
+            box-shadow: 0 10px 22px rgba(20, 14, 8, 0.18);
+            backdrop-filter: blur(6px);
+            pointer-events: none;
+        }
+
+        .ui-box {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 12px;
+            border: 1px solid rgba(48, 36, 26, 0.12);
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+            font-weight: 700;
+            font-size: 0.86rem;
+            color: #3a2f26;
+            letter-spacing: 0.3px;
+        }
+
+        .ui-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            color: #78695e;
+        }
+
+        .ui-value {
+            font-family: var(--font-title);
+            font-size: 1.1rem;
+            color: #2a221b;
+        }
+
+        .ui-icon {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .ui-hearts .ui-icon {
+            background: var(--accent-red);
+            box-shadow: 0 0 0 3px rgba(240, 97, 111, 0.2);
+        }
+
+        .ui-coins .ui-icon {
+            background: var(--accent-orange);
+            box-shadow: 0 0 0 3px rgba(241, 177, 74, 0.2);
+        }
+
+        .ui-redcoins .ui-icon {
+            background: #e2474b;
+            box-shadow: 0 0 0 3px rgba(226, 71, 75, 0.2);
+        }
+
+        .ui-flowers .ui-icon {
+            background: #ffd54a;
+            box-shadow: 0 0 0 3px rgba(255, 213, 74, 0.2);
+        }
+
+        .ui-eggs .ui-icon {
+            background: #8bd188;
+            box-shadow: 0 0 0 3px rgba(139, 209, 136, 0.2);
+        }
+
+        .ui-level .ui-icon {
+            background: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(78, 167, 243, 0.2);
+        }
+
+        #eggCounter {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        #eggDisplay {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .egg-dot {
+            width: 14px;
+            height: 18px;
+            background: radial-gradient(ellipse at 30% 30%, #ffffff 0%, #c1efc1 45%, #4fa55c 100%);
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            border: 2px solid #1f6b33;
+            box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.6);
+        }
+
+        .egg-dot.empty {
+            background: #d2d2d2;
+            border-color: #a8a8a8;
+        }
+
+        #controls {
+            display: grid;
+            gap: 14px;
+        }
+
+        .panel-card {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 243, 221, 0.96) 100%);
+            border: 2px solid rgba(242, 196, 106, 0.85);
+            border-radius: var(--radius-lg);
+            padding: 16px 18px;
+            box-shadow: var(--shadow-soft);
+            position: relative;
+            overflow: hidden;
+            animation: cardIn 0.6s ease both;
+        }
+
+        .panel-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, var(--accent-green), var(--accent-blue), var(--accent-orange));
+            opacity: 0.7;
+        }
+
+        .panel-card:nth-child(1) { animation-delay: 0.08s; }
+        .panel-card:nth-child(2) { animation-delay: 0.16s; }
+        .panel-card:nth-child(3) { animation-delay: 0.24s; }
+
+        #controls h3 {
+            font-family: var(--font-title);
+            font-size: 1.15rem;
+            margin-bottom: 8px;
+            color: #3b2f25;
+            letter-spacing: 0.3px;
+        }
+
+        .control-grid {
+            display: grid;
+            gap: 8px;
+        }
+
+        .control-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 12px;
+            border: 1px solid rgba(240, 220, 190, 0.9);
+            padding: 8px 12px;
+            font-size: 0.95rem;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            animation: riseIn 0.5s ease both;
+        }
+
+        .control-item:nth-child(1) { animation-delay: 0.04s; }
+        .control-item:nth-child(2) { animation-delay: 0.08s; }
+        .control-item:nth-child(3) { animation-delay: 0.12s; }
+        .control-item:nth-child(4) { animation-delay: 0.16s; }
+        .control-item:nth-child(5) { animation-delay: 0.2s; }
+
+        .key {
+            min-width: 86px;
+            text-align: center;
+            background: linear-gradient(180deg, #fff6df 0%, #ffdca0 100%);
+            border: 2px solid #e2b45c;
+            padding: 4px 10px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-family: var(--font-title);
+            font-size: 0.95rem;
+            box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.8), 0 2px 0 rgba(226, 180, 92, 0.6);
+        }
+
+        .panel-note {
+            color: var(--ink-soft);
+            font-size: 0.95rem;
+            line-height: 1.45;
+        }
+
+        .screen {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle at 50% 10%, rgba(255, 255, 255, 0.25) 0%, rgba(15, 18, 16, 0.65) 60%, rgba(15, 18, 16, 0.85) 100%);
+            backdrop-filter: blur(6px);
+            border-radius: 18px;
+            z-index: 100;
+            animation: fadeIn 0.25s ease both;
+        }
+
+        .screen-card {
+            width: min(90%, 520px);
+            background: linear-gradient(180deg, #fffdf8 0%, #fff1d4 100%);
+            border-radius: 24px;
+            border: 3px solid #2f241c;
+            padding: 22px 24px;
+            text-align: center;
+            box-shadow: var(--shadow-hard);
+            animation: popIn 0.3s ease both;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .screen-card.wide {
+            width: min(92%, 720px);
+        }
+
+        .screen-card h2 {
+            font-family: var(--font-title);
+            font-size: 2.1rem;
+            margin-bottom: 10px;
+        }
+
+        .screen-text {
+            color: var(--ink-soft);
+            margin-bottom: 18px;
+            font-size: 1.02rem;
+        }
+
+        .screen-note {
+            color: #7d6f63;
+            margin-top: 14px;
+            font-size: 0.9rem;
+        }
+
+        .screen-actions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .level-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px;
+            margin: 12px 0;
+        }
+
+        .btn {
+            background: linear-gradient(180deg, #6fe28f 0%, #2fa85f 100%);
+            color: #ffffff;
+            border: 3px solid #1f6b3a;
+            padding: 12px 30px;
+            font-size: 1.05rem;
+            border-radius: 999px;
+            cursor: pointer;
+            font-family: var(--font-title);
+            letter-spacing: 0.3px;
+            box-shadow: 0 6px 0 #1f6b3a, 0 16px 26px rgba(0, 0, 0, 0.22);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: -35%;
+            left: -10%;
+            width: 60%;
+            height: 80%;
+            background: rgba(255, 255, 255, 0.35);
+            transform: skewX(-18deg);
+            pointer-events: none;
+        }
+
+        .btn:hover {
+            transform: translateY(2px);
+            box-shadow: 0 4px 0 #1f6b3a, 0 12px 22px rgba(0, 0, 0, 0.18);
+        }
+
+        .btn:active {
+            transform: translateY(6px);
+            box-shadow: 0 0 0 #1f6b3a;
+        }
+
+        .btn.secondary {
+            background: linear-gradient(180deg, #ffe39a 0%, #f2b24e 100%);
+            color: #3b2a1a;
+            border-color: #c6862d;
+            box-shadow: 0 6px 0 #c6862d, 0 14px 24px rgba(0, 0, 0, 0.18);
+        }
+
+        .btn.secondary:hover {
+            box-shadow: 0 4px 0 #c6862d, 0 12px 20px rgba(0, 0, 0, 0.16);
+        }
+
+        .btn:disabled {
+            background: linear-gradient(180deg, #9b9b9b 0%, #6d6d6d 100%);
+            border-color: #4f4f4f;
+            box-shadow: 0 5px 0 #404040;
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+
+        .btn:disabled::after {
+            opacity: 0.15;
+        }
+
+        .level-btn {
+            min-width: 180px;
+            font-size: 0.95rem;
+            padding: 10px 16px;
+        }
+
+        .level-btn.completed {
+            background: linear-gradient(180deg, #ffe39a 0%, #f2b24e 100%);
+            border-color: #c6862d;
+            box-shadow: 0 6px 0 #c6862d;
+            color: #3b2a1a;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @keyframes floatIn {
+            from { opacity: 0; transform: translateY(14px) scale(0.99); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.96); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes riseIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes cardIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 980px) {
+            .game-shell {
+                grid-template-columns: 1fr;
+            }
+
+            #controls {
+                order: 2;
+            }
+
+            #ui {
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            }
+        }
+
+        @media (max-width: 600px) {
+            .titlebar {
+                padding: 14px 16px;
+            }
+
+            .screen-card {
+                padding: 18px;
+            }
+
+            #ui {
+                padding: 6px 8px;
+                border-radius: 12px;
+            }
+
+            .ui-box {
+                font-size: 0.8rem;
+                padding: 5px 8px;
+            }
+
+            .ui-label {
+                display: none;
+            }
+
+            .badge {
+                font-size: 0.8rem;
+                padding: 5px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <header class="titlebar">
+            <div class="title-stack">
+                <h1>Benji's Yoshi Adventure</h1>
+                <p class="subtitle">Crafted worlds, cozy vibes, and heroic eggs.</p>
+            </div>
+            <div class="title-badges">
+                <div class="badge">Collect 5 Smiley Flowers</div>
+                <div class="badge badge-alt">Find all Red Coins</div>
+            </div>
+        </header>
+
+        <section class="game-shell">
+            <div id="gameContainer">
+                <canvas id="gameCanvas" width="900" height="500"></canvas>
+                <div id="ui">
+                    <div class="ui-box ui-hearts">
+                        <span class="ui-icon"></span>
+                        <span class="ui-label">Hearts</span>
+                        <span class="ui-value" id="hearts">3</span>
+                    </div>
+                    <div class="ui-box ui-coins">
+                        <span class="ui-icon"></span>
+                        <span class="ui-label">Coins</span>
+                        <span class="ui-value" id="coins">0</span>
+                    </div>
+                    <div class="ui-box ui-redcoins">
+                        <span class="ui-icon"></span>
+                        <span class="ui-label">Red Coins</span>
+                        <span class="ui-value"><span id="redCoins">0</span>/20</span>
+                    </div>
+                    <div class="ui-box ui-flowers">
+                        <span class="ui-icon"></span>
+                        <span class="ui-label">Flowers</span>
+                        <span class="ui-value"><span id="flowers">0</span>/5</span>
+                    </div>
+                    <div class="ui-box ui-eggs" id="eggCounter">
+                        <span class="ui-icon"></span>
+                        <span class="ui-label">Eggs</span>
+                        <span class="ui-value" id="eggDisplay"></span>
+                    </div>
+                    <div class="ui-box ui-level">
+                        <span class="ui-icon"></span>
+                        <span class="ui-label">World</span>
+                        <span class="ui-value" id="levelDisplay">1-1</span>
+                    </div>
+                </div>
+
+                <div id="startScreen" class="screen">
+                    <div class="screen-card">
+                        <h2>Benji's Yoshi Adventure</h2>
+                        <p class="screen-text">A crafted adventure awaits.</p>
+                        <div class="screen-actions">
+                            <button class="btn" onclick="showLevelSelect()">Start Adventure</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="levelSelectScreen" class="screen hidden">
+                    <div class="screen-card wide">
+                        <h2>World Map</h2>
+                        <div class="level-grid">
+                            <button class="btn level-btn" onclick="selectLevel(1)" id="lvl1">World 1-1 Green Meadows</button>
+                            <button class="btn level-btn" onclick="selectLevel(2)" id="lvl2" disabled>World 1-2 Sandy Dunes</button>
+                            <button class="btn level-btn" onclick="selectLevel(3)" id="lvl3" disabled>World 1-3 Frosty Peaks</button>
+                            <button class="btn level-btn" onclick="selectLevel(4)" id="lvl4" disabled>World 1-4 Boss Castle</button>
+                        </div>
+                        <p class="screen-note">Complete levels to unlock more.</p>
+                    </div>
+                </div>
+
+                <div id="gameOverScreen" class="screen hidden">
+                    <div class="screen-card">
+                        <h2>Oh no!</h2>
+                        <p class="screen-text">Yoshi got hurt.</p>
+                        <div class="screen-actions">
+                            <button class="btn" onclick="restartGame()">Try Again</button>
+                            <button class="btn secondary" onclick="showLevelSelect()">Level Select</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="winScreen" class="screen hidden">
+                    <div class="screen-card">
+                        <h2>Amazing!</h2>
+                        <p class="screen-text" id="winMessage">You found all 5 Smiley Flowers!</p>
+                        <div class="screen-actions">
+                            <button class="btn" onclick="nextLevel()">Next Level</button>
+                            <button class="btn secondary" onclick="showLevelSelect()">Level Select</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="bossScreen" class="screen hidden">
+                    <div class="screen-card">
+                        <h2>Victory!</h2>
+                        <p class="screen-text">You defeated Baby Bowser and saved the day!</p>
+                        <p class="screen-note">Thanks for playing Benji's Yoshi Adventure.</p>
+                        <div class="screen-actions">
+                            <button class="btn" onclick="showLevelSelect()">Play Again</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <aside id="controls">
+                <div class="panel-card">
+                    <h3>Controls</h3>
+                    <div class="control-grid">
+                        <div class="control-item"><span class="key">Arrow Keys</span><span>Move</span></div>
+                        <div class="control-item"><span class="key">Space</span><span>Jump / Flutter</span></div>
+                        <div class="control-item"><span class="key">Arrow Down</span><span>Ground Pound</span></div>
+                        <div class="control-item"><span class="key">Z</span><span>Eat Enemy</span></div>
+                        <div class="control-item"><span class="key">X</span><span>Aim / Throw Egg</span></div>
+                    </div>
+                </div>
+                <div class="panel-card">
+                    <h3>Goals</h3>
+                    <p class="panel-note">Collect 5 Smiley Flowers to clear the level. Red coins unlock bonus eggs.</p>
+                </div>
+                <div class="panel-card">
+                    <h3>Tips</h3>
+                    <p class="panel-note">Hold X to aim, release to throw. Ground pound breaks blocks and stuns enemies.</p>
+                </div>
+            </aside>
+        </section>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Game state
+        let gameRunning = false;
+        let cameraX = 0;
+        const WORLD_WIDTH = 3600;
+        const GRAVITY = 0.5;
+        const FLUTTER_GRAVITY = 0.15;
+        
+        // Level system
+        let currentLevel = 1;
+        let levelsCompleted = [false, false, false, false]; // Tracks which levels are done
+        const LEVEL_NAMES = ['Green Meadows', 'Sandy Dunes', 'Frosty Peaks', 'Boss Castle'];
+        const LEVEL_THEMES = {
+            1: { // Green Meadows
+                sky: ['#87CEEB', '#B0E0E6'],
+                ground: '#8FBC8F',
+                platforms: ['#8B4513', '#654321'],
+                accent: '#228B22'
+            },
+            2: { // Sandy Dunes
+                sky: ['#FFE4B5', '#FFDAB9'],
+                ground: '#DEB887',
+                platforms: ['#D2691E', '#CD853F'],
+                accent: '#DAA520'
+            },
+            3: { // Frosty Peaks  
+                sky: ['#E0FFFF', '#B0E0E6'],
+                ground: '#F0F8FF',
+                platforms: ['#4682B4', '#5F9EA0'],
+                accent: '#87CEEB'
+            },
+            4: { // Boss Castle
+                sky: ['#4A4A4A', '#2F2F2F'],
+                ground: '#696969',
+                platforms: ['#8B0000', '#A52A2A'],
+                accent: '#FF4500'
+            }
+        };
+        
+        // Boss system
+        let boss = null;
+        let bossActive = false;
+        
+        // Yoshi
+        const yoshi = {
+            x: 100,
+            y: 300,
+            width: 50,
+            height: 60,
+            vx: 0,
+            vy: 0,
+            speed: 5,
+            jumpPower: -12,
+            grounded: false,
+            fluttering: false,
+            flutterTime: 0,
+            facing: 1,
+            frame: 0,
+            animTimer: 0,
+            eating: false,
+            eatTimer: 0,
+            tongueLength: 0,
+            hearts: 3,
+            eggs: 3,
+            maxEggs: 6,
+            invincible: 0,
+            // New Phase 1 properties
+            aiming: false,
+            aimAngle: Math.PI / 4, // 45 degrees up
+            aimDirection: 1, // 1 = going up, -1 = going down
+            groundPounding: false,
+            groundPoundSpeed: 15
+        };
+        
+        // Egg trail behind Yoshi (visual trailing eggs)
+        let eggTrail = [];
+        
+        // Arrays for game objects
+        let platforms = [];
+        let gems = [];
+        let enemies = [];
+        let eggs = [];
+        let particles = [];
+        let decorations = [];
+        let clouds = [];
+        
+        // Phase 2: New interactive objects
+        let questionClouds = [];
+        let breakableBlocks = [];
+        let movingPlatforms = [];
+        let checkpoints = [];
+        let lastCheckpoint = { x: 100, y: 300 };
+        
+        // Phase 3: Collectibles
+        let coins = [];
+        let redCoins = [];
+        let smileyFlowers = [];
+        let heartPickups = [];
+        let coinCount = 0;
+        let redCoinCount = 0;
+        let flowerCount = 0;
+        
+        // Phase 4: New enemy types
+        let piranhaPlants = [];
+        let flyGuys = [];
+        let koopaTroopas = [];
+        let shells = [];  // Kicked koopa shells
+        
+        // Phase 5: Visual depth layers
+        let backgroundObjects = [];  // Far background decorations
+        let foregroundObjects = [];  // Objects in front of Yoshi
+        let parallaxLayers = [];     // Multiple parallax background layers
+        
+        // Input
+        const keys = {};
+        
+        // Initialize level
+        function initLevel(levelNum = 1) {
+            currentLevel = levelNum;
+            boss = null;
+            bossActive = false;
+            
+            platforms = [];
+            gems = [];
+            enemies = [];
+            eggs = [];
+            particles = [];
+            decorations = [];
+            clouds = [];
+            questionClouds = [];
+            breakableBlocks = [];
+            movingPlatforms = [];
+            coins = [];
+            redCoins = [];
+            smileyFlowers = [];
+            heartPickups = [];
+            coinCount = 0;
+            redCoinCount = 0;
+            flowerCount = 0;
+            piranhaPlants = [];
+            flyGuys = [];
+            koopaTroopas = [];
+            shells = [];
+            backgroundObjects = [];
+            foregroundObjects = [];
+            parallaxLayers = [];
+            checkpoints = [];
+            lastCheckpoint = { x: 100, y: 300 };
+            
+            const theme = LEVEL_THEMES[levelNum];
+            
+            // Generate level-specific content based on level number
+            if (levelNum === 4) {
+                // Boss level - shorter, leads to boss fight
+                initBossLevel(theme);
+            } else {
+                // Regular level with themed content
+                initRegularLevel(levelNum, theme);
+            }
+            
+            // Reset Yoshi
+            yoshi.x = 100;
+            yoshi.y = 300;
+            yoshi.vx = 0;
+            yoshi.vy = 0;
+            yoshi.hearts = 3;
+            yoshi.eggs = 3;
+            yoshi.invincible = 0;
+            yoshi.grounded = false;
+            yoshi.fluttering = false;
+            yoshi.aiming = false;
+            yoshi.groundPounding = false;
+            
+            // Initialize egg trail
+            updateEggTrail();
+            
+            cameraX = 0;
+            
+            document.getElementById('levelDisplay').textContent = `1-${levelNum}`;
+            updateUI();
+        }
+        
+        function initRegularLevel(levelNum, theme) {
+            // Ground platforms vary by level
+            let groundSegments, floatingPlatforms;
+            
+            if (levelNum === 1) {
+                // Green Meadows - original layout
+                groundSegments = [
+                    { x: 0, y: 420, width: 500, height: 80 },
+                    { x: 550, y: 420, width: 300, height: 80 },
+                    { x: 900, y: 420, width: 400, height: 80 },
+                    { x: 1400, y: 420, width: 300, height: 80 },
+                    { x: 1800, y: 420, width: 500, height: 80 },
+                    { x: 2400, y: 420, width: 400, height: 80 },
+                    { x: 2900, y: 420, width: 700, height: 80 }
+                ];
+                floatingPlatforms = [
+                    { x: 250, y: 320, width: 150, height: 25 },
+                    { x: 450, y: 250, width: 120, height: 25 },
+                    { x: 650, y: 300, width: 100, height: 25 },
+                    { x: 850, y: 220, width: 150, height: 25 },
+                    { x: 1050, y: 300, width: 120, height: 25 },
+                    { x: 1200, y: 180, width: 180, height: 25 },
+                    { x: 1500, y: 280, width: 130, height: 25 },
+                    { x: 1700, y: 200, width: 150, height: 25 },
+                    { x: 1950, y: 320, width: 120, height: 25 },
+                    { x: 2150, y: 240, width: 140, height: 25 },
+                    { x: 2350, y: 160, width: 160, height: 25 },
+                    { x: 2600, y: 280, width: 130, height: 25 },
+                    { x: 2800, y: 200, width: 150, height: 25 },
+                    { x: 3050, y: 300, width: 140, height: 25 },
+                    { x: 3250, y: 220, width: 180, height: 25 }
+                ];
+            } else if (levelNum === 2) {
+                // Sandy Dunes - more gaps, desert-style
+                groundSegments = [
+                    { x: 0, y: 420, width: 400, height: 80 },
+                    { x: 500, y: 420, width: 250, height: 80 },
+                    { x: 850, y: 420, width: 350, height: 80 },
+                    { x: 1300, y: 420, width: 200, height: 80 },
+                    { x: 1600, y: 420, width: 400, height: 80 },
+                    { x: 2100, y: 420, width: 350, height: 80 },
+                    { x: 2550, y: 420, width: 250, height: 80 },
+                    { x: 2900, y: 420, width: 700, height: 80 }
+                ];
+                floatingPlatforms = [
+                    { x: 420, y: 340, width: 80, height: 25 },
+                    { x: 770, y: 300, width: 80, height: 25 },
+                    { x: 1220, y: 340, width: 80, height: 25 },
+                    { x: 1520, y: 280, width: 80, height: 25 },
+                    { x: 1800, y: 200, width: 150, height: 25 },
+                    { x: 2020, y: 300, width: 80, height: 25 },
+                    { x: 2470, y: 320, width: 80, height: 25 },
+                    { x: 2820, y: 280, width: 80, height: 25 },
+                    { x: 3100, y: 200, width: 180, height: 25 },
+                    { x: 3350, y: 280, width: 100, height: 25 }
+                ];
+            } else if (levelNum === 3) {
+                // Frosty Peaks - icy platforms, vertical challenge
+                groundSegments = [
+                    { x: 0, y: 420, width: 350, height: 80 },
+                    { x: 450, y: 420, width: 200, height: 80 },
+                    { x: 750, y: 380, width: 300, height: 120 },
+                    { x: 1150, y: 420, width: 200, height: 80 },
+                    { x: 1450, y: 350, width: 250, height: 150 },
+                    { x: 1800, y: 420, width: 300, height: 80 },
+                    { x: 2200, y: 380, width: 200, height: 120 },
+                    { x: 2500, y: 420, width: 250, height: 80 },
+                    { x: 2850, y: 350, width: 350, height: 150 },
+                    { x: 3300, y: 420, width: 300, height: 80 }
+                ];
+                floatingPlatforms = [
+                    { x: 370, y: 320, width: 80, height: 25 },
+                    { x: 680, y: 260, width: 70, height: 25 },
+                    { x: 900, y: 180, width: 100, height: 25 },
+                    { x: 1070, y: 300, width: 80, height: 25 },
+                    { x: 1370, y: 220, width: 80, height: 25 },
+                    { x: 1650, y: 160, width: 120, height: 25 },
+                    { x: 1950, y: 280, width: 80, height: 25 },
+                    { x: 2120, y: 200, width: 80, height: 25 },
+                    { x: 2420, y: 280, width: 80, height: 25 },
+                    { x: 2700, y: 180, width: 120, height: 25 },
+                    { x: 3050, y: 220, width: 100, height: 25 },
+                    { x: 3200, y: 300, width: 80, height: 25 }
+                ];
+            }
+            
+            platforms = [...groundSegments, ...floatingPlatforms];
+            
+            // Add level-themed decorations and enemies
+            addLevelEnemies(levelNum);
+            addLevelCollectibles(levelNum);
+            addLevelCloudsAndDecorations(levelNum, theme);
+            addLevelInteractiveObjects(levelNum);
+        }
+        
+        function addLevelEnemies(levelNum) {
+            // Shy Guys (basic enemies)
+            const shyGuyPositions = levelNum === 1 ? [
+                { x: 350, y: 370, patrol: 100 },
+                { x: 750, y: 370, patrol: 80 },
+                { x: 1100, y: 370, patrol: 120 },
+                { x: 1600, y: 370, patrol: 100 },
+                { x: 2000, y: 370, patrol: 90 },
+                { x: 2500, y: 370, patrol: 110 },
+                { x: 3100, y: 370, patrol: 100 }
+            ] : levelNum === 2 ? [
+                { x: 200, y: 370, patrol: 100 },
+                { x: 600, y: 370, patrol: 80 },
+                { x: 1000, y: 370, patrol: 100 },
+                { x: 1700, y: 370, patrol: 120 },
+                { x: 2200, y: 370, patrol: 100 },
+                { x: 2650, y: 370, patrol: 80 },
+                { x: 3050, y: 370, patrol: 110 }
+            ] : [
+                { x: 150, y: 370, patrol: 80 },
+                { x: 550, y: 370, patrol: 70 },
+                { x: 900, y: 330, patrol: 100 },
+                { x: 1250, y: 370, patrol: 80 },
+                { x: 1600, y: 300, patrol: 100 },
+                { x: 1950, y: 370, patrol: 90 },
+                { x: 2350, y: 330, patrol: 80 },
+                { x: 2700, y: 300, patrol: 100 }
+            ];
+            
+            enemies = shyGuyPositions.map(pos => ({
+                x: pos.x,
+                y: pos.y,
+                startX: pos.x,
+                width: 40,
+                height: 50,
+                patrol: pos.patrol,
+                vx: 1.5,
+                alive: true,
+                frame: 0
+            }));
+            
+            // Piranha Plants
+            const piranhaCount = levelNum + 3;
+            piranhaPlants = [];
+            for (let i = 0; i < piranhaCount; i++) {
+                piranhaPlants.push({
+                    x: 400 + i * (WORLD_WIDTH / (piranhaCount + 1)),
+                    y: 395,
+                    width: 40,
+                    height: 50,
+                    alive: true,
+                    biting: false,
+                    biteTimer: 0,
+                    phase: Math.random() * Math.PI * 2
+                });
+            }
+            
+            // Fly Guys
+            const flyGuyCount = levelNum + 4;
+            flyGuys = [];
+            for (let i = 0; i < flyGuyCount; i++) {
+                flyGuys.push({
+                    x: 300 + i * (WORLD_WIDTH / (flyGuyCount + 1)),
+                    y: 140 + Math.random() * 40,
+                    startY: 140 + Math.random() * 40,
+                    width: 35,
+                    height: 45,
+                    patrolY: 40 + Math.random() * 20,
+                    vy: 1,
+                    alive: true,
+                    carriesItem: ['coin', 'coin', 'redCoin', 'egg'][i % 4],
+                    propellerAngle: 0
+                });
+            }
+            
+            // Koopa Troopas
+            const koopaCount = levelNum + 4;
+            koopaTroopas = [];
+            for (let i = 0; i < koopaCount; i++) {
+                koopaTroopas.push({
+                    x: 500 + i * (WORLD_WIDTH / (koopaCount + 1)),
+                    y: 365,
+                    startX: 500 + i * (WORLD_WIDTH / (koopaCount + 1)),
+                    width: 35,
+                    height: 55,
+                    patrol: 70 + Math.random() * 40,
+                    vx: 1.2,
+                    alive: true,
+                    inShell: false,
+                    shellTimer: 0
+                });
+            }
+        }
+        
+        function addLevelCollectibles(levelNum) {
+            // Gems
+            gems = [];
+            for (let i = 0; i < 20; i++) {
+                gems.push({
+                    x: 150 + i * (WORLD_WIDTH / 22),
+                    y: 200 + Math.sin(i * 0.8) * 120,
+                    width: 30,
+                    height: 30,
+                    collected: false,
+                    bobOffset: Math.random() * Math.PI * 2,
+                    color: ['#FF6B6B', '#4ECDC4', '#FFE66D', '#95E1D3', '#F38181'][i % 5]
+                });
+            }
+            
+            // Coins
+            coins = [];
+            for (let i = 0; i < 40; i++) {
+                coins.push({
+                    x: 100 + i * (WORLD_WIDTH / 42),
+                    y: 350 + Math.sin(i * 0.3) * 50,
+                    collected: false,
+                    bobOffset: Math.random() * Math.PI * 2
+                });
+            }
+            
+            // Red Coins (20 per level)
+            redCoins = [];
+            for (let i = 0; i < 20; i++) {
+                redCoins.push({
+                    x: 200 + i * (WORLD_WIDTH / 22),
+                    y: 150 + Math.sin(i * 0.5) * 80,
+                    collected: false,
+                    bobOffset: Math.random() * Math.PI * 2
+                });
+            }
+            
+            // Smiley Flowers (5 per level)
+            smileyFlowers = [];
+            const flowerSpacing = WORLD_WIDTH / 6;
+            for (let i = 0; i < 5; i++) {
+                smileyFlowers.push({
+                    x: 400 + i * flowerSpacing,
+                    y: 100 + Math.sin(i) * 40,
+                    collected: false,
+                    bobOffset: Math.random() * Math.PI * 2,
+                    sparkleTimer: 0
+                });
+            }
+            
+            // Heart Pickups
+            heartPickups = [];
+            for (let i = 0; i < 4; i++) {
+                heartPickups.push({
+                    x: 600 + i * (WORLD_WIDTH / 5),
+                    y: 160 + Math.random() * 40,
+                    collected: false,
+                    bobOffset: Math.random() * Math.PI * 2
+                });
+            }
+        }
+        
+        function addLevelCloudsAndDecorations(levelNum, theme) {
+            // Clouds
+            for (let i = 0; i < 20; i++) {
+                clouds.push({
+                    x: Math.random() * WORLD_WIDTH,
+                    y: 30 + Math.random() * 100,
+                    width: 80 + Math.random() * 60,
+                    speed: 0.2 + Math.random() * 0.3
+                });
+            }
+            
+            // Decorations vary by level theme
+            const decoTypes = levelNum === 1 ? ['flower', 'tree', 'bush', 'mushroom'] :
+                              levelNum === 2 ? ['cactus', 'rock', 'tumbleweed', 'bone'] :
+                              ['snowtree', 'icicle', 'snowman', 'rock'];
+            
+            for (let i = 0; i < 40; i++) {
+                decorations.push({
+                    type: decoTypes[Math.floor(Math.random() * decoTypes.length)],
+                    x: Math.random() * WORLD_WIDTH,
+                    y: 380 + Math.random() * 30,
+                    scale: 0.5 + Math.random() * 0.5
+                });
+            }
+            
+            // Parallax layers
+            for (let i = 0; i < 8; i++) {
+                parallaxLayers.push({
+                    type: levelNum === 1 ? 'mountain' : levelNum === 2 ? 'dune' : 'snowMountain',
+                    x: i * 500,
+                    layer: 0,
+                    parallax: 0.1,
+                    height: 120 + Math.random() * 80
+                });
+            }
+            
+            for (let i = 0; i < 12; i++) {
+                parallaxLayers.push({
+                    type: 'craftedHill',
+                    x: i * 350,
+                    layer: 1,
+                    parallax: 0.3,
+                    height: 80 + Math.random() * 40,
+                    color: theme.accent
+                });
+            }
+            
+            // Background objects
+            for (let i = 0; i < 25; i++) {
+                backgroundObjects.push({
+                    type: levelNum === 1 ? ['bgTree', 'bgHouse', 'bgWindmill', 'bgCloud'][i % 4] :
+                          levelNum === 2 ? ['bgPyramid', 'bgCactus', 'bgSun', 'bgCloud'][i % 4] :
+                          ['bgPineTree', 'bgCabin', 'bgSnowCloud', 'bgIgloo'][i % 4],
+                    x: Math.random() * WORLD_WIDTH,
+                    y: 280 + Math.random() * 100,
+                    scale: 0.4 + Math.random() * 0.3,
+                    parallax: 0.5 + Math.random() * 0.2
+                });
+            }
+            
+            // Foreground objects
+            for (let i = 0; i < 15; i++) {
+                foregroundObjects.push({
+                    type: levelNum === 1 ? ['fgGrass', 'fgFlower', 'fgRock', 'fgBush'][i % 4] :
+                          levelNum === 2 ? ['fgSand', 'fgCactus', 'fgRock', 'fgSkull'][i % 4] :
+                          ['fgSnow', 'fgIcicle', 'fgRock', 'fgSnowPile'][i % 4],
+                    x: 200 + Math.random() * (WORLD_WIDTH - 400),
+                    y: 420 + Math.random() * 60,
+                    scale: 0.6 + Math.random() * 0.6,
+                    parallax: 1.2
+                });
+            }
+        }
+        
+        function addLevelInteractiveObjects(levelNum) {
+            // Question Clouds
+            questionClouds = [];
+            for (let i = 0; i < 9; i++) {
+                questionClouds.push({
+                    x: 250 + i * (WORLD_WIDTH / 10),
+                    y: 140 + Math.sin(i) * 40,
+                    width: 50,
+                    height: 40,
+                    reward: ['coin', 'egg', 'heart'][i % 3],
+                    hit: false,
+                    bobOffset: Math.random() * Math.PI * 2
+                });
+            }
+            
+            // Breakable Blocks
+            breakableBlocks = [];
+            for (let i = 0; i < 8; i++) {
+                breakableBlocks.push({
+                    x: 180 + i * (WORLD_WIDTH / 9),
+                    y: 350 - (i % 2) * 100,
+                    width: 40,
+                    height: 40,
+                    broken: false,
+                    shakeTime: 0
+                });
+            }
+            
+            // Moving Platforms
+            movingPlatforms = [
+                { x: 500, y: 280, width: 100, height: 20, startX: 500, endX: 620, speed: 1.5, direction: 1, moveType: 'horizontal' },
+                { x: 1350, y: 300, width: 100, height: 20, startY: 200, endY: 350, speed: 1, direction: 1, moveType: 'vertical' },
+                { x: 2100, y: 280, width: 120, height: 20, startX: 2100, endX: 2250, speed: 2, direction: 1, moveType: 'horizontal' },
+                { x: 2950, y: 250, width: 100, height: 20, startY: 180, endY: 320, speed: 1.5, direction: 1, moveType: 'vertical' }
+            ];
+            
+            // Checkpoints
+            checkpoints = [
+                { x: 800, y: 370, activated: false },
+                { x: 1700, y: 370, activated: false },
+                { x: 2600, y: 370, activated: false }
+            ];
+        }
+        
+        function initBossLevel(theme) {
+            // Boss Castle - shorter level leading to boss arena
+            const groundSegments = [
+                { x: 0, y: 420, width: 400, height: 80 },
+                { x: 500, y: 420, width: 300, height: 80 },
+                { x: 900, y: 420, width: 400, height: 80 },
+                { x: 1400, y: 420, width: 1000, height: 80 }  // Boss arena
+            ];
+            
+            const floatingPlatforms = [
+                { x: 420, y: 320, width: 80, height: 25 },
+                { x: 820, y: 280, width: 80, height: 25 },
+                { x: 1100, y: 340, width: 100, height: 25 },
+                // Boss arena platforms
+                { x: 1500, y: 280, width: 120, height: 25 },
+                { x: 1800, y: 200, width: 120, height: 25 },
+                { x: 2100, y: 280, width: 120, height: 25 }
+            ];
+            
+            platforms = [...groundSegments, ...floatingPlatforms];
+            
+            // Minimal enemies before boss
+            enemies = [
+                { x: 200, y: 370, startX: 200, width: 40, height: 50, patrol: 80, vx: 1.5, alive: true, frame: 0 },
+                { x: 600, y: 370, startX: 600, width: 40, height: 50, patrol: 100, vx: 1.5, alive: true, frame: 0 },
+                { x: 1000, y: 370, startX: 1000, width: 40, height: 50, patrol: 100, vx: 1.5, alive: true, frame: 0 }
+            ];
+            
+            // Boss setup
+            boss = {
+                x: 1800,
+                y: 300,
+                width: 100,
+                height: 120,
+                health: 5,
+                maxHealth: 5,
+                phase: 'idle',
+                timer: 0,
+                attackTimer: 0,
+                invincible: 0,
+                direction: -1,
+                jumpTimer: 0,
+                groundY: 300,
+                vy: 0,
+                fireballs: []
+            };
+            
+            // Fewer collectibles in boss level
+            gems = [];
+            for (let i = 0; i < 8; i++) {
+                gems.push({
+                    x: 100 + i * 150,
+                    y: 350,
+                    width: 30,
+                    height: 30,
+                    collected: false,
+                    bobOffset: Math.random() * Math.PI * 2,
+                    color: ['#FF6B6B', '#4ECDC4'][i % 2]
+                });
+            }
+            
+            coins = [];
+            for (let i = 0; i < 15; i++) {
+                coins.push({
+                    x: 80 + i * 80,
+                    y: 350,
+                    collected: false,
+                    bobOffset: Math.random() * Math.PI * 2
+                });
+            }
+            
+            // Only 3 smiley flowers in boss level
+            smileyFlowers = [
+                { x: 300, y: 280, collected: false, bobOffset: 0, sparkleTimer: 0 },
+                { x: 700, y: 220, collected: false, bobOffset: 1, sparkleTimer: 0 },
+                { x: 1100, y: 300, collected: false, bobOffset: 2, sparkleTimer: 0 }
+            ];
+            
+            // Dark castle decorations
+            for (let i = 0; i < 15; i++) {
+                clouds.push({
+                    x: Math.random() * 2400,
+                    y: 20 + Math.random() * 80,
+                    width: 60 + Math.random() * 40,
+                    speed: 0.1 + Math.random() * 0.2
+                });
+            }
+            
+            for (let i = 0; i < 20; i++) {
+                decorations.push({
+                    type: ['torch', 'banner', 'pillar', 'skull'][Math.floor(Math.random() * 4)],
+                    x: Math.random() * 2400,
+                    y: 380 + Math.random() * 30,
+                    scale: 0.5 + Math.random() * 0.5
+                });
+            }
+            
+            // Dark parallax
+            for (let i = 0; i < 6; i++) {
+                parallaxLayers.push({
+                    type: 'castle',
+                    x: i * 400,
+                    layer: 0,
+                    parallax: 0.1,
+                    height: 150
+                });
+            }
+            
+            backgroundObjects = [];
+            foregroundObjects = [];
+            questionClouds = [];
+            breakableBlocks = [];
+            movingPlatforms = [];
+            checkpoints = [{ x: 1300, y: 370, activated: false }];
+            piranhaPlants = [];
+            flyGuys = [];
+            koopaTroopas = [];
+            redCoins = [];
+            heartPickups = [{ x: 1200, y: 380, collected: false, bobOffset: 0 }];
+        }
+        
+        function updateUI() {
+            document.getElementById('hearts').textContent = yoshi.hearts;
+            document.getElementById('coins').textContent = coinCount;
+            document.getElementById('redCoins').textContent = redCoinCount;
+            document.getElementById('flowers').textContent = flowerCount;
+            
+            // Update egg display
+            const eggDisplay = document.getElementById('eggDisplay');
+            eggDisplay.innerHTML = '';
+            for (let i = 0; i < yoshi.maxEggs; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'egg-dot' + (i >= yoshi.eggs ? ' empty' : '');
+                eggDisplay.appendChild(dot);
+            }
+        }
+        
+        // Drawing functions
+        function drawCraftedBackground() {
+            const theme = LEVEL_THEMES[currentLevel];
+            
+            // Sky gradient based on level theme
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            if (currentLevel === 1) {
+                // Green Meadows - warm peachy sky
+                gradient.addColorStop(0, '#FFE4B5');
+                gradient.addColorStop(0.3, '#87CEEB');
+                gradient.addColorStop(0.7, '#B0E0E6');
+                gradient.addColorStop(1, '#98D8C8');
+            } else if (currentLevel === 2) {
+                // Sandy Dunes - hot desert sky
+                gradient.addColorStop(0, '#FF8C00');
+                gradient.addColorStop(0.3, '#FFE4B5');
+                gradient.addColorStop(0.7, '#FFDAB9');
+                gradient.addColorStop(1, '#DEB887');
+            } else if (currentLevel === 3) {
+                // Frosty Peaks - cold icy sky
+                gradient.addColorStop(0, '#B0E0E6');
+                gradient.addColorStop(0.3, '#E0FFFF');
+                gradient.addColorStop(0.7, '#F0FFFF');
+                gradient.addColorStop(1, '#ADD8E6');
+            } else {
+                // Boss Castle - dark ominous sky
+                gradient.addColorStop(0, '#2F2F2F');
+                gradient.addColorStop(0.3, '#4A4A4A');
+                gradient.addColorStop(0.7, '#5A5A5A');
+                gradient.addColorStop(1, '#696969');
+            }
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Paper texture overlay (subtle)
+            ctx.fillStyle = currentLevel === 4 ? 'rgba(30, 30, 30, 0.3)' : 'rgba(255, 248, 240, 0.3)';
+            for (let i = 0; i < 20; i++) {
+                const px = (i * 137 + Date.now() * 0.01) % canvas.width;
+                ctx.fillRect(px, 0, 2, canvas.height);
+            }
+            
+            // Draw parallax layer 0 - Far mountains/dunes/peaks (cardboard cutout style)
+            for (const obj of parallaxLayers.filter(o => o.layer === 0)) {
+                const x = obj.x - cameraX * obj.parallax;
+                if (x < -300 || x > canvas.width + 300) continue;
+                
+                if (currentLevel === 2) {
+                    // Desert dunes
+                    ctx.fillStyle = '#D2B48C';
+                    ctx.beginPath();
+                    ctx.moveTo(x - 120, canvas.height - 80);
+                    ctx.quadraticCurveTo(x, canvas.height - 80 - obj.height, x + 120, canvas.height - 80);
+                    ctx.fill();
+                } else if (currentLevel === 4) {
+                    // Castle silhouette
+                    ctx.fillStyle = '#1a1a1a';
+                    ctx.beginPath();
+                    ctx.moveTo(x - 80, canvas.height - 80);
+                    ctx.lineTo(x - 80, canvas.height - 80 - obj.height);
+                    ctx.lineTo(x - 60, canvas.height - 80 - obj.height);
+                    ctx.lineTo(x - 60, canvas.height - 80 - obj.height - 20);
+                    ctx.lineTo(x - 40, canvas.height - 80 - obj.height - 20);
+                    ctx.lineTo(x - 40, canvas.height - 80 - obj.height);
+                    ctx.lineTo(x + 40, canvas.height - 80 - obj.height);
+                    ctx.lineTo(x + 40, canvas.height - 80 - obj.height - 20);
+                    ctx.lineTo(x + 60, canvas.height - 80 - obj.height - 20);
+                    ctx.lineTo(x + 60, canvas.height - 80 - obj.height);
+                    ctx.lineTo(x + 80, canvas.height - 80 - obj.height);
+                    ctx.lineTo(x + 80, canvas.height - 80);
+                    ctx.fill();
+                } else {
+                    // Mountain with cardboard edge
+                    ctx.fillStyle = currentLevel === 3 ? '#B0C4DE' : '#90A4AE';
+                    ctx.beginPath();
+                    ctx.moveTo(x - 100, canvas.height - 80);
+                    ctx.lineTo(x, canvas.height - 80 - obj.height);
+                    ctx.lineTo(x + 100, canvas.height - 80);
+                    ctx.fill();
+                    
+                    // Snow cap
+                    ctx.fillStyle = '#ECEFF1';
+                    ctx.beginPath();
+                    ctx.moveTo(x - 25, canvas.height - 80 - obj.height + 30);
+                    ctx.lineTo(x, canvas.height - 80 - obj.height);
+                    ctx.lineTo(x + 25, canvas.height - 80 - obj.height + 30);
+                    ctx.fill();
+                    
+                    // Cardboard edge shadow
+                    ctx.strokeStyle = '#607D8B';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(x - 100, canvas.height - 80);
+                    ctx.lineTo(x, canvas.height - 80 - obj.height);
+                    ctx.lineTo(x + 100, canvas.height - 80);
+                    ctx.stroke();
+                }
+            }
+            
+            // Draw parallax layer 1 - Crafted hills
+            for (const obj of parallaxLayers.filter(o => o.layer === 1)) {
+                const x = obj.x - cameraX * obj.parallax;
+                if (x < -200 || x > canvas.width + 200) continue;
+                
+                // Rolling hill with stitched look
+                const hillColor = currentLevel === 2 ? '#D2B48C' : 
+                                  currentLevel === 3 ? '#E0FFFF' : 
+                                  currentLevel === 4 ? '#4a4a4a' : obj.color;
+                ctx.fillStyle = hillColor;
+                ctx.beginPath();
+                ctx.arc(x, canvas.height - 30, obj.height, Math.PI, 0);
+                ctx.fill();
+                
+                // Stitch marks on top (except castle level)
+                if (currentLevel !== 4) {
+                    ctx.strokeStyle = currentLevel === 2 ? '#8B4513' : 
+                                      currentLevel === 3 ? '#87CEEB' : '#4CAF50';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([5, 5]);
+                    ctx.beginPath();
+                    ctx.arc(x, canvas.height - 30, obj.height - 5, Math.PI + 0.3, -0.3);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+            }
+            
+            // Draw background objects
+            for (const obj of backgroundObjects) {
+                drawBackgroundObject(obj);
+            }
+        }
+        
+        // Phase 5: Draw background objects (behind gameplay)
+        function drawBackgroundObject(obj) {
+            const x = obj.x - cameraX * obj.parallax;
+            if (x < -100 || x > canvas.width + 100) return;
+            
+            ctx.save();
+            ctx.translate(x, obj.y);
+            ctx.scale(obj.scale, obj.scale);
+            ctx.globalAlpha = 0.7;  // Faded for depth
+            
+            if (obj.type === 'bgTree') {
+                // Background tree (simpler, faded)
+                ctx.fillStyle = '#6D4C41';
+                ctx.fillRect(-8, -40, 16, 60);
+                ctx.fillStyle = '#81C784';
+                ctx.beginPath();
+                ctx.arc(0, -50, 35, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#A5D6A7';
+                ctx.beginPath();
+                ctx.arc(-10, -60, 20, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (obj.type === 'bgHouse') {
+                // Crafted cardboard house
+                ctx.fillStyle = '#FFCC80';
+                ctx.fillRect(-25, -40, 50, 50);
+                // Roof
+                ctx.fillStyle = '#E57373';
+                ctx.beginPath();
+                ctx.moveTo(-30, -40);
+                ctx.lineTo(0, -65);
+                ctx.lineTo(30, -40);
+                ctx.fill();
+                // Window
+                ctx.fillStyle = '#81D4FA';
+                ctx.fillRect(-10, -30, 15, 15);
+                // Door
+                ctx.fillStyle = '#8D6E63';
+                ctx.fillRect(5, -20, 12, 25);
+            } else if (obj.type === 'bgWindmill') {
+                // Crafted windmill
+                ctx.fillStyle = '#ECEFF1';
+                ctx.fillRect(-12, -60, 24, 70);
+                // Blades (rotating)
+                ctx.save();
+                ctx.translate(0, -50);
+                ctx.rotate(Date.now() / 1000);
+                ctx.fillStyle = '#BDBDBD';
+                for (let i = 0; i < 4; i++) {
+                    ctx.rotate(Math.PI / 2);
+                    ctx.fillRect(-4, 0, 8, 30);
+                }
+                ctx.restore();
+            } else if (obj.type === 'bgCloud') {
+                // Distant cloud
+                ctx.fillStyle = '#FFFFFF';
+                ctx.beginPath();
+                ctx.arc(0, 0, 25, 0, Math.PI * 2);
+                ctx.arc(20, -5, 20, 0, Math.PI * 2);
+                ctx.arc(-15, 5, 15, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            ctx.restore();
+        }
+        
+        // Phase 5: Draw foreground objects (in front of Yoshi)
+        function drawForegroundObject(obj) {
+            const x = obj.x - cameraX * obj.parallax;
+            if (x < -80 || x > canvas.width + 80) return;
+            
+            ctx.save();
+            ctx.translate(x, obj.y);
+            ctx.scale(obj.scale, obj.scale);
+            
+            if (obj.type === 'fgGrass') {
+                // Foreground grass blades (crafted felt look)
+                ctx.fillStyle = '#2E7D32';
+                for (let i = -3; i <= 3; i++) {
+                    const sway = Math.sin(Date.now() / 500 + i) * 3;
+                    ctx.beginPath();
+                    ctx.moveTo(i * 8, 0);
+                    ctx.quadraticCurveTo(i * 8 + sway, -25, i * 8 + sway * 2, -40 - Math.abs(i) * 5);
+                    ctx.lineTo(i * 8 + 3 + sway * 2, -38 - Math.abs(i) * 5);
+                    ctx.quadraticCurveTo(i * 8 + 3 + sway, -23, i * 8 + 3, 0);
+                    ctx.fill();
+                }
+            } else if (obj.type === 'fgFlower') {
+                // Large foreground flower
+                const colors = ['#FF5252', '#FF4081', '#E040FB', '#7C4DFF'];
+                ctx.fillStyle = '#388E3C';
+                ctx.fillRect(-3, -40, 6, 45);
+                ctx.fillStyle = colors[Math.floor(obj.x) % 4];
+                for (let i = 0; i < 6; i++) {
+                    ctx.save();
+                    ctx.translate(0, -45);
+                    ctx.rotate(i * Math.PI / 3 + Math.sin(Date.now() / 800) * 0.1);
+                    ctx.beginPath();
+                    ctx.ellipse(0, -12, 10, 18, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
+                ctx.fillStyle = '#FFEB3B';
+                ctx.beginPath();
+                ctx.arc(0, -45, 10, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (obj.type === 'fgRock') {
+                // Cardboard rock
+                ctx.fillStyle = '#9E9E9E';
+                ctx.beginPath();
+                ctx.moveTo(-20, 5);
+                ctx.lineTo(-15, -15);
+                ctx.lineTo(5, -20);
+                ctx.lineTo(20, -10);
+                ctx.lineTo(22, 5);
+                ctx.closePath();
+                ctx.fill();
+                ctx.strokeStyle = '#757575';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                // Tape
+                ctx.fillStyle = '#FFECB3';
+                ctx.fillRect(-5, -18, 15, 8);
+            } else if (obj.type === 'fgBush') {
+                // Puffy foreground bush
+                ctx.fillStyle = '#43A047';
+                ctx.beginPath();
+                ctx.arc(-15, -10, 18, 0, Math.PI * 2);
+                ctx.arc(15, -10, 18, 0, Math.PI * 2);
+                ctx.arc(0, -20, 22, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#2E7D32';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+            
+            ctx.restore();
+        }
+        
+        function drawCloud(cloud) {
+            const x = cloud.x - cameraX * 0.3;
+            if (x < -100 || x > canvas.width + 100) return;
+            
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(x, cloud.y, cloud.width * 0.3, 0, Math.PI * 2);
+            ctx.arc(x + cloud.width * 0.25, cloud.y - 10, cloud.width * 0.35, 0, Math.PI * 2);
+            ctx.arc(x + cloud.width * 0.5, cloud.y, cloud.width * 0.3, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Paper outline
+            ctx.strokeStyle = '#E0E0E0';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+        
+        function drawDecoration(dec) {
+            const x = dec.x - cameraX;
+            if (x < -50 || x > canvas.width + 50) return;
+            
+            ctx.save();
+            ctx.translate(x, dec.y);
+            ctx.scale(dec.scale, dec.scale);
+            
+            if (dec.type === 'flower') {
+                // Crafted paper flower with felt texture
+                const colors = ['#FF6B6B', '#FFE66D', '#FF8E53', '#F06292'];
+                const petalColor = colors[Math.floor(dec.x) % 4];
+                
+                // Stem with stitching
+                ctx.strokeStyle = '#4CAF50';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.moveTo(0, 5);
+                ctx.quadraticCurveTo(5, 25, 0, 40);
+                ctx.stroke();
+                
+                // Stitch marks on stem
+                ctx.strokeStyle = '#2E7D32';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([3, 3]);
+                ctx.beginPath();
+                ctx.moveTo(2, 8);
+                ctx.lineTo(2, 38);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                
+                // Felt petals
+                ctx.fillStyle = petalColor;
+                for (let i = 0; i < 5; i++) {
+                    ctx.save();
+                    ctx.rotate(i * Math.PI * 2 / 5);
+                    ctx.beginPath();
+                    ctx.ellipse(0, -15, 10, 16, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Petal stitching
+                    ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([2, 2]);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    ctx.restore();
+                }
+                
+                // Center with button look
+                ctx.fillStyle = '#FFD54F';
+                ctx.beginPath();
+                ctx.arc(0, 0, 9, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#FFA000';
+                ctx.beginPath();
+                ctx.arc(-2, -2, 2, 0, Math.PI * 2);
+                ctx.arc(2, 2, 2, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (dec.type === 'tree') {
+                // Cardboard tree with tape and googly eyes
+                ctx.fillStyle = '#795548';
+                ctx.fillRect(-10, 0, 20, 55);
+                
+                // Wood grain
+                ctx.strokeStyle = '#5D4037';
+                ctx.lineWidth = 1;
+                for (let i = 5; i < 55; i += 10) {
+                    ctx.beginPath();
+                    ctx.moveTo(-8, i);
+                    ctx.quadraticCurveTo(0, i + 3, 8, i);
+                    ctx.stroke();
+                }
+                
+                // Foliage (layered felt circles)
+                ctx.fillStyle = '#66BB6A';
+                ctx.beginPath();
+                ctx.arc(0, -20, 38, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#81C784';
+                ctx.beginPath();
+                ctx.arc(-18, -10, 28, 0, Math.PI * 2);
+                ctx.arc(18, -10, 28, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#A5D6A7';
+                ctx.beginPath();
+                ctx.arc(0, -38, 28, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Googly eyes on tree!
+                ctx.fillStyle = '#FFF';
+                ctx.beginPath();
+                ctx.arc(-10, -20, 8, 0, Math.PI * 2);
+                ctx.arc(10, -20, 8, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                // Pupils that look at Yoshi
+                const lookDir = Math.sign((yoshi.x - cameraX) - x);
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(-10 + lookDir * 3, -20, 4, 0, Math.PI * 2);
+                ctx.arc(10 + lookDir * 3, -20, 4, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Tape holding foliage
+                ctx.fillStyle = '#FFECB3';
+                ctx.fillRect(-25, -5, 20, 8);
+                ctx.fillRect(5, -5, 20, 8);
+            } else if (dec.type === 'bush') {
+                ctx.fillStyle = '#43A047';
+                ctx.beginPath();
+                ctx.arc(0, 10, 28, 0, Math.PI * 2);
+                ctx.arc(-22, 15, 22, 0, Math.PI * 2);
+                ctx.arc(22, 15, 22, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Stitching around edge
+                ctx.strokeStyle = '#2E7D32';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([4, 4]);
+                ctx.beginPath();
+                ctx.arc(0, 10, 24, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                
+                // Little berries
+                ctx.fillStyle = '#E53935';
+                ctx.beginPath();
+                ctx.arc(-8, 5, 4, 0, Math.PI * 2);
+                ctx.arc(12, 8, 3, 0, Math.PI * 2);
+                ctx.arc(-15, 15, 3, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (dec.type === 'mushroom') {
+                // Cute crafted mushroom with googly eyes
+                ctx.fillStyle = '#EFEBE9';
+                ctx.fillRect(-6, 5, 12, 22);
+                
+                // Mushroom cap
+                ctx.fillStyle = '#E53935';
+                ctx.beginPath();
+                ctx.arc(0, 0, 20, Math.PI, 0);
+                ctx.fill();
+                
+                // White spots
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(-10, -6, 6, 0, Math.PI * 2);
+                ctx.arc(8, -9, 5, 0, Math.PI * 2);
+                ctx.arc(-2, -14, 4, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Googly eyes
+                ctx.fillStyle = '#FFF';
+                ctx.beginPath();
+                ctx.arc(-5, 12, 5, 0, Math.PI * 2);
+                ctx.arc(5, 12, 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(-5, 13, 2, 0, Math.PI * 2);
+                ctx.arc(5, 13, 2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Cute smile
+                ctx.strokeStyle = '#795548';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(0, 16, 4, 0.2, Math.PI - 0.2);
+                ctx.stroke();
+            }
+            
+            ctx.restore();
+        }
+        
+        function drawPlatform(plat) {
+            const x = plat.x - cameraX;
+            if (x < -plat.width || x > canvas.width) return;
+            
+            // Theme-based colors
+            const groundColors = {
+                1: { base: '#8B7355', dark: '#7A6B5A', grass: '#7CB342', grassLight: '#9CCC65' },
+                2: { base: '#D2B48C', dark: '#C4A569', grass: '#DAA520', grassLight: '#F4D03F' },
+                3: { base: '#B0C4DE', dark: '#9DB7D2', grass: '#E0FFFF', grassLight: '#F0FFFF' },
+                4: { base: '#4A4A4A', dark: '#3A3A3A', grass: '#8B0000', grassLight: '#A52A2A' }
+            };
+            const colors = groundColors[currentLevel];
+            
+            // Cardboard platform look
+            if (plat.height > 50) {
+                // Ground platform - enhanced crafted style
+                ctx.fillStyle = colors.base;
+                ctx.fillRect(x, plat.y, plat.width, plat.height);
+                
+                // Corrugated cardboard texture
+                ctx.fillStyle = colors.dark;
+                for (let i = 0; i < plat.width; i += 8) {
+                    ctx.fillRect(x + i, plat.y + 15, 3, plat.height - 15);
+                }
+                
+                // Grass/surface top layer
+                ctx.fillStyle = colors.grass;
+                ctx.fillRect(x, plat.y, plat.width, 18);
+                
+                // Grass tufts with felt texture
+                ctx.fillStyle = colors.grassLight;
+                for (let i = 0; i < plat.width; i += 15) {
+                    ctx.beginPath();
+                    ctx.moveTo(x + i, plat.y + 18);
+                    ctx.quadraticCurveTo(x + i + 7, plat.y - 5, x + i + 15, plat.y + 18);
+                    ctx.fill();
+                }
+                
+                // Stitching on top edge
+                ctx.strokeStyle = currentLevel === 4 ? '#5a0000' : '#558B2F';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([4, 4]);
+                ctx.beginPath();
+                ctx.moveTo(x + 5, plat.y + 5);
+                ctx.lineTo(x + plat.width - 5, plat.y + 5);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                
+                // Tape strips holding cardboard together
+                if (plat.width > 100) {
+                    ctx.fillStyle = 'rgba(255, 236, 179, 0.8)';
+                    ctx.fillRect(x + plat.width/2 - 20, plat.y + 20, 40, 15);
+                    ctx.fillRect(x + 30, plat.y + 40, 30, 12);
+                    ctx.fillRect(x + plat.width - 60, plat.y + 40, 30, 12);
+                }
+            } else {
+                // Floating platform - enhanced
+                // Shadow underneath
+                ctx.fillStyle = 'rgba(0,0,0,0.2)';
+                ctx.beginPath();
+                ctx.ellipse(x + plat.width/2, plat.y + plat.height + 8, plat.width/2 - 5, 6, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                const floatColors = {
+                    1: { base: '#A1887F', stripe: '#8D6E63', grass: '#81C784', grassLight: '#A5D6A7' },
+                    2: { base: '#D2B48C', stripe: '#BDA97A', grass: '#F4D03F', grassLight: '#F9E79F' },
+                    3: { base: '#B0C4DE', stripe: '#9DB7D2', grass: '#E0FFFF', grassLight: '#F0FFFF' },
+                    4: { base: '#5a5a5a', stripe: '#4a4a4a', grass: '#8B0000', grassLight: '#A52A2A' }
+                };
+                const fColors = floatColors[currentLevel];
+                
+                ctx.fillStyle = fColors.base;
+                ctx.fillRect(x, plat.y, plat.width, plat.height);
+                
+                // Corrugated lines
+                ctx.strokeStyle = fColors.stripe;
+                ctx.lineWidth = 1;
+                for (let i = 6; i < plat.width; i += 10) {
+                    ctx.beginPath();
+                    ctx.moveTo(x + i, plat.y + 8);
+                    ctx.lineTo(x + i, plat.y + plat.height - 2);
+                    ctx.stroke();
+                }
+                
+                // Top grass strip (felt)
+                ctx.fillStyle = fColors.grass;
+                ctx.fillRect(x, plat.y, plat.width, 10);
+                
+                // Fuzzy grass edge
+                ctx.fillStyle = fColors.grassLight;
+                for (let i = 0; i < plat.width; i += 8) {
+                    ctx.beginPath();
+                    ctx.arc(x + i + 4, plat.y + 2, 4, Math.PI, 0);
+                    ctx.fill();
+                }
+                
+                // Cardboard edge with fold
+                ctx.strokeStyle = '#6D4C41';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(x, plat.y, plat.width, plat.height);
+                
+                // Corner tape
+                ctx.fillStyle = '#FFECB3';
+                ctx.beginPath();
+                ctx.moveTo(x, plat.y);
+                ctx.lineTo(x + 15, plat.y);
+                ctx.lineTo(x, plat.y + 12);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.moveTo(x + plat.width, plat.y);
+                ctx.lineTo(x + plat.width - 15, plat.y);
+                ctx.lineTo(x + plat.width, plat.y + 12);
+                ctx.fill();
+            }
+        }
+        
+        function drawGem(gem) {
+            if (gem.collected) return;
+            
+            const x = gem.x - cameraX;
+            if (x < -30 || x > canvas.width + 30) return;
+            
+            const bob = Math.sin(Date.now() / 300 + gem.bobOffset) * 5;
+            
+            ctx.save();
+            ctx.translate(x + gem.width/2, gem.y + gem.height/2 + bob);
+            
+            // Sparkle effect
+            const sparkle = Math.sin(Date.now() / 200) * 0.3 + 0.7;
+            
+            // Diamond shape
+            ctx.fillStyle = gem.color;
+            ctx.beginPath();
+            ctx.moveTo(0, -15);
+            ctx.lineTo(15, 0);
+            ctx.lineTo(0, 15);
+            ctx.lineTo(-15, 0);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Shine
+            ctx.fillStyle = `rgba(255,255,255,${sparkle})`;
+            ctx.beginPath();
+            ctx.moveTo(0, -10);
+            ctx.lineTo(5, 0);
+            ctx.lineTo(0, 2);
+            ctx.lineTo(-5, 0);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Outline
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, -15);
+            ctx.lineTo(15, 0);
+            ctx.lineTo(0, 15);
+            ctx.lineTo(-15, 0);
+            ctx.closePath();
+            ctx.stroke();
+            
+            ctx.restore();
+        }
+        
+        // Phase 2: Draw ? Cloud
+        function drawQuestionCloud(cloud) {
+            if (cloud.hit) return;
+            
+            const x = cloud.x - cameraX;
+            if (x < -60 || x > canvas.width + 60) return;
+            
+            const bob = Math.sin(Date.now() / 400 + cloud.bobOffset) * 4;
+            
+            ctx.save();
+            ctx.translate(x + cloud.width/2, cloud.y + cloud.height/2 + bob);
+            
+            // Cloud puff shape (white with wings)
+            ctx.fillStyle = '#FFF8E1';
+            ctx.beginPath();
+            ctx.arc(-15, 5, 18, 0, Math.PI * 2);
+            ctx.arc(15, 5, 18, 0, Math.PI * 2);
+            ctx.arc(0, -5, 22, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Cloud outline
+            ctx.strokeStyle = '#FFB74D';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            // Question mark
+            ctx.fillStyle = '#FF9800';
+            ctx.font = 'bold 24px Comic Sans MS';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('?', 0, 0);
+            
+            // Sparkle
+            const sparkle = Math.sin(Date.now() / 150) * 0.5 + 0.5;
+            ctx.fillStyle = `rgba(255, 255, 255, ${sparkle})`;
+            ctx.beginPath();
+            ctx.arc(-10, -12, 4, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.restore();
+        }
+        
+        // Phase 2: Draw Breakable Block
+        function drawBreakableBlock(block) {
+            if (block.broken) return;
+            
+            const x = block.x - cameraX;
+            if (x < -50 || x > canvas.width + 50) return;
+            
+            ctx.save();
+            
+            // Shake effect when about to break
+            if (block.shakeTime > 0) {
+                ctx.translate((Math.random() - 0.5) * 4, (Math.random() - 0.5) * 4);
+            }
+            
+            // Cardboard box look
+            ctx.fillStyle = '#D7CCC8';
+            ctx.fillRect(x, block.y, block.width, block.height);
+            
+            // Darker edges (3D effect)
+            ctx.fillStyle = '#A1887F';
+            ctx.fillRect(x, block.y + block.height - 6, block.width, 6);
+            ctx.fillRect(x + block.width - 6, block.y, 6, block.height);
+            
+            // Tape X pattern
+            ctx.strokeStyle = '#8D6E63';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(x + 5, block.y + 5);
+            ctx.lineTo(x + block.width - 5, block.y + block.height - 5);
+            ctx.moveTo(x + block.width - 5, block.y + 5);
+            ctx.lineTo(x + 5, block.y + block.height - 5);
+            ctx.stroke();
+            
+            // Border
+            ctx.strokeStyle = '#6D4C41';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x, block.y, block.width, block.height);
+            
+            // Cracks (visual hint it's breakable)
+            ctx.strokeStyle = '#5D4037';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(x + 10, block.y);
+            ctx.lineTo(x + 15, block.y + 10);
+            ctx.moveTo(x + block.width, block.y + 15);
+            ctx.lineTo(x + block.width - 8, block.y + 20);
+            ctx.stroke();
+            
+            ctx.restore();
+        }
+        
+        // Phase 2: Draw Moving Platform
+        function drawMovingPlatform(plat) {
+            const x = plat.x - cameraX;
+            if (x < -plat.width || x > canvas.width + plat.width) return;
+            
+            // Platform base (different color to show it moves)
+            ctx.fillStyle = '#7E57C2';
+            ctx.fillRect(x, plat.y, plat.width, plat.height);
+            
+            // Top stripe
+            ctx.fillStyle = '#9575CD';
+            ctx.fillRect(x, plat.y, plat.width, 6);
+            
+            // Arrow indicators showing direction
+            ctx.fillStyle = '#EDE7F6';
+            if (plat.moveType === 'horizontal') {
+                // Left/right arrows
+                ctx.beginPath();
+                ctx.moveTo(x + 10, plat.y + plat.height/2);
+                ctx.lineTo(x + 20, plat.y + 5);
+                ctx.lineTo(x + 20, plat.y + plat.height - 5);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.moveTo(x + plat.width - 10, plat.y + plat.height/2);
+                ctx.lineTo(x + plat.width - 20, plat.y + 5);
+                ctx.lineTo(x + plat.width - 20, plat.y + plat.height - 5);
+                ctx.fill();
+            } else {
+                // Up/down arrows
+                ctx.beginPath();
+                ctx.moveTo(x + plat.width/2, plat.y + 4);
+                ctx.lineTo(x + plat.width/2 - 8, plat.y + 12);
+                ctx.lineTo(x + plat.width/2 + 8, plat.y + 12);
+                ctx.fill();
+            }
+            
+            // Border
+            ctx.strokeStyle = '#512DA8';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x, plat.y, plat.width, plat.height);
+        }
+        
+        // Phase 2: Draw Checkpoint
+        function drawCheckpoint(cp) {
+            const x = cp.x - cameraX;
+            if (x < -40 || x > canvas.width + 40) return;
+            
+            // Flag pole
+            ctx.fillStyle = '#795548';
+            ctx.fillRect(x, cp.y - 60, 6, 70);
+            
+            // Flag
+            if (cp.activated) {
+                // Activated - green flag waving
+                const wave = Math.sin(Date.now() / 200) * 5;
+                ctx.fillStyle = '#4CAF50';
+                ctx.beginPath();
+                ctx.moveTo(x + 6, cp.y - 60);
+                ctx.lineTo(x + 45 + wave, cp.y - 50);
+                ctx.lineTo(x + 6, cp.y - 35);
+                ctx.fill();
+                ctx.strokeStyle = '#2E7D32';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Star on flag
+                ctx.fillStyle = '#FFEB3B';
+                ctx.beginPath();
+                ctx.arc(x + 25, cp.y - 48, 6, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                // Not activated - red flag
+                ctx.fillStyle = '#F44336';
+                ctx.beginPath();
+                ctx.moveTo(x + 6, cp.y - 60);
+                ctx.lineTo(x + 40, cp.y - 50);
+                ctx.lineTo(x + 6, cp.y - 35);
+                ctx.fill();
+                ctx.strokeStyle = '#C62828';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+            
+            // Base
+            ctx.fillStyle = '#5D4037';
+            ctx.fillRect(x - 8, cp.y + 5, 22, 8);
+        }
+        
+        // Phase 3: Draw Coin (golden spinning coin)
+        function drawCoin(coin) {
+            if (coin.collected) return;
+            const x = coin.x - cameraX;
+            if (x < -20 || x > canvas.width + 20) return;
+            
+            const bob = Math.sin(Date.now() / 300 + coin.bobOffset) * 3;
+            const spin = Math.abs(Math.sin(Date.now() / 150 + coin.bobOffset));
+            
+            ctx.save();
+            ctx.translate(x, coin.y + bob);
+            ctx.scale(spin, 1);
+            
+            // Coin body
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 12, 12, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Inner circle
+            ctx.fillStyle = '#FFA000';
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 8, 8, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Star symbol
+            ctx.fillStyle = '#FFE082';
+            ctx.beginPath();
+            ctx.arc(0, 0, 3, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.restore();
+        }
+        
+        // Phase 3: Draw Red Coin (looks like regular coin but reveals red when near/collected)
+        function drawRedCoin(coin) {
+            if (coin.collected) return;
+            const x = coin.x - cameraX;
+            if (x < -20 || x > canvas.width + 20) return;
+            
+            const bob = Math.sin(Date.now() / 300 + coin.bobOffset) * 3;
+            const spin = Math.abs(Math.sin(Date.now() / 150 + coin.bobOffset));
+            
+            // Check if Yoshi is nearby to reveal true color
+            const dist = Math.abs(yoshi.x - coin.x) + Math.abs(yoshi.y - coin.y);
+            const revealing = dist < 150;
+            
+            ctx.save();
+            ctx.translate(x, coin.y + bob);
+            ctx.scale(spin, 1);
+            
+            // Coin body - red if nearby, gold otherwise
+            if (revealing) {
+                ctx.fillStyle = '#F44336';
+                ctx.shadowColor = '#FF5722';
+                ctx.shadowBlur = 8;
+            } else {
+                ctx.fillStyle = '#FFD700';
+            }
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 12, 12, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Inner circle
+            ctx.fillStyle = revealing ? '#C62828' : '#FFA000';
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 8, 8, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Star or R symbol
+            ctx.fillStyle = revealing ? '#FFCDD2' : '#FFE082';
+            ctx.font = 'bold 10px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(revealing ? 'R' : 'â˜…', 0, 0);
+            
+            ctx.restore();
+        }
+        
+        // Phase 3: Draw Smiley Flower (main collectible)
+        function drawSmileyFlower(flower) {
+            if (flower.collected) return;
+            const x = flower.x - cameraX;
+            if (x < -30 || x > canvas.width + 30) return;
+            
+            const bob = Math.sin(Date.now() / 400 + flower.bobOffset) * 4;
+            const pulse = 1 + Math.sin(Date.now() / 200) * 0.05;
+            
+            ctx.save();
+            ctx.translate(x, flower.y + bob);
+            ctx.scale(pulse, pulse);
+            
+            // Sparkles around flower
+            for (let i = 0; i < 6; i++) {
+                const angle = (Date.now() / 500 + i * Math.PI / 3);
+                const sx = Math.cos(angle) * 25;
+                const sy = Math.sin(angle) * 25;
+                ctx.fillStyle = 'rgba(255, 235, 59, ' + (0.5 + Math.sin(Date.now() / 100 + i) * 0.3) + ')';
+                ctx.beginPath();
+                ctx.arc(sx, sy, 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Petals (white/pink)
+            for (let i = 0; i < 8; i++) {
+                const angle = (i * Math.PI / 4);
+                ctx.save();
+                ctx.rotate(angle);
+                ctx.fillStyle = i % 2 === 0 ? '#FFEB3B' : '#FFF59D';
+                ctx.beginPath();
+                ctx.ellipse(0, -15, 8, 12, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#FBC02D';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                ctx.restore();
+            }
+            
+            // Center face (yellow circle with smiley)
+            ctx.fillStyle = '#FF9800';
+            ctx.beginPath();
+            ctx.arc(0, 0, 12, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#E65100';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Eyes
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(-4, -2, 2, 0, Math.PI * 2);
+            ctx.arc(4, -2, 2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Smile
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(0, 2, 5, 0.2, Math.PI - 0.2);
+            ctx.stroke();
+            
+            ctx.restore();
+        }
+        
+        // Phase 3: Draw Heart Pickup
+        function drawHeartPickup(heart) {
+            if (heart.collected) return;
+            const x = heart.x - cameraX;
+            if (x < -20 || x > canvas.width + 20) return;
+            
+            const bob = Math.sin(Date.now() / 350 + heart.bobOffset) * 4;
+            const pulse = 1 + Math.sin(Date.now() / 200) * 0.1;
+            
+            ctx.save();
+            ctx.translate(x, heart.y + bob);
+            ctx.scale(pulse, pulse);
+            
+            // Glow
+            ctx.shadowColor = '#E91E63';
+            ctx.shadowBlur = 10;
+            
+            // Heart shape
+            ctx.fillStyle = '#E91E63';
+            ctx.beginPath();
+            ctx.moveTo(0, 5);
+            ctx.bezierCurveTo(-12, -5, -12, -15, 0, -8);
+            ctx.bezierCurveTo(12, -15, 12, -5, 0, 5);
+            ctx.fill();
+            
+            // Highlight
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+            ctx.beginPath();
+            ctx.ellipse(-4, -8, 3, 4, -0.5, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.restore();
+        }
+        
+        function drawYoshi() {
+            const x = yoshi.x - cameraX;
+            ctx.save();
+            ctx.translate(x + yoshi.width/2, yoshi.y + yoshi.height/2);
+            ctx.scale(yoshi.facing, 1);
+            
+            // Ground pound squash effect
+            if (yoshi.groundPounding) {
+                ctx.scale(1.3, 0.7);
+            }
+            
+            // Flash when invincible
+            if (yoshi.invincible > 0 && Math.floor(yoshi.invincible / 5) % 2 === 0) {
+                ctx.globalAlpha = 0.5;
+            }
+            
+            // Aiming pose adjustment
+            if (yoshi.aiming) {
+                ctx.globalAlpha = Math.max(ctx.globalAlpha || 1, 0.9);
+            }
+            
+            // Body (green egg shape)
+            ctx.fillStyle = '#4CAF50';
+            ctx.beginPath();
+            ctx.ellipse(0, 5, 22, 28, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#2E7D32';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // White belly
+            ctx.fillStyle = '#E8F5E9';
+            ctx.beginPath();
+            ctx.ellipse(5, 10, 12, 18, 0.2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Shell (red with spots)
+            ctx.fillStyle = '#E53935';
+            ctx.beginPath();
+            ctx.ellipse(-5, -5, 15, 12, -0.3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#C62828';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Shell spots
+            ctx.fillStyle = '#FFEB3B';
+            ctx.beginPath();
+            ctx.arc(-10, -8, 4, 0, Math.PI * 2);
+            ctx.arc(-2, -3, 3, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Head
+            ctx.fillStyle = '#66BB6A';
+            ctx.beginPath();
+            ctx.ellipse(18, -12, 18, 16, 0.2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#388E3C';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Snout
+            ctx.fillStyle = '#81C784';
+            ctx.beginPath();
+            ctx.ellipse(32, -8, 12, 8, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            
+            // Nose
+            ctx.fillStyle = '#4CAF50';
+            ctx.beginPath();
+            ctx.ellipse(40, -10, 4, 3, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Eye
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.ellipse(22, -18, 10, 12, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#333';
+            ctx.stroke();
+            
+            // Pupil
+            ctx.fillStyle = '#333';
+            ctx.beginPath();
+            ctx.arc(25, -17, 5, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Eye shine
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(27, -19, 2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Tongue when eating
+            if (yoshi.eating && yoshi.tongueLength > 0) {
+                ctx.fillStyle = '#E91E63';
+                ctx.beginPath();
+                ctx.ellipse(40 + yoshi.tongueLength, -8, 8, 5, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillRect(40, -11, yoshi.tongueLength, 6);
+            }
+            
+            // Legs (animated when moving)
+            const legOffset = yoshi.grounded && Math.abs(yoshi.vx) > 0 ? Math.sin(Date.now() / 100) * 8 : 0;
+            
+            // Back leg
+            ctx.fillStyle = '#FF8A65';
+            ctx.beginPath();
+            ctx.ellipse(-10 - legOffset, 30, 10, 8, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#E64A19';
+            ctx.stroke();
+            
+            // Front leg
+            ctx.beginPath();
+            ctx.ellipse(10 + legOffset, 30, 10, 8, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            
+            // Boot details
+            ctx.fillStyle = '#D84315';
+            ctx.beginPath();
+            ctx.arc(-10 - legOffset + 5, 32, 4, 0, Math.PI * 2);
+            ctx.arc(10 + legOffset + 5, 32, 4, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Flutter effect
+            if (yoshi.fluttering) {
+                ctx.strokeStyle = '#81D4FA';
+                ctx.lineWidth = 2;
+                for (let i = 0; i < 3; i++) {
+                    ctx.beginPath();
+                    ctx.arc(-5, 10, 25 + i * 8, Math.PI * 0.6, Math.PI * 1.4);
+                    ctx.stroke();
+                }
+            }
+            
+            ctx.restore();
+        }
+        
+        function drawEnemy(enemy) {
+            if (!enemy.alive) return;
+            
+            const x = enemy.x - cameraX;
+            if (x < -50 || x > canvas.width + 50) return;
+            
+            ctx.save();
+            ctx.translate(x + enemy.width/2, enemy.y + enemy.height/2);
+            ctx.scale(enemy.vx > 0 ? 1 : -1, 1);
+            
+            // Shy Guy body (robe)
+            ctx.fillStyle = '#E53935';
+            ctx.beginPath();
+            ctx.moveTo(-15, -10);
+            ctx.lineTo(-18, 25);
+            ctx.lineTo(18, 25);
+            ctx.lineTo(15, -10);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#B71C1C';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Belt
+            ctx.fillStyle = '#FDD835';
+            ctx.fillRect(-15, 5, 30, 6);
+            ctx.strokeStyle = '#F9A825';
+            ctx.strokeRect(-15, 5, 30, 6);
+            
+            // Face/mask
+            ctx.fillStyle = '#ECEFF1';
+            ctx.beginPath();
+            ctx.ellipse(0, -15, 14, 12, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#B0BEC5';
+            ctx.stroke();
+            
+            // Mask holes (eyes)
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.ellipse(-6, -16, 4, 6, 0, 0, Math.PI * 2);
+            ctx.ellipse(6, -16, 4, 6, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Feet
+            const walkOffset = Math.sin(Date.now() / 150) * 3;
+            ctx.fillStyle = '#1565C0';
+            ctx.beginPath();
+            ctx.ellipse(-8 + walkOffset, 28, 8, 5, 0, 0, Math.PI * 2);
+            ctx.ellipse(8 - walkOffset, 28, 8, 5, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.restore();
+        }
+        
+        // Phase 4: Draw Piranha Plant
+        function drawPiranhaPlant(plant) {
+            if (!plant.alive) return;
+            const x = plant.x - cameraX;
+            if (x < -50 || x > canvas.width + 50) return;
+            
+            ctx.save();
+            ctx.translate(x + plant.width/2, plant.y);
+            
+            // Idle sway animation
+            const sway = Math.sin(Date.now() / 400 + plant.phase) * 0.1;
+            ctx.rotate(sway);
+            
+            // Pipe (green)
+            ctx.fillStyle = '#2E7D32';
+            ctx.fillRect(-18, 10, 36, 35);
+            ctx.fillStyle = '#1B5E20';
+            ctx.fillRect(-22, 5, 44, 10);
+            
+            // Stem
+            ctx.fillStyle = '#4CAF50';
+            ctx.fillRect(-6, -20, 12, 30);
+            
+            // Head
+            const biteOpen = plant.biting ? Math.sin(plant.biteTimer * 0.3) * 15 : 0;
+            
+            // Bottom jaw
+            ctx.fillStyle = '#4CAF50';
+            ctx.beginPath();
+            ctx.ellipse(0, -15 + biteOpen/2, 20, 12, 0, 0, Math.PI);
+            ctx.fill();
+            
+            // Top jaw (opens when biting)
+            ctx.save();
+            ctx.translate(0, -20 - biteOpen/2);
+            ctx.fillStyle = '#66BB6A';
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 20, 12, 0, Math.PI, Math.PI * 2);
+            ctx.fill();
+            
+            // White dots on head
+            ctx.fillStyle = '#FFF';
+            ctx.beginPath();
+            ctx.arc(-10, -3, 4, 0, Math.PI * 2);
+            ctx.arc(10, -3, 4, 0, Math.PI * 2);
+            ctx.arc(-5, 3, 3, 0, Math.PI * 2);
+            ctx.arc(5, 3, 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+            
+            // Teeth
+            ctx.fillStyle = '#FFF';
+            for (let i = -2; i <= 2; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * 7, -20);
+                ctx.lineTo(i * 7 - 3, -15 - biteOpen/3);
+                ctx.lineTo(i * 7 + 3, -15 - biteOpen/3);
+                ctx.fill();
+            }
+            
+            // Lips
+            ctx.fillStyle = '#C62828';
+            ctx.beginPath();
+            ctx.ellipse(0, -18, 22, 4, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.restore();
+        }
+        
+        // Phase 4: Draw Fly Guy
+        function drawFlyGuy(flyGuy) {
+            if (!flyGuy.alive) return;
+            const x = flyGuy.x - cameraX;
+            if (x < -50 || x > canvas.width + 50) return;
+            
+            ctx.save();
+            ctx.translate(x + flyGuy.width/2, flyGuy.y + flyGuy.height/2);
+            
+            // Propeller
+            flyGuy.propellerAngle += 0.4;
+            ctx.save();
+            ctx.translate(0, -30);
+            ctx.rotate(flyGuy.propellerAngle);
+            ctx.fillStyle = '#FFD54F';
+            ctx.fillRect(-20, -3, 40, 6);
+            ctx.fillStyle = '#FFA000';
+            ctx.beginPath();
+            ctx.arc(0, 0, 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+            
+            // Body (smaller Shy Guy style)
+            ctx.fillStyle = '#42A5F5'; // Blue Fly Guy
+            ctx.beginPath();
+            ctx.moveTo(-12, -8);
+            ctx.lineTo(-14, 18);
+            ctx.lineTo(14, 18);
+            ctx.lineTo(12, -8);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#1565C0';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Face/mask
+            ctx.fillStyle = '#ECEFF1';
+            ctx.beginPath();
+            ctx.ellipse(0, -14, 11, 9, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#B0BEC5';
+            ctx.stroke();
+            
+            // Eyes
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.ellipse(-4, -15, 3, 5, 0, 0, Math.PI * 2);
+            ctx.ellipse(4, -15, 3, 5, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Dangling feet
+            const dangle = Math.sin(Date.now() / 200) * 3;
+            ctx.fillStyle = '#E53935';
+            ctx.beginPath();
+            ctx.ellipse(-6, 22 + dangle, 6, 4, 0, 0, Math.PI * 2);
+            ctx.ellipse(6, 22 - dangle, 6, 4, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Carried item indicator (below)
+            if (flyGuy.carriesItem) {
+                ctx.fillStyle = flyGuy.carriesItem === 'redCoin' ? '#F44336' : '#FFD700';
+                ctx.beginPath();
+                ctx.arc(0, 30, 8, 0, Math.PI * 2);
+                ctx.fill();
+                if (flyGuy.carriesItem === 'egg') {
+                    ctx.fillStyle = '#81C784';
+                    ctx.beginPath();
+                    ctx.arc(-2, 28, 2, 0, Math.PI * 2);
+                    ctx.arc(2, 31, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            
+            ctx.restore();
+        }
+        
+        // Phase 4: Draw Koopa Troopa
+        function drawKoopaTroopa(koopa) {
+            if (!koopa.alive && !koopa.inShell) return;
+            const x = koopa.x - cameraX;
+            if (x < -50 || x > canvas.width + 50) return;
+            
+            ctx.save();
+            ctx.translate(x + koopa.width/2, koopa.y + koopa.height/2);
+            
+            if (koopa.inShell) {
+                // Shell only (can be kicked)
+                ctx.scale(koopa.vx > 0 ? 1 : -1, 1);
+                
+                // Shell
+                ctx.fillStyle = '#4CAF50';
+                ctx.beginPath();
+                ctx.ellipse(0, 5, 18, 14, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#2E7D32';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Shell pattern
+                ctx.strokeStyle = '#81C784';
+                ctx.beginPath();
+                ctx.moveTo(-12, 5);
+                ctx.lineTo(12, 5);
+                ctx.moveTo(0, -8);
+                ctx.lineTo(0, 18);
+                ctx.stroke();
+                
+                // Shell rim
+                ctx.fillStyle = '#FFF9C4';
+                ctx.beginPath();
+                ctx.ellipse(0, 15, 16, 5, 0, 0, Math.PI);
+                ctx.fill();
+            } else if (koopa.alive) {
+                ctx.scale(koopa.vx > 0 ? 1 : -1, 1);
+                
+                // Shell (on back)
+                ctx.fillStyle = '#4CAF50';
+                ctx.beginPath();
+                ctx.ellipse(-2, 5, 16, 18, 0.2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#2E7D32';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Shell pattern
+                ctx.strokeStyle = '#81C784';
+                ctx.beginPath();
+                ctx.moveTo(-14, 5);
+                ctx.lineTo(10, 5);
+                ctx.stroke();
+                
+                // Head
+                ctx.fillStyle = '#FFEB3B';
+                ctx.beginPath();
+                ctx.ellipse(12, -10, 10, 12, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#F9A825';
+                ctx.stroke();
+                
+                // Eye
+                ctx.fillStyle = '#FFF';
+                ctx.beginPath();
+                ctx.ellipse(16, -12, 5, 6, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(17, -11, 2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Beak/mouth
+                ctx.fillStyle = '#FF8F00';
+                ctx.beginPath();
+                ctx.moveTo(20, -8);
+                ctx.lineTo(26, -6);
+                ctx.lineTo(20, -4);
+                ctx.fill();
+                
+                // Feet (walking)
+                const walkOffset = Math.sin(Date.now() / 150) * 4;
+                ctx.fillStyle = '#FF8F00';
+                ctx.beginPath();
+                ctx.ellipse(-8 + walkOffset, 22, 7, 4, 0, 0, Math.PI * 2);
+                ctx.ellipse(8 - walkOffset, 22, 7, 4, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            ctx.restore();
+        }
+        
+        // Phase 4: Draw kicked shell
+        function drawShell(shell) {
+            const x = shell.x - cameraX;
+            if (x < -50 || x > canvas.width + 50) return;
+            
+            ctx.save();
+            ctx.translate(x, shell.y);
+            ctx.rotate(shell.rotation);
+            
+            // Spinning shell
+            ctx.fillStyle = '#4CAF50';
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 16, 12, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#2E7D32';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Pattern
+            ctx.strokeStyle = '#81C784';
+            ctx.beginPath();
+            ctx.moveTo(-10, 0);
+            ctx.lineTo(10, 0);
+            ctx.moveTo(0, -10);
+            ctx.lineTo(0, 10);
+            ctx.stroke();
+            
+            ctx.restore();
+        }
+        
+        function drawEgg(egg) {
+            const x = egg.x - cameraX;
+            
+            ctx.save();
+            ctx.translate(x, egg.y);
+            ctx.rotate(egg.rotation);
+            
+            // Spotted egg
+            ctx.fillStyle = '#C8E6C9';
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 12, 15, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#4CAF50';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Spots
+            ctx.fillStyle = '#81C784';
+            ctx.beginPath();
+            ctx.arc(-4, -5, 4, 0, Math.PI * 2);
+            ctx.arc(5, 3, 3, 0, Math.PI * 2);
+            ctx.arc(-2, 6, 3, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.restore();
+        }
+        
+        function drawParticle(p) {
+            ctx.fillStyle = p.color;
+            ctx.globalAlpha = p.life;
+            ctx.beginPath();
+            ctx.arc(p.x - cameraX, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+        }
+        
+        // Physics and collision
+        function checkPlatformCollision(obj, adjustY = true) {
+            for (const plat of platforms) {
+                if (obj.x + obj.width > plat.x && 
+                    obj.x < plat.x + plat.width &&
+                    obj.y + obj.height > plat.y && 
+                    obj.y + obj.height < plat.y + plat.height + 20 &&
+                    obj.vy >= 0) {
+                    if (adjustY) {
+                        obj.y = plat.y - obj.height;
+                        obj.vy = 0;
+                    }
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+        function checkGemCollision() {
+            for (const gem of gems) {
+                if (!gem.collected &&
+                    yoshi.x + yoshi.width > gem.x &&
+                    yoshi.x < gem.x + gem.width &&
+                    yoshi.y + yoshi.height > gem.y &&
+                    yoshi.y < gem.y + gem.height) {
+                    gem.collected = true;
+                    
+                    // Sparkle particles
+                    for (let i = 0; i < 10; i++) {
+                        particles.push({
+                            x: gem.x + gem.width/2,
+                            y: gem.y + gem.height/2,
+                            vx: (Math.random() - 0.5) * 8,
+                            vy: (Math.random() - 0.5) * 8,
+                            color: gem.color,
+                            size: 3 + Math.random() * 4,
+                            life: 1
+                        });
+                    }
+                    
+                    updateUI();
+                }
+            }
+        }
+        
+        // Phase 3: Check coin collection
+        function checkCoinCollision() {
+            for (const coin of coins) {
+                if (!coin.collected &&
+                    yoshi.x + yoshi.width > coin.x - 12 &&
+                    yoshi.x < coin.x + 12 &&
+                    yoshi.y + yoshi.height > coin.y - 12 &&
+                    yoshi.y < coin.y + 12) {
+                    coin.collected = true;
+                    coinCount++;
+                    
+                    // Coin particles
+                    for (let i = 0; i < 6; i++) {
+                        particles.push({
+                            x: coin.x,
+                            y: coin.y,
+                            vx: (Math.random() - 0.5) * 6,
+                            vy: -Math.random() * 4 - 2,
+                            color: '#FFD700',
+                            size: 3 + Math.random() * 3,
+                            life: 1
+                        });
+                    }
+                    
+                    // Extra life every 100 coins
+                    if (coinCount % 100 === 0 && yoshi.hearts < 5) {
+                        yoshi.hearts++;
+                    }
+                    
+                    updateUI();
+                }
+            }
+        }
+        
+        // Phase 3: Check red coin collection
+        function checkRedCoinCollision() {
+            for (const coin of redCoins) {
+                if (!coin.collected &&
+                    yoshi.x + yoshi.width > coin.x - 12 &&
+                    yoshi.x < coin.x + 12 &&
+                    yoshi.y + yoshi.height > coin.y - 12 &&
+                    yoshi.y < coin.y + 12) {
+                    coin.collected = true;
+                    redCoinCount++;
+                    
+                    // Big red sparkle effect
+                    for (let i = 0; i < 12; i++) {
+                        particles.push({
+                            x: coin.x,
+                            y: coin.y,
+                            vx: (Math.random() - 0.5) * 10,
+                            vy: (Math.random() - 0.5) * 10,
+                            color: ['#F44336', '#FF5722', '#FFCDD2'][Math.floor(Math.random() * 3)],
+                            size: 4 + Math.random() * 4,
+                            life: 1
+                        });
+                    }
+                    
+                    // Also counts as regular coin
+                    coinCount++;
+                    
+                    updateUI();
+                    
+                    // Check if all red coins collected
+                    if (redCoinCount >= 20) {
+                        // Bonus celebration!
+                        for (let i = 0; i < 30; i++) {
+                            particles.push({
+                                x: yoshi.x + yoshi.width/2,
+                                y: yoshi.y,
+                                vx: (Math.random() - 0.5) * 15,
+                                vy: -Math.random() * 10,
+                                color: ['#F44336', '#FFD700', '#4CAF50'][Math.floor(Math.random() * 3)],
+                                size: 5 + Math.random() * 5,
+                                life: 1.5
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Phase 3: Check smiley flower collection
+        function checkFlowerCollision() {
+            for (const flower of smileyFlowers) {
+                if (!flower.collected &&
+                    yoshi.x + yoshi.width > flower.x - 20 &&
+                    yoshi.x < flower.x + 20 &&
+                    yoshi.y + yoshi.height > flower.y - 20 &&
+                    yoshi.y < flower.y + 20) {
+                    flower.collected = true;
+                    flowerCount++;
+                    
+                    // Big celebration burst!
+                    for (let i = 0; i < 25; i++) {
+                        const angle = (i / 25) * Math.PI * 2;
+                        particles.push({
+                            x: flower.x,
+                            y: flower.y,
+                            vx: Math.cos(angle) * 8,
+                            vy: Math.sin(angle) * 8,
+                            color: ['#FFEB3B', '#FF9800', '#4CAF50', '#E91E63'][Math.floor(Math.random() * 4)],
+                            size: 5 + Math.random() * 5,
+                            life: 1.5
+                        });
+                    }
+                    
+                    updateUI();
+                    
+                    // Check if all flowers collected - level complete!
+                    const requiredFlowers = currentLevel === 4 ? 3 : 5;
+                    if (flowerCount >= requiredFlowers && !(currentLevel === 4 && boss && boss.health > 0)) {
+                        setTimeout(() => winLevel(), 1000);
+                    }
+                }
+            }
+        }
+        
+        // Phase 3: Check heart pickup collection
+        function checkHeartPickupCollision() {
+            for (const heart of heartPickups) {
+                if (!heart.collected &&
+                    yoshi.x + yoshi.width > heart.x - 15 &&
+                    yoshi.x < heart.x + 15 &&
+                    yoshi.y + yoshi.height > heart.y - 15 &&
+                    yoshi.y < heart.y + 15) {
+                    
+                    if (yoshi.hearts < 5) {
+                        heart.collected = true;
+                        yoshi.hearts++;
+                        
+                        // Heart particles
+                        for (let i = 0; i < 10; i++) {
+                            particles.push({
+                                x: heart.x,
+                                y: heart.y,
+                                vx: (Math.random() - 0.5) * 6,
+                                vy: -Math.random() * 5,
+                                color: '#E91E63',
+                                size: 4 + Math.random() * 4,
+                                life: 1
+                            });
+                        }
+                        
+                        updateUI();
+                    }
+                }
+            }
+        }
+        
+        function checkEnemyCollision() {
+            if (yoshi.invincible > 0) return;
+            
+            for (const enemy of enemies) {
+                if (!enemy.alive) continue;
+                
+                if (yoshi.x + yoshi.width > enemy.x &&
+                    yoshi.x < enemy.x + enemy.width &&
+                    yoshi.y + yoshi.height > enemy.y &&
+                    yoshi.y < enemy.y + enemy.height) {
+                    
+                    // Check if stomping from above
+                    if (yoshi.vy > 0 && yoshi.y + yoshi.height < enemy.y + enemy.height/2) {
+                        enemy.alive = false;
+                        yoshi.vy = -8;
+                        
+                        // Add egg
+                        if (yoshi.eggs < yoshi.maxEggs) {
+                            yoshi.eggs++;
+                            updateUI();
+                        }
+                        
+                        // Death particles
+                        for (let i = 0; i < 8; i++) {
+                            particles.push({
+                                x: enemy.x + enemy.width/2,
+                                y: enemy.y + enemy.height/2,
+                                vx: (Math.random() - 0.5) * 6,
+                                vy: -Math.random() * 5,
+                                color: '#E53935',
+                                size: 5,
+                                life: 1
+                            });
+                        }
+                    } else {
+                        // Take damage
+                        yoshi.hearts--;
+                        yoshi.invincible = 120;
+                        yoshi.vy = -8;
+                        yoshi.vx = -yoshi.facing * 5;
+                        updateUI();
+                        
+                        if (yoshi.hearts <= 0) {
+                            gameRunning = false;
+                            document.getElementById('gameOverScreen').classList.remove('hidden');
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Phase 4: Check Fly Guy collision
+        function checkFlyGuyCollision() {
+            if (yoshi.invincible > 0) return;
+            
+            for (const flyGuy of flyGuys) {
+                if (!flyGuy.alive) continue;
+                
+                if (yoshi.x + yoshi.width > flyGuy.x &&
+                    yoshi.x < flyGuy.x + flyGuy.width &&
+                    yoshi.y + yoshi.height > flyGuy.y &&
+                    yoshi.y < flyGuy.y + flyGuy.height + 30) {
+                    
+                    // Check if stomping from above
+                    if (yoshi.vy > 0 && yoshi.y + yoshi.height < flyGuy.y + flyGuy.height/2) {
+                        flyGuy.alive = false;
+                        yoshi.vy = -10;
+                        
+                        // Drop carried item
+                        if (flyGuy.carriesItem === 'coin') {
+                            coinCount++;
+                        } else if (flyGuy.carriesItem === 'redCoin') {
+                            redCoinCount++;
+                            coinCount++;
+                        } else if (flyGuy.carriesItem === 'egg' && yoshi.eggs < yoshi.maxEggs) {
+                            yoshi.eggs++;
+                            updateEggTrail();
+                        }
+                        
+                        // Add egg from defeating
+                        if (yoshi.eggs < yoshi.maxEggs) {
+                            yoshi.eggs++;
+                            updateEggTrail();
+                        }
+                        
+                        // Death particles
+                        for (let i = 0; i < 10; i++) {
+                            particles.push({
+                                x: flyGuy.x + flyGuy.width/2,
+                                y: flyGuy.y + flyGuy.height/2,
+                                vx: (Math.random() - 0.5) * 8,
+                                vy: -Math.random() * 6,
+                                color: ['#42A5F5', '#FFD54F'][Math.floor(Math.random() * 2)],
+                                size: 5,
+                                life: 1
+                            });
+                        }
+                        
+                        updateUI();
+                    } else {
+                        // Take damage
+                        yoshi.hearts--;
+                        yoshi.invincible = 120;
+                        yoshi.vy = -8;
+                        yoshi.vx = -yoshi.facing * 5;
+                        updateUI();
+                        
+                        if (yoshi.hearts <= 0) {
+                            gameRunning = false;
+                            document.getElementById('gameOverScreen').classList.remove('hidden');
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Phase 4: Check Koopa Troopa collision
+        function checkKoopaCollision() {
+            if (yoshi.invincible > 0) return;
+            
+            for (const koopa of koopaTroopas) {
+                if (!koopa.alive && !koopa.inShell) continue;
+                
+                if (yoshi.x + yoshi.width > koopa.x &&
+                    yoshi.x < koopa.x + koopa.width &&
+                    yoshi.y + yoshi.height > koopa.y &&
+                    yoshi.y < koopa.y + koopa.height) {
+                    
+                    // Check if stomping from above
+                    if (yoshi.vy > 0 && yoshi.y + yoshi.height < koopa.y + koopa.height/2) {
+                        yoshi.vy = -8;
+                        
+                        if (koopa.inShell) {
+                            // Kick the shell!
+                            shells.push({
+                                x: koopa.x + koopa.width/2,
+                                y: koopa.y + koopa.height/2,
+                                vx: yoshi.facing * 12,
+                                rotation: 0,
+                                source: koopa
+                            });
+                            koopa.inShell = false;
+                            koopa.alive = false;
+                            
+                            // Kick particles
+                            for (let i = 0; i < 5; i++) {
+                                particles.push({
+                                    x: koopa.x + koopa.width/2,
+                                    y: koopa.y + koopa.height/2,
+                                    vx: yoshi.facing * (3 + Math.random() * 3),
+                                    vy: -Math.random() * 3,
+                                    color: '#81C784',
+                                    size: 4,
+                                    life: 0.5
+                                });
+                            }
+                        } else {
+                            // First stomp - go into shell
+                            koopa.alive = false;
+                            koopa.inShell = true;
+                            koopa.shellTimer = 0;
+                            koopa.y = koopa.y + 20; // Shell sits lower
+                            koopa.height = 35;
+                            
+                            // Shell pop particles
+                            for (let i = 0; i < 6; i++) {
+                                particles.push({
+                                    x: koopa.x + koopa.width/2,
+                                    y: koopa.y,
+                                    vx: (Math.random() - 0.5) * 6,
+                                    vy: -Math.random() * 5,
+                                    color: '#FFEB3B',
+                                    size: 5,
+                                    life: 1
+                                });
+                            }
+                        }
+                    } else if (!koopa.inShell) {
+                        // Take damage from walking koopa
+                        yoshi.hearts--;
+                        yoshi.invincible = 120;
+                        yoshi.vy = -8;
+                        yoshi.vx = -yoshi.facing * 5;
+                        updateUI();
+                        
+                        if (yoshi.hearts <= 0) {
+                            gameRunning = false;
+                            document.getElementById('gameOverScreen').classList.remove('hidden');
+                        }
+                    }
+                }
+            }
+        }
+        
+        function eatEnemy() {
+            const tongueReach = 80;
+            const tongueX = yoshi.x + (yoshi.facing > 0 ? yoshi.width + tongueReach : -tongueReach);
+            
+            // Eat Shy Guys
+            for (const enemy of enemies) {
+                if (!enemy.alive) continue;
+                
+                const inRange = yoshi.facing > 0 ? 
+                    (enemy.x > yoshi.x && enemy.x < tongueX) :
+                    (enemy.x + enemy.width < yoshi.x + yoshi.width && enemy.x + enemy.width > tongueX);
+                
+                if (inRange &&
+                    Math.abs((enemy.y + enemy.height/2) - (yoshi.y + yoshi.height/2)) < 40) {
+                    enemy.alive = false;
+                    
+                    if (yoshi.eggs < yoshi.maxEggs) {
+                        yoshi.eggs++;
+                        updateEggTrail();
+                        updateUI();
+                    }
+                    
+                    // Gulp particles
+                    for (let i = 0; i < 5; i++) {
+                        particles.push({
+                            x: enemy.x + enemy.width/2,
+                            y: enemy.y + enemy.height/2,
+                            vx: -yoshi.facing * (2 + Math.random() * 3),
+                            vy: (Math.random() - 0.5) * 2,
+                            color: '#E53935',
+                            size: 6,
+                            life: 1
+                        });
+                    }
+                    return true;
+                }
+            }
+            
+            // Eat Fly Guys
+            for (const flyGuy of flyGuys) {
+                if (!flyGuy.alive) continue;
+                
+                const inRange = yoshi.facing > 0 ? 
+                    (flyGuy.x > yoshi.x && flyGuy.x < tongueX) :
+                    (flyGuy.x + flyGuy.width < yoshi.x + yoshi.width && flyGuy.x + flyGuy.width > tongueX);
+                
+                if (inRange &&
+                    Math.abs((flyGuy.y + flyGuy.height/2) - (yoshi.y + yoshi.height/2)) < 50) {
+                    flyGuy.alive = false;
+                    
+                    // Get carried item
+                    if (flyGuy.carriesItem === 'coin') coinCount++;
+                    else if (flyGuy.carriesItem === 'redCoin') { redCoinCount++; coinCount++; }
+                    else if (flyGuy.carriesItem === 'egg' && yoshi.eggs < yoshi.maxEggs) { yoshi.eggs++; updateEggTrail(); }
+                    
+                    if (yoshi.eggs < yoshi.maxEggs) {
+                        yoshi.eggs++;
+                        updateEggTrail();
+                    }
+                    updateUI();
+                    
+                    for (let i = 0; i < 5; i++) {
+                        particles.push({
+                            x: flyGuy.x + flyGuy.width/2,
+                            y: flyGuy.y + flyGuy.height/2,
+                            vx: -yoshi.facing * (2 + Math.random() * 3),
+                            vy: (Math.random() - 0.5) * 2,
+                            color: '#42A5F5',
+                            size: 6,
+                            life: 1
+                        });
+                    }
+                    return true;
+                }
+            }
+            
+            // Eat Koopa Troopas
+            for (const koopa of koopaTroopas) {
+                if (!koopa.alive && !koopa.inShell) continue;
+                
+                const inRange = yoshi.facing > 0 ? 
+                    (koopa.x > yoshi.x && koopa.x < tongueX) :
+                    (koopa.x + koopa.width < yoshi.x + yoshi.width && koopa.x + koopa.width > tongueX);
+                
+                if (inRange &&
+                    Math.abs((koopa.y + koopa.height/2) - (yoshi.y + yoshi.height/2)) < 50) {
+                    koopa.alive = false;
+                    koopa.inShell = false;
+                    
+                    if (yoshi.eggs < yoshi.maxEggs) {
+                        yoshi.eggs++;
+                        updateEggTrail();
+                        updateUI();
+                    }
+                    
+                    for (let i = 0; i < 5; i++) {
+                        particles.push({
+                            x: koopa.x + koopa.width/2,
+                            y: koopa.y + koopa.height/2,
+                            vx: -yoshi.facing * (2 + Math.random() * 3),
+                            vy: (Math.random() - 0.5) * 2,
+                            color: '#4CAF50',
+                            size: 6,
+                            life: 1
+                        });
+                    }
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+        
+        function throwEgg() {
+            if (yoshi.eggs <= 0) return;
+            
+            yoshi.eggs--;
+            updateUI();
+            
+            // Calculate velocity based on aim angle
+            const power = 14;
+            const vx = Math.cos(yoshi.aimAngle) * power * yoshi.facing;
+            const vy = -Math.sin(yoshi.aimAngle) * power;
+            
+            eggs.push({
+                x: yoshi.x + (yoshi.facing > 0 ? yoshi.width : 0),
+                y: yoshi.y + 10,
+                vx: vx,
+                vy: vy,
+                rotation: 0,
+                bounces: 0,
+                maxBounces: 3
+            });
+            
+            // Update egg trail
+            updateEggTrail();
+        }
+        
+        // Update visual egg trail positions (eggs following Yoshi)
+        function updateEggTrail() {
+            eggTrail = [];
+            for (let i = 0; i < yoshi.eggs; i++) {
+                eggTrail.push({
+                    offsetX: -20 - i * 18,
+                    offsetY: 10 + Math.sin(i * 0.8) * 5,
+                    bobPhase: i * 0.5
+                });
+            }
+        }
+        
+        // Draw aiming reticle and trajectory
+        function drawAimingReticle() {
+            if (!yoshi.aiming || yoshi.eggs <= 0) return;
+            
+            const startX = yoshi.x + yoshi.width/2 + (yoshi.facing > 0 ? 20 : -20) - cameraX;
+            const startY = yoshi.y + 15;
+            
+            const power = 14;
+            let vx = Math.cos(yoshi.aimAngle) * power * yoshi.facing;
+            let vy = -Math.sin(yoshi.aimAngle) * power;
+            
+            // Draw trajectory dots
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            let simX = startX;
+            let simY = startY;
+            let simVx = vx;
+            let simVy = vy;
+            
+            for (let i = 0; i < 25; i++) {
+                // Draw dot
+                const alpha = 1 - (i / 25);
+                ctx.fillStyle = `rgba(255, 255, 100, ${alpha})`;
+                ctx.beginPath();
+                ctx.arc(simX, simY, 4 - i * 0.1, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Simulate physics
+                simX += simVx * 0.5;
+                simY += simVy * 0.5;
+                simVy += 0.3 * 0.5;
+                
+                // Check for platform collision in simulation
+                for (const plat of platforms) {
+                    const platX = plat.x - cameraX;
+                    if (simX > platX && simX < platX + plat.width &&
+                        simY > plat.y && simY < plat.y + plat.height) {
+                        simVy = -simVy * 0.7;
+                        simY = plat.y;
+                        break;
+                    }
+                }
+            }
+            
+            // Draw aiming arrow
+            const arrowLength = 50;
+            const arrowX = startX + Math.cos(yoshi.aimAngle) * arrowLength * yoshi.facing;
+            const arrowY = startY - Math.sin(yoshi.aimAngle) * arrowLength;
+            
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(arrowX, arrowY);
+            ctx.stroke();
+            
+            // Arrowhead
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            const angle = Math.atan2(startY - arrowY, arrowX - startX);
+            ctx.moveTo(arrowX, arrowY);
+            ctx.lineTo(arrowX - 12 * Math.cos(angle - 0.4), arrowY + 12 * Math.sin(angle - 0.4));
+            ctx.lineTo(arrowX - 12 * Math.cos(angle + 0.4), arrowY + 12 * Math.sin(angle + 0.4));
+            ctx.closePath();
+            ctx.fill();
+        }
+        
+        // Draw egg trail behind Yoshi
+        function drawEggTrail() {
+            const baseX = yoshi.x - cameraX;
+            const baseY = yoshi.y;
+            
+            for (let i = 0; i < eggTrail.length; i++) {
+                const trail = eggTrail[i];
+                const bob = Math.sin(Date.now() / 200 + trail.bobPhase) * 3;
+                const x = baseX + trail.offsetX * yoshi.facing;
+                const y = baseY + trail.offsetY + bob;
+                
+                ctx.save();
+                ctx.translate(x, y);
+                
+                // Smaller trailing egg
+                ctx.fillStyle = '#C8E6C9';
+                ctx.beginPath();
+                ctx.ellipse(0, 0, 8, 10, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#4CAF50';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+                
+                // Spots
+                ctx.fillStyle = '#81C784';
+                ctx.beginPath();
+                ctx.arc(-2, -3, 2.5, 0, Math.PI * 2);
+                ctx.arc(3, 2, 2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.restore();
+            }
+        }
+        
+        // Update functions
+        function updateYoshi() {
+            // Horizontal movement
+            if (keys['ArrowLeft'] || keys['KeyA']) {
+                yoshi.vx = -yoshi.speed;
+                yoshi.facing = -1;
+            } else if (keys['ArrowRight'] || keys['KeyD']) {
+                yoshi.vx = yoshi.speed;
+                yoshi.facing = 1;
+            } else {
+                yoshi.vx *= 0.8;
+            }
+            
+            // Jumping and fluttering
+            if (keys['Space'] || keys['ArrowUp'] || keys['KeyW']) {
+                if (yoshi.grounded) {
+                    yoshi.vy = yoshi.jumpPower;
+                    yoshi.grounded = false;
+                } else if (!yoshi.fluttering && yoshi.vy > 0) {
+                    yoshi.fluttering = true;
+                    yoshi.flutterTime = 40;
+                }
+            } else {
+                if (!yoshi.grounded) {
+                    yoshi.fluttering = false;
+                }
+            }
+            
+            // Flutter physics
+            if (yoshi.fluttering && yoshi.flutterTime > 0) {
+                yoshi.vy += FLUTTER_GRAVITY;
+                yoshi.flutterTime--;
+                if (yoshi.flutterTime <= 0) {
+                    yoshi.fluttering = false;
+                }
+            } else {
+                yoshi.vy += GRAVITY;
+            }
+            
+            // Eating
+            if ((keys['KeyZ'] || keys['ShiftLeft']) && !yoshi.eating && !yoshi.aiming) {
+                yoshi.eating = true;
+                yoshi.eatTimer = 20;
+                yoshi.tongueLength = 0;
+            }
+            
+            if (yoshi.eating) {
+                yoshi.eatTimer--;
+                if (yoshi.eatTimer > 10) {
+                    yoshi.tongueLength += 8;
+                    if (yoshi.tongueLength >= 60) {
+                        eatEnemy();
+                    }
+                } else {
+                    yoshi.tongueLength -= 8;
+                }
+                if (yoshi.eatTimer <= 0) {
+                    yoshi.eating = false;
+                    yoshi.tongueLength = 0;
+                }
+            }
+            
+            // Ground Pound (press down while in air)
+            if ((keys['ArrowDown'] || keys['KeyS']) && !yoshi.grounded && !yoshi.groundPounding && !yoshi.aiming) {
+                yoshi.groundPounding = true;
+                yoshi.fluttering = false;
+                yoshi.vy = 0; // Brief pause before slam
+            }
+            
+            if (yoshi.groundPounding) {
+                yoshi.vy = yoshi.groundPoundSpeed;
+                yoshi.vx = 0; // No horizontal movement during ground pound
+                if (yoshi.grounded) {
+                    yoshi.groundPounding = false;
+                    // Ground pound impact particles
+                    for (let i = 0; i < 8; i++) {
+                        particles.push({
+                            x: yoshi.x + yoshi.width/2,
+                            y: yoshi.y + yoshi.height,
+                            vx: (Math.random() - 0.5) * 10,
+                            vy: -Math.random() * 5,
+                            color: '#8B7355',
+                            size: 4 + Math.random() * 4,
+                            life: 1
+                        });
+                    }
+                }
+            }
+            
+            // Egg aiming system (hold X to aim, release to throw)
+            if (keys['KeyX'] || keys['ControlLeft']) {
+                if (!yoshi.aiming && yoshi.eggs > 0) {
+                    yoshi.aiming = true;
+                    yoshi.aimAngle = Math.PI / 4; // Start at 45 degrees
+                    yoshi.aimDirection = 1;
+                }
+                if (yoshi.aiming) {
+                    // Oscillate aim angle
+                    yoshi.aimAngle += 0.03 * yoshi.aimDirection;
+                    if (yoshi.aimAngle > Math.PI * 0.85) {
+                        yoshi.aimDirection = -1;
+                    } else if (yoshi.aimAngle < 0.1) {
+                        yoshi.aimDirection = 1;
+                    }
+                }
+            } else {
+                // Released - throw egg if was aiming
+                if (yoshi.aiming) {
+                    throwEgg();
+                    yoshi.aiming = false;
+                }
+            }
+            
+            // Apply velocity
+            yoshi.x += yoshi.vx;
+            yoshi.y += yoshi.vy;
+            
+            // Platform collision
+            yoshi.grounded = checkPlatformCollision(yoshi);
+            if (yoshi.grounded) {
+                yoshi.fluttering = false;
+            }
+            
+            // World bounds
+            if (yoshi.x < 0) yoshi.x = 0;
+            if (yoshi.x > WORLD_WIDTH - yoshi.width) yoshi.x = WORLD_WIDTH - yoshi.width;
+            
+            // Fall death
+            if (yoshi.y > canvas.height + 100) {
+                yoshi.hearts--;
+                updateUI();
+                if (yoshi.hearts <= 0) {
+                    gameRunning = false;
+                    document.getElementById('gameOverScreen').classList.remove('hidden');
+                } else {
+                    yoshi.x = 100;
+                    yoshi.y = 300;
+                    yoshi.vx = 0;
+                    yoshi.vy = 0;
+                    yoshi.invincible = 120;
+                    cameraX = 0;
+                }
+            }
+            
+            // Invincibility timer
+            if (yoshi.invincible > 0) {
+                yoshi.invincible--;
+            }
+            
+            // Camera follow
+            const targetCameraX = yoshi.x - canvas.width / 3;
+            cameraX += (targetCameraX - cameraX) * 0.1;
+            cameraX = Math.max(0, Math.min(cameraX, WORLD_WIDTH - canvas.width));
+        }
+        
+        function updateEnemies() {
+            for (const enemy of enemies) {
+                if (!enemy.alive) continue;
+                
+                enemy.x += enemy.vx;
+                
+                // Patrol bounds
+                if (enemy.x < enemy.startX - enemy.patrol || enemy.x > enemy.startX + enemy.patrol) {
+                    enemy.vx *= -1;
+                }
+                
+                enemy.frame++;
+            }
+        }
+        
+        // Phase 4: Update Piranha Plants
+        function updatePiranhaPlants() {
+            for (const plant of piranhaPlants) {
+                if (!plant.alive) continue;
+                
+                // Check if Yoshi is nearby - start biting
+                const dist = Math.abs(yoshi.x - plant.x);
+                const vertDist = Math.abs(yoshi.y - plant.y);
+                
+                if (dist < 80 && vertDist < 60) {
+                    plant.biting = true;
+                    plant.biteTimer++;
+                } else {
+                    plant.biting = false;
+                    plant.biteTimer = 0;
+                }
+                
+                // Check for collision with Yoshi when biting
+                if (plant.biting && yoshi.invincible <= 0) {
+                    if (dist < 45 && vertDist < 50) {
+                        // Damage Yoshi
+                        yoshi.hearts--;
+                        yoshi.invincible = 120;
+                        yoshi.vy = -8;
+                        yoshi.vx = (yoshi.x < plant.x ? -5 : 5);
+                        updateUI();
+                        
+                        if (yoshi.hearts <= 0) {
+                            gameRunning = false;
+                            document.getElementById('gameOverScreen').classList.remove('hidden');
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Phase 4: Update Fly Guys
+        function updateFlyGuys() {
+            for (const flyGuy of flyGuys) {
+                if (!flyGuy.alive) continue;
+                
+                // Vertical patrol movement
+                flyGuy.y += flyGuy.vy;
+                if (flyGuy.y < flyGuy.startY - flyGuy.patrolY || flyGuy.y > flyGuy.startY + flyGuy.patrolY) {
+                    flyGuy.vy *= -1;
+                }
+            }
+        }
+        
+        // Phase 4: Update Koopa Troopas
+        function updateKoopaTroopas() {
+            for (const koopa of koopaTroopas) {
+                if (koopa.inShell) {
+                    koopa.shellTimer++;
+                    // Pop back out after 5 seconds
+                    if (koopa.shellTimer > 300) {
+                        koopa.inShell = false;
+                        koopa.alive = true;
+                        koopa.shellTimer = 0;
+                    }
+                } else if (koopa.alive) {
+                    koopa.x += koopa.vx;
+                    
+                    // Patrol bounds
+                    if (koopa.x < koopa.startX - koopa.patrol || koopa.x > koopa.startX + koopa.patrol) {
+                        koopa.vx *= -1;
+                    }
+                }
+            }
+        }
+        
+        // Phase 4: Update kicked shells
+        function updateShells() {
+            for (let i = shells.length - 1; i >= 0; i--) {
+                const shell = shells[i];
+                shell.x += shell.vx;
+                shell.rotation += 0.3;
+                
+                // Remove if off screen
+                if (shell.x < -50 || shell.x > WORLD_WIDTH + 50) {
+                    shells.splice(i, 1);
+                    continue;
+                }
+                
+                // Hit enemies (including Shy Guys)
+                for (const enemy of enemies) {
+                    if (enemy.alive &&
+                        shell.x > enemy.x && shell.x < enemy.x + enemy.width &&
+                        shell.y > enemy.y && shell.y < enemy.y + enemy.height) {
+                        enemy.alive = false;
+                        // Death particles
+                        for (let j = 0; j < 8; j++) {
+                            particles.push({
+                                x: enemy.x + enemy.width/2,
+                                y: enemy.y + enemy.height/2,
+                                vx: (Math.random() - 0.5) * 6,
+                                vy: -Math.random() * 5,
+                                color: '#E53935',
+                                size: 5,
+                                life: 1
+                            });
+                        }
+                    }
+                }
+                
+                // Hit other Koopas
+                for (const koopa of koopaTroopas) {
+                    if ((koopa.alive || koopa.inShell) && koopa !== shell.source &&
+                        shell.x > koopa.x && shell.x < koopa.x + koopa.width &&
+                        shell.y > koopa.y && shell.y < koopa.y + koopa.height) {
+                        koopa.alive = false;
+                        koopa.inShell = false;
+                        // Shell break particles
+                        for (let j = 0; j < 10; j++) {
+                            particles.push({
+                                x: koopa.x + koopa.width/2,
+                                y: koopa.y + koopa.height/2,
+                                vx: (Math.random() - 0.5) * 8,
+                                vy: -Math.random() * 6,
+                                color: ['#4CAF50', '#FFEB3B'][Math.floor(Math.random() * 2)],
+                                size: 5,
+                                life: 1
+                            });
+                        }
+                    }
+                }
+                
+                // Bounce off walls
+                for (const plat of platforms) {
+                    if (shell.y > plat.y && shell.y < plat.y + plat.height) {
+                        if (shell.x > plat.x - 5 && shell.x < plat.x + 10 && shell.vx > 0) {
+                            shell.vx *= -1;
+                        } else if (shell.x > plat.x + plat.width - 10 && shell.x < plat.x + plat.width + 5 && shell.vx < 0) {
+                            shell.vx *= -1;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Boss: Baby Bowser
+        function updateBoss() {
+            if (!boss || boss.health <= 0) return;
+            
+            // Activate boss when Yoshi enters arena
+            if (!bossActive && yoshi.x > 1400) {
+                bossActive = true;
+                boss.phase = 'attack';
+            }
+            
+            if (!bossActive) return;
+            
+            boss.timer++;
+            boss.attackTimer++;
+            
+            // Invincibility frames
+            if (boss.invincible > 0) boss.invincible--;
+            
+            // Gravity for boss
+            boss.vy += 0.4;
+            boss.y += boss.vy;
+            
+            // Ground collision
+            if (boss.y >= boss.groundY) {
+                boss.y = boss.groundY;
+                boss.vy = 0;
+            }
+            
+            // Boss AI phases
+            if (boss.phase === 'attack') {
+                // Move toward Yoshi
+                const targetX = yoshi.x;
+                if (boss.x < targetX - 50) {
+                    boss.x += 2;
+                    boss.direction = 1;
+                } else if (boss.x > targetX + 50) {
+                    boss.x -= 2;
+                    boss.direction = -1;
+                }
+                
+                // Jump occasionally
+                boss.jumpTimer++;
+                if (boss.jumpTimer > 90 && boss.y >= boss.groundY) {
+                    boss.vy = -12;
+                    boss.jumpTimer = 0;
+                }
+                
+                // Shoot fireballs
+                if (boss.attackTimer > 120) {
+                    boss.attackTimer = 0;
+                    // Create fireball
+                    const angle = Math.atan2(yoshi.y - boss.y, yoshi.x - boss.x);
+                    boss.fireballs.push({
+                        x: boss.x + boss.width/2,
+                        y: boss.y + boss.height/2,
+                        vx: Math.cos(angle) * 5,
+                        vy: Math.sin(angle) * 5,
+                        size: 20,
+                        life: 180
+                    });
+                }
+            }
+            
+            // Update fireballs
+            for (let i = boss.fireballs.length - 1; i >= 0; i--) {
+                const fb = boss.fireballs[i];
+                fb.x += fb.vx;
+                fb.y += fb.vy;
+                fb.life--;
+                
+                if (fb.life <= 0) {
+                    boss.fireballs.splice(i, 1);
+                    continue;
+                }
+                
+                // Fireball hits Yoshi
+                if (yoshi.invincible <= 0) {
+                    const dx = fb.x - (yoshi.x + yoshi.width/2);
+                    const dy = fb.y - (yoshi.y + yoshi.height/2);
+                    if (Math.sqrt(dx*dx + dy*dy) < fb.size + 20) {
+                        hurtYoshi();
+                        boss.fireballs.splice(i, 1);
+                    }
+                }
+            }
+            
+            // Boss collision with Yoshi
+            if (yoshi.invincible <= 0 &&
+                yoshi.x + yoshi.width > boss.x &&
+                yoshi.x < boss.x + boss.width &&
+                yoshi.y + yoshi.height > boss.y &&
+                yoshi.y < boss.y + boss.height) {
+                
+                // Check if stomping from above
+                if (yoshi.vy > 0 && yoshi.y + yoshi.height < boss.y + 40) {
+                    // Bounce off boss
+                    yoshi.vy = -10;
+                    damageBoss();
+                } else {
+                    // Boss hurts Yoshi
+                    hurtYoshi();
+                }
+            }
+        }
+        
+        function damageBoss() {
+            if (boss.invincible > 0) return;
+            
+            boss.health--;
+            boss.invincible = 60;
+            
+            // Hit particles
+            for (let i = 0; i < 15; i++) {
+                particles.push({
+                    x: boss.x + boss.width/2,
+                    y: boss.y + boss.height/2,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: -Math.random() * 8,
+                    color: ['#FF4500', '#FFD700', '#FF6347'][Math.floor(Math.random() * 3)],
+                    size: 8,
+                    life: 1
+                });
+            }
+            
+            // Boss defeated
+            if (boss.health <= 0) {
+                // Big explosion
+                for (let i = 0; i < 30; i++) {
+                    particles.push({
+                        x: boss.x + boss.width/2,
+                        y: boss.y + boss.height/2,
+                        vx: (Math.random() - 0.5) * 15,
+                        vy: -Math.random() * 12,
+                        color: ['#FF4500', '#FFD700', '#FFFFFF'][Math.floor(Math.random() * 3)],
+                        size: 10,
+                        life: 1.5
+                    });
+                }
+                // Victory!
+                setTimeout(() => winLevel(), 1000);
+            }
+        }
+        
+        function hurtYoshi() {
+            yoshi.hearts--;
+            yoshi.invincible = 90;
+            
+            for (let i = 0; i < 10; i++) {
+                particles.push({
+                    x: yoshi.x + yoshi.width/2,
+                    y: yoshi.y + yoshi.height/2,
+                    vx: (Math.random() - 0.5) * 6,
+                    vy: -Math.random() * 4,
+                    color: '#FF5555',
+                    size: 6,
+                    life: 1
+                });
+            }
+            
+            if (yoshi.hearts <= 0) {
+                gameRunning = false;
+                document.getElementById('gameOverScreen').classList.remove('hidden');
+            }
+            
+            updateUI();
+        }
+        
+        function drawBoss() {
+            if (!boss || boss.health <= 0) return;
+            
+            const bx = boss.x - cameraX;
+            const by = boss.y;
+            
+            // Flash when invincible
+            if (boss.invincible > 0 && Math.floor(boss.invincible / 4) % 2 === 0) {
+                ctx.globalAlpha = 0.5;
+            }
+            
+            // Baby Bowser body (spiky shell)
+            ctx.fillStyle = '#228B22';
+            ctx.beginPath();
+            ctx.ellipse(bx + boss.width/2, by + boss.height - 30, 45, 35, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#1B5E20';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            // Shell spikes
+            ctx.fillStyle = '#8B0000';
+            const spikeCount = 5;
+            for (let i = 0; i < spikeCount; i++) {
+                const angle = -Math.PI + (i / (spikeCount - 1)) * Math.PI;
+                const sx = bx + boss.width/2 + Math.cos(angle) * 35;
+                const sy = by + boss.height - 30 + Math.sin(angle) * 25;
+                ctx.beginPath();
+                ctx.moveTo(sx, sy);
+                ctx.lineTo(sx + Math.cos(angle) * 20, sy + Math.sin(angle) * 20 - 10);
+                ctx.lineTo(sx + Math.cos(angle + 0.3) * 5, sy + Math.sin(angle + 0.3) * 5);
+                ctx.closePath();
+                ctx.fill();
+            }
+            
+            // Head
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.ellipse(bx + boss.width/2 + boss.direction * 10, by + 30, 35, 30, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#DAA520';
+            ctx.stroke();
+            
+            // Snout
+            ctx.fillStyle = '#FFFACD';
+            ctx.beginPath();
+            ctx.ellipse(bx + boss.width/2 + boss.direction * 30, by + 40, 20, 15, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Eyes (angry!)
+            const eyeX = bx + boss.width/2 + boss.direction * 5;
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.ellipse(eyeX - 12, by + 25, 12, 10, 0, 0, Math.PI * 2);
+            ctx.ellipse(eyeX + 12, by + 25, 12, 10, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#8B0000';
+            ctx.beginPath();
+            ctx.arc(eyeX - 10 + boss.direction * 3, by + 26, 6, 0, Math.PI * 2);
+            ctx.arc(eyeX + 14 + boss.direction * 3, by + 26, 6, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Angry eyebrows
+            ctx.strokeStyle = '#8B0000';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(eyeX - 20, by + 12);
+            ctx.lineTo(eyeX - 5, by + 18);
+            ctx.moveTo(eyeX + 20, by + 12);
+            ctx.lineTo(eyeX + 5, by + 18);
+            ctx.stroke();
+            
+            // Horns
+            ctx.fillStyle = '#FFFACD';
+            ctx.beginPath();
+            ctx.moveTo(bx + boss.width/2 - 25, by + 10);
+            ctx.lineTo(bx + boss.width/2 - 35, by - 20);
+            ctx.lineTo(bx + boss.width/2 - 15, by + 5);
+            ctx.closePath();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(bx + boss.width/2 + 25, by + 10);
+            ctx.lineTo(bx + boss.width/2 + 35, by - 20);
+            ctx.lineTo(bx + boss.width/2 + 15, by + 5);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Hair tuft
+            ctx.fillStyle = '#FF4500';
+            for (let i = 0; i < 3; i++) {
+                ctx.beginPath();
+                ctx.ellipse(bx + boss.width/2 - 5 + i * 10, by - 5, 8, 15, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            ctx.globalAlpha = 1;
+            
+            // Draw fireballs
+            for (const fb of boss.fireballs) {
+                const fx = fb.x - cameraX;
+                ctx.fillStyle = '#FF4500';
+                ctx.beginPath();
+                ctx.arc(fx, fb.y, fb.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#FFD700';
+                ctx.beginPath();
+                ctx.arc(fx, fb.y, fb.size * 0.6, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#FFFF00';
+                ctx.beginPath();
+                ctx.arc(fx, fb.y, fb.size * 0.3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Boss health bar
+            const barWidth = 200;
+            const barHeight = 20;
+            const barX = canvas.width/2 - barWidth/2;
+            const barY = 60;
+            
+            ctx.fillStyle = '#333';
+            ctx.fillRect(barX - 2, barY - 2, barWidth + 4, barHeight + 4);
+            ctx.fillStyle = '#8B0000';
+            ctx.fillRect(barX, barY, barWidth, barHeight);
+            ctx.fillStyle = '#FF4500';
+            ctx.fillRect(barX, barY, barWidth * (boss.health / boss.maxHealth), barHeight);
+            
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 14px Comic Sans MS';
+            ctx.textAlign = 'center';
+            ctx.fillText('BABY BOWSER', canvas.width/2, barY - 8);
+        }
+        
+        function updateEggs() {
+            for (let i = eggs.length - 1; i >= 0; i--) {
+                const egg = eggs[i];
+                egg.x += egg.vx;
+                egg.y += egg.vy;
+                egg.vy += 0.3;
+                egg.rotation += 0.2;
+                
+                // Bounce off platforms
+                for (const plat of platforms) {
+                    // Top of platform (bounce up)
+                    if (egg.x > plat.x && egg.x < plat.x + plat.width &&
+                        egg.y > plat.y - 10 && egg.y < plat.y + 15 && egg.vy > 0) {
+                        if (egg.bounces < egg.maxBounces) {
+                            egg.vy = -egg.vy * 0.6;
+                            egg.vx *= 0.8;
+                            egg.y = plat.y - 10;
+                            egg.bounces++;
+                            // Bounce particles
+                            for (let j = 0; j < 3; j++) {
+                                particles.push({
+                                    x: egg.x,
+                                    y: egg.y,
+                                    vx: (Math.random() - 0.5) * 4,
+                                    vy: -Math.random() * 3,
+                                    color: '#C8E6C9',
+                                    size: 3,
+                                    life: 0.5
+                                });
+                            }
+                        } else {
+                            eggs.splice(i, 1);
+                            continue;
+                        }
+                    }
+                    // Side collision (bounce horizontally)
+                    if (egg.y > plat.y && egg.y < plat.y + plat.height) {
+                        // Left side
+                        if (egg.x > plat.x - 5 && egg.x < plat.x + 10 && egg.vx > 0) {
+                            if (egg.bounces < egg.maxBounces) {
+                                egg.vx = -egg.vx * 0.6;
+                                egg.x = plat.x - 10;
+                                egg.bounces++;
+                            }
+                        }
+                        // Right side
+                        if (egg.x > plat.x + plat.width - 10 && egg.x < plat.x + plat.width + 5 && egg.vx < 0) {
+                            if (egg.bounces < egg.maxBounces) {
+                                egg.vx = -egg.vx * 0.6;
+                                egg.x = plat.x + plat.width + 10;
+                                egg.bounces++;
+                            }
+                        }
+                    }
+                }
+                
+                // Check enemy hits
+                for (const enemy of enemies) {
+                    if (!enemy.alive) continue;
+                    
+                    if (egg.x > enemy.x && egg.x < enemy.x + enemy.width &&
+                        egg.y > enemy.y && egg.y < enemy.y + enemy.height) {
+                        enemy.alive = false;
+                        eggs.splice(i, 1);
+                        
+                        // Impact particles
+                        for (let j = 0; j < 10; j++) {
+                            particles.push({
+                                x: egg.x,
+                                y: egg.y,
+                                vx: (Math.random() - 0.5) * 8,
+                                vy: (Math.random() - 0.5) * 8,
+                                color: ['#C8E6C9', '#81C784', '#E53935'][Math.floor(Math.random() * 3)],
+                                size: 4,
+                                life: 1
+                            });
+                        }
+                        break;
+                    }
+                }
+                
+                // Phase 4: Check Fly Guy hits
+                for (const flyGuy of flyGuys) {
+                    if (!flyGuy.alive) continue;
+                    
+                    if (egg.x > flyGuy.x && egg.x < flyGuy.x + flyGuy.width &&
+                        egg.y > flyGuy.y && egg.y < flyGuy.y + flyGuy.height + 30) {
+                        flyGuy.alive = false;
+                        eggs.splice(i, 1);
+                        
+                        // Drop carried item
+                        if (flyGuy.carriesItem === 'coin') coinCount++;
+                        else if (flyGuy.carriesItem === 'redCoin') { redCoinCount++; coinCount++; }
+                        else if (flyGuy.carriesItem === 'egg' && yoshi.eggs < yoshi.maxEggs) { yoshi.eggs++; updateEggTrail(); }
+                        updateUI();
+                        
+                        // Impact particles
+                        for (let j = 0; j < 10; j++) {
+                            particles.push({
+                                x: egg.x,
+                                y: egg.y,
+                                vx: (Math.random() - 0.5) * 8,
+                                vy: (Math.random() - 0.5) * 8,
+                                color: ['#42A5F5', '#FFD54F'][Math.floor(Math.random() * 2)],
+                                size: 4,
+                                life: 1
+                            });
+                        }
+                        break;
+                    }
+                }
+                
+                // Phase 4: Check Koopa hits
+                for (const koopa of koopaTroopas) {
+                    if (!koopa.alive && !koopa.inShell) continue;
+                    
+                    if (egg.x > koopa.x && egg.x < koopa.x + koopa.width &&
+                        egg.y > koopa.y && egg.y < koopa.y + koopa.height) {
+                        
+                        if (koopa.inShell) {
+                            // Kick shell with egg
+                            shells.push({
+                                x: koopa.x + koopa.width/2,
+                                y: koopa.y + koopa.height/2,
+                                vx: egg.vx > 0 ? 12 : -12,
+                                rotation: 0,
+                                source: koopa
+                            });
+                            koopa.inShell = false;
+                            koopa.alive = false;
+                        } else {
+                            // Put into shell
+                            koopa.alive = false;
+                            koopa.inShell = true;
+                            koopa.shellTimer = 0;
+                        }
+                        
+                        eggs.splice(i, 1);
+                        
+                        // Impact particles
+                        for (let j = 0; j < 8; j++) {
+                            particles.push({
+                                x: egg.x,
+                                y: egg.y,
+                                vx: (Math.random() - 0.5) * 6,
+                                vy: (Math.random() - 0.5) * 6,
+                                color: ['#4CAF50', '#FFEB3B'][Math.floor(Math.random() * 2)],
+                                size: 4,
+                                life: 1
+                            });
+                        }
+                        break;
+                    }
+                }
+                
+                // Phase 4: Check Piranha Plant hits (can be defeated with eggs!)
+                for (const plant of piranhaPlants) {
+                    if (!plant.alive) continue;
+                    
+                    if (egg.x > plant.x && egg.x < plant.x + plant.width &&
+                        egg.y > plant.y - 40 && egg.y < plant.y + plant.height) {
+                        plant.alive = false;
+                        eggs.splice(i, 1);
+                        
+                        // Big explosion particles
+                        for (let j = 0; j < 15; j++) {
+                            particles.push({
+                                x: plant.x + plant.width/2,
+                                y: plant.y - 20,
+                                vx: (Math.random() - 0.5) * 10,
+                                vy: -Math.random() * 8,
+                                color: ['#4CAF50', '#66BB6A', '#81C784'][Math.floor(Math.random() * 3)],
+                                size: 5,
+                                life: 1
+                            });
+                        }
+                        break;
+                    }
+                }
+                
+                // Phase 6: Check Boss hits with eggs
+                if (boss && boss.health > 0 && bossActive) {
+                    if (egg.x > boss.x && egg.x < boss.x + boss.width &&
+                        egg.y > boss.y && egg.y < boss.y + boss.height) {
+                        damageBoss();
+                        eggs.splice(i, 1);
+                        continue;
+                    }
+                }
+                
+                // Remove off-screen eggs or eggs that have bounced too much
+                if (egg.y > canvas.height || egg.x < cameraX - 50 || egg.x > cameraX + canvas.width + 50) {
+                    eggs.splice(i, 1);
+                }
+            }
+        }
+        
+        function updateParticles() {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.2;
+                p.life -= 0.02;
+                
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+        }
+        
+        function updateClouds() {
+            for (const cloud of clouds) {
+                cloud.x += cloud.speed;
+                if (cloud.x > WORLD_WIDTH + 100) {
+                    cloud.x = -100;
+                }
+            }
+        }
+        
+        // Phase 2: Update Moving Platforms
+        function updateMovingPlatforms() {
+            for (const plat of movingPlatforms) {
+                if (plat.moveType === 'horizontal') {
+                    plat.x += plat.speed * plat.direction;
+                    if (plat.x >= plat.endX) {
+                        plat.direction = -1;
+                    } else if (plat.x <= plat.startX) {
+                        plat.direction = 1;
+                    }
+                } else {
+                    plat.y += plat.speed * plat.direction;
+                    if (plat.y >= plat.endY) {
+                        plat.direction = -1;
+                    } else if (plat.y <= plat.startY) {
+                        plat.direction = 1;
+                    }
+                }
+            }
+        }
+        
+        // Phase 2: Update Breakable Blocks (check for ground pound and egg hits)
+        function updateBreakableBlocks() {
+            for (const block of breakableBlocks) {
+                if (block.broken) continue;
+                
+                if (block.shakeTime > 0) {
+                    block.shakeTime--;
+                    if (block.shakeTime <= 0) {
+                        breakBlock(block);
+                    }
+                }
+            }
+        }
+        
+        // Phase 2: Break a block
+        function breakBlock(block) {
+            block.broken = true;
+            
+            // Explosion of cardboard pieces
+            for (let i = 0; i < 12; i++) {
+                particles.push({
+                    x: block.x + block.width/2,
+                    y: block.y + block.height/2,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: -Math.random() * 8 - 2,
+                    color: ['#D7CCC8', '#A1887F', '#8D6E63'][Math.floor(Math.random() * 3)],
+                    size: 5 + Math.random() * 6,
+                    life: 1
+                });
+            }
+        }
+        
+        // Phase 2: Check collisions with ? clouds (eggs hit them)
+        function checkQuestionCloudHits() {
+            for (let i = eggs.length - 1; i >= 0; i--) {
+                const egg = eggs[i];
+                
+                for (const cloud of questionClouds) {
+                    if (cloud.hit) continue;
+                    
+                    if (egg.x > cloud.x && egg.x < cloud.x + cloud.width &&
+                        egg.y > cloud.y - 10 && egg.y < cloud.y + cloud.height + 10) {
+                        cloud.hit = true;
+                        eggs.splice(i, 1);
+                        
+                        // Spawn reward
+                        spawnReward(cloud.x + cloud.width/2, cloud.y, cloud.reward);
+                        
+                        // Poof particles
+                        for (let j = 0; j < 8; j++) {
+                            particles.push({
+                                x: cloud.x + cloud.width/2,
+                                y: cloud.y + cloud.height/2,
+                                vx: (Math.random() - 0.5) * 6,
+                                vy: (Math.random() - 0.5) * 6,
+                                color: '#FFF8E1',
+                                size: 8,
+                                life: 1
+                            });
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // Phase 2: Spawn reward from ? cloud
+        function spawnReward(x, y, type) {
+            if (type === 'coin') {
+                // Add a gem at this position
+                gems.push({
+                    x: x - 15,
+                    y: y - 30,
+                    width: 30,
+                    height: 30,
+                    collected: false,
+                    bobOffset: Math.random() * Math.PI * 2,
+                    color: '#FFD700'
+                });
+            } else if (type === 'egg') {
+                if (yoshi.eggs < yoshi.maxEggs) {
+                    yoshi.eggs++;
+                    updateEggTrail();
+                    updateUI();
+                }
+                // Egg appear particles
+                for (let i = 0; i < 6; i++) {
+                    particles.push({
+                        x: x, y: y,
+                        vx: (Math.random() - 0.5) * 4,
+                        vy: -Math.random() * 4,
+                        color: '#C8E6C9',
+                        size: 5,
+                        life: 1
+                    });
+                }
+            } else if (type === 'heart') {
+                if (yoshi.hearts < 5) {
+                    yoshi.hearts++;
+                    updateUI();
+                }
+                // Heart particles
+                for (let i = 0; i < 6; i++) {
+                    particles.push({
+                        x: x, y: y,
+                        vx: (Math.random() - 0.5) * 4,
+                        vy: -Math.random() * 4,
+                        color: '#E91E63',
+                        size: 5,
+                        life: 1
+                    });
+                }
+            }
+        }
+        
+        // Phase 2: Check breakable block collisions
+        function checkBreakableBlockCollisions() {
+            for (const block of breakableBlocks) {
+                if (block.broken) continue;
+                
+                // Ground pound from above
+                if (yoshi.groundPounding) {
+                    if (yoshi.x + yoshi.width > block.x &&
+                        yoshi.x < block.x + block.width &&
+                        yoshi.y + yoshi.height > block.y - 5 &&
+                        yoshi.y + yoshi.height < block.y + 20) {
+                        block.shakeTime = 10;
+                        yoshi.groundPounding = false;
+                        yoshi.vy = -8; // Bounce up
+                    }
+                }
+                
+                // Egg hit
+                for (let i = eggs.length - 1; i >= 0; i--) {
+                    const egg = eggs[i];
+                    if (egg.x > block.x && egg.x < block.x + block.width &&
+                        egg.y > block.y && egg.y < block.y + block.height) {
+                        block.shakeTime = 10;
+                        eggs.splice(i, 1);
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // Phase 2: Check checkpoint activation
+        function checkCheckpoints() {
+            for (const cp of checkpoints) {
+                if (cp.activated) continue;
+                
+                if (yoshi.x + yoshi.width > cp.x - 10 &&
+                    yoshi.x < cp.x + 20 &&
+                    yoshi.y + yoshi.height > cp.y - 60 &&
+                    yoshi.y < cp.y + 10) {
+                    cp.activated = true;
+                    lastCheckpoint = { x: cp.x, y: cp.y - 60 };
+                    
+                    // Celebration particles
+                    for (let i = 0; i < 15; i++) {
+                        particles.push({
+                            x: cp.x + 10,
+                            y: cp.y - 40,
+                            vx: (Math.random() - 0.5) * 8,
+                            vy: -Math.random() * 6,
+                            color: ['#4CAF50', '#FFEB3B', '#2196F3'][Math.floor(Math.random() * 3)],
+                            size: 4 + Math.random() * 4,
+                            life: 1
+                        });
+                    }
+                }
+            }
+        }
+        
+        // Phase 2: Check moving platform collision for Yoshi
+        function checkMovingPlatformCollision() {
+            for (const plat of movingPlatforms) {
+                if (yoshi.x + yoshi.width > plat.x && 
+                    yoshi.x < plat.x + plat.width &&
+                    yoshi.y + yoshi.height > plat.y && 
+                    yoshi.y + yoshi.height < plat.y + plat.height + 15 &&
+                    yoshi.vy >= 0) {
+                    yoshi.y = plat.y - yoshi.height;
+                    yoshi.vy = 0;
+                    yoshi.grounded = true;
+                    yoshi.fluttering = false;
+                    
+                    // Move Yoshi with horizontal platform
+                    if (plat.moveType === 'horizontal') {
+                        yoshi.x += plat.speed * plat.direction;
+                    }
+                }
+            }
+        }
+        
+        // Main game loop
+        function gameLoop() {
+            if (!gameRunning) return;
+            
+            // Update
+            updateYoshi();
+            updateEnemies();
+            updatePiranhaPlants();
+            updateFlyGuys();
+            updateKoopaTroopas();
+            updateShells();
+            updateBoss();
+            updateEggs();
+            updateParticles();
+            updateClouds();
+            updateMovingPlatforms();
+            updateBreakableBlocks();
+            checkGemCollision();
+            checkCoinCollision();
+            checkRedCoinCollision();
+            checkFlowerCollision();
+            checkHeartPickupCollision();
+            checkEnemyCollision();
+            checkFlyGuyCollision();
+            checkKoopaCollision();
+            checkQuestionCloudHits();
+            checkBreakableBlockCollisions();
+            checkCheckpoints();
+            checkMovingPlatformCollision();
+            
+            // Draw
+            drawCraftedBackground();
+            
+            clouds.forEach(drawCloud);
+            decorations.sort((a, b) => a.y - b.y).forEach(drawDecoration);
+            platforms.forEach(drawPlatform);
+            movingPlatforms.forEach(drawMovingPlatform);
+            breakableBlocks.filter(b => !b.broken).forEach(drawBreakableBlock);
+            questionClouds.filter(c => !c.hit).forEach(drawQuestionCloud);
+            checkpoints.forEach(drawCheckpoint);
+            gems.forEach(drawGem);
+            coins.forEach(drawCoin);
+            redCoins.forEach(drawRedCoin);
+            smileyFlowers.forEach(drawSmileyFlower);
+            heartPickups.forEach(drawHeartPickup);
+            piranhaPlants.forEach(drawPiranhaPlant);
+            flyGuys.forEach(drawFlyGuy);
+            koopaTroopas.forEach(drawKoopaTroopa);
+            shells.forEach(drawShell);
+            enemies.forEach(drawEnemy);
+            eggs.forEach(drawEgg);
+            drawBoss();
+            drawEggTrail();
+            drawYoshi();
+            drawAimingReticle();
+            particles.forEach(drawParticle);
+            
+            // Phase 5: Draw foreground objects (in front of everything)
+            foregroundObjects.forEach(drawForegroundObject);
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Input handling
+        document.addEventListener('keydown', (e) => {
+            keys[e.code] = true;
+            if (['Space', 'ArrowUp', 'ArrowDown'].includes(e.code)) {
+                e.preventDefault();
+            }
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            keys[e.code] = false;
+        });
+        
+        // Game control functions
+        function showLevelSelect() {
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            document.getElementById('winScreen').classList.add('hidden');
+            document.getElementById('bossScreen').classList.add('hidden');
+            document.getElementById('levelSelectScreen').classList.remove('hidden');
+            gameRunning = false;
+            updateLevelButtons();
+        }
+        
+        function updateLevelButtons() {
+            // Level 1 always unlocked
+            document.getElementById('lvl1').disabled = false;
+            document.getElementById('lvl1').classList.toggle('completed', levelsCompleted[0]);
+            
+            // Other levels unlock when previous is completed
+            for (let i = 2; i <= 4; i++) {
+                const btn = document.getElementById('lvl' + i);
+                btn.disabled = !levelsCompleted[i - 2]; // Unlock if previous completed
+                btn.classList.toggle('completed', levelsCompleted[i - 1]);
+            }
+        }
+        
+        function selectLevel(levelNum) {
+            document.getElementById('levelSelectScreen').classList.add('hidden');
+            currentLevel = levelNum;
+            initLevel(levelNum);
+            gameRunning = true;
+            gameLoop();
+        }
+        
+        function startGame() {
+            document.getElementById('startScreen').classList.add('hidden');
+            showLevelSelect();
+        }
+        
+        function restartGame() {
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            document.getElementById('winScreen').classList.add('hidden');
+            document.getElementById('bossScreen').classList.add('hidden');
+            initLevel(currentLevel);
+            gameRunning = true;
+            gameLoop();
+        }
+        
+        function nextLevel() {
+            document.getElementById('winScreen').classList.add('hidden');
+            if (currentLevel < 4) {
+                selectLevel(currentLevel + 1);
+            } else {
+                showLevelSelect();
+            }
+        }
+        
+        function winLevel() {
+            gameRunning = false;
+            levelsCompleted[currentLevel - 1] = true;
+            
+            if (currentLevel === 4 && boss && boss.health <= 0) {
+                // Beat the boss!
+                document.getElementById('bossScreen').classList.remove('hidden');
+            } else {
+                document.getElementById('winMessage').textContent = 
+                    currentLevel === 4 ? 'You defeated the boss!' : 
+                    `You completed World 1-${currentLevel}!`;
+                document.getElementById('winScreen').classList.remove('hidden');
+            }
+        }
+        
+        // Initial draw
+        initLevel();
+        drawCraftedBackground();
+        clouds.forEach(drawCloud);
+        decorations.forEach(drawDecoration);
+        platforms.forEach(drawPlatform);
+        movingPlatforms.forEach(drawMovingPlatform);
+        breakableBlocks.forEach(drawBreakableBlock);
+        questionClouds.forEach(drawQuestionCloud);
+        checkpoints.forEach(drawCheckpoint);
+        gems.forEach(drawGem);
+        coins.forEach(drawCoin);
+        redCoins.forEach(drawRedCoin);
+        smileyFlowers.forEach(drawSmileyFlower);
+        heartPickups.forEach(drawHeartPickup);
+        piranhaPlants.forEach(drawPiranhaPlant);
+        flyGuys.forEach(drawFlyGuy);
+        koopaTroopas.forEach(drawKoopaTroopa);
+        enemies.forEach(drawEnemy);
+        drawYoshi();
+    </script>
+</body>
+</html>
+

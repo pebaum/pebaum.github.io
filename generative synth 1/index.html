@@ -1,0 +1,2097 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ambient Generative Synth</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a0f;
+            color: #e0e0e0;
+            font-family: 'Courier New', monospace;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 0;
+        }
+
+        h1 {
+            font-size: 1.8em;
+            font-weight: 300;
+            letter-spacing: 8px;
+            color: #8899aa;
+            text-transform: uppercase;
+        }
+
+        .subtitle {
+            font-size: 0.8em;
+            color: #556677;
+            margin-top: 10px;
+            letter-spacing: 4px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        button {
+            background: transparent;
+            border: 1px solid #334455;
+            color: #8899aa;
+            padding: 15px 40px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            letter-spacing: 3px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+
+        button:hover {
+            background: #1a1a2e;
+            border-color: #5566aa;
+            color: #aabbcc;
+        }
+
+        button.active {
+            background: #1a2a3a;
+            border-color: #6688aa;
+        }
+
+        .secondary-controls {
+            margin-top: 10px;
+        }
+
+        .secondary-controls button {
+            padding: 10px 25px;
+            font-size: 0.8em;
+        }
+
+        button.recording {
+            background: #3a1a1a;
+            border-color: #aa4444;
+            color: #ff6666;
+            animation: pulse-record 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse-record {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a2a3a;
+            border: 1px solid #4a6080;
+            color: #aabbcc;
+            padding: 15px 30px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            letter-spacing: 2px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        #visualizer {
+            width: 100%;
+            height: 400px;
+            background: linear-gradient(180deg, #0a0a15 0%, #0f1520 50%, #0a0a15 100%);
+            border: 1px solid #1a2030;
+            margin: 20px 0;
+        }
+
+        .info-panel {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .synth-info {
+            background: rgba(20, 25, 35, 0.6);
+            border: 1px solid #1a2535;
+            padding: 20px;
+            border-radius: 2px;
+        }
+
+        .synth-info h3 {
+            font-size: 0.75em;
+            letter-spacing: 3px;
+            color: #667788;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+
+        .param {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 8px 0;
+            font-size: 0.7em;
+            color: #556677;
+        }
+
+        .param-value {
+            color: #8899bb;
+        }
+
+        .param-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .mini-btn {
+            background: transparent;
+            border: 1px solid #2a3545;
+            color: #667788;
+            padding: 2px 6px;
+            font-size: 0.8em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Courier New', monospace;
+        }
+
+        .mini-btn:hover {
+            background: #1a2535;
+            border-color: #4a6080;
+            color: #99aabb;
+        }
+
+        .synth-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .synth-header h3 {
+            margin: 0;
+        }
+
+        .randomize-synth {
+            font-size: 0.65em;
+            padding: 4px 8px;
+        }
+
+        .global-info {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(15, 20, 30, 0.5);
+            border: 1px solid #1a2030;
+        }
+
+        .global-info span {
+            margin: 0 20px;
+            font-size: 0.8em;
+            letter-spacing: 2px;
+        }
+
+        .mode-label {
+            color: #7788aa;
+        }
+
+        .mode-value {
+            color: #99aabb;
+        }
+
+        @media (max-width: 768px) {
+            .info-panel {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Ambient Drift</h1>
+            <div class="subtitle">Generative Synthesis</div>
+        </header>
+
+        <div class="controls">
+            <button id="startBtn">Initialize</button>
+            <button id="randomizeBtn" disabled>Randomize</button>
+            <button id="stopBtn" disabled>Stop</button>
+        </div>
+
+        <div class="controls secondary-controls">
+            <button id="saveBtn" disabled>Save Settings</button>
+            <button id="loadBtn">Load Settings</button>
+            <button id="recordBtn" disabled>● Record</button>
+            <input type="file" id="loadFile" accept=".json" style="display: none;">
+        </div>
+
+        <canvas id="visualizer"></canvas>
+
+        <div class="global-info">
+            <span class="mode-label">Mode:</span>
+            <span class="mode-value" id="modeDisplay">—</span>
+            <button class="mini-btn" onclick="randomizeGlobal('mode')">↻</button>
+            <span class="mode-label">Root:</span>
+            <span class="mode-value" id="rootDisplay">—</span>
+            <button class="mini-btn" onclick="randomizeGlobal('root')">↻</button>
+            <span class="mode-label">Chord:</span>
+            <span class="mode-value" id="chordDisplay">—</span>
+            <button class="mini-btn" onclick="advanceChord()">→</button>
+        </div>
+
+        <div class="info-panel">
+            <div class="synth-info" id="synth1-info">
+                <div class="synth-header">
+                    <h3>Cello</h3>
+                    <button class="mini-btn randomize-synth" onclick="randomizeSynth(0)">↻</button>
+                </div>
+                <div class="param"><span>Notes:</span><span class="param-value" id="s1-notes">—</span></div>
+                <div class="param"><span>Loop:</span><span class="param-value" id="s1-loop">—</span></div>
+                <div class="param"><span>Volume:</span><span class="param-value" id="s1-volume">—</span></div>
+                <div class="param"><span>Mode:</span><span class="param-value" id="s1-wave">—</span></div>
+            </div>
+            <div class="synth-info" id="synth2-info">
+                <div class="synth-header">
+                    <h3>Celeste</h3>
+                    <button class="mini-btn randomize-synth" onclick="randomizeSynth(1)">↻</button>
+                </div>
+                <div class="param"><span>Notes:</span><span class="param-value" id="s2-notes">—</span></div>
+                <div class="param"><span>Loop:</span><span class="param-value" id="s2-loop">—</span></div>
+                <div class="param"><span>Volume:</span><span class="param-value" id="s2-volume">—</span></div>
+                <div class="param"><span>Mode:</span><span class="param-value" id="s2-wave">—</span></div>
+            </div>
+            <div class="synth-info" id="synth3-info">
+                <div class="synth-header">
+                    <h3>Harp</h3>
+                    <button class="mini-btn randomize-synth" onclick="randomizeSynth(2)">↻</button>
+                </div>
+                <div class="param"><span>Notes:</span><span class="param-value" id="s3-notes">—</span></div>
+                <div class="param"><span>Loop:</span><span class="param-value" id="s3-loop">—</span></div>
+                <div class="param"><span>Volume:</span><span class="param-value" id="s3-volume">—</span></div>
+                <div class="param"><span>Mode:</span><span class="param-value" id="s3-wave">—</span></div>
+            </div>
+            <div class="synth-info" id="synth4-info">
+                <div class="synth-header">
+                    <h3>Rhodes</h3>
+                    <button class="mini-btn randomize-synth" onclick="randomizeSynth(3)">↻</button>
+                </div>
+                <div class="param"><span>Notes:</span><span class="param-value" id="s4-notes">—</span></div>
+                <div class="param"><span>Loop:</span><span class="param-value" id="s4-loop">—</span></div>
+                <div class="param"><span>Volume:</span><span class="param-value" id="s4-volume">—</span></div>
+                <div class="param"><span>Mode:</span><span class="param-value" id="s4-wave">—</span></div>
+            </div>
+            <div class="synth-info" id="synth5-info">
+                <div class="synth-header">
+                    <h3>Vibraphone</h3>
+                    <button class="mini-btn randomize-synth" onclick="randomizeSynth(4)">↻</button>
+                </div>
+                <div class="param"><span>Notes:</span><span class="param-value" id="s5-notes">—</span></div>
+                <div class="param"><span>Loop:</span><span class="param-value" id="s5-loop">—</span></div>
+                <div class="param"><span>Volume:</span><span class="param-value" id="s5-volume">—</span></div>
+                <div class="param"><span>Mode:</span><span class="param-value" id="s5-wave">—</span></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple major and minor scales
+        const SCALES = {
+            'Major': [0, 2, 4, 5, 7, 9, 11],
+            'Minor': [0, 2, 3, 5, 7, 8, 10]
+        };
+
+        const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+        const SYNTH_COLORS = ['#4a7c9b', '#7b5a9e', '#5a9e7b', '#9e8a5a', '#5a9e9e'];
+        
+        // Note colors - each pitch class gets a unique color (chromatic rainbow)
+        const NOTE_COLORS = [
+            '#ff6b6b', // C - red
+            '#ff9f43', // C# - orange
+            '#feca57', // D - yellow
+            '#48dbfb', // D# - cyan
+            '#1dd1a1', // E - green
+            '#10ac84', // F - teal
+            '#54a0ff', // F# - blue
+            '#5f27cd', // G - purple
+            '#c44569', // G# - magenta
+            '#ff6b81', // A - pink
+            '#a55eea', // A# - violet
+            '#778ca3'  // B - slate
+        ];
+        
+        // Expanded chord vocabulary - scale degrees with fancy voicings
+        // degrees are indices into the scale (0-6 for 7-note scales)
+        const CHORD_TYPES = {
+            // Basic triads
+            triads: [
+                { name: 'I', degrees: [0, 2, 4] },
+                { name: 'ii', degrees: [1, 3, 5] },
+                { name: 'iii', degrees: [2, 4, 6] },
+                { name: 'IV', degrees: [3, 5, 0] },
+                { name: 'V', degrees: [4, 6, 1] },
+                { name: 'vi', degrees: [5, 0, 2] },
+                { name: 'vii°', degrees: [6, 1, 3] },
+            ],
+            // 7th chords
+            sevenths: [
+                { name: 'Imaj7', degrees: [0, 2, 4, 6] },
+                { name: 'ii7', degrees: [1, 3, 5, 0] },
+                { name: 'iii7', degrees: [2, 4, 6, 1] },
+                { name: 'IVmaj7', degrees: [3, 5, 0, 2] },
+                { name: 'V7', degrees: [4, 6, 1, 3] },
+                { name: 'vi7', degrees: [5, 0, 2, 4] },
+                { name: 'viiø7', degrees: [6, 1, 3, 5] },
+            ],
+            // Sus chords
+            sus: [
+                { name: 'Isus2', degrees: [0, 1, 4] },
+                { name: 'Isus4', degrees: [0, 3, 4] },
+                { name: 'IIsus4', degrees: [1, 4, 5] },
+                { name: 'IVsus2', degrees: [3, 4, 0] },
+                { name: 'Vsus4', degrees: [4, 0, 1] },
+                { name: 'Vsus2', degrees: [4, 5, 1] },
+                { name: 'visus4', degrees: [5, 1, 2] },
+                { name: '7sus4', degrees: [0, 3, 4, 6] },
+                { name: 'V7sus4', degrees: [4, 0, 1, 3] },
+            ],
+            // Add chords
+            add: [
+                { name: 'Iadd9', degrees: [0, 2, 4, 1] },
+                { name: 'Iadd11', degrees: [0, 2, 4, 3] },
+                { name: 'IVadd9', degrees: [3, 5, 0, 4] },
+                { name: 'viadd9', degrees: [5, 0, 2, 6] },
+                { name: 'Iadd6', degrees: [0, 2, 4, 5] },
+                { name: 'IVadd6', degrees: [3, 5, 0, 1] },
+            ],
+            // Extended chords (9ths, 11ths, 13ths)
+            extended: [
+                { name: 'Imaj9', degrees: [0, 2, 4, 6, 1] },
+                { name: 'ii9', degrees: [1, 3, 5, 0, 2] },
+                { name: 'V9', degrees: [4, 6, 1, 3, 5] },
+                { name: 'Imaj11', degrees: [0, 2, 4, 6, 1, 3] },
+                { name: 'ii11', degrees: [1, 3, 5, 0, 2, 4] },
+                { name: 'Imaj13', degrees: [0, 2, 4, 6, 1, 5] },
+                { name: 'V13', degrees: [4, 6, 1, 3, 5, 2] },
+            ],
+            // Slash chords (chord/bass note)
+            slash: [
+                { name: 'I/3', degrees: [2, 0, 4], bass: 2 },
+                { name: 'I/5', degrees: [4, 0, 2], bass: 4 },
+                { name: 'IV/I', degrees: [0, 3, 5], bass: 0 },
+                { name: 'V/I', degrees: [0, 4, 6, 1], bass: 0 },
+                { name: 'ii/IV', degrees: [3, 1, 5], bass: 3 },
+                { name: 'vi/III', degrees: [2, 5, 0], bass: 2 },
+                { name: 'IV/V', degrees: [4, 3, 5, 0], bass: 4 },
+                { name: 'I/VII', degrees: [6, 0, 2, 4], bass: 6 },
+                { name: 'V/VI', degrees: [5, 4, 6, 1], bass: 5 },
+            ],
+            // Altered and color chords  
+            altered: [
+                { name: 'Imaj7#11', degrees: [0, 2, 4, 6, 3] },
+                { name: 'V7b9', degrees: [4, 6, 1, 3, 5] },
+                { name: 'ii7b5', degrees: [1, 3, 4, 0] },
+                { name: 'bVII', degrees: [6, 1, 3] },
+                { name: 'bVI', degrees: [5, 0, 2] },
+                { name: 'bIImaj7', degrees: [1, 3, 5, 0] },
+                { name: '#IVdim', degrees: [3, 5, 0] },
+            ],
+            // Quartal/quintal voicings
+            quartal: [
+                { name: 'Q1', degrees: [0, 3, 6] },
+                { name: 'Q2', degrees: [1, 4, 0] },
+                { name: 'Q3', degrees: [2, 5, 1] },
+                { name: 'Q4', degrees: [4, 0, 3] },
+                { name: 'Q5', degrees: [0, 3, 6, 2] },
+            ],
+            // Clusters and dense voicings
+            cluster: [
+                { name: 'Cluster1', degrees: [0, 1, 2] },
+                { name: 'Cluster2', degrees: [0, 1, 2, 3] },
+                { name: 'Cluster3', degrees: [4, 5, 6, 0] },
+                { name: 'Dense9', degrees: [0, 1, 2, 4, 6] },
+            ],
+        };
+        
+        // Global chord state
+        let currentChord = null;
+        let currentChordNotes = [];
+        let chordChangeInterval = null;
+        let chordHistory = []; // Track last few chords to avoid immediate repeats
+
+        // Global effects nodes
+        let delayNode = null;
+        let delayFeedback = null;
+        let reverbNode = null;
+        let dryGain = null;
+        let wetGain = null;
+        
+        // Create reverb impulse response
+        function createReverbIR(duration = 4, decay = 3) {
+            const length = audioCtx.sampleRate * duration;
+            const impulse = audioCtx.createBuffer(2, length, audioCtx.sampleRate);
+            
+            for (let channel = 0; channel < 2; channel++) {
+                const channelData = impulse.getChannelData(channel);
+                for (let i = 0; i < length; i++) {
+                    const t = i / audioCtx.sampleRate;
+                    // Exponential decay with some randomness
+                    channelData[i] = (Math.random() * 2 - 1) * Math.pow(1 - t / duration, decay);
+                }
+            }
+            return impulse;
+        }
+
+        let audioCtx = null;
+        let masterGain = null;
+        let synths = [];
+        let isPlaying = false;
+        let animationId = null;
+        let driftIntervals = [];
+        let mediaRecorder = null;
+        let recordedChunks = [];
+        let recordingDestination = null;
+
+        // Global parameters
+        let globalScale = null;
+        let globalRoot = null;
+        let globalScaleIntervals = null;
+
+        // Canvas setup
+        const canvas = document.getElementById('visualizer');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+            canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Utility functions
+        function random(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+        function randomInt(min, max) {
+            return Math.floor(random(min, max + 1));
+        }
+
+        function randomChoice(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        function midiToFreq(midi) {
+            return 440 * Math.pow(2, (midi - 69) / 12);
+        }
+
+        // Generate scale notes across octaves
+        function generateScaleNotes(rootMidi, intervals, octaves = 3) {
+            const notes = [];
+            for (let oct = 0; oct < octaves; oct++) {
+                for (const interval of intervals) {
+                    notes.push(rootMidi + interval + (oct * 12));
+                }
+            }
+            return notes;
+        }
+        
+        // Generate a random chord (infinite variety)
+        function generateRandomChord() {
+            // Weight towards more interesting chord types
+            const typeWeights = {
+                triads: 10,
+                sevenths: 25,
+                sus: 20,
+                add: 15,
+                extended: 20,
+                slash: 25,
+                altered: 10,
+                quartal: 8,
+                cluster: 5
+            };
+            
+            // Build weighted array
+            const weightedTypes = [];
+            for (const [type, weight] of Object.entries(typeWeights)) {
+                for (let i = 0; i < weight; i++) {
+                    weightedTypes.push(type);
+                }
+            }
+            
+            // Pick a random type
+            const chordType = randomChoice(weightedTypes);
+            const chordsOfType = CHORD_TYPES[chordType];
+            
+            // Pick a chord, avoiding recent repeats
+            let chord;
+            let attempts = 0;
+            do {
+                chord = randomChoice(chordsOfType);
+                attempts++;
+            } while (chordHistory.includes(chord.name) && attempts < 10);
+            
+            // Track history (keep last 4)
+            chordHistory.push(chord.name);
+            if (chordHistory.length > 4) chordHistory.shift();
+            
+            return chord;
+        }
+        
+        // Get the actual MIDI notes for a chord across octaves
+        function getChordNotes(chord) {
+            if (!chord) return [];
+            
+            const rootMidi = 36 + globalRoot; // C2 + root offset
+            const notes = [];
+            
+            // For slash chords, add the bass note in lowest octave
+            if (chord.bass !== undefined) {
+                const bassScaleNote = globalScaleIntervals[chord.bass % globalScaleIntervals.length];
+                notes.push(rootMidi + bassScaleNote - 12); // One octave below
+            }
+            
+            // Build chord notes across multiple octaves
+            for (let octave = 0; octave < 5; octave++) {
+                for (const degree of chord.degrees) {
+                    // Get the scale note for this degree
+                    const scaleNote = globalScaleIntervals[degree % globalScaleIntervals.length];
+                    const midiNote = rootMidi + scaleNote + (octave * 12);
+                    if (midiNote >= 24 && midiNote <= 108) { // Valid MIDI range
+                        notes.push(midiNote);
+                    }
+                }
+            }
+            
+            return [...new Set(notes)].sort((a, b) => a - b);
+        }
+        
+        // Smooth voice leading - find nearest note in new chord
+        function findNearestChordTone(currentNote, newChordNotes) {
+            if (newChordNotes.length === 0) return currentNote;
+            return newChordNotes.reduce((nearest, note) => 
+                Math.abs(note - currentNote) < Math.abs(nearest - currentNote) ? note : nearest
+            );
+        }
+        
+        // Gradual chord transition state
+        let nextChord = null;
+        let transitionProgress = 0;
+        let transitioningSynths = [];
+        
+        // Advance to next chord (generates new random chord) - GRADUAL transition
+        function advanceChord() {
+            nextChord = generateRandomChord();
+            const nextChordNotes = getChordNotes(nextChord);
+            
+            // Stagger the synth transitions over time
+            // Each synth will transition at different times for smooth blending
+            const transitionOrder = [0, 1, 2, 3].sort(() => Math.random() - 0.5);
+            
+            transitionOrder.forEach((synthIndex, orderIndex) => {
+                const synth = synths[synthIndex];
+                if (!synth || synth.config.waveform === 'noise') return;
+                
+                // Delay each synth's transition (2-8 seconds apart)
+                const delay = orderIndex * random(2000, 8000);
+                
+                setTimeout(() => {
+                    if (!isPlaying) return;
+                    
+                    graduallyTransitionSynth(synth, nextChordNotes);
+                    
+                    // On last synth transition, update the current chord
+                    if (orderIndex === transitionOrder.length - 1) {
+                        currentChord = nextChord;
+                        currentChordNotes = nextChordNotes;
+                        updateDisplay();
+                    }
+                }, delay);
+            });
+        }
+        
+        // Gradually transition a single synth to new chord notes
+        function graduallyTransitionSynth(synth, newChordNotes) {
+            const baseOctave = synth.config.baseOctave || 48;
+            const availableNotes = newChordNotes.filter(n => 
+                n >= baseOctave - 12 && n <= baseOctave + 24
+            );
+            
+            if (availableNotes.length === 0) return;
+            
+            const oldNotes = [...synth.config.notes];
+            
+            if (synth.config.isOstinato) {
+                // For ostinato, smoothly voice-lead each note in the pattern
+                const newPattern = oldNotes.map(oldNote => 
+                    findNearestChordTone(oldNote, availableNotes)
+                );
+                synth.config.notes = newPattern;
+            } else {
+                // For chords, use voice leading - move each voice to nearest chord tone
+                const newNotes = oldNotes.map(oldNote => 
+                    findNearestChordTone(oldNote, availableNotes)
+                );
+                
+                // Sometimes add or remove a voice (20% chance)
+                if (Math.random() < 0.2 && newNotes.length > 1) {
+                    // Remove a random voice
+                    newNotes.splice(randomInt(0, newNotes.length - 1), 1);
+                } else if (Math.random() < 0.15 && newNotes.length < 4) {
+                    // Add a new voice from available notes
+                    const unusedNotes = availableNotes.filter(n => !newNotes.includes(n));
+                    if (unusedNotes.length > 0) {
+                        newNotes.push(randomChoice(unusedNotes));
+                    }
+                }
+                
+                // Remove duplicates
+                synth.config.notes = [...new Set(newNotes)];
+            }
+        }
+        
+        // Micro-transitions: occasionally shift just one note in one synth
+        function microTransition() {
+            if (!isPlaying || !currentChordNotes || currentChordNotes.length === 0) return;
+            
+            // Pick a random non-noise synth
+            const eligibleSynths = synths.filter(s => s && s.config.waveform !== 'noise');
+            if (eligibleSynths.length === 0) return;
+            
+            const synth = randomChoice(eligibleSynths);
+            if (synth.config.notes.length === 0) return;
+            
+            const baseOctave = synth.config.baseOctave || 48;
+            const availableNotes = currentChordNotes.filter(n => 
+                n >= baseOctave - 12 && n <= baseOctave + 24
+            );
+            
+            if (availableNotes.length === 0) return;
+            
+            // Pick one note to potentially shift
+            const noteIndex = randomInt(0, synth.config.notes.length - 1);
+            const oldNote = synth.config.notes[noteIndex];
+            
+            // Find nearby chord tones (within a 5th)
+            const nearbyNotes = availableNotes.filter(n => 
+                Math.abs(n - oldNote) <= 7 && Math.abs(n - oldNote) >= 1
+            );
+            
+            if (nearbyNotes.length > 0 && Math.random() < 0.6) {
+                // Move to a nearby chord tone
+                synth.config.notes[noteIndex] = randomChoice(nearbyNotes);
+            }
+        }
+
+        // Synth class
+        class AmbientSynth {
+            constructor(audioCtx, masterGain, index, config) {
+                this.audioCtx = audioCtx;
+                this.masterGain = masterGain;
+                this.index = index;
+                this.config = config;
+                this.oscillators = [];
+                this.gains = [];
+                this.panners = [];
+                this.lfoPhases = [];
+                this.panPhases = [];
+                this.activeNotes = [];
+                this.noteIndex = 0;
+                this.loopTimeout = null;
+                this.visualData = {
+                    amplitude: 0,
+                    pan: 0,
+                    frequency: 0,
+                    active: false
+                };
+            }
+
+            start() {
+                this.scheduleNote();
+            }
+
+            stop() {
+                if (this.loopTimeout) {
+                    clearTimeout(this.loopTimeout);
+                }
+                this.oscillators.forEach(osc => {
+                    try { osc.stop(); } catch(e) {}
+                });
+                this.oscillators = [];
+                this.gains = [];
+                this.panners = [];
+            }
+
+            scheduleNote() {
+                if (!isPlaying) return;
+
+                // Sometimes skip a cycle for sparseness
+                const silenceChance = this.config.silenceChance || 0;
+                if (Math.random() >= silenceChance) {
+                    if (this.config.isMelody && this.config.notes.length > 1) {
+                        // Melody: play notes in sequence with timing
+                        this.config.notes.forEach((note, i) => {
+                            setTimeout(() => {
+                                if (isPlaying) this.playNote(note);
+                            }, i * (this.config.melodySpeed || 0.5) * 1000);
+                        });
+                    } else {
+                        // Chord: play ALL notes simultaneously
+                        for (const note of this.config.notes) {
+                            this.playNote(note);
+                        }
+                    }
+                }
+                this.noteIndex++;
+
+                // Schedule next event
+                const nextTime = this.config.loopLength * 1000;
+                this.loopTimeout = setTimeout(() => this.scheduleNote(), nextTime);
+            }
+
+            playNote(midiNote) {
+                const now = this.audioCtx.currentTime;
+                const freq = midiToFreq(midiNote);
+                const noteDuration = Math.min(this.config.loopLength, this.config.attack + this.config.decay + 2 + this.config.release);
+
+                // Create oscillator
+                const osc = this.audioCtx.createOscillator();
+                osc.type = this.config.waveform || 'sine';
+                osc.frequency.setValueAtTime(freq, now);
+
+                // VIBRATO - pitch modulation (uses global effectsState)
+                const vibratoAmount = (this.config.vibratoAmount || 0) * effectsState.vibrato;
+                const vibratoSpeed = this.config.vibratoSpeed || 5;
+                if (vibratoAmount > 0) {
+                    const vibratoLfo = this.audioCtx.createOscillator();
+                    const vibratoGain = this.audioCtx.createGain();
+                    vibratoLfo.frequency.value = vibratoSpeed;
+                    vibratoGain.gain.value = freq * vibratoAmount;
+                    vibratoLfo.connect(vibratoGain);
+                    vibratoGain.connect(osc.frequency);
+                    vibratoLfo.start(now);
+                    vibratoLfo.stop(now + noteDuration + 0.1);
+                }
+
+                // Gain envelope
+                const gainNode = this.audioCtx.createGain();
+                gainNode.gain.setValueAtTime(0.001, now);
+                gainNode.gain.exponentialRampToValueAtTime(this.config.volume, now + Math.max(0.01, this.config.attack));
+                
+                const sustainLevel = Math.max(0.001, this.config.volume * this.config.sustain);
+                const decayEnd = now + this.config.attack + this.config.decay;
+                gainNode.gain.exponentialRampToValueAtTime(sustainLevel, decayEnd);
+                
+                const releaseStart = now + noteDuration - this.config.release;
+                gainNode.gain.setValueAtTime(sustainLevel, Math.max(decayEnd, releaseStart));
+                gainNode.gain.exponentialRampToValueAtTime(0.001, now + noteDuration);
+
+                // TREMOLO - amplitude modulation (uses global effectsState)
+                let tremoloNode = null;
+                const tremoloAmount = (this.config.tremoloAmount || 0) * effectsState.tremolo;
+                const tremoloSpeed = this.config.tremoloSpeed || 6;
+                if (tremoloAmount > 0) {
+                    tremoloNode = this.audioCtx.createGain();
+                    const tremoloLfo = this.audioCtx.createOscillator();
+                    const tremoloGainMod = this.audioCtx.createGain();
+                    tremoloLfo.frequency.value = tremoloSpeed;
+                    tremoloGainMod.gain.value = tremoloAmount;
+                    tremoloLfo.connect(tremoloGainMod);
+                    tremoloGainMod.connect(tremoloNode.gain);
+                    tremoloNode.gain.value = 1 - tremoloAmount / 2;
+                    tremoloLfo.start(now);
+                    tremoloLfo.stop(now + noteDuration + 0.1);
+                }
+
+                // Panner
+                const panner = this.audioCtx.createStereoPanner();
+                const panValue = Math.sin(now * this.config.panRate * Math.PI * 2) * this.config.panDepth;
+                panner.pan.setValueAtTime(Math.max(-1, Math.min(1, panValue)), now);
+
+                // Filter for warmth
+                const filter = this.audioCtx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(this.config.filterFreq, now);
+                filter.Q.setValueAtTime(0.7, now);
+
+                // Connect audio chain
+                osc.connect(gainNode);
+                if (tremoloNode) {
+                    gainNode.connect(tremoloNode);
+                    tremoloNode.connect(filter);
+                } else {
+                    gainNode.connect(filter);
+                }
+                filter.connect(panner);
+                panner.connect(this.masterGain);
+
+                // Start and stop
+                osc.start(now);
+                osc.stop(now + noteDuration + 0.1);
+
+                // Track for visualization
+                this.activeNotes.push({
+                    startTime: now,
+                    duration: noteDuration,
+                    freq: freq
+                });
+
+                // Cleanup old notes periodically
+                if (this.activeNotes.length > 20) {
+                    this.activeNotes = this.activeNotes.filter(n => 
+                        this.audioCtx.currentTime < n.startTime + n.duration + 1
+                    );
+                }
+            }
+
+            // Play filtered noise for nature/ambient textures
+            playNoise() {
+                const now = this.audioCtx.currentTime;
+                const noteDuration = Math.min(this.config.loopLength * 0.9, this.config.attack + this.config.decay + 5 + this.config.release);
+
+                // Create noise buffer
+                const bufferSize = this.audioCtx.sampleRate * Math.max(2, noteDuration);
+                const noiseBuffer = this.audioCtx.createBuffer(2, bufferSize, this.audioCtx.sampleRate);
+                
+                // Fill with noise based on type
+                const noiseType = this.config.noiseType || 'wind';
+                for (let channel = 0; channel < 2; channel++) {
+                    const output = noiseBuffer.getChannelData(channel);
+                    let lastOut = 0;
+                    
+                    for (let i = 0; i < bufferSize; i++) {
+                        const white = Math.random() * 2 - 1;
+                        
+                        switch(noiseType) {
+                            case 'wind':
+                                // Brown noise (smoother, wind-like)
+                                lastOut = (lastOut + (0.02 * white)) / 1.02;
+                                output[i] = lastOut * 3.5;
+                                break;
+                            case 'rain':
+                                // Pink-ish noise with occasional peaks
+                                lastOut = lastOut * 0.95 + white * 0.05;
+                                output[i] = lastOut * (Math.random() > 0.995 ? 3 : 1);
+                                break;
+                            case 'breath':
+                                // Very smooth, low frequency
+                                lastOut = (lastOut + (0.005 * white)) / 1.005;
+                                output[i] = lastOut * 5;
+                                break;
+                            case 'ocean':
+                                // Slow undulating noise
+                                const t = i / this.audioCtx.sampleRate;
+                                const wave = Math.sin(t * 0.1 * Math.PI * 2) * 0.5 + 0.5;
+                                lastOut = (lastOut + (0.01 * white)) / 1.01;
+                                output[i] = lastOut * 4 * wave;
+                                break;
+                            default:
+                                output[i] = white * 0.3;
+                        }
+                    }
+                }
+
+                // Create buffer source
+                const noise = this.audioCtx.createBufferSource();
+                noise.buffer = noiseBuffer;
+
+                // Gain envelope
+                const gainNode = this.audioCtx.createGain();
+                gainNode.gain.setValueAtTime(0.001, now);
+                gainNode.gain.exponentialRampToValueAtTime(this.config.volume, now + Math.max(0.01, this.config.attack));
+                
+                const sustainLevel = Math.max(0.001, this.config.volume * this.config.sustain);
+                const decayEnd = now + this.config.attack + this.config.decay;
+                gainNode.gain.exponentialRampToValueAtTime(sustainLevel, decayEnd);
+                
+                const releaseStart = now + noteDuration - this.config.release;
+                gainNode.gain.setValueAtTime(sustainLevel, Math.max(decayEnd, releaseStart));
+                gainNode.gain.exponentialRampToValueAtTime(0.001, now + noteDuration);
+
+                // Filter for shaping the noise character
+                const filter = this.audioCtx.createBiquadFilter();
+                filter.type = noiseType === 'wind' ? 'lowpass' : noiseType === 'rain' ? 'highpass' : 'bandpass';
+                filter.frequency.setValueAtTime(this.config.filterFreq, now);
+                filter.Q.setValueAtTime(this.config.filterQ || 1, now);
+                
+                // Modulate filter for movement
+                const filterMod = this.config.filterFreq * 0.3;
+                const modPeriod = random(2, 8);
+                for (let t = 0; t < noteDuration; t += modPeriod) {
+                    const modValue = Math.sin(t / modPeriod * Math.PI * 2) * filterMod;
+                    filter.frequency.setValueAtTime(this.config.filterFreq + modValue, now + t);
+                }
+
+                // Panner for spatial movement
+                const panner = this.audioCtx.createStereoPanner();
+                const panValue = Math.sin(now * this.config.panRate * Math.PI * 2) * this.config.panDepth;
+                panner.pan.setValueAtTime(Math.max(-1, Math.min(1, panValue)), now);
+
+                // Connect
+                noise.connect(gainNode);
+                gainNode.connect(filter);
+                filter.connect(panner);
+                panner.connect(this.masterGain);
+
+                noise.start(now);
+                noise.stop(now + noteDuration + 0.1);
+
+                // Track for visualization
+                this.activeNotes.push({
+                    startTime: now,
+                    duration: noteDuration,
+                    freq: this.config.filterFreq,
+                    isNoise: true
+                });
+            }
+
+            getVisualData() {
+                const now = this.audioCtx.currentTime;
+                
+                // Clean old notes
+                this.activeNotes = this.activeNotes.filter(n => now < n.startTime + n.duration + 0.5);
+                
+                if (this.activeNotes.length === 0) {
+                    return { amplitude: 0, pan: 0, frequency: 0 };
+                }
+
+                let totalAmp = 0;
+                let avgFreq = 0;
+                let count = 0;
+
+                for (const note of this.activeNotes) {
+                    const elapsed = now - note.startTime;
+                    if (elapsed < 0 || elapsed > note.duration) continue;
+
+                    // Simplified envelope calculation
+                    let amp = 0;
+                    const attack = this.config.attack || 0.1;
+                    const decay = this.config.decay || 0.5;
+                    const release = this.config.release || 1;
+                    const sustain = this.config.sustain || 0.5;
+                    const volume = this.config.volume || 0.1;
+                    
+                    if (elapsed < attack) {
+                        amp = (elapsed / attack) * volume;
+                    } else if (elapsed < attack + decay) {
+                        const decayProgress = (elapsed - attack) / decay;
+                        amp = volume - (decayProgress * volume * (1 - sustain));
+                    } else if (elapsed < note.duration - release) {
+                        amp = volume * sustain;
+                    } else {
+                        const releaseProgress = (elapsed - (note.duration - release)) / release;
+                        amp = volume * sustain * Math.max(0, 1 - releaseProgress);
+                    }
+
+                    totalAmp += Math.max(0, amp);
+                    avgFreq += note.freq;
+                    count++;
+                }
+
+                // Calculate pan based on time
+                const panRate = this.config.panRate || 0.05;
+                const panDepth = this.config.panDepth || 0.5;
+                const pan = Math.sin(now * panRate * Math.PI * 2) * panDepth;
+
+                return {
+                    amplitude: count > 0 ? totalAmp / count : 0,
+                    pan: pan,
+                    frequency: count > 0 ? avgFreq / count : 0
+                };
+            }
+        }
+
+        // Instrument types - acoustic/ethereal palette
+        const SYNTH_TYPES = ['cello', 'celeste', 'harp', 'rhodes', 'vibraphone'];
+
+        // Global effects state - these ebb and flow over time
+        let effectsState = {
+            echo: 0.3,
+            reverb: 0.5,
+            vibrato: 0.3,
+            tremolo: 0.2
+        };
+        let effectsEbbInterval = null;
+        
+        // Ebb and flow the effects amounts
+        function startEffectsEbb() {
+            if (effectsEbbInterval) clearInterval(effectsEbbInterval);
+            effectsEbbInterval = setInterval(() => {
+                if (!isPlaying) return;
+                
+                // Each effect slowly drifts
+                for (const effect of ['echo', 'reverb', 'vibrato', 'tremolo']) {
+                    const drift = (Math.random() - 0.5) * 0.1;
+                    effectsState[effect] = Math.max(0, Math.min(1, effectsState[effect] + drift));
+                }
+                
+                // Apply to audio nodes
+                if (delayFeedback) {
+                    delayFeedback.gain.linearRampToValueAtTime(effectsState.echo * 0.5, audioCtx.currentTime + 2);
+                }
+                if (wetGain && dryGain) {
+                    wetGain.gain.linearRampToValueAtTime(effectsState.reverb * 0.7, audioCtx.currentTime + 2);
+                    dryGain.gain.linearRampToValueAtTime(1 - effectsState.reverb * 0.5, audioCtx.currentTime + 2);
+                }
+            }, 3000);
+        }
+        
+        function stopEffectsEbb() {
+            if (effectsEbbInterval) {
+                clearInterval(effectsEbbInterval);
+                effectsEbbInterval = null;
+            }
+        }
+
+        // Chord voicings for beautiful harmony
+        const CHORD_VOICINGS = [
+            [0],                    // single note
+            [0, 7],                 // fifth
+            [0, 4],                 // major third
+            [0, 3],                 // minor third
+            [0, 7, 12],             // octave + fifth
+            [0, 4, 7],              // major triad
+            [0, 3, 7],              // minor triad
+            [0, 4, 7, 11],          // major 7
+            [0, 3, 7, 10],          // minor 7
+            [0, 4, 7, 14],          // add 9
+            [0, 5, 7],              // sus4
+            [0, 2, 7],              // sus2
+            [0, 7, 14],             // open voicing
+            [0, 4, 11],             // major 7 (no 5)
+            [0, 3, 10],             // minor 7 (no 5)
+            [0, 7, 11, 14],         // maj7 add 9
+            [0, 2, 7, 12],          // sus2 + octave
+        ];
+
+        // Generate random synth configuration - ONE INSTRUMENT PER SYNTH
+        function generateSynthConfig(index, scaleNotes, forceType = null) {
+            // Each synth is a specific instrument (0-4 maps to our 5 instruments)
+            const instrumentOrder = ['cello', 'celeste', 'harp', 'rhodes', 'vibraphone'];
+            const synthType = forceType || instrumentOrder[index] || 'rhodes';
+            
+            // Natural ranges per instrument (MIDI note numbers)
+            // These are the actual playable ranges of each instrument
+            const naturalRanges = {
+                cello: { low: 36, high: 72 },      // C2 to C5 (warm, resonant)
+                celeste: { low: 60, high: 96 },    // C4 to C7 (sparkly, ethereal)
+                harp: { low: 24, high: 96 },       // C1 to C7 (full range, arpeggiated)
+                rhodes: { low: 48, high: 84 },     // C3 to C6 (classic electric piano)
+                vibraphone: { low: 53, high: 89 }  // F3 to F6 (metallic, bell-like)
+            };
+            
+            const range = naturalRanges[synthType] || { low: 48, high: 72 };
+            // Pick a base octave within the natural range
+            const possibleOctaves = [];
+            for (let oct = Math.floor(range.low / 12) * 12; oct <= range.high - 12; oct += 12) {
+                if (oct >= range.low - 6 && oct + 12 <= range.high + 6) {
+                    possibleOctaves.push(oct);
+                }
+            }
+            const baseOctave = possibleOctaves.length > 0 ? randomChoice(possibleOctaves) : Math.floor((range.low + range.high) / 2);
+
+            // Pick notes only within the instrument's natural range
+            const inRangeNotes = scaleNotes.filter(n => n >= range.low && n <= range.high);
+            const rootNotes = inRangeNotes.filter(n => n >= baseOctave - 6 && n <= baseOctave + 12);
+            const rootNote = rootNotes.length > 0 ? randomChoice(rootNotes) : Math.floor((range.low + range.high) / 2);
+            
+            // CHANCE: melody or chord?
+            const melodyChance = 0.4;  // 40% melody, 60% chord
+            const isMelody = Math.random() < melodyChance;
+            
+            let selectedNotes = [];
+            
+            if (isMelody) {
+                // Create a melodic pattern (2-6 notes)
+                const patternLength = randomInt(2, 6);
+                let currentNote = rootNote;
+                for (let i = 0; i < patternLength; i++) {
+                    selectedNotes.push(currentNote);
+                    // Step to nearby scale note
+                    const nearbyNotes = scaleNotes.filter(n => Math.abs(n - currentNote) <= 7 && n !== currentNote);
+                    if (nearbyNotes.length > 0) {
+                        currentNote = randomChoice(nearbyNotes);
+                    }
+                }
+            } else {
+                // Build a chord
+                const voicing = randomChoice(CHORD_VOICINGS);
+                selectedNotes = voicing.map(interval => {
+                    const targetNote = rootNote + interval;
+                    const closest = scaleNotes.reduce((prev, curr) => 
+                        Math.abs(curr - targetNote) < Math.abs(prev - targetNote) ? curr : prev
+                    , scaleNotes[0]);
+                    return closest;
+                });
+                selectedNotes = [...new Set(selectedNotes)];
+            }
+
+            // Instrument character presets
+            let config;
+            switch(synthType) {
+                case 'cello':
+                    // Warm, sustained, singing
+                    config = {
+                        attack: random(0.5, 3),
+                        decay: random(1, 4),
+                        sustain: random(0.6, 0.9),
+                        release: random(3, 12),
+                        loopLength: random(8, 45),
+                        volume: random(0.08, 0.15),
+                        filterFreq: random(300, 1500),
+                        waveform: 'triangle',
+                        vibratoAmount: random(0.01, 0.03),
+                        vibratoSpeed: random(4, 7),
+                        silenceChance: random(0.2, 0.5)
+                    };
+                    break;
+                case 'celeste':
+                    // Bright, crystalline, music box
+                    config = {
+                        attack: random(0.001, 0.01),
+                        decay: random(2, 8),
+                        sustain: random(0.02, 0.1),
+                        release: random(4, 15),
+                        loopLength: random(5, 35),
+                        volume: random(0.05, 0.1),
+                        filterFreq: random(3000, 10000),
+                        waveform: 'sine',
+                        vibratoAmount: random(0.002, 0.008),
+                        vibratoSpeed: random(5, 8),
+                        silenceChance: random(0.3, 0.6)
+                    };
+                    break;
+                case 'harp':
+                    // Plucked, shimmering, arpeggiated
+                    config = {
+                        attack: random(0.001, 0.02),
+                        decay: random(1, 5),
+                        sustain: random(0.1, 0.3),
+                        release: random(3, 10),
+                        loopLength: random(4, 25),
+                        volume: random(0.06, 0.12),
+                        filterFreq: random(1500, 6000),
+                        waveform: 'triangle',
+                        vibratoAmount: random(0.001, 0.005),
+                        vibratoSpeed: random(3, 6),
+                        silenceChance: random(0.2, 0.45)
+                    };
+                    break;
+                case 'rhodes':
+                    // Electric piano, warm bell-like
+                    config = {
+                        attack: random(0.001, 0.015),
+                        decay: random(1, 4),
+                        sustain: random(0.15, 0.4),
+                        release: random(2, 8),
+                        loopLength: random(6, 35),
+                        volume: random(0.07, 0.13),
+                        filterFreq: random(1000, 4000),
+                        waveform: 'sine',
+                        tremoloAmount: random(0.1, 0.3),
+                        tremoloSpeed: random(4, 7),
+                        silenceChance: random(0.25, 0.5)
+                    };
+                    break;
+                case 'vibraphone':
+                    // Metallic, sustaining, with motor vibrato
+                    config = {
+                        attack: random(0.001, 0.01),
+                        decay: random(3, 10),
+                        sustain: random(0.2, 0.5),
+                        release: random(5, 18),
+                        loopLength: random(8, 40),
+                        volume: random(0.06, 0.11),
+                        filterFreq: random(2000, 7000),
+                        waveform: 'sine',
+                        tremoloAmount: random(0.15, 0.4),
+                        tremoloSpeed: random(5, 9),
+                        silenceChance: random(0.3, 0.55)
+                    };
+                    break;
+            }
+
+            return {
+                notes: selectedNotes,
+                isMelody: isMelody,
+                melodySpeed: isMelody ? random(0.3, 1.2) : 0,
+                pitchBendRate: random(0.01, 0.1),
+                pitchBendDepth: random(0.0001, 0.004),
+                panRate: random(0.005, 0.06),
+                panDepth: random(0.1, 0.7),
+                synthType: synthType,
+                baseOctave: baseOctave,
+                ...config
+            };
+        }
+
+        // Initialize audio and synths
+        function initialize() {
+            if (audioCtx) {
+                audioCtx.close();
+            }
+            
+            // Clear any existing chord change interval
+            if (chordChangeInterval) {
+                clearInterval(chordChangeInterval);
+                chordChangeInterval = null;
+            }
+            
+            // Reset chord history
+            chordHistory = [];
+
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            masterGain = audioCtx.createGain();
+            masterGain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            
+            // Create effects chain for Eno/Disasterpeace sound
+            // Delay effect - ping-pong style
+            delayNode = audioCtx.createDelay(2.0);
+            delayNode.delayTime.value = 0.375;  // Dotted eighth for rhythmic delay
+            
+            delayFeedback = audioCtx.createGain();
+            delayFeedback.gain.value = 0.35;  // 35% feedback for spacious echoes
+            
+            // Reverb using convolution
+            reverbNode = audioCtx.createConvolver();
+            reverbNode.buffer = createReverbIR(5, 2.5);  // 5 second reverb tail
+            
+            // Dry/wet mix
+            dryGain = audioCtx.createGain();
+            wetGain = audioCtx.createGain();
+            dryGain.gain.value = 0.5;   // 50% dry
+            wetGain.gain.value = 0.5;   // 50% wet
+            
+            // Connect effects chain:
+            // masterGain -> dryGain -> destination (dry path)
+            // masterGain -> delayNode -> delayFeedback -> delayNode (feedback loop)
+            // masterGain -> delayNode -> reverbNode -> wetGain -> destination (wet path)
+            // masterGain -> reverbNode -> wetGain -> destination (direct reverb)
+            
+            masterGain.connect(dryGain);
+            dryGain.connect(audioCtx.destination);
+            
+            masterGain.connect(delayNode);
+            delayNode.connect(delayFeedback);
+            delayFeedback.connect(delayNode);  // Feedback loop
+            
+            delayNode.connect(reverbNode);
+            masterGain.connect(reverbNode);  // Also direct to reverb
+            reverbNode.connect(wetGain);
+            wetGain.connect(audioCtx.destination);
+
+            // Choose global key and scale
+            const scaleNames = Object.keys(SCALES);
+            globalScale = randomChoice(scaleNames);
+            globalScaleIntervals = SCALES[globalScale];
+            globalRoot = randomInt(0, 11); // 0-11 for C to B
+
+            // Generate first random chord
+            currentChord = generateRandomChord();
+            currentChordNotes = getChordNotes(currentChord);
+
+            // Generate scale notes (for reference)
+            const rootMidi = 36 + globalRoot;
+            const scaleNotes = generateScaleNotes(rootMidi, globalScaleIntervals, 5);
+
+            // Create synths - one for each instrument (cello, celeste, harp, rhodes, vibraphone)
+            synths = [];
+            for (let i = 0; i < 5; i++) {
+                const config = generateSynthConfig(i, currentChordNotes);
+                synths.push(new AmbientSynth(audioCtx, masterGain, i, config));
+            }
+
+            // Update display
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            document.getElementById('modeDisplay').textContent = globalScale;
+            document.getElementById('rootDisplay').textContent = NOTE_NAMES[globalRoot];
+            
+            // Show current chord
+            const chordDisplay = document.getElementById('chordDisplay');
+            if (chordDisplay && currentChord) {
+                chordDisplay.textContent = currentChord.name;
+            }
+
+            synths.forEach((synth, i) => {
+                const n = i + 1;
+                const notesEl = document.getElementById(`s${n}-notes`);
+                const loopEl = document.getElementById(`s${n}-loop`);
+                const volumeEl = document.getElementById(`s${n}-volume`);
+                const waveEl = document.getElementById(`s${n}-wave`);
+                
+                if (notesEl) notesEl.textContent = synth.config.notes.length;
+                if (loopEl) loopEl.textContent = synth.config.loopLength.toFixed(1) + 's';
+                if (volumeEl) volumeEl.textContent = (synth.config.volume * 100).toFixed(0) + '%';
+                if (waveEl) waveEl.textContent = synth.config.isMelody ? 'melody' : 'chord';
+            });
+        }
+
+        // Universal parameter ranges for drift - wider for more variation
+        const PARAM_RANGES = {
+            attack: [0.001, 18],
+            decay: [0.1, 12],
+            sustain: [0.03, 0.95],
+            release: [0.5, 35],
+            loopLength: [1.5, 100],
+            volume: [0.02, 0.28],
+            filterFreq: [60, 6000],
+            pitchBendRate: [0.003, 0.25],
+            pitchBendDepth: [0.00005, 0.012],
+            panRate: [0.002, 0.15],
+            panDepth: [0.03, 1.0],
+            notes: [1, 6],
+            silenceChance: [0, 0.7],
+            melodySpeed: [0.2, 1.5],
+            vibratoAmount: [0, 0.05],
+            vibratoSpeed: [2, 10],
+            tremoloAmount: [0, 0.5],
+            tremoloSpeed: [3, 12]
+        };
+
+        // Drift amount - bigger changes for more evolution
+        const DRIFT_AMOUNTS = {
+            attack: 1.5,
+            decay: 0.8,
+            sustain: 0.1,
+            release: 3.0,
+            loopLength: 8.0,
+            volume: 0.025,
+            filterFreq: 400,
+            pitchBendRate: 0.02,
+            pitchBendDepth: 0.001,
+            panRate: 0.015,
+            panDepth: 0.15,
+            melodySpeed: 0.15,
+            vibratoAmount: 0.005,
+            vibratoSpeed: 1,
+            tremoloAmount: 0.05,
+            tremoloSpeed: 1,
+            silenceChance: 0.1
+        };
+
+        // Randomize a single parameter
+        function randomizeParam(synthIndex, param) {
+            if (!synths[synthIndex]) return;
+
+            const synth = synths[synthIndex];
+
+            if (param === 'notes') {
+                const baseOctave = synth.config.baseOctave || randomChoice([36, 48, 60, 72]);
+                const rootMidi = 36 + globalRoot;
+                const scaleNotes = generateScaleNotes(rootMidi, globalScaleIntervals, 5);
+                const availableNotes = scaleNotes.filter(n => n >= baseOctave - 12 && n <= baseOctave + 24);
+                const numNotes = randomInt(PARAM_RANGES.notes[0], PARAM_RANGES.notes[1]);
+                const selectedNotes = [];
+                for (let i = 0; i < numNotes; i++) {
+                    selectedNotes.push(randomChoice(availableNotes));
+                }
+                synth.config.notes = selectedNotes;
+            } else if (param === 'waveform') {
+                synth.config.waveform = randomChoice(['sine', 'triangle']);
+            } else if (param === 'synthType') {
+                // Regenerate entire config with new type
+                const rootMidi = 36 + globalRoot;
+                const scaleNotes = generateScaleNotes(rootMidi, globalScaleIntervals, 5);
+                const newType = randomChoice(SYNTH_TYPES);
+                synth.config = generateSynthConfig(synthIndex, scaleNotes, newType);
+            } else if (PARAM_RANGES[param]) {
+                synth.config[param] = random(PARAM_RANGES[param][0], PARAM_RANGES[param][1]);
+            }
+
+            updateDisplay();
+        }
+
+        // Randomize entire synth
+        function randomizeSynth(synthIndex) {
+            if (!synths[synthIndex]) return;
+
+            const rootMidi = 36 + globalRoot;
+            const scaleNotes = generateScaleNotes(rootMidi, globalScaleIntervals, 5);
+            const newConfig = generateSynthConfig(synthIndex, scaleNotes);
+            
+            synths[synthIndex].config = newConfig;
+            updateDisplay();
+        }
+
+        // Randomize global parameters
+        function randomizeGlobal(param) {
+            if (param === 'mode') {
+                // Toggle between major and minor
+                globalScale = globalScale === 'Major' ? 'Minor' : 'Major';
+                globalScaleIntervals = SCALES[globalScale];
+                
+                // Regenerate notes for all synths to fit the new scale
+                const rootMidi = 36 + globalRoot;
+                const scaleNotes = generateScaleNotes(rootMidi, globalScaleIntervals, 5);
+                synths.forEach((synth, i) => {
+                    const baseOctave = synth.config.baseOctave || 48;
+                    const rootNotes = scaleNotes.filter(n => n >= baseOctave - 6 && n <= baseOctave + 12);
+                    // Rebuild chord in new scale
+                    if (synth.config.notes.length > 0) {
+                        const rootNote = randomChoice(rootNotes);
+                        const voicing = randomChoice(CHORD_VOICINGS);
+                        synth.config.notes = voicing.map(interval => {
+                            const targetNote = rootNote + interval;
+                            return scaleNotes.reduce((prev, curr) => 
+                                Math.abs(curr - targetNote) < Math.abs(prev - targetNote) ? curr : prev
+                            );
+                        });
+                        synth.config.notes = [...new Set(synth.config.notes)];
+                    }
+                });
+                document.getElementById('modeDisplay').textContent = globalScale;
+            } else if (param === 'root') {
+                globalRoot = randomInt(0, 11);
+                
+                // Regenerate notes for all synths to fit the new root
+                const rootMidi = 36 + globalRoot;
+                const scaleNotes = generateScaleNotes(rootMidi, globalScaleIntervals, 5);
+                synths.forEach((synth, i) => {
+                    const baseOctave = synth.config.baseOctave || 48;
+                    const rootNotes = scaleNotes.filter(n => n >= baseOctave - 6 && n <= baseOctave + 12);
+                    // Rebuild chord in new key
+                    if (synth.config.notes.length > 0) {
+                        const rootNote = randomChoice(rootNotes);
+                        const voicing = randomChoice(CHORD_VOICINGS);
+                        synth.config.notes = voicing.map(interval => {
+                            const targetNote = rootNote + interval;
+                            return scaleNotes.reduce((prev, curr) => 
+                                Math.abs(curr - targetNote) < Math.abs(prev - targetNote) ? curr : prev
+                            );
+                        });
+                        synth.config.notes = [...new Set(synth.config.notes)];
+                    }
+                });
+                document.getElementById('rootDisplay').textContent = NOTE_NAMES[globalRoot];
+            }
+
+            updateDisplay();
+        }
+
+        function startPlayback() {
+            isPlaying = true;
+            synths.forEach(synth => synth.start());
+            startVisualization();
+            startDrift();
+            
+            // Start chord progression changes (Eno-sparse: 30-90 seconds per chord)
+            const scheduleNextChord = () => {
+                const chordDuration = random(30000, 90000);
+                chordChangeInterval = setTimeout(() => {
+                    if (isPlaying) {
+                        advanceChord();
+                        scheduleNextChord(); // Schedule next with new random duration
+                    }
+                }, chordDuration);
+            };
+            scheduleNextChord();
+            
+            // Micro-transitions: subtle note shifts within current chord (every 8-20 seconds)
+            const microTransitionLoop = () => {
+                if (!isPlaying) return;
+                microTransition();
+                setTimeout(microTransitionLoop, random(8000, 20000));
+            };
+            setTimeout(microTransitionLoop, random(10000, 20000));
+            
+            // Start effects ebbing and flowing
+            startEffectsEbb();
+        }
+
+        function stopPlayback() {
+            isPlaying = false;
+            synths.forEach(synth => synth.stop());
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            stopDrift();
+            stopEffectsEbb();
+            
+            // Clear chord progression timer
+            if (chordChangeInterval) {
+                clearTimeout(chordChangeInterval);
+                chordChangeInterval = null;
+            }
+        }
+
+        // Parameter drift system - more frequent evolution
+        function startDrift() {
+            stopDrift(); // Clear any existing
+            
+            synths.forEach((synth, synthIndex) => {
+                // Each synth drifts at different rates
+                const baseInterval = random(1000, 3500);  // Faster drift
+                
+                const interval = setInterval(() => {
+                    if (!isPlaying) return;
+                    
+                    // Pick 2-5 random parameters to drift
+                    const numParams = randomInt(2, 5);
+                    const driftableParams = ['attack', 'decay', 'sustain', 'release', 'volume', 
+                                            'filterFreq', 'pitchBendRate', 'pitchBendDepth', 
+                                            'panRate', 'panDepth', 'loopLength', 'silenceChance',
+                                            'ostinatoSpeed'];
+                    
+                    for (let i = 0; i < numParams; i++) {
+                        const param = randomChoice(driftableParams);
+                        driftParameter(synth, param);
+                    }
+                    
+                    updateDisplay();
+                }, baseInterval);
+                
+                driftIntervals.push(interval);
+            });
+            
+            // Thoughtful note evolution - use voice leading within current chord\n            const noteInterval = setInterval(() => {\n                if (!isPlaying) return;\n                \n                // Use micro-transition for smooth voice leading\n                microTransition();\n                \n                updateDisplay();\n            }, random(4000, 12000));  // Slower, more gradual\n            \n            driftIntervals.push(noteInterval);\n            \n            // Occasional waveform changes (less frequent for smoothness)\n            const waveInterval = setInterval(() => {\n                if (!isPlaying) return;\n                if (Math.random() < 0.25) {\n                    const synthIndex = randomInt(0, synths.length - 1);\n                    const synth = synths[synthIndex];\n                    if (synth.config.waveform !== 'noise') {\n                        synth.config.waveform = randomChoice(['sine', 'triangle']);\n                    }\n                    updateDisplay();\n                }\n            }, random(15000, 30000));  // Much slower
+            
+            driftIntervals.push(waveInterval);
+            
+            // More frequent octave shifts
+            const octaveInterval = setInterval(() => {
+                if (!isPlaying) return;
+                if (Math.random() < 0.25) {  // More frequent
+                    const synthIndex = randomInt(0, synths.length - 1);
+                    const synth = synths[synthIndex];
+                    if (synth.config.waveform !== 'noise') {
+                        const direction = Math.random() < 0.5 ? -12 : 12;
+                        synth.config.notes = synth.config.notes.map(n => n + direction);
+                        synth.config.baseOctave = (synth.config.baseOctave || 48) + direction;
+                        updateDisplay();
+                    }
+                }
+            }, random(15000, 35000));  // Faster
+            
+            driftIntervals.push(octaveInterval);
+            
+            // Emotional arc - more frequent key changes and major/minor shifts
+            const emotionalInterval = setInterval(() => {
+                if (!isPlaying) return;
+                
+                const changeType = Math.random();
+                
+                if (changeType < 0.35) {
+                    // Toggle between major and minor (emotional shift)
+                    globalScale = globalScale === 'Major' ? 'Minor' : 'Major';
+                    globalScaleIntervals = SCALES[globalScale];
+                    document.getElementById('modeDisplay').textContent = globalScale;
+                    
+                    // Migrate notes to new scale
+                    const rootMidi = 36 + globalRoot;
+                    const scaleNotes = generateScaleNotes(rootMidi, globalScaleIntervals, 5);
+                    synths.forEach(synth => {
+                        synth.config.notes = synth.config.notes.map(n => {
+                            return scaleNotes.reduce((prev, curr) => 
+                                Math.abs(curr - n) < Math.abs(prev - n) ? curr : prev
+                            );
+                        });
+                    });
+                } else if (changeType < 0.7) {
+                    // Shift root by a consonant interval
+                    const shifts = [5, 7, -5, -7, 2, -2]; // fourths, fifths, whole steps
+                    globalRoot = (globalRoot + randomChoice(shifts) + 12) % 12;
+                    document.getElementById('rootDisplay').textContent = NOTE_NAMES[globalRoot];
+                    
+                    // Migrate notes to new key
+                    const rootMidi = 36 + globalRoot;
+                    const scaleNotes = generateScaleNotes(rootMidi, globalScaleIntervals, 5);
+                    synths.forEach(synth => {
+                        synth.config.notes = synth.config.notes.map(n => {
+                            return scaleNotes.reduce((prev, curr) => 
+                                Math.abs(curr - n) < Math.abs(prev - n) ? curr : prev
+                            );
+                        });
+                    });
+                } else if (changeType < 0.85) {
+                    // Tempo shift - all synths speed up or slow down
+                    const tempoMultiplier = randomChoice([0.6, 0.75, 1.3, 1.5, 2.0, 0.5]);
+                    synths.forEach(synth => {
+                        synth.config.loopLength = Math.max(1.5, Math.min(100, synth.config.loopLength * tempoMultiplier));
+                        if (synth.config.ostinatoSpeed) {
+                            synth.config.ostinatoSpeed = Math.max(0.1, Math.min(1.2, synth.config.ostinatoSpeed * tempoMultiplier));
+                        }
+                    });
+                } else {
+                    // Intensity shift - all synths get quieter or louder (gradual)
+                    const volumeShift = random(-0.02, 0.02);
+                    synths.forEach(synth => {
+                        synth.config.volume = Math.max(0.02, Math.min(0.28, synth.config.volume + volumeShift));
+                    });
+                }
+                
+                // Also update chord notes to match new scale/key
+                if (currentChord) {
+                    currentChordNotes = getChordNotes(currentChord);
+                }
+                
+                updateDisplay();
+            }, random(40000, 90000));  // Much slower emotional changes (40-90 seconds)
+            
+            driftIntervals.push(emotionalInterval);
+        }
+
+        function stopDrift() {
+            driftIntervals.forEach(interval => clearInterval(interval));
+            driftIntervals = [];
+        }
+
+        function driftParameter(synth, param) {
+            const currentValue = synth.config[param];
+            const range = PARAM_RANGES[param];
+            const driftAmount = DRIFT_AMOUNTS[param];
+            
+            if (!range || driftAmount === undefined) return;
+            
+            // Random walk - drift up or down
+            const direction = Math.random() < 0.5 ? -1 : 1;
+            const drift = direction * random(driftAmount * 0.3, driftAmount);
+            
+            let newValue = currentValue + drift;
+            
+            // Clamp to valid range
+            newValue = Math.max(range[0], Math.min(range[1], newValue));
+            
+            synth.config[param] = newValue;
+        }
+
+        // Visualization - notes are colors that bloom and combine
+        function startVisualization() {
+            const width = canvas.offsetWidth;
+            const height = canvas.offsetHeight;
+
+            // Blooming note particles - each note creates colored blooms
+            let blooms = [];
+            const maxBlooms = 80;
+
+            // Get color for a MIDI note
+            function getNoteColor(midiNote) {
+                const pitchClass = midiNote % 12;
+                return NOTE_COLORS[pitchClass];
+            }
+            
+            // Parse hex color to RGB
+            function hexToRgb(hex) {
+                const result = /^#?([a-f\\d]{2})([a-f\\d]{2})([a-f\\d]{2})$/i.exec(hex);
+                return result ? {
+                    r: parseInt(result[1], 16),
+                    g: parseInt(result[2], 16),
+                    b: parseInt(result[3], 16)
+                } : { r: 128, g: 128, b: 128 };
+            }
+            
+            // Blend colors for combined chord tones
+            function blendColors(colors) {
+                if (colors.length === 0) return { r: 50, g: 50, b: 70 };
+                let r = 0, g = 0, b = 0;
+                colors.forEach(c => {
+                    const rgb = hexToRgb(c);
+                    r += rgb.r;
+                    g += rgb.g;
+                    b += rgb.b;
+                });
+                return {
+                    r: Math.floor(r / colors.length),
+                    g: Math.floor(g / colors.length),
+                    b: Math.floor(b / colors.length)
+                };
+            }
+
+            function createBloom(synthIndex, note, amplitude) {
+                const synth = synths[synthIndex];
+                if (!synth) return null;
+                
+                const visualData = synth.getVisualData();
+                const color = getNoteColor(note);
+                
+                // Position based on pitch (lower = bottom, higher = top)
+                const pitchY = height - ((note - 24) / 84) * height * 0.8 - height * 0.1;
+                // Pan affects X position
+                const panX = width / 2 + (visualData.pan * width * 0.35);
+                
+                return {
+                    x: panX + (Math.random() - 0.5) * 60,
+                    y: pitchY + (Math.random() - 0.5) * 40,
+                    vx: (Math.random() - 0.5) * 0.8,
+                    vy: (Math.random() - 0.5) * 0.5 - 0.3, // Slight upward drift
+                    size: 5 + amplitude * 50 + Math.random() * 20,
+                    maxSize: 30 + amplitude * 80,
+                    color: color,
+                    note: note,
+                    alpha: 0.7 + amplitude * 0.3,
+                    life: 1,
+                    decay: 0.003 + Math.random() * 0.008,
+                    growing: true,
+                    growRate: 1.02 + Math.random() * 0.03
+                };
+            }
+
+            function draw() {
+                if (!isPlaying) return;
+
+                // Clear with slow fade for trails
+                ctx.fillStyle = 'rgba(8, 8, 12, 0.04)';
+                ctx.fillRect(0, 0, width, height);
+
+                // Collect all active notes across all synths for the chord blend
+                const activeColors = [];
+                
+                // Process each synth
+                for (let i = 0; i < synths.length; i++) {
+                    const synth = synths[i];
+                    if (!synth) continue;
+                    
+                    const visualData = synth.getVisualData();
+                    const amplitude = visualData.amplitude || 0;
+                    
+                    // Get colors from synth's active notes
+                    if (synth.activeNotes && synth.activeNotes.length > 0) {
+                        synth.activeNotes.forEach(noteData => {
+                            if (noteData.freq) {
+                                // Convert frequency back to approximate MIDI note
+                                const midiNote = Math.round(12 * Math.log2(noteData.freq / 440) + 69);
+                                activeColors.push(getNoteColor(midiNote));
+                            }
+                        });
+                    }
+                    
+                    // Create new blooms based on amplitude and notes
+                    if (amplitude > 0.008 && blooms.length < maxBlooms) {
+                        // Create blooms for each note being played
+                        synth.config.notes.forEach(note => {
+                            if (Math.random() < amplitude * 0.8) {
+                                const bloom = createBloom(i, note, amplitude);
+                                if (bloom) blooms.push(bloom);
+                            }
+                        });
+                    }
+                }
+
+                // Draw central chord glow - all colors blending
+                if (activeColors.length > 0) {
+                    const blendedColor = blendColors(activeColors);
+                    const centerGlow = ctx.createRadialGradient(
+                        width / 2, height / 2, 0,
+                        width / 2, height / 2, Math.min(width, height) * 0.4
+                    );
+                    centerGlow.addColorStop(0, `rgba(${blendedColor.r}, ${blendedColor.g}, ${blendedColor.b}, 0.15)`);
+                    centerGlow.addColorStop(0.5, `rgba(${blendedColor.r}, ${blendedColor.g}, ${blendedColor.b}, 0.05)`);
+                    centerGlow.addColorStop(1, 'transparent');
+                    ctx.fillStyle = centerGlow;
+                    ctx.fillRect(0, 0, width, height);
+                }
+
+                // Update and draw blooms
+                for (let j = blooms.length - 1; j >= 0; j--) {
+                    const b = blooms[j];
+                    
+                    // Movement
+                    b.x += b.vx;
+                    b.y += b.vy;
+                    b.vy *= 0.99; // Slow down vertical movement
+                    
+                    // Blooming effect - grow then shrink
+                    if (b.growing) {
+                        b.size *= b.growRate;
+                        if (b.size >= b.maxSize) {
+                            b.growing = false;
+                        }
+                    } else {
+                        b.size *= 0.995;
+                    }
+                    
+                    b.life -= b.decay;
+                    
+                    // Remove dead blooms
+                    if (b.life <= 0 || b.size < 1) {
+                        blooms.splice(j, 1);
+                        continue;
+                    }
+
+                    // Draw the bloom - soft glowing circle
+                    const rgb = hexToRgb(b.color);
+                    const gradient = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.size);
+                    gradient.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${b.life * b.alpha * 0.8})`);
+                    gradient.addColorStop(0.3, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${b.life * b.alpha * 0.4})`);
+                    gradient.addColorStop(0.7, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${b.life * b.alpha * 0.1})`);
+                    gradient.addColorStop(1, 'transparent');
+                    
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(b.x, b.y, b.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // Draw subtle connecting lines between nearby same-color blooms
+                ctx.globalAlpha = 0.1;
+                for (let i = 0; i < blooms.length; i++) {
+                    for (let j = i + 1; j < blooms.length; j++) {
+                        if (blooms[i].note % 12 === blooms[j].note % 12) {
+                            const dx = blooms[i].x - blooms[j].x;
+                            const dy = blooms[i].y - blooms[j].y;
+                            const dist = Math.sqrt(dx * dx + dy * dy);
+                            if (dist < 150) {
+                                ctx.strokeStyle = blooms[i].color;
+                                ctx.lineWidth = (1 - dist / 150) * 2;
+                                ctx.beginPath();
+                                ctx.moveTo(blooms[i].x, blooms[i].y);
+                                ctx.lineTo(blooms[j].x, blooms[j].y);
+                                ctx.stroke();
+                            }
+                        }
+                    }
+                }
+
+                ctx.globalAlpha = 1;
+                animationId = requestAnimationFrame(draw);
+            }
+
+            draw();
+        }
+
+        // Event listeners
+        document.getElementById('startBtn').addEventListener('click', () => {
+            initialize();
+            startPlayback();
+            document.getElementById('startBtn').textContent = 'Restart';
+            document.getElementById('randomizeBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = false;
+            document.getElementById('saveBtn').disabled = false;
+            document.getElementById('recordBtn').disabled = false;
+        });
+
+        document.getElementById('randomizeBtn').addEventListener('click', () => {
+            const wasRecording = mediaRecorder && mediaRecorder.state === 'recording';
+            if (wasRecording) stopRecording();
+            
+            stopPlayback();
+            setTimeout(() => {
+                initialize();
+                startPlayback();
+            }, 100);
+        });
+
+        document.getElementById('stopBtn').addEventListener('click', () => {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                stopRecording();
+            }
+            stopPlayback();
+            document.getElementById('startBtn').textContent = 'Initialize';
+            document.getElementById('randomizeBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('recordBtn').disabled = true;
+        });
+
+        // Handle page visibility
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && isPlaying) {
+                // Optionally pause when tab is hidden
+            }
+        });
+
+        // Save settings to JSON file
+        function saveSettings() {
+            const settings = {
+                version: 1,
+                timestamp: new Date().toISOString(),
+                global: {
+                    mode: globalScale,
+                    root: globalRoot
+                },
+                synths: synths.map(s => ({...s.config}))
+            };
+
+            const blob = new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ambient-drift-${Date.now()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showToast('Settings saved');
+        }
+
+        // Load settings from JSON file
+        function loadSettings(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const settings = JSON.parse(e.target.result);
+                    
+                    if (!settings.global || !settings.synths) {
+                        throw new Error('Invalid settings file');
+                    }
+
+                    // Stop current playback
+                    const wasPlaying = isPlaying;
+                    if (isPlaying) {
+                        stopPlayback();
+                    }
+
+                    // Initialize audio context if needed
+                    if (!audioCtx) {
+                        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                        masterGain = audioCtx.createGain();
+                        masterGain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                        masterGain.connect(audioCtx.destination);
+                    }
+
+                    // Apply global settings
+                    globalScale = settings.global.mode || settings.global.scale || 'Major';
+                    globalRoot = settings.global.root;
+                    globalScaleIntervals = SCALES[globalScale];
+
+                    // Create synths with loaded configs
+                    synths = [];
+                    settings.synths.forEach((config, i) => {
+                        const synth = new AmbientSynth(audioCtx, masterGain, i, config);
+                        synths.push(synth);
+                    });
+
+                    updateDisplay();
+                    
+                    // Enable buttons
+                    document.getElementById('startBtn').textContent = 'Start';
+                    document.getElementById('randomizeBtn').disabled = false;
+                    document.getElementById('stopBtn').disabled = false;
+                    document.getElementById('saveBtn').disabled = false;
+                    document.getElementById('recordBtn').disabled = false;
+
+                    showToast('Settings loaded');
+
+                    // Resume if was playing
+                    if (wasPlaying) {
+                        startPlayback();
+                    }
+                } catch (err) {
+                    showToast('Error loading settings');
+                    console.error(err);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Audio recording
+        function startRecording() {
+            if (!audioCtx || !isPlaying) return;
+
+            recordedChunks = [];
+            
+            // Create a destination for recording
+            recordingDestination = audioCtx.createMediaStreamDestination();
+            masterGain.connect(recordingDestination);
+
+            mediaRecorder = new MediaRecorder(recordingDestination.stream, {
+                mimeType: 'audio/webm;codecs=opus'
+            });
+
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) {
+                    recordedChunks.push(e.data);
+                }
+            };
+
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `ambient-drift-${Date.now()}.webm`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                // Cleanup
+                masterGain.disconnect(recordingDestination);
+                recordingDestination = null;
+                
+                showToast('Recording saved');
+            };
+
+            mediaRecorder.start();
+            document.getElementById('recordBtn').classList.add('recording');
+            document.getElementById('recordBtn').textContent = '■ Stop Recording';
+            
+            showToast('Recording started');
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+                document.getElementById('recordBtn').classList.remove('recording');
+                document.getElementById('recordBtn').textContent = '● Record';
+            }
+        }
+
+        function showToast(message) {
+            // Remove existing toast
+            const existing = document.querySelector('.toast');
+            if (existing) existing.remove();
+
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            // Trigger animation
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 2500);
+        }
+
+        // Event listeners - Save/Load/Record
+        document.getElementById('saveBtn').addEventListener('click', saveSettings);
+
+        document.getElementById('loadBtn').addEventListener('click', () => {
+            document.getElementById('loadFile').click();
+        });
+
+        document.getElementById('loadFile').addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                loadSettings(e.target.files[0]);
+                e.target.value = ''; // Reset for same file selection
+            }
+        });
+
+        document.getElementById('recordBtn').addEventListener('click', () => {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                stopRecording();
+            } else {
+                startRecording();
+            }
+        });
+    </script>
+</body>
+</html>

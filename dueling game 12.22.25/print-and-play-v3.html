@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BLADE &amp; HONOR - Print and Play v3</title>
+    <style>
+        @page {
+            size: letter;
+            margin: 0.5in;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial Black', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background: white;
+            color: black;
+            font-size: 11pt;
+            line-height: 1.3;
+        }
+
+        .print-page {
+            page-break-after: always;
+            padding: 0.25in;
+        }
+
+        .print-page:last-child {
+            page-break-after: avoid;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 32pt;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 6px;
+            border-bottom: 6px solid black;
+            padding-bottom: 10px;
+        }
+
+        h2 {
+            font-size: 12pt;
+            margin: 12px 0 6px 0;
+            border-bottom: 3px solid black;
+            padding-bottom: 3px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            font-size: 10pt;
+        }
+
+        .rules-columns {
+            display: flex;
+            gap: 20px;
+        }
+
+        .rules-column {
+            flex: 1;
+        }
+
+        ul {
+            margin-left: 15px;
+            margin-bottom: 8px;
+        }
+
+        li {
+            margin-bottom: 2px;
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+        }
+
+        .beats-diagram {
+            text-align: center;
+            font-size: 14pt;
+            margin: 12px 0;
+            padding: 10px;
+            background: white;
+            border: 4px solid black;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin: 12px 0;
+            justify-items: center;
+        }
+
+        /* CARD FRONT */
+        .card {
+            width: 2.5in;
+            height: 3.5in;
+            border: 4px solid black;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Ghost text - what opponent sees on back (see-through effect) */
+        .card-ghost {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24pt;
+            color: #ccc;
+            line-height: 1;
+            z-index: 0;
+            pointer-events: none;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .card-body {
+            flex: 1;
+            position: relative;
+            z-index: 1;
+        }
+
+        .card-footer {
+            border-top: 3px solid black;
+            padding: 10px;
+            text-align: center;
+            background: white;
+            position: relative;
+            z-index: 1;
+        }
+
+        .card-type-label {
+            font-size: 14pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .card-power {
+            font-size: 48pt;
+            font-weight: bold;
+            line-height: 1;
+        }
+
+        .trick-badge {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: black;
+            color: white;
+            font-size: 8pt;
+            padding: 3px 6px;
+            font-weight: bold;
+            z-index: 2;
+        }
+
+        /* CARD BACK */
+        .card-back {
+            width: 2.5in;
+            height: 3.5in;
+            border: 4px solid black;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: white;
+        }
+
+        .back-label {
+            font-size: 24pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        /* REFERENCE CARD */
+        .ref-card {
+            width: 2.5in;
+            height: 3.5in;
+            border: 4px solid black;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            padding: 12px;
+        }
+
+        .ref-title {
+            font-size: 14pt;
+            font-weight: bold;
+            border-bottom: 3px solid black;
+            padding-bottom: 6px;
+            margin-bottom: 10px;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .ref-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin: 12px 0;
+            font-size: 11pt;
+            font-weight: bold;
+        }
+
+        .ref-arrow {
+            font-size: 16pt;
+        }
+
+        /* HP TRACKER */
+        .hp-tracker {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 15px 0;
+        }
+
+        .hp-track {
+            border: 3px solid black;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .hp-boxes {
+            display: flex;
+            gap: 3px;
+            margin-top: 6px;
+        }
+
+        .hp-box {
+            width: 22px;
+            height: 22px;
+            border: 2px solid black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10pt;
+            font-weight: bold;
+        }
+
+        .cut-instruction {
+            text-align: center;
+            font-size: 9pt;
+            margin: 4px 0;
+        }
+
+        @media print {
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .no-print { display: none; }
+        }
+
+        .print-btn {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 12px 24px;
+            font-size: 14pt;
+            background: black;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <button class="print-btn no-print" onclick="window.print()">PRINT</button>
+
+    <!-- PAGE 1: Rules -->
+    <div class="print-page">
+        <h1>BLADE &amp; HONOR</h1>
+        <p class="subtitle">A Game of Steel and Deception</p>
+
+        <div class="rules-columns">
+            <div class="rules-column">
+                <h2>Setup</h2>
+                <ul>
+                    <li>Each player: 15-card deck, 10 HP</li>
+                    <li>Shuffle deck, draw 3 cards</li>
+                    <li>See YOUR cards' true types</li>
+                    <li>See only opponent card BACKS</li>
+                </ul>
+
+                <h2>Card Types</h2>
+                <div class="beats-diagram">
+                    ATTACK &gt; MANEUVER &gt; DEFENSE &gt; ATTACK
+                </div>
+
+                <h2>Round Flow (3 Clashes)</h2>
+                <ul>
+                    <li><strong>Clash 1:</strong> P1 leads, P2 responds</li>
+                    <li><strong>Clash 2:</strong> P2 leads, P1 responds</li>
+                    <li><strong>Clash 3:</strong> P1 leads, P2 responds</li>
+                    <li>Resolve clashes in order: 1, 2, 3</li>
+                    <li>Discard all 6 cards, draw 3 each</li>
+                    <li>Next round: swap lead order</li>
+                </ul>
+            </div>
+
+            <div class="rules-column">
+                <h2>Combat</h2>
+                <ul>
+                    <li><strong>Winning type:</strong> Deal YOUR power as damage</li>
+                    <li><strong>Same type:</strong> Higher power wins, deals difference</li>
+                    <li><strong>Losing type:</strong> Take THEIR power as damage</li>
+                </ul>
+
+                <h2>Trick Cards</h2>
+                <p>Each deck has <strong>6 trick cards</strong> where the back doesn't match the true type!</p>
+                <ul>
+                    <li>Gray text = what opponent sees</li>
+                    <li>Bottom label = true type</li>
+                    <li>Use tricks to deceive!</li>
+                </ul>
+
+                <h2>Winning</h2>
+                <ul>
+                    <li>Reduce opponent to 0 HP, OR</li>
+                    <li>More HP when both decks empty</li>
+                </ul>
+
+                <h2>Deck Contents (15 cards)</h2>
+                <ul>
+                    <li>5 Attack backs: 3 Attack + 1 Defense + 1 Maneuver</li>
+                    <li>5 Defense backs: 3 Defense + 1 Attack + 1 Maneuver</li>
+                    <li>5 Maneuver backs: 3 Maneuver + 1 Attack + 1 Defense</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="hp-tracker">
+            <div class="hp-track">
+                <strong>PLAYER 1 HP</strong>
+                <div class="hp-boxes">
+                    <div class="hp-box">10</div>
+                    <div class="hp-box">9</div>
+                    <div class="hp-box">8</div>
+                    <div class="hp-box">7</div>
+                    <div class="hp-box">6</div>
+                    <div class="hp-box">5</div>
+                    <div class="hp-box">4</div>
+                    <div class="hp-box">3</div>
+                    <div class="hp-box">2</div>
+                    <div class="hp-box">1</div>
+                </div>
+            </div>
+            <div class="hp-track">
+                <strong>PLAYER 2 HP</strong>
+                <div class="hp-boxes">
+                    <div class="hp-box">10</div>
+                    <div class="hp-box">9</div>
+                    <div class="hp-box">8</div>
+                    <div class="hp-box">7</div>
+                    <div class="hp-box">6</div>
+                    <div class="hp-box">5</div>
+                    <div class="hp-box">4</div>
+                    <div class="hp-box">3</div>
+                    <div class="hp-box">2</div>
+                    <div class="hp-box">1</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGE 2: Reference Cards -->
+    <div class="print-page">
+        <h2>Reference Cards (cut out)</h2>
+        <p class="cut-instruction">CUT: 2.5" x 3.5"</p>
+        
+        <div class="card-grid">
+            <div class="ref-card">
+                <div class="ref-title">WHO WINS?</div>
+                <div class="ref-row">ATTACK <span class="ref-arrow">→</span> MANEUVER</div>
+                <div class="ref-row">MANEUVER <span class="ref-arrow">→</span> DEFENSE</div>
+                <div class="ref-row">DEFENSE <span class="ref-arrow">→</span> ATTACK</div>
+            </div>
+            <div class="ref-card">
+                <div class="ref-title">WHO WINS?</div>
+                <div class="ref-row">ATTACK <span class="ref-arrow">→</span> MANEUVER</div>
+                <div class="ref-row">MANEUVER <span class="ref-arrow">→</span> DEFENSE</div>
+                <div class="ref-row">DEFENSE <span class="ref-arrow">→</span> ATTACK</div>
+            </div>
+            <div class="ref-card">
+                <div class="ref-title">WHO WINS?</div>
+                <div class="ref-row">ATTACK <span class="ref-arrow">→</span> MANEUVER</div>
+                <div class="ref-row">MANEUVER <span class="ref-arrow">→</span> DEFENSE</div>
+                <div class="ref-row">DEFENSE <span class="ref-arrow">→</span> ATTACK</div>
+            </div>
+            <div class="ref-card">
+                <div class="ref-title">WHO WINS?</div>
+                <div class="ref-row">ATTACK <span class="ref-arrow">→</span> MANEUVER</div>
+                <div class="ref-row">MANEUVER <span class="ref-arrow">→</span> DEFENSE</div>
+                <div class="ref-row">DEFENSE <span class="ref-arrow">→</span> ATTACK</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGE 3: Player 1 Cards (Page 1 of 3) -->
+    <div class="print-page">
+        <h2>Player 1 Cards (Page 1 of 3)</h2>
+        <p class="cut-instruction">CUT: 2.5" x 3.5"</p>
+        
+        <div class="card-grid">
+            <!-- Attack 1 (Attack back) -->
+            <div class="card">
+                <div class="card-ghost">ATTACK</div>
+                <div class="card-body"></div>
+                <div class="card-footer">
+                    <div class="card-type-label">ATTACK</div>
+                    <div class="card-power">1</div>
+                </div>
+            </div>
+            <!-- Attack 2 (Attack back) -->
+            <div class="card">
+                <div class="card-ghost">ATTACK</div>
+                <div class="card-body"></div>
+                <div class="card-footer">
+                    <div class="card-type-label">ATTACK</div>
+                    <div class="card-power">2</div>
+                </div>
+            </div>
+            <!-- Attack 3 (Attack back) -->
+            <div class="card">
+                <div class="card-ghost">ATTACK</div>
+                <div class="card-body"></div>
+                <div class="card-footer">
+                    <div class="card-type-label">ATTACK</div>
+                    <div class="card-power">3</div>
+                </div>
+            </div>
+            <!-- TRICK: Defense 5 (Attack back) -->
+            <div class="card">
+                <div class="trick-badge">TRICK!</div>
+                <div class="card-ghost">ATTACK</div>
+                <div class="card-body"></div>
+                <div class="card-footer">
+                    <div class="card-type-label">DEFENSE</div>
+                    <div class="card-power">5</div>
+                </div>
+            </div>
+            <!-- TRICK: Maneuver 4 (Attack back) -->
+            <div class="card">
+                <div class="trick-badge">TRICK!</div>
+                <div class="card-ghost">ATTACK</div>
+                <div class="card-body"></div>
+                <div class="card-footer">
+                    <div class="card-type-label">MANEUVER</div>
+                    <div class="card-power">4</div>
+                </div>
+            </div>
+            <!-- Defense 1 (Defense back) -->
+            <div class="card">
+                <div class="card-ghost">DEFENSE</div>
+                <div class="card-body"></div>
+                <div class="card-footer">
+                    <div class="card-type-label">DEFENSE</div>
+                    <div class="card-power">1</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGE 4: Player 1 Cards (Page 2 of 3) -->
+    <div class="print-page">
+        <h2>Player 1 Cards (Page 2 of 3)</h2>
+        <p class="cut-instruction">CUT: 2.5" x 3.5"</p>
+        
+        <div class="card-grid">
+            <!-- Defense 2 (Defense back) -->
+            <div class="card">
+                <div class="card-ghost">DEFENSE</div>
+                <div class="card-body"></div>
+                <div class="card-footer">
+                    <div class="card-type-label">DEFENSE</div>
+                    <div class="card-power">2</div>
+                </div>
+            </div>
+            <!-- Defense 3 (Defense back) -->
+            <div class="card">
+                <div class="card-ghost">DEFENSE</div>
+                <div class="card-body"></div>
+                <div class="card-footer">
+                    <div class="card-type-label">DEFENSE</div>
+                    <div class="card-power">3</div>
+                </div>
+            </div>
+            <!-- TRICK: Attack 4 (Defense back) -->
+            <div class="card">
+                <div class="trick-badge">TRICK!</div>
+                <div class="card-ghost">DEFENSE</div>
+                <div class="card-body"></div>
+                <div class="card-footer">
+                    <div class="card-type-label">ATTACK</div>
+                    <div class="card-power">4</div>
+                </div>
+            </div>
+            <!-- TRICK: Maneuver 5 (Defense back) -->
+            <div class="card">
+                <div class="trick-badge">TRICK!</div>
+                <div class="card-ghost">DEFENSE</div>
+                <div class="card-body"></div>
+                <div class="card-footer">
+                    <div class="card-type-label">MANEUVER</div>
+                    <div class="card-power">5</div>
+                </div>
+            </div>
+            <!-- Maneuver 1 (Maneuver back) -->
+            <div class="card">
+                <div class="card-ghost">MANEUVER</div>
+                <div class="card-body"></div>
+                <div class="card-footer">
+                    <div class="card-type-label">MANEUVER</div>
+                    <div class="card-power">1</div>
+                </div>
+            </div>
+            <!-- Maneuver 2 (Maneuver back) -->
+            <div class="card">
+                <div class="card-ghost">MANEUVER</div>
+                <div class="card-body"></div>
+                <div class="card-footer">
+                    <div class="card-type-label">MANEUVER</div>
+                    <div class="card-power">2</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGE 5: Player 1 Cards (Page 3 of 3) -->
+    <div class="print-page">
+        <h2>Player 1 Cards (Page 3 of 3)</h2>
+        <p class="cut-instruction">CUT: 2.5" x 3.5"</p>
+        
+        <div class="card-grid">
+            <!-- Maneuver 3 (Maneuver back) -->
+            <div class="card">
+                <div class="card-ghost">MANEUVER</div>
+                <div class="card-body"></div>
+                <div class="card-footer">
+                    <div class="card-type-label">MANEUVER</div>
+                    <div class="card-power">3</div>
+                </div>
+            </div>
+            <!-- TRICK: Attack 5 (Maneuver back) -->
+            <div class="card">
+                <div class="trick-badge">TRICK!</div>
+                <div class="card-ghost">MANEUVER</div>
+                <div class="card-body"></div>
+                <div class="card-footer">
+                    <div class="card-type-label">ATTACK</div>
+                    <div class="card-power">5</div>
+                </div>
+            </div>
+            <!-- TRICK: Defense 4 (Maneuver back) -->
+            <div class="card">
+                <div class="trick-badge">TRICK!</div>
+                <div class="card-ghost">MANEUVER</div>
+                <div class="card-body"></div>
+                <div class="card-footer">
+                    <div class="card-type-label">DEFENSE</div>
+                    <div class="card-power">4</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGE 6: Player 1 Card Backs (Page 1 of 3) -->
+    <div class="print-page">
+        <h2>Player 1 Backs (Page 1 of 3)</h2>
+        <p class="cut-instruction">Print on back of Page 3</p>
+        
+        <div class="card-grid">
+            <div class="card-back"><div class="back-label">ATTACK</div></div>
+            <div class="card-back"><div class="back-label">ATTACK</div></div>
+            <div class="card-back"><div class="back-label">ATTACK</div></div>
+            <div class="card-back"><div class="back-label">ATTACK</div></div>
+            <div class="card-back"><div class="back-label">ATTACK</div></div>
+            <div class="card-back"><div class="back-label">DEFENSE</div></div>
+        </div>
+    </div>
+
+    <!-- PAGE 7: Player 1 Card Backs (Page 2 of 3) -->
+    <div class="print-page">
+        <h2>Player 1 Backs (Page 2 of 3)</h2>
+        <p class="cut-instruction">Print on back of Page 4</p>
+        
+        <div class="card-grid">
+            <div class="card-back"><div class="back-label">DEFENSE</div></div>
+            <div class="card-back"><div class="back-label">DEFENSE</div></div>
+            <div class="card-back"><div class="back-label">DEFENSE</div></div>
+            <div class="card-back"><div class="back-label">DEFENSE</div></div>
+            <div class="card-back"><div class="back-label">MANEUVER</div></div>
+            <div class="card-back"><div class="back-label">MANEUVER</div></div>
+        </div>
+    </div>
+
+    <!-- PAGE 8: Player 1 Card Backs (Page 3 of 3) -->
+    <div class="print-page">
+        <h2>Player 1 Backs (Page 3 of 3)</h2>
+        <p class="cut-instruction">Print on back of Page 5</p>
+        
+        <div class="card-grid">
+            <div class="card-back"><div class="back-label">MANEUVER</div></div>
+            <div class="card-back"><div class="back-label">MANEUVER</div></div>
+            <div class="card-back"><div class="back-label">MANEUVER</div></div>
+        </div>
+    </div>
+
+    <!-- PAGE 9: Player 2 Cards (Page 1 of 3) -->
+    <div class="print-page">
+        <h2>Player 2 Cards (Page 1 of 3)</h2>
+        <p class="cut-instruction">CUT: 2.5" x 3.5"</p>
+        
+        <div class="card-grid">
+            <!-- Attack 1 (Attack back) -->
+            <div class="card">
+                <div class="card-ghost">ATTACK</div>
+                <div class="card-body"></div>
+                <div class="card-footer">
+                    <div class="card-type-label">ATTACK</div>
+                    <div class="card-power">1</div>
+                </div>
+            </div>
+            <!-- Attack 2 (Attack back) -->
+            <div class="card">
+                <div class="card-ghost">ATTACK</div>
+                <div class="card-body"></div>
+                <div class="card-footer">
+                    <div class="card-type-label">ATTACK</div>
+                    <div class="card-power">2</div>
+                </div>
+            </div>
+            <!-- Attack 3 (Attack back) -->
+            <div class="card">
+                <div class="card-ghost">ATTACK</div>
+                <div class="card-body"></div>
+                <div class="card-footer">
+                    <div class="card-type-label">ATTACK</div>
+                    <div class="card-power">3</div>
+                </div>
+            </div>
+            <!-- TRICK: Defense 5 (Attack back) -->
+            <div class="card">
+                <div class="trick-badge">TRICK!</div>
+                <div class="card-ghost">ATTACK</div>
+                <div class="card-body"></div>
+                <div class="card-footer">
+                    <div class="card-type-label">DEFENSE</div>
+                    <div class="card-power">5</div>
+                </div>
+            </div>
+            <!-- TRICK: Maneuver 4 (Attack back) -->
+            <div class="card">
+                <div class="trick-badge">TRICK!</div>
+                <div class="card-ghost">ATTACK</div>
+                <div class="card-body"></div>
+                <div class="card-footer">
+                    <div class="card-type-label">MANEUVER</div>
+                    <div class="card-power">4</div>
+                </div>
+            </div>
+            <!-- Defense 1 (Defense back) -->
+            <div class="card">
+                <div class="card-ghost">DEFENSE</div>
+                <div class="card-body"></div>
+                <div class="card-footer">
+                    <div class="card-type-label">DEFENSE</div>
+                    <div class="card-power">1</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGE 10: Player 2 Cards (Page 2 of 3) -->
+    <div class="print-page">
+        <h2>Player 2 Cards (Page 2 of 3)</h2>
+        <p class="cut-instruction">CUT: 2.5" x 3.5"</p>
+        
+        <div class="card-grid">
+            <!-- Defense 2 (Defense back) -->
+            <div class="card">
+                <div class="card-ghost">DEFENSE</div>
+                <div class="card-body"></div>
+                <div class="card-footer">
+                    <div class="card-type-label">DEFENSE</div>
+                    <div class="card-power">2</div>
+                </div>
+            </div>
+            <!-- Defense 3 (Defense back) -->
+            <div class="card">
+                <div class="card-ghost">DEFENSE</div>
+                <div class="card-body"></div>
+                <div class="card-footer">
+                    <div class="card-type-label">DEFENSE</div>
+                    <div class="card-power">3</div>
+                </div>
+            </div>
+            <!-- TRICK: Attack 4 (Defense back) -->
+            <div class="card">
+                <div class="trick-badge">TRICK!</div>
+                <div class="card-ghost">DEFENSE</div>
+                <div class="card-body"></div>
+                <div class="card-footer">
+                    <div class="card-type-label">ATTACK</div>
+                    <div class="card-power">4</div>
+                </div>
+            </div>
+            <!-- TRICK: Maneuver 5 (Defense back) -->
+            <div class="card">
+                <div class="trick-badge">TRICK!</div>
+                <div class="card-ghost">DEFENSE</div>
+                <div class="card-body"></div>
+                <div class="card-footer">
+                    <div class="card-type-label">MANEUVER</div>
+                    <div class="card-power">5</div>
+                </div>
+            </div>
+            <!-- Maneuver 1 (Maneuver back) -->
+            <div class="card">
+                <div class="card-ghost">MANEUVER</div>
+                <div class="card-body"></div>
+                <div class="card-footer">
+                    <div class="card-type-label">MANEUVER</div>
+                    <div class="card-power">1</div>
+                </div>
+            </div>
+            <!-- Maneuver 2 (Maneuver back) -->
+            <div class="card">
+                <div class="card-ghost">MANEUVER</div>
+                <div class="card-body"></div>
+                <div class="card-footer">
+                    <div class="card-type-label">MANEUVER</div>
+                    <div class="card-power">2</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGE 11: Player 2 Cards (Page 3 of 3) -->
+    <div class="print-page">
+        <h2>Player 2 Cards (Page 3 of 3)</h2>
+        <p class="cut-instruction">CUT: 2.5" x 3.5"</p>
+        
+        <div class="card-grid">
+            <!-- Maneuver 3 (Maneuver back) -->
+            <div class="card">
+                <div class="card-ghost">MANEUVER</div>
+                <div class="card-body"></div>
+                <div class="card-footer">
+                    <div class="card-type-label">MANEUVER</div>
+                    <div class="card-power">3</div>
+                </div>
+            </div>
+            <!-- TRICK: Attack 5 (Maneuver back) -->
+            <div class="card">
+                <div class="trick-badge">TRICK!</div>
+                <div class="card-ghost">MANEUVER</div>
+                <div class="card-body"></div>
+                <div class="card-footer">
+                    <div class="card-type-label">ATTACK</div>
+                    <div class="card-power">5</div>
+                </div>
+            </div>
+            <!-- TRICK: Defense 4 (Maneuver back) -->
+            <div class="card">
+                <div class="trick-badge">TRICK!</div>
+                <div class="card-ghost">MANEUVER</div>
+                <div class="card-body"></div>
+                <div class="card-footer">
+                    <div class="card-type-label">DEFENSE</div>
+                    <div class="card-power">4</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGE 12: Player 2 Card Backs (Page 1 of 3) -->
+    <div class="print-page">
+        <h2>Player 2 Backs (Page 1 of 3)</h2>
+        <p class="cut-instruction">Print on back of Page 9</p>
+        
+        <div class="card-grid">
+            <div class="card-back"><div class="back-label">ATTACK</div></div>
+            <div class="card-back"><div class="back-label">ATTACK</div></div>
+            <div class="card-back"><div class="back-label">ATTACK</div></div>
+            <div class="card-back"><div class="back-label">ATTACK</div></div>
+            <div class="card-back"><div class="back-label">ATTACK</div></div>
+            <div class="card-back"><div class="back-label">DEFENSE</div></div>
+        </div>
+    </div>
+
+    <!-- PAGE 13: Player 2 Card Backs (Page 2 of 3) -->
+    <div class="print-page">
+        <h2>Player 2 Backs (Page 2 of 3)</h2>
+        <p class="cut-instruction">Print on back of Page 10</p>
+        
+        <div class="card-grid">
+            <div class="card-back"><div class="back-label">DEFENSE</div></div>
+            <div class="card-back"><div class="back-label">DEFENSE</div></div>
+            <div class="card-back"><div class="back-label">DEFENSE</div></div>
+            <div class="card-back"><div class="back-label">DEFENSE</div></div>
+            <div class="card-back"><div class="back-label">MANEUVER</div></div>
+            <div class="card-back"><div class="back-label">MANEUVER</div></div>
+        </div>
+    </div>
+
+    <!-- PAGE 14: Player 2 Card Backs (Page 3 of 3) -->
+    <div class="print-page">
+        <h2>Player 2 Backs (Page 3 of 3)</h2>
+        <p class="cut-instruction">Print on back of Page 11</p>
+        
+        <div class="card-grid">
+            <div class="card-back"><div class="back-label">MANEUVER</div></div>
+            <div class="card-back"><div class="back-label">MANEUVER</div></div>
+            <div class="card-back"><div class="back-label">MANEUVER</div></div>
+        </div>
+    </div>
+
+    <!-- PAGE 15: PLAYMAT -->
+    <div class="print-page playmat-page">
+        <h1 style="font-size: 24pt; margin-bottom: 10px;">BLADE &amp; HONOR</h1>
+        
+        <!-- Player 2 Side (top) -->
+        <div class="playmat-player">
+            <div class="playmat-label">PLAYER 2</div>
+            <div class="playmat-hp">
+                <span class="hp-label">HP:</span>
+                <span class="hp-circle">10</span>
+                <span class="hp-circle">9</span>
+                <span class="hp-circle">8</span>
+                <span class="hp-circle">7</span>
+                <span class="hp-circle">6</span>
+                <span class="hp-circle">5</span>
+                <span class="hp-circle">4</span>
+                <span class="hp-circle">3</span>
+                <span class="hp-circle">2</span>
+                <span class="hp-circle">1</span>
+            </div>
+            <div class="playmat-slots">
+                <div class="card-slot">
+                    <div class="slot-label">CLASH 1</div>
+                </div>
+                <div class="card-slot">
+                    <div class="slot-label">CLASH 2</div>
+                </div>
+                <div class="card-slot">
+                    <div class="slot-label">CLASH 3</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Center Guide -->
+        <div class="playmat-center">
+            <div class="beats-guide">
+                <span>ATTACK</span>
+                <span class="beats-arrow">→</span>
+                <span>MANEUVER</span>
+                <span class="beats-arrow">→</span>
+                <span>DEFENSE</span>
+                <span class="beats-arrow">→</span>
+                <span>ATTACK</span>
+            </div>
+        </div>
+
+        <!-- Player 1 Side (bottom) -->
+        <div class="playmat-player">
+            <div class="playmat-slots">
+                <div class="card-slot">
+                    <div class="slot-label">CLASH 1</div>
+                </div>
+                <div class="card-slot">
+                    <div class="slot-label">CLASH 2</div>
+                </div>
+                <div class="card-slot">
+                    <div class="slot-label">CLASH 3</div>
+                </div>
+            </div>
+            <div class="playmat-hp">
+                <span class="hp-label">HP:</span>
+                <span class="hp-circle">10</span>
+                <span class="hp-circle">9</span>
+                <span class="hp-circle">8</span>
+                <span class="hp-circle">7</span>
+                <span class="hp-circle">6</span>
+                <span class="hp-circle">5</span>
+                <span class="hp-circle">4</span>
+                <span class="hp-circle">3</span>
+                <span class="hp-circle">2</span>
+                <span class="hp-circle">1</span>
+            </div>
+            <div class="playmat-label">PLAYER 1</div>
+        </div>
+    </div>
+
+    <style>
+        .playmat-page {
+            display: flex;
+            flex-direction: column;
+            height: 10in;
+        }
+
+        .playmat-player {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .playmat-label {
+            font-size: 14pt;
+            font-weight: bold;
+            text-align: center;
+            letter-spacing: 4px;
+        }
+
+        .playmat-hp {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .hp-label {
+            font-size: 12pt;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .hp-circle {
+            width: 28px;
+            height: 28px;
+            border: 2px solid black;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11pt;
+            font-weight: bold;
+        }
+
+        .playmat-slots {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .card-slot {
+            width: 2.5in;
+            height: 3.5in;
+            border: 3px dashed #999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f9f9f9;
+        }
+
+        .slot-label {
+            font-size: 12pt;
+            color: #999;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        .playmat-center {
+            padding: 15px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .beats-guide {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12pt;
+            font-weight: bold;
+            border: 3px solid black;
+            padding: 10px 20px;
+            background: white;
+        }
+
+        .beats-arrow {
+            font-size: 14pt;
+        }
+    </style>
+
+</body>
+</html>

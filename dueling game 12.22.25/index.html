@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blade & Honor - Dueling Card Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+        }
+
+        .game-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            color: #ffd700;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+
+        /* Player Areas */
+        .player-area {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.05);
+        }
+
+        .player-area.opponent {
+            border: 2px solid #e74c3c;
+        }
+
+        .player-area.player {
+            border: 2px solid #3498db;
+        }
+
+        .player-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .player-name {
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+
+        .player-area.opponent .player-name { color: #e74c3c; }
+        .player-area.player .player-name { color: #3498db; }
+
+        /* Health Bar */
+        .health-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .health-bar {
+            width: 200px;
+            height: 25px;
+            background: #333;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid #555;
+        }
+
+        .health-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #e74c3c, #c0392b);
+            transition: width 0.5s ease;
+        }
+
+        .health-text {
+            font-weight: bold;
+            min-width: 60px;
+        }
+
+        .deck-count {
+            font-size: 0.85em;
+            color: #888;
+            margin-left: 15px;
+        }
+
+        /* Cards */
+        .hand {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            min-height: 180px;
+            align-items: center;
+        }
+
+        .card {
+            width: 120px;
+            height: 170px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        }
+
+        .card.selected {
+            transform: translateY(-15px);
+            box-shadow: 0 15px 40px rgba(255,215,0,0.5);
+            outline: 3px solid #ffd700;
+        }
+
+        /* Card Colors by Type */
+        .card.red, .card.attack {
+            background: linear-gradient(135deg, #c0392b 0%, #e74c3c 50%, #c0392b 100%);
+            border: 3px solid #a93226;
+        }
+
+        .card.blue, .card.defense {
+            background: linear-gradient(135deg, #2471a3 0%, #3498db 50%, #2471a3 100%);
+            border: 3px solid #1a5276;
+        }
+
+        .card.green, .card.tactics {
+            background: linear-gradient(135deg, #1e8449 0%, #27ae60 50%, #1e8449 100%);
+            border: 3px solid #145a32;
+        }
+
+        /* Card Back (opponent view) */
+        .card-back {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 10px;
+        }
+
+        .card-back .color-indicator {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .card-back .hint-text {
+            font-size: 0.75em;
+            text-align: center;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .card.red .hint-text { color: #ffcccc; }
+        .card.blue .hint-text { color: #cce5ff; }
+        .card.green .hint-text { color: #ccffcc; }
+
+        /* Card Front (player view) */
+        .card-front {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            padding: 8px;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .card-front .card-name {
+            font-size: 0.9em;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .card-front .card-icon {
+            font-size: 2em;
+            text-align: center;
+            margin: 5px 0;
+        }
+
+        .card-front .card-type {
+            font-size: 0.65em;
+            text-align: center;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        .card-front .card-effect {
+            font-size: 0.65em;
+            text-align: center;
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 5px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 5px;
+        }
+
+        .card-front .card-power {
+            font-size: 1.2em;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 5px;
+        }
+
+        .trick-badge {
+            position: absolute;
+            top: 3px;
+            right: 3px;
+            background: rgba(0,0,0,0.6);
+            color: #ffd700;
+            font-size: 0.5em;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .reveal-badge {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            right: 3px;
+            background: rgba(255,215,0,0.9);
+            color: #1a1a2e;
+            font-size: 0.5em;
+            padding: 2px 4px;
+            border-radius: 3px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        /* Battle Arena */
+        .battle-arena {
+            background: rgba(0,0,0,0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+            min-height: 250px;
+            border: 2px solid #444;
+        }
+
+        .arena-title {
+            font-size: 1.2em;
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+
+        .initiative-display {
+            padding: 10px 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 1em;
+        }
+
+        .initiative-display.player-leads {
+            background: rgba(231, 76, 60, 0.2);
+            border: 2px solid #e74c3c;
+            color: #e74c3c;
+        }
+
+        .initiative-display.opponent-leads {
+            background: rgba(46, 204, 113, 0.2);
+            border: 2px solid #2ecc71;
+            color: #2ecc71;
+        }
+
+        .played-cards {
+            display: flex;
+            justify-content: center;
+            gap: 50px;
+            align-items: center;
+            margin: 20px 0;
+        }
+
+        .played-card-slot {
+            width: 130px;
+            height: 180px;
+            border: 3px dashed #555;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+        }
+
+        .played-card-slot.has-card {
+            border: none;
+        }
+
+        .vs-symbol {
+            font-size: 2em;
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        .battle-result {
+            font-size: 1.5em;
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .battle-result.win { background: rgba(39, 174, 96, 0.3); color: #2ecc71; }
+        .battle-result.lose { background: rgba(231, 76, 60, 0.3); color: #e74c3c; }
+        .battle-result.draw { background: rgba(241, 196, 15, 0.3); color: #f1c40f; }
+
+        /* Controls */
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 5px;
+            transition: all 0.2s;
+            font-weight: bold;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ffd700, #ffaa00);
+            color: #1a1a2e;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(255,215,0,0.4);
+        }
+
+        .btn-primary:disabled {
+            background: #555;
+            color: #888;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: #444;
+            color: #e0e0e0;
+        }
+
+        .btn-secondary:hover {
+            background: #555;
+        }
+
+        /* Legend */
+        .legend {
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .legend h3 {
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+
+        .legend-items {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .legend-color {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+        }
+
+        .legend-color.red { background: #e74c3c; }
+        .legend-color.blue { background: #3498db; }
+        .legend-color.green { background: #27ae60; }
+
+        /* Game Log */
+        .game-log {
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .game-log h3 {
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+
+        .log-entry {
+            font-size: 0.85em;
+            padding: 3px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* Rules Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1a1a2e;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 2px solid #ffd700;
+        }
+
+        .modal-content h2 {
+            color: #ffd700;
+            margin-bottom: 20px;
+        }
+
+        .modal-content h4 {
+            color: #3498db;
+            margin: 15px 0 10px;
+        }
+
+        .modal-content p, .modal-content li {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+
+        .close-modal {
+            float: right;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #888;
+        }
+
+        .close-modal:hover {
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>⚔️ Blade & Honor ⚔️</h1>
+        <p class="subtitle">A Dueling Card Game of Steel and Strategy</p>
+
+        <!-- Opponent Area -->
+        <div class="player-area opponent">
+            <div class="player-header">
+                <span class="player-name">⚔️ Opponent</span>
+                <div class="health-container">
+                    <div class="health-bar">
+                        <div class="health-fill" id="opponent-health-bar" style="width: 100%"></div>
+                    </div>
+                    <span class="health-text" id="opponent-health">10/10</span>
+                    <span class="deck-count">Deck: <span id="opponent-deck-count">10</span></span>
+                </div>
+            </div>
+            <div class="hand" id="opponent-hand">
+                <!-- Opponent cards will show backs only -->
+            </div>
+        </div>
+
+        <!-- Battle Arena -->
+        <div class="battle-arena">
+            <div class="arena-title">⚔️ Battle Arena ⚔️</div>
+            <div class="initiative-display" id="initiative-display">⚔️ Determining initiative...</div>
+            <div class="played-cards">
+                <div class="played-card-slot" id="opponent-played">
+                    Waiting...
+                </div>
+                <div class="vs-symbol">VS</div>
+                <div class="played-card-slot" id="player-played">
+                    Select a card
+                </div>
+            </div>
+            <div class="battle-result" id="battle-result"></div>
+        </div>
+
+        <!-- Player Area -->
+        <div class="player-area player">
+            <div class="player-header">
+                <span class="player-name">🛡️ You</span>
+                <div class="health-container">
+                    <div class="health-bar">
+                        <div class="health-fill" id="player-health-bar" style="width: 100%"></div>
+                    </div>
+                    <span class="health-text" id="player-health">10/10</span>
+                    <span class="deck-count">Deck: <span id="player-deck-count">10</span></span>
+                </div>
+            </div>
+            <div class="hand" id="player-hand">
+                <!-- Player cards will show full details -->
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <button class="btn btn-primary" id="play-btn" disabled>Play Selected Card</button>
+            <button class="btn btn-secondary" id="rules-btn">How to Play</button>
+            <button class="btn btn-secondary" id="new-game-btn">New Game</button>
+        </div>
+
+        <!-- Legend -->
+        <div class="legend">
+            <h3>Card Types & Counters</h3>
+            <div class="legend-items">
+                <div class="legend-item">
+                    <div class="legend-color red"></div>
+                    <span><strong>ATTACK</strong> → Beats Tactics</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color blue"></div>
+                    <span><strong>DEFENSE</strong> → Beats Attack</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color green"></div>
+                    <span><strong>TACTICS</strong> → Beats Defense</span>
+                </div>
+            </div>
+            <p style="margin-top: 10px; font-size: 0.85em; color: #888; text-align: center;">
+                ⚠️ Beware! Some cards are TRICKS - their back doesn't match their true type!
+            </p>
+        </div>
+
+        <!-- Game Log -->
+        <div class="game-log">
+            <h3>Battle Log</h3>
+            <div id="log-entries"></div>
+        </div>
+    </div>
+
+    <!-- Rules Modal -->
+    <div class="modal" id="rules-modal">
+        <div class="modal-content">
+            <span class="close-modal" id="close-rules">&times;</span>
+            <h2>⚔️ How to Play Blade & Honor</h2>
+            
+            <h4>Overview</h4>
+            <p>Two duelists face off in a battle of wits and steel. Each round, both players simultaneously choose a card to play. The winner deals damage based on their card's power.</p>
+            
+            <h4>Card Types (Rock-Paper-Scissors)</h4>
+            <ul>
+                <li><strong style="color:#e74c3c">ATTACK</strong> - Strikes, Lunges, Thrusts. Overwhelms tactical maneuvers. <em>Beats TACTICS.</em></li>
+                <li><strong style="color:#3498db">DEFENSE</strong> - Parries, Blocks, Dodges. Turns aggression against the attacker. <em>Beats ATTACK.</em></li>
+                <li><strong style="color:#27ae60">TACTICS</strong> - Feints, Presses, Disarms. Outmaneuvers defensive stances. <em>Beats DEFENSE.</em></li>
+            </ul>
+            
+            <h4>Deck Composition (15 cards each)</h4>
+            <ul>
+                <li>5 cards with <strong style="color:#e74c3c">RED backs</strong> (Attack): 3 real Attacks + 1 secret Defense + 1 secret Tactics</li>
+                <li>5 cards with <strong style="color:#3498db">BLUE backs</strong> (Defense): 3 real Defenses + 1 secret Attack + 1 secret Tactics</li>
+                <li>5 cards with <strong style="color:#27ae60">GREEN backs</strong> (Tactics): 3 real Tactics + 1 secret Attack + 1 secret Defense</li>
+            </ul>
+            <p>Each card has a power from 1-5. Higher power = more damage!</p>
+            
+            <h4>Information & Bluffing</h4>
+            <p>You can see your own cards in full detail - the move name, effect, and power. But you can only see the <strong>back color</strong> of your opponent's cards. Beware - <strong>some cards are TRICKS</strong> where the back color doesn't match the real type!</p>
+            
+            <h4>Game Flow</h4>
+            <ul>
+                <li>Start with 5 cards in hand</li>
+                <li>Each turn: Play 1 card, then draw 1 card</li>
+                <li>Game continues until someone's HP reaches 0 or decks run out</li>
+            </ul>
+            
+            <h4>Combat Resolution</h4>
+            <ul>
+                <li><strong>Win:</strong> Your card type beats theirs → Deal your card's power as damage</li>
+                <li><strong>Lose:</strong> Their card type beats yours → Take their card's power as damage</li>
+                <li><strong>Draw:</strong> Same card type → Compare power. Higher power wins (reduced damage)</li>
+            </ul>
+            
+            <h4>Victory</h4>
+            <p>Reduce your opponent's health to 0 to win the duel!</p>
+        </div>
+    </div>
+
+    <script>
+        // Card definitions - each type has 5 cards (power 1-5)
+        // But 1 card in each type is secretly a different type (trick cards!)
+        const CARD_NAMES = {
+            attack: [
+                { name: "Jab", icon: "👊", effect: "A quick testing strike." },
+                { name: "Slash", icon: "⚔️", effect: "A swift diagonal cut." },
+                { name: "Thrust", icon: "🗡️", effect: "A direct piercing attack." },
+                { name: "Heavy Blow", icon: "💥", effect: "A powerful overhead swing." },
+                { name: "Lunge", icon: "⚡", effect: "A committed all-out strike." }
+            ],
+            defense: [
+                { name: "Sidestep", icon: "👟", effect: "A slight evasive movement." },
+                { name: "Block", icon: "🔰", effect: "A solid defensive guard." },
+                { name: "Parry", icon: "🛡️", effect: "Deflect and redirect." },
+                { name: "Dodge", icon: "💨", effect: "Evade the attack entirely." },
+                { name: "Riposte", icon: "↩️", effect: "Perfect parry and counter." }
+            ],
+            tactics: [
+                { name: "Read", icon: "👁️", effect: "Study the opponent's stance." },
+                { name: "Feint", icon: "🎭", effect: "A deceptive false attack." },
+                { name: "Press", icon: "🦶", effect: "Force them backwards." },
+                { name: "Bind", icon: "🔗", effect: "Control the blade engagement." },
+                { name: "Disarm", icon: "✋", effect: "Strip the weapon away." }
+            ]
+        };
+
+        // Build a deck of 15 cards
+        // 5 Attack (red back): 3 true attacks + 1 secret defense + 1 secret tactics
+        // 5 Defense (blue back): 3 true defenses + 1 secret attack + 1 secret tactics  
+        // 5 Tactics (green back): 3 true tactics + 1 secret attack + 1 secret defense
+        function buildDeck() {
+            const deck = [];
+            
+            // Attack cards (red backs) - powers 1-5
+            // 3 real attacks, 1 secret defense, 1 secret tactics
+            const attackPowers = shuffleArray([1, 2, 3, 4, 5]);
+            const attackTypes = shuffleArray(['attack', 'attack', 'attack', 'defense', 'tactics']);
+            for (let i = 0; i < 5; i++) {
+                const realType = attackTypes[i];
+                const power = attackPowers[i];
+                const cardInfo = CARD_NAMES[realType][power - 1];
+                deck.push({
+                    id: Math.random().toString(36).substr(2, 9),
+                    backColor: 'red',
+                    realType: realType,
+                    power: power,
+                    name: cardInfo.name,
+                    icon: cardInfo.icon,
+                    effect: cardInfo.effect,
+                    isTrick: realType !== 'attack'
+                });
+            }
+            
+            // Defense cards (blue backs) - powers 1-5
+            // 3 real defenses, 1 secret attack, 1 secret tactics
+            const defensePowers = shuffleArray([1, 2, 3, 4, 5]);
+            const defenseTypes = shuffleArray(['defense', 'defense', 'defense', 'attack', 'tactics']);
+            for (let i = 0; i < 5; i++) {
+                const realType = defenseTypes[i];
+                const power = defensePowers[i];
+                const cardInfo = CARD_NAMES[realType][power - 1];
+                deck.push({
+                    id: Math.random().toString(36).substr(2, 9),
+                    backColor: 'blue',
+                    realType: realType,
+                    power: power,
+                    name: cardInfo.name,
+                    icon: cardInfo.icon,
+                    effect: cardInfo.effect,
+                    isTrick: realType !== 'defense'
+                });
+            }
+            
+            // Tactics cards (green backs) - powers 1-5
+            // 3 real tactics, 1 secret attack, 1 secret defense
+            const tacticsPowers = shuffleArray([1, 2, 3, 4, 5]);
+            const tacticsTypes = shuffleArray(['tactics', 'tactics', 'tactics', 'attack', 'defense']);
+            for (let i = 0; i < 5; i++) {
+                const realType = tacticsTypes[i];
+                const power = tacticsPowers[i];
+                const cardInfo = CARD_NAMES[realType][power - 1];
+                deck.push({
+                    id: Math.random().toString(36).substr(2, 9),
+                    backColor: 'green',
+                    realType: realType,
+                    power: power,
+                    name: cardInfo.name,
+                    icon: cardInfo.icon,
+                    effect: cardInfo.effect,
+                    isTrick: realType !== 'tactics'
+                });
+            }
+            
+            return shuffleArray(deck);
+        }
+        
+        function shuffleArray(array) {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        // Game state
+        let gameState = {
+            playerHealth: 10,
+            opponentHealth: 10,
+            maxHealth: 10,
+            playerHand: [],
+            opponentHand: [],
+            playerDeck: [],
+            opponentDeck: [],
+            selectedCard: null,
+            gameOver: false,
+            phase: 'select', // 'select', 'respond', 'resolve'
+            leaderCard: null, // card played by the leader
+            lastLoser: null // 'player' or 'opponent' - for tie-breaking initiative
+        };
+
+        // DOM elements
+        const playerHandEl = document.getElementById('player-hand');
+        const opponentHandEl = document.getElementById('opponent-hand');
+        const playerPlayedEl = document.getElementById('player-played');
+        const opponentPlayedEl = document.getElementById('opponent-played');
+        const battleResultEl = document.getElementById('battle-result');
+        const playBtn = document.getElementById('play-btn');
+        const rulesBtn = document.getElementById('rules-btn');
+        const newGameBtn = document.getElementById('new-game-btn');
+        const rulesModal = document.getElementById('rules-modal');
+        const closeRules = document.getElementById('close-rules');
+        const logEntries = document.getElementById('log-entries');
+
+        // Initialize game
+        function initGame() {
+            gameState = {
+                playerHealth: 10,
+                opponentHealth: 10,
+                maxHealth: 10,
+                playerHand: [],
+                opponentHand: [],
+                playerDeck: buildDeck(),
+                opponentDeck: buildDeck(),
+                selectedCard: null,
+                gameOver: false
+            };
+
+            // Draw initial hands (5 cards each)
+            for (let i = 0; i < 5; i++) {
+                if (gameState.playerDeck.length > 0) {
+                    gameState.playerHand.push(gameState.playerDeck.pop());
+                }
+                if (gameState.opponentDeck.length > 0) {
+                    gameState.opponentHand.push(gameState.opponentDeck.pop());
+                }
+            }
+
+            updateHealthDisplay();
+            updateDeckDisplay();
+            renderHands();
+            clearArena();
+            logEntries.innerHTML = '';
+            addLog("⚔️ A new duel begins! En garde!");
+            updateInitiativeDisplay();
+        }
+
+        // Determine who has initiative (leads/reveals first)
+        function getLeader() {
+            if (gameState.playerHealth > gameState.opponentHealth) {
+                return 'player'; // Player ahead, must reveal first
+            } else if (gameState.opponentHealth > gameState.playerHealth) {
+                return 'opponent'; // Opponent ahead, must reveal first
+            } else {
+                // Tied HP - last loser leads (or player leads at start)
+                return gameState.lastLoser || 'player';
+            }
+        }
+
+        // Update initiative display
+        function updateInitiativeDisplay() {
+            const leader = getLeader();
+            const initiativeEl = document.getElementById('initiative-display');
+            if (leader === 'player') {
+                initiativeEl.innerHTML = '⚔️ <strong>You lead</strong> - You must reveal first!';
+                initiativeEl.className = 'initiative-display player-leads';
+            } else {
+                initiativeEl.innerHTML = '🛡️ <strong>Opponent leads</strong> - They reveal, then you respond!';
+                initiativeEl.className = 'initiative-display opponent-leads';
+            }
+        }
+
+        // Update deck count display
+        function updateDeckDisplay() {
+            document.getElementById('player-deck-count').textContent = gameState.playerDeck.length;
+            document.getElementById('opponent-deck-count').textContent = gameState.opponentDeck.length;
+        }
+
+        // Render hands
+        function renderHands() {
+            // Player hand (full info)
+            playerHandEl.innerHTML = '';
+            gameState.playerHand.forEach((card, index) => {
+                const cardEl = createCardElement(card, true, index);
+                playerHandEl.appendChild(cardEl);
+            });
+
+            // Opponent hand (backs only)
+            opponentHandEl.innerHTML = '';
+            gameState.opponentHand.forEach((card, index) => {
+                const cardEl = createCardElement(card, false, index);
+                opponentHandEl.appendChild(cardEl);
+            });
+        }
+
+        // Create card element
+        function createCardElement(card, showFront, index) {
+            const cardEl = document.createElement('div');
+            cardEl.className = `card ${showFront ? card.realType : card.backColor}`;
+            cardEl.dataset.index = index;
+
+            const typeLabels = {
+                attack: 'Attack',
+                defense: 'Defense', 
+                tactics: 'Tactics'
+            };
+
+            if (showFront) {
+                // Player view - full info (shows REAL type)
+                const trickBadge = card.isTrick ? `<div class="trick-badge">🎭 TRICK</div>` : '';
+                cardEl.innerHTML = `
+                    <div class="card-front">
+                        ${trickBadge}
+                        <div class="card-name">${card.name}</div>
+                        <div class="card-icon">${card.icon}</div>
+                        <div class="card-type">${typeLabels[card.realType]}</div>
+                        <div class="card-effect">${card.effect}</div>
+                        <div class="card-power">⚔️ ${card.power}</div>
+                    </div>
+                `;
+                if (index >= 0) {
+                    cardEl.addEventListener('click', () => selectCard(index));
+                }
+            } else {
+                // Opponent view - back color only (may not match real type!)
+                const colorHints = {
+                    red: { symbol: '🔥', text: 'Attack' },
+                    blue: { symbol: '🛡️', text: 'Defense' },
+                    green: { symbol: '🌿', text: 'Tactics' }
+                };
+                const hint = colorHints[card.backColor];
+                cardEl.innerHTML = `
+                    <div class="card-back">
+                        <div class="color-indicator">${hint.symbol}</div>
+                        <div class="hint-text">${hint.text}</div>
+                    </div>
+                `;
+            }
+
+            return cardEl;
+        }
+
+        // Create revealed card (shows both back color and real type)
+        function createRevealedCard(card) {
+            const cardEl = document.createElement('div');
+            cardEl.className = `card ${card.realType}`;
+            
+            const typeLabels = {
+                attack: 'Attack',
+                defense: 'Defense', 
+                tactics: 'Tactics'
+            };
+            
+            const backLabels = {
+                red: 'Attack',
+                blue: 'Defense',
+                green: 'Tactics'
+            };
+
+            const wasATrick = card.isTrick ? `<div class="reveal-badge">Was ${backLabels[card.backColor]} back!</div>` : '';
+            
+            cardEl.innerHTML = `
+                <div class="card-front">
+                    ${wasATrick}
+                    <div class="card-name">${card.name}</div>
+                    <div class="card-icon">${card.icon}</div>
+                    <div class="card-type">${typeLabels[card.realType]}</div>
+                    <div class="card-effect">${card.effect}</div>
+                    <div class="card-power">⚔️ ${card.power}</div>
+                </div>
+            `;
+            return cardEl;
+        }
+
+        // Select a card
+        function selectCard(index) {
+            if (gameState.gameOver) return;
+
+            // Remove previous selection
+            document.querySelectorAll('.player-area.player .card').forEach(c => c.classList.remove('selected'));
+
+            // Select new card
+            gameState.selectedCard = index;
+            document.querySelectorAll('.player-area.player .card')[index].classList.add('selected');
+            playBtn.disabled = false;
+        }
+
+        // Play the selected card
+        function playCard() {
+            if (gameState.selectedCard === null || gameState.gameOver) return;
+
+            const leader = getLeader();
+            const playerCard = gameState.playerHand[gameState.selectedCard];
+
+            if (leader === 'player') {
+                // Player leads - show player's card, then AI responds
+                playerPlayedEl.innerHTML = '';
+                playerPlayedEl.classList.add('has-card');
+                playerPlayedEl.appendChild(createRevealedCard(playerCard));
+                
+                addLog(`You commit to ${playerCard.name}...`);
+                
+                // AI sees the card and picks a response (smarter AI)
+                const opponentCardIndex = aiSelectCard(playerCard);
+                const opponentCard = gameState.opponentHand[opponentCardIndex];
+                
+                // Brief delay then show opponent's response
+                setTimeout(() => {
+                    opponentPlayedEl.innerHTML = '';
+                    opponentPlayedEl.classList.add('has-card');
+                    opponentPlayedEl.appendChild(createRevealedCard(opponentCard));
+                    
+                    resolveTurn(playerCard, opponentCard, opponentCardIndex);
+                }, 800);
+            } else {
+                // Opponent leads - AI commits first, player responds
+                const opponentCardIndex = Math.floor(Math.random() * gameState.opponentHand.length);
+                const opponentCard = gameState.opponentHand[opponentCardIndex];
+                
+                // Show opponent's committed card
+                opponentPlayedEl.innerHTML = '';
+                opponentPlayedEl.classList.add('has-card');
+                opponentPlayedEl.appendChild(createRevealedCard(opponentCard));
+                
+                addLog(`Opponent commits to ${opponentCard.name}!`);
+                
+                // Now show player's response
+                setTimeout(() => {
+                    playerPlayedEl.innerHTML = '';
+                    playerPlayedEl.classList.add('has-card');
+                    playerPlayedEl.appendChild(createRevealedCard(playerCard));
+                    
+                    resolveTurn(playerCard, opponentCard, opponentCardIndex);
+                }, 800);
+            }
+            
+            playBtn.disabled = true;
+        }
+
+        // AI card selection (can see leader's card when responding)
+        function aiSelectCard(leaderCard) {
+            // Find cards that beat the leader's type
+            const dominated = {
+                attack: 'defense',
+                defense: 'tactics',
+                tactics: 'attack'
+            };
+            const winningType = dominated[leaderCard.realType];
+            
+            // Look for a winning card
+            const winningCards = gameState.opponentHand
+                .map((c, i) => ({ card: c, index: i }))
+                .filter(x => x.card.realType === winningType);
+            
+            if (winningCards.length > 0) {
+                // Pick the lowest power winning card (save high cards)
+                winningCards.sort((a, b) => a.card.power - b.card.power);
+                return winningCards[0].index;
+            }
+            
+            // No winning card - try to match type with higher power
+            const matchingCards = gameState.opponentHand
+                .map((c, i) => ({ card: c, index: i }))
+                .filter(x => x.card.realType === leaderCard.realType && x.card.power > leaderCard.power);
+            
+            if (matchingCards.length > 0) {
+                return matchingCards[0].index;
+            }
+            
+            // Just pick randomly
+            return Math.floor(Math.random() * gameState.opponentHand.length);
+        }
+
+        // Resolve the turn after both cards are played
+        function resolveTurn(playerCard, opponentCard, opponentCardIndex) {
+            // Resolve combat using REAL types
+            const result = resolveCombat(playerCard, opponentCard);
+
+            // Track who lost for initiative tie-breaker
+            if (result.outcome === 'win') {
+                gameState.lastLoser = 'opponent';
+            } else if (result.outcome === 'lose') {
+                gameState.lastLoser = 'player';
+            }
+
+            // Update health
+            gameState.playerHealth = Math.max(0, gameState.playerHealth - result.playerDamage);
+            gameState.opponentHealth = Math.max(0, gameState.opponentHealth - result.opponentDamage);
+            updateHealthDisplay();
+
+            // Show result
+            displayResult(result, playerCard, opponentCard);
+
+            // Remove played cards from hands
+            gameState.playerHand.splice(gameState.selectedCard, 1);
+            gameState.opponentHand.splice(opponentCardIndex, 1);
+            gameState.selectedCard = null;
+
+            // Draw 1 new card each (if deck has cards)
+            if (gameState.playerDeck.length > 0) {
+                gameState.playerHand.push(gameState.playerDeck.pop());
+            }
+            if (gameState.opponentDeck.length > 0) {
+                gameState.opponentHand.push(gameState.opponentDeck.pop());
+            }
+
+            updateDeckDisplay();
+            renderHands();
+            updateInitiativeDisplay();
+
+            // Check for game over
+            checkGameOver();
+        }
+
+        // Resolve combat between two cards (uses REAL types)
+        function resolveCombat(playerCard, opponentCard) {
+            // Attack beats Tactics, Defense beats Attack, Tactics beats Defense
+            const beats = {
+                attack: 'tactics',
+                defense: 'attack',
+                tactics: 'defense'
+            };
+
+            let result = { outcome: 'draw', playerDamage: 0, opponentDamage: 0 };
+
+            if (playerCard.realType === opponentCard.realType) {
+                // Same type - compare power
+                if (playerCard.power > opponentCard.power) {
+                    result.outcome = 'win';
+                    result.opponentDamage = playerCard.power - opponentCard.power;
+                } else if (opponentCard.power > playerCard.power) {
+                    result.outcome = 'lose';
+                    result.playerDamage = opponentCard.power - playerCard.power;
+                } else {
+                    result.outcome = 'draw';
+                }
+            } else if (beats[playerCard.realType] === opponentCard.realType) {
+                // Player wins
+                result.outcome = 'win';
+                result.opponentDamage = playerCard.power;
+            } else {
+                // Opponent wins
+                result.outcome = 'lose';
+                result.playerDamage = opponentCard.power;
+            }
+
+            return result;
+        }
+
+        // Display battle result
+        function displayResult(result, playerCard, opponentCard) {
+            battleResultEl.className = 'battle-result ' + result.outcome;
+            
+            let text = '';
+            if (result.outcome === 'win') {
+                text = `Victory! Your ${playerCard.name} overcomes their ${opponentCard.name}! (${result.opponentDamage} damage)`;
+            } else if (result.outcome === 'lose') {
+                text = `Defeat! Their ${opponentCard.name} bests your ${playerCard.name}! (${result.playerDamage} damage)`;
+            } else {
+                text = `Clash! Both blades meet equally!`;
+            }
+            
+            battleResultEl.textContent = text;
+            addLog(text);
+        }
+
+        // Update health display
+        function updateHealthDisplay() {
+            document.getElementById('player-health').textContent = `${gameState.playerHealth}/${gameState.maxHealth}`;
+            document.getElementById('opponent-health').textContent = `${gameState.opponentHealth}/${gameState.maxHealth}`;
+            
+            document.getElementById('player-health-bar').style.width = `${(gameState.playerHealth / gameState.maxHealth) * 100}%`;
+            document.getElementById('opponent-health-bar').style.width = `${(gameState.opponentHealth / gameState.maxHealth) * 100}%`;
+        }
+
+        // Clear arena
+        function clearArena() {
+            playerPlayedEl.innerHTML = 'Select a card';
+            playerPlayedEl.classList.remove('has-card');
+            opponentPlayedEl.innerHTML = 'Waiting...';
+            opponentPlayedEl.classList.remove('has-card');
+            battleResultEl.textContent = '';
+            battleResultEl.className = 'battle-result';
+        }
+
+        // Check for game over
+        function checkGameOver() {
+            if (gameState.playerHealth <= 0) {
+                gameState.gameOver = true;
+                battleResultEl.className = 'battle-result lose';
+                battleResultEl.textContent = '☠️ You have been defeated! The duel is lost.';
+                addLog('☠️ DEFEAT - The opponent claims victory!');
+            } else if (gameState.opponentHealth <= 0) {
+                gameState.gameOver = true;
+                battleResultEl.className = 'battle-result win';
+                battleResultEl.textContent = '🏆 Victory is yours! You have won the duel!';
+                addLog('🏆 VICTORY - You are the champion!');
+            }
+        }
+
+        // Add log entry
+        function addLog(text) {
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.textContent = text;
+            logEntries.insertBefore(entry, logEntries.firstChild);
+        }
+
+        // Event listeners
+        playBtn.addEventListener('click', playCard);
+        newGameBtn.addEventListener('click', initGame);
+        rulesBtn.addEventListener('click', () => rulesModal.classList.add('active'));
+        closeRules.addEventListener('click', () => rulesModal.classList.remove('active'));
+        rulesModal.addEventListener('click', (e) => {
+            if (e.target === rulesModal) rulesModal.classList.remove('active');
+        });
+
+        // Start the game
+        initGame();
+    </script>
+</body>
+</html>

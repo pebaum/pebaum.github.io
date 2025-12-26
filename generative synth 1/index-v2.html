@@ -1,0 +1,2898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AMBIENT DRIFT v2</title>
+    <style>
+        @font-face {
+            font-family: 'IBM';
+            src: local('IBM Plex Mono'), local('Consolas'), local('Monaco');
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a0a;
+            color: #00ff00;
+            font-family: 'Courier New', 'IBM Plex Mono', monospace;
+            min-height: 100vh;
+            overflow-x: hidden;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .main-container {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            min-height: 100vh;
+        }
+
+        /* LEFT PANEL - Code Streams */
+        .viz-panel {
+            position: relative;
+            background: #050505;
+            border-right: 1px solid #1a1a1a;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            overflow: hidden;
+        }
+
+        .stream-column {
+            border-right: 1px solid #111;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .stream-column:last-child {
+            border-right: none;
+        }
+
+        .stream-header {
+            padding: 8px 6px;
+            background: #0a0a0a;
+            border-bottom: 1px solid #1a1a1a;
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #333;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .stream-header .inst-name {
+            color: #00ff00;
+            font-weight: bold;
+        }
+
+        .stream-content {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+            font-size: 9px;
+            line-height: 1.3;
+            padding: 4px;
+        }
+
+        .stream-log {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 4px;
+        }
+
+        .stream-entry {
+            padding: 2px 0;
+            opacity: 0.9;
+            animation: fadeIn 0.3s ease-out;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 0.9; transform: translateY(0); }
+        }
+
+        .stream-entry.note {
+            color: #00ffff;
+        }
+
+        .stream-entry.decision {
+            color: #00ff00;
+        }
+
+        .stream-entry.chord {
+            color: #ff00ff;
+        }
+
+        .stream-entry.effect {
+            color: #ffff00;
+        }
+
+        .stream-entry.silence {
+            color: #333;
+        }
+
+        .stream-entry .time {
+            color: #222;
+            margin-right: 4px;
+        }
+
+        .stream-entry .freq {
+            color: #444;
+            font-size: 8px;
+        }
+
+        /* Note visualization bar */
+        .note-bar {
+            height: 2px;
+            background: linear-gradient(90deg, #00ff00, transparent);
+            margin: 2px 0;
+            animation: noteDecay 3s ease-out forwards;
+        }
+
+        @keyframes noteDecay {
+            from { width: 100%; opacity: 1; }
+            to { width: 0%; opacity: 0; }
+        }
+
+        .stream-effects {
+            padding: 4px 6px;
+            background: #080808;
+            border-top: 1px solid #111;
+            font-size: 7px;
+        }
+
+        .fx-row {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-bottom: 2px;
+        }
+
+        .fx-row span {
+            color: #333;
+            width: 20px;
+        }
+
+        .fx-bar {
+            flex: 1;
+            height: 3px;
+            background: #111;
+        }
+
+        .fx-fill {
+            height: 100%;
+            background: #00ff00;
+            width: 0%;
+            transition: width 0.5s, background 0.5s;
+        }
+
+        /* Pan bar with center marker */
+        .pan-bar {
+            position: relative;
+            background: linear-gradient(to right, #111 0%, #222 50%, #111 100%);
+        }
+
+        .pan-bar::after {
+            content: '│';
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #333;
+            font-size: 6px;
+            line-height: 3px;
+        }
+
+        .pan-marker {
+            position: absolute;
+            width: 4px;
+            height: 100%;
+            background: #00ff00;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: left 0.8s ease-out;
+        }
+
+        /* Echo and Reverb specific colors */
+        .echo-fill {
+            background: #00aaff;
+        }
+        .reverb-fill {
+            background: #ff66aa;
+        }
+        
+        /* Additional effect colors */
+        .delay-time-fill { background: #0088cc; }
+        .delay-fb-fill { background: #00bbff; }
+        .reverb-decay-fill { background: #cc5588; }
+        .reverb-tone-fill { background: #ff88aa; }
+        .vib-depth-fill { background: #88ff88; }
+        .vib-speed-fill { background: #44cc44; }
+        .trm-depth-fill { background: #ffff88; }
+        .trm-speed-fill { background: #cccc44; }
+        
+        /* EQ bars - centered at middle, can go left (cut) or right (boost) */
+        .eq-bar {
+            position: relative;
+            background: linear-gradient(to right, #220000 0%, #111 50%, #002200 100%);
+        }
+        .eq-bar::after {
+            content: '│';
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #333;
+            font-size: 6px;
+            line-height: 3px;
+        }
+        .eq-marker {
+            position: absolute;
+            width: 4px;
+            height: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: left 0.8s ease-out;
+        }
+        .eq-low { background: #ff6644; }
+        .eq-mid { background: #ffcc44; }
+        .eq-high { background: #44ccff; }
+        
+        /* FX section header */
+        .fx-section-label {
+            color: #222;
+            font-size: 6px;
+            text-transform: uppercase;
+            margin: 3px 0 1px 0;
+            letter-spacing: 1px;
+        }
+
+        .stream-stats {
+            padding: 4px 6px;
+            background: #0a0a0a;
+            border-top: 1px solid #111;
+            font-size: 8px;
+            color: #333;
+            text-align: center;
+        }
+
+        .stream-stats span {
+            color: #00ff00;
+        }
+
+        .stream-stats span.off {
+            color: #ff3333;
+        }
+
+        /* Fade overlay at top */
+        .stream-column::before {
+            content: '';
+            position: absolute;
+            top: 28px;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: linear-gradient(to bottom, #050505, transparent);
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        /* RIGHT PANEL - Controls & Logs */
+        .control-panel {
+            background: #0a0a0a;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ASCII Header */
+        .ascii-header {
+            padding: 10px;
+            border-bottom: 1px solid #1a1a1a;
+            white-space: pre;
+            font-size: 8px;
+            color: #333;
+            text-align: center;
+            line-height: 1.1;
+        }
+
+        .ascii-header .highlight {
+            color: #00ff00;
+        }
+
+        /* Ticket Style Info */
+        .ticket {
+            border: 1px dashed #333;
+            margin: 8px;
+            padding: 8px;
+            background: #0d0d0d;
+        }
+
+        .ticket-header {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px dotted #222;
+            padding-bottom: 5px;
+            margin-bottom: 5px;
+        }
+
+        .ticket-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 2px 0;
+            color: #666;
+        }
+
+        .ticket-row .label {
+            color: #444;
+        }
+
+        .ticket-row .value {
+            color: #00ff00;
+            font-weight: bold;
+        }
+
+        .ticket-barcode {
+            text-align: center;
+            padding: 8px 0 4px 0;
+            letter-spacing: 2px;
+            color: #222;
+            font-size: 10px;
+        }
+
+        /* Controls */
+        .controls-section {
+            padding: 8px;
+            border-bottom: 1px solid #1a1a1a;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 4px;
+        }
+
+        button {
+            flex: 1;
+            background: #0a0a0a;
+            border: 1px solid #333;
+            color: #00ff00;
+            padding: 8px 4px;
+            font-family: inherit;
+            font-size: 10px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button:hover {
+            background: #111;
+            border-color: #00ff00;
+        }
+
+        button:disabled {
+            color: #333;
+            border-color: #1a1a1a;
+            cursor: not-allowed;
+        }
+
+        button.active {
+            background: #0a1a0a;
+            border-color: #00ff00;
+        }
+
+        button.recording {
+            background: #1a0a0a;
+            border-color: #ff0000;
+            color: #ff0000;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0.5; }
+        }
+
+        /* Log Panel */
+        .log-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .log-header {
+            padding: 6px 8px;
+            background: #0d0d0d;
+            border-bottom: 1px solid #1a1a1a;
+            color: #444;
+            font-size: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .log-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 4px 8px;
+            font-size: 9px;
+            background: #080808;
+        }
+
+        .log-entry {
+            padding: 2px 0;
+            border-bottom: 1px dotted #111;
+            display: flex;
+            gap: 8px;
+        }
+
+        .log-time {
+            color: #333;
+            min-width: 50px;
+        }
+
+        .log-type {
+            min-width: 60px;
+        }
+
+        .log-type.note { color: #00ffff; }
+        .log-type.chord { color: #ff00ff; }
+        .log-type.effect { color: #ffff00; }
+        .log-type.system { color: #666; }
+        .log-type.decision { color: #00ff00; }
+        .log-type.weather { color: #446688; }
+
+        .log-msg {
+            color: #444;
+            flex: 1;
+        }
+
+        /* Weather Display (per-channel) */
+        .channel-weather {
+            padding: 4px 6px;
+            border-top: 1px solid #1a1a1a;
+            background: #080808;
+        }
+        
+        .channel-weather .wx-header {
+            font-size: 7px;
+            color: #335;
+            margin-bottom: 3px;
+            letter-spacing: 1px;
+        }
+        
+        .weather-display {
+            padding: 8px;
+            border-top: 1px solid #1a1a1a;
+            background: #080808;
+        }
+        
+        .weather-header {
+            font-size: 9px;
+            color: #446;
+            margin-bottom: 6px;
+            letter-spacing: 1px;
+        }
+        
+        .weather-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        
+        .weather-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 7px;
+        }
+        
+        .wx-label {
+            color: #335;
+            width: 45px;
+            text-transform: lowercase;
+        }
+        
+        .wx-bar {
+            flex: 1;
+            height: 3px;
+            background: #111;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .wx-bar::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            background: linear-gradient(90deg, #224, #448);
+            width: var(--wx-level, 50%);
+            transition: width 2s ease-out;
+        }
+
+        /* Effects Bar */
+        .effects-bar {
+            padding: 8px;
+            border-top: 1px solid #1a1a1a;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+            font-size: 9px;
+        }
+
+        .effect-item {
+            text-align: center;
+        }
+
+        .effect-label {
+            color: #333;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        .effect-bar {
+            height: 4px;
+            background: #111;
+            position: relative;
+        }
+
+        .effect-fill {
+            height: 100%;
+            background: #00ff00;
+            transition: width 0.5s;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0a0a0a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #222;
+        }
+
+        /* Hidden file input */
+        #loadFile {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Left: Instrument Code Streams -->
+        <div class="viz-panel">
+            <div class="stream-column" id="stream-cello">
+                <div class="stream-header" title="Deep, warm tones in bass-mid register. Sine wave."><span class="inst-name">CELLO</span></div>
+                <div class="stream-content"><div class="stream-log"></div></div>
+                <div class="stream-effects">
+                    <div class="fx-section-label">─ vibrato ─</div>
+                    <div class="fx-row"><span>DPT</span><div class="fx-bar"><div class="fx-fill vib-depth-fill" id="cello-vib-depth"></div></div></div>
+                    <div class="fx-row"><span>AMT</span><div class="fx-bar"><div class="fx-fill" id="cello-vib"></div></div></div>
+                    <div class="fx-row"><span>SPD</span><div class="fx-bar"><div class="fx-fill vib-speed-fill" id="cello-vib-speed"></div></div></div>
+                    <div class="fx-section-label">─ tremolo ─</div>
+                    <div class="fx-row"><span>DPT</span><div class="fx-bar"><div class="fx-fill trm-depth-fill" id="cello-trm-depth"></div></div></div>
+                    <div class="fx-row"><span>AMT</span><div class="fx-bar"><div class="fx-fill" id="cello-trm"></div></div></div>
+                    <div class="fx-row"><span>SPD</span><div class="fx-bar"><div class="fx-fill trm-speed-fill" id="cello-trm-speed"></div></div></div>
+                    <div class="fx-section-label">─ delay ─</div>
+                    <div class="fx-row"><span>TIM</span><div class="fx-bar"><div class="fx-fill delay-time-fill" id="cello-delay-time"></div></div></div>
+                    <div class="fx-row"><span>MIX</span><div class="fx-bar"><div class="fx-fill echo-fill" id="cello-echo"></div></div></div>
+                    <div class="fx-row"><span>FBK</span><div class="fx-bar"><div class="fx-fill delay-fb-fill" id="cello-delay-fb"></div></div></div>
+                    <div class="fx-section-label">─ reverb ─</div>
+                    <div class="fx-row"><span>MIX</span><div class="fx-bar"><div class="fx-fill reverb-fill" id="cello-reverb"></div></div></div>
+                    <div class="fx-row"><span>DEC</span><div class="fx-bar"><div class="fx-fill reverb-decay-fill" id="cello-reverb-decay"></div></div></div>
+                    <div class="fx-row"><span>TON</span><div class="fx-bar"><div class="fx-fill reverb-tone-fill" id="cello-reverb-tone"></div></div></div>
+                    <div class="fx-section-label">─ eq ─</div>
+                    <div class="fx-row"><span>LOW</span><div class="fx-bar eq-bar"><div class="eq-marker eq-low" id="cello-eq-low"></div></div></div>
+                    <div class="fx-row"><span>MID</span><div class="fx-bar eq-bar"><div class="eq-marker eq-mid" id="cello-eq-mid"></div></div></div>
+                    <div class="fx-row"><span>HI</span><div class="fx-bar eq-bar"><div class="eq-marker eq-high" id="cello-eq-high"></div></div></div>
+                    <div class="fx-section-label">─ pan ─</div>
+                    <div class="fx-row"><span>L/R</span><div class="fx-bar pan-bar"><div class="pan-marker" id="cello-pan"></div></div></div>
+                </div>
+                <div class="channel-weather">
+                    <div class="wx-header">☁ WEATHER</div>
+                    <div class="weather-grid">
+                        <div class="weather-item"><span class="wx-label">presence</span><span class="wx-bar" id="cello-wx-presence"></span></div>
+                        <div class="weather-item"><span class="wx-label">density</span><span class="wx-bar" id="cello-wx-density"></span></div>
+                        <div class="weather-item"><span class="wx-label">intimacy</span><span class="wx-bar" id="cello-wx-intimacy"></span></div>
+                        <div class="weather-item"><span class="wx-label">breath</span><span class="wx-bar" id="cello-wx-breath"></span></div>
+                        <div class="weather-item"><span class="wx-label">decay</span><span class="wx-bar" id="cello-wx-decay"></span></div>
+                        <div class="weather-item"><span class="wx-label">drift</span><span class="wx-bar" id="cello-wx-drift"></span></div>
+                        <div class="weather-item"><span class="wx-label">depth</span><span class="wx-bar" id="cello-wx-depth"></span></div>
+                        <div class="weather-item"><span class="wx-label">suspension</span><span class="wx-bar" id="cello-wx-suspension"></span></div>
+                        <div class="weather-item"><span class="wx-label">solitude</span><span class="wx-bar" id="cello-wx-solitude"></span></div>
+                        <div class="weather-item"><span class="wx-label">memory</span><span class="wx-bar" id="cello-wx-memory"></span></div>
+                    </div>
+                </div>
+                <div class="stream-stats"><span id="cello-count">0</span>n | <span id="cello-mode">──</span></div>
+            </div>
+            <div class="stream-column" id="stream-celeste">
+                <div class="stream-header" title="Bell-like, crystalline tones in high register. Triangle wave."><span class="inst-name">CELESTE</span></div>
+                <div class="stream-content"><div class="stream-log"></div></div>
+                <div class="stream-effects">
+                    <div class="fx-section-label">─ vibrato ─</div>
+                    <div class="fx-row"><span>DPT</span><div class="fx-bar"><div class="fx-fill vib-depth-fill" id="celeste-vib-depth"></div></div></div>
+                    <div class="fx-row"><span>AMT</span><div class="fx-bar"><div class="fx-fill" id="celeste-vib"></div></div></div>
+                    <div class="fx-row"><span>SPD</span><div class="fx-bar"><div class="fx-fill vib-speed-fill" id="celeste-vib-speed"></div></div></div>
+                    <div class="fx-section-label">─ tremolo ─</div>
+                    <div class="fx-row"><span>DPT</span><div class="fx-bar"><div class="fx-fill trm-depth-fill" id="celeste-trm-depth"></div></div></div>
+                    <div class="fx-row"><span>AMT</span><div class="fx-bar"><div class="fx-fill" id="celeste-trm"></div></div></div>
+                    <div class="fx-row"><span>SPD</span><div class="fx-bar"><div class="fx-fill trm-speed-fill" id="celeste-trm-speed"></div></div></div>
+                    <div class="fx-section-label">─ delay ─</div>
+                    <div class="fx-row"><span>TIM</span><div class="fx-bar"><div class="fx-fill delay-time-fill" id="celeste-delay-time"></div></div></div>
+                    <div class="fx-row"><span>MIX</span><div class="fx-bar"><div class="fx-fill echo-fill" id="celeste-echo"></div></div></div>
+                    <div class="fx-row"><span>FBK</span><div class="fx-bar"><div class="fx-fill delay-fb-fill" id="celeste-delay-fb"></div></div></div>
+                    <div class="fx-section-label">─ reverb ─</div>
+                    <div class="fx-row"><span>MIX</span><div class="fx-bar"><div class="fx-fill reverb-fill" id="celeste-reverb"></div></div></div>
+                    <div class="fx-row"><span>DEC</span><div class="fx-bar"><div class="fx-fill reverb-decay-fill" id="celeste-reverb-decay"></div></div></div>
+                    <div class="fx-row"><span>TON</span><div class="fx-bar"><div class="fx-fill reverb-tone-fill" id="celeste-reverb-tone"></div></div></div>
+                    <div class="fx-section-label">─ eq ─</div>
+                    <div class="fx-row"><span>LOW</span><div class="fx-bar eq-bar"><div class="eq-marker eq-low" id="celeste-eq-low"></div></div></div>
+                    <div class="fx-row"><span>MID</span><div class="fx-bar eq-bar"><div class="eq-marker eq-mid" id="celeste-eq-mid"></div></div></div>
+                    <div class="fx-row"><span>HI</span><div class="fx-bar eq-bar"><div class="eq-marker eq-high" id="celeste-eq-high"></div></div></div>
+                    <div class="fx-section-label">─ pan ─</div>
+                    <div class="fx-row"><span>L/R</span><div class="fx-bar pan-bar"><div class="pan-marker" id="celeste-pan"></div></div></div>
+                </div>
+                <div class="channel-weather">
+                    <div class="wx-header">☁ WEATHER</div>
+                    <div class="weather-grid">
+                        <div class="weather-item"><span class="wx-label">presence</span><span class="wx-bar" id="celeste-wx-presence"></span></div>
+                        <div class="weather-item"><span class="wx-label">density</span><span class="wx-bar" id="celeste-wx-density"></span></div>
+                        <div class="weather-item"><span class="wx-label">intimacy</span><span class="wx-bar" id="celeste-wx-intimacy"></span></div>
+                        <div class="weather-item"><span class="wx-label">breath</span><span class="wx-bar" id="celeste-wx-breath"></span></div>
+                        <div class="weather-item"><span class="wx-label">decay</span><span class="wx-bar" id="celeste-wx-decay"></span></div>
+                        <div class="weather-item"><span class="wx-label">drift</span><span class="wx-bar" id="celeste-wx-drift"></span></div>
+                        <div class="weather-item"><span class="wx-label">depth</span><span class="wx-bar" id="celeste-wx-depth"></span></div>
+                        <div class="weather-item"><span class="wx-label">suspension</span><span class="wx-bar" id="celeste-wx-suspension"></span></div>
+                        <div class="weather-item"><span class="wx-label">solitude</span><span class="wx-bar" id="celeste-wx-solitude"></span></div>
+                        <div class="weather-item"><span class="wx-label">memory</span><span class="wx-bar" id="celeste-wx-memory"></span></div>
+                    </div>
+                </div>
+                <div class="stream-stats"><span id="celeste-count">0</span>n | <span id="celeste-mode">──</span></div>
+            </div>
+            <div class="stream-column" id="stream-harp">
+                <div class="stream-header" title="Wide range, plucked character. Sine wave with quick decay."><span class="inst-name">HARP</span></div>
+                <div class="stream-content"><div class="stream-log"></div></div>
+                <div class="stream-effects">
+                    <div class="fx-section-label">─ vibrato ─</div>
+                    <div class="fx-row"><span>DPT</span><div class="fx-bar"><div class="fx-fill vib-depth-fill" id="harp-vib-depth"></div></div></div>
+                    <div class="fx-row"><span>AMT</span><div class="fx-bar"><div class="fx-fill" id="harp-vib"></div></div></div>
+                    <div class="fx-row"><span>SPD</span><div class="fx-bar"><div class="fx-fill vib-speed-fill" id="harp-vib-speed"></div></div></div>
+                    <div class="fx-section-label">─ tremolo ─</div>
+                    <div class="fx-row"><span>DPT</span><div class="fx-bar"><div class="fx-fill trm-depth-fill" id="harp-trm-depth"></div></div></div>
+                    <div class="fx-row"><span>AMT</span><div class="fx-bar"><div class="fx-fill" id="harp-trm"></div></div></div>
+                    <div class="fx-row"><span>SPD</span><div class="fx-bar"><div class="fx-fill trm-speed-fill" id="harp-trm-speed"></div></div></div>
+                    <div class="fx-section-label">─ delay ─</div>
+                    <div class="fx-row"><span>TIM</span><div class="fx-bar"><div class="fx-fill delay-time-fill" id="harp-delay-time"></div></div></div>
+                    <div class="fx-row"><span>MIX</span><div class="fx-bar"><div class="fx-fill echo-fill" id="harp-echo"></div></div></div>
+                    <div class="fx-row"><span>FBK</span><div class="fx-bar"><div class="fx-fill delay-fb-fill" id="harp-delay-fb"></div></div></div>
+                    <div class="fx-section-label">─ reverb ─</div>
+                    <div class="fx-row"><span>MIX</span><div class="fx-bar"><div class="fx-fill reverb-fill" id="harp-reverb"></div></div></div>
+                    <div class="fx-row"><span>DEC</span><div class="fx-bar"><div class="fx-fill reverb-decay-fill" id="harp-reverb-decay"></div></div></div>
+                    <div class="fx-row"><span>TON</span><div class="fx-bar"><div class="fx-fill reverb-tone-fill" id="harp-reverb-tone"></div></div></div>
+                    <div class="fx-section-label">─ eq ─</div>
+                    <div class="fx-row"><span>LOW</span><div class="fx-bar eq-bar"><div class="eq-marker eq-low" id="harp-eq-low"></div></div></div>
+                    <div class="fx-row"><span>MID</span><div class="fx-bar eq-bar"><div class="eq-marker eq-mid" id="harp-eq-mid"></div></div></div>
+                    <div class="fx-row"><span>HI</span><div class="fx-bar eq-bar"><div class="eq-marker eq-high" id="harp-eq-high"></div></div></div>
+                    <div class="fx-section-label">─ pan ─</div>
+                    <div class="fx-row"><span>L/R</span><div class="fx-bar pan-bar"><div class="pan-marker" id="harp-pan"></div></div></div>
+                </div>
+                <div class="channel-weather">
+                    <div class="wx-header">☁ WEATHER</div>
+                    <div class="weather-grid">
+                        <div class="weather-item"><span class="wx-label">presence</span><span class="wx-bar" id="harp-wx-presence"></span></div>
+                        <div class="weather-item"><span class="wx-label">density</span><span class="wx-bar" id="harp-wx-density"></span></div>
+                        <div class="weather-item"><span class="wx-label">intimacy</span><span class="wx-bar" id="harp-wx-intimacy"></span></div>
+                        <div class="weather-item"><span class="wx-label">breath</span><span class="wx-bar" id="harp-wx-breath"></span></div>
+                        <div class="weather-item"><span class="wx-label">decay</span><span class="wx-bar" id="harp-wx-decay"></span></div>
+                        <div class="weather-item"><span class="wx-label">drift</span><span class="wx-bar" id="harp-wx-drift"></span></div>
+                        <div class="weather-item"><span class="wx-label">depth</span><span class="wx-bar" id="harp-wx-depth"></span></div>
+                        <div class="weather-item"><span class="wx-label">suspension</span><span class="wx-bar" id="harp-wx-suspension"></span></div>
+                        <div class="weather-item"><span class="wx-label">solitude</span><span class="wx-bar" id="harp-wx-solitude"></span></div>
+                        <div class="weather-item"><span class="wx-label">memory</span><span class="wx-bar" id="harp-wx-memory"></span></div>
+                    </div>
+                </div>
+                <div class="stream-stats"><span id="harp-count">0</span>n | <span id="harp-mode">──</span></div>
+            </div>
+            <div class="stream-column" id="stream-rhodes">
+                <div class="stream-header" title="Warm electric piano tones, mid-register. Sine with tremolo."><span class="inst-name">RHODES</span></div>
+                <div class="stream-content"><div class="stream-log"></div></div>
+                <div class="stream-effects">
+                    <div class="fx-section-label">─ vibrato ─</div>
+                    <div class="fx-row"><span>DPT</span><div class="fx-bar"><div class="fx-fill vib-depth-fill" id="rhodes-vib-depth"></div></div></div>
+                    <div class="fx-row"><span>AMT</span><div class="fx-bar"><div class="fx-fill" id="rhodes-vib"></div></div></div>
+                    <div class="fx-row"><span>SPD</span><div class="fx-bar"><div class="fx-fill vib-speed-fill" id="rhodes-vib-speed"></div></div></div>
+                    <div class="fx-section-label">─ tremolo ─</div>
+                    <div class="fx-row"><span>DPT</span><div class="fx-bar"><div class="fx-fill trm-depth-fill" id="rhodes-trm-depth"></div></div></div>
+                    <div class="fx-row"><span>AMT</span><div class="fx-bar"><div class="fx-fill" id="rhodes-trm"></div></div></div>
+                    <div class="fx-row"><span>SPD</span><div class="fx-bar"><div class="fx-fill trm-speed-fill" id="rhodes-trm-speed"></div></div></div>
+                    <div class="fx-section-label">─ delay ─</div>
+                    <div class="fx-row"><span>TIM</span><div class="fx-bar"><div class="fx-fill delay-time-fill" id="rhodes-delay-time"></div></div></div>
+                    <div class="fx-row"><span>MIX</span><div class="fx-bar"><div class="fx-fill echo-fill" id="rhodes-echo"></div></div></div>
+                    <div class="fx-row"><span>FBK</span><div class="fx-bar"><div class="fx-fill delay-fb-fill" id="rhodes-delay-fb"></div></div></div>
+                    <div class="fx-section-label">─ reverb ─</div>
+                    <div class="fx-row"><span>MIX</span><div class="fx-bar"><div class="fx-fill reverb-fill" id="rhodes-reverb"></div></div></div>
+                    <div class="fx-row"><span>DEC</span><div class="fx-bar"><div class="fx-fill reverb-decay-fill" id="rhodes-reverb-decay"></div></div></div>
+                    <div class="fx-row"><span>TON</span><div class="fx-bar"><div class="fx-fill reverb-tone-fill" id="rhodes-reverb-tone"></div></div></div>
+                    <div class="fx-section-label">─ eq ─</div>
+                    <div class="fx-row"><span>LOW</span><div class="fx-bar eq-bar"><div class="eq-marker eq-low" id="rhodes-eq-low"></div></div></div>
+                    <div class="fx-row"><span>MID</span><div class="fx-bar eq-bar"><div class="eq-marker eq-mid" id="rhodes-eq-mid"></div></div></div>
+                    <div class="fx-row"><span>HI</span><div class="fx-bar eq-bar"><div class="eq-marker eq-high" id="rhodes-eq-high"></div></div></div>
+                    <div class="fx-section-label">─ pan ─</div>
+                    <div class="fx-row"><span>L/R</span><div class="fx-bar pan-bar"><div class="pan-marker" id="rhodes-pan"></div></div></div>
+                </div>
+                <div class="channel-weather">
+                    <div class="wx-header">☁ WEATHER</div>
+                    <div class="weather-grid">
+                        <div class="weather-item"><span class="wx-label">presence</span><span class="wx-bar" id="rhodes-wx-presence"></span></div>
+                        <div class="weather-item"><span class="wx-label">density</span><span class="wx-bar" id="rhodes-wx-density"></span></div>
+                        <div class="weather-item"><span class="wx-label">intimacy</span><span class="wx-bar" id="rhodes-wx-intimacy"></span></div>
+                        <div class="weather-item"><span class="wx-label">breath</span><span class="wx-bar" id="rhodes-wx-breath"></span></div>
+                        <div class="weather-item"><span class="wx-label">decay</span><span class="wx-bar" id="rhodes-wx-decay"></span></div>
+                        <div class="weather-item"><span class="wx-label">drift</span><span class="wx-bar" id="rhodes-wx-drift"></span></div>
+                        <div class="weather-item"><span class="wx-label">depth</span><span class="wx-bar" id="rhodes-wx-depth"></span></div>
+                        <div class="weather-item"><span class="wx-label">suspension</span><span class="wx-bar" id="rhodes-wx-suspension"></span></div>
+                        <div class="weather-item"><span class="wx-label">solitude</span><span class="wx-bar" id="rhodes-wx-solitude"></span></div>
+                        <div class="weather-item"><span class="wx-label">memory</span><span class="wx-bar" id="rhodes-wx-memory"></span></div>
+                    </div>
+                </div>
+                <div class="stream-stats"><span id="rhodes-count">0</span>n | <span id="rhodes-mode">──</span></div>
+            </div>
+            <div class="stream-column" id="stream-vibes">
+                <div class="stream-header" title="Metallic, mallet-struck tones. Triangle wave with motor vibrato."><span class="inst-name">VIBES</span></div>
+                <div class="stream-content"><div class="stream-log"></div></div>
+                <div class="stream-effects">
+                    <div class="fx-section-label">─ vibrato ─</div>
+                    <div class="fx-row"><span>DPT</span><div class="fx-bar"><div class="fx-fill vib-depth-fill" id="vibes-vib-depth"></div></div></div>
+                    <div class="fx-row"><span>AMT</span><div class="fx-bar"><div class="fx-fill" id="vibes-vib"></div></div></div>
+                    <div class="fx-row"><span>SPD</span><div class="fx-bar"><div class="fx-fill vib-speed-fill" id="vibes-vib-speed"></div></div></div>
+                    <div class="fx-section-label">─ tremolo ─</div>
+                    <div class="fx-row"><span>DPT</span><div class="fx-bar"><div class="fx-fill trm-depth-fill" id="vibes-trm-depth"></div></div></div>
+                    <div class="fx-row"><span>AMT</span><div class="fx-bar"><div class="fx-fill" id="vibes-trm"></div></div></div>
+                    <div class="fx-row"><span>SPD</span><div class="fx-bar"><div class="fx-fill trm-speed-fill" id="vibes-trm-speed"></div></div></div>
+                    <div class="fx-section-label">─ delay ─</div>
+                    <div class="fx-row"><span>TIM</span><div class="fx-bar"><div class="fx-fill delay-time-fill" id="vibes-delay-time"></div></div></div>
+                    <div class="fx-row"><span>MIX</span><div class="fx-bar"><div class="fx-fill echo-fill" id="vibes-echo"></div></div></div>
+                    <div class="fx-row"><span>FBK</span><div class="fx-bar"><div class="fx-fill delay-fb-fill" id="vibes-delay-fb"></div></div></div>
+                    <div class="fx-section-label">─ reverb ─</div>
+                    <div class="fx-row"><span>MIX</span><div class="fx-bar"><div class="fx-fill reverb-fill" id="vibes-reverb"></div></div></div>
+                    <div class="fx-row"><span>DEC</span><div class="fx-bar"><div class="fx-fill reverb-decay-fill" id="vibes-reverb-decay"></div></div></div>
+                    <div class="fx-row"><span>TON</span><div class="fx-bar"><div class="fx-fill reverb-tone-fill" id="vibes-reverb-tone"></div></div></div>
+                    <div class="fx-section-label">─ eq ─</div>
+                    <div class="fx-row"><span>LOW</span><div class="fx-bar eq-bar"><div class="eq-marker eq-low" id="vibes-eq-low"></div></div></div>
+                    <div class="fx-row"><span>MID</span><div class="fx-bar eq-bar"><div class="eq-marker eq-mid" id="vibes-eq-mid"></div></div></div>
+                    <div class="fx-row"><span>HI</span><div class="fx-bar eq-bar"><div class="eq-marker eq-high" id="vibes-eq-high"></div></div></div>
+                    <div class="fx-section-label">─ pan ─</div>
+                    <div class="fx-row"><span>L/R</span><div class="fx-bar pan-bar"><div class="pan-marker" id="vibes-pan"></div></div></div>
+                </div>
+                <div class="channel-weather">
+                    <div class="wx-header">☁ WEATHER</div>
+                    <div class="weather-grid">
+                        <div class="weather-item"><span class="wx-label">presence</span><span class="wx-bar" id="vibes-wx-presence"></span></div>
+                        <div class="weather-item"><span class="wx-label">density</span><span class="wx-bar" id="vibes-wx-density"></span></div>
+                        <div class="weather-item"><span class="wx-label">intimacy</span><span class="wx-bar" id="vibes-wx-intimacy"></span></div>
+                        <div class="weather-item"><span class="wx-label">breath</span><span class="wx-bar" id="vibes-wx-breath"></span></div>
+                        <div class="weather-item"><span class="wx-label">decay</span><span class="wx-bar" id="vibes-wx-decay"></span></div>
+                        <div class="weather-item"><span class="wx-label">drift</span><span class="wx-bar" id="vibes-wx-drift"></span></div>
+                        <div class="weather-item"><span class="wx-label">depth</span><span class="wx-bar" id="vibes-wx-depth"></span></div>
+                        <div class="weather-item"><span class="wx-label">suspension</span><span class="wx-bar" id="vibes-wx-suspension"></span></div>
+                        <div class="weather-item"><span class="wx-label">solitude</span><span class="wx-bar" id="vibes-wx-solitude"></span></div>
+                        <div class="weather-item"><span class="wx-label">memory</span><span class="wx-bar" id="vibes-wx-memory"></span></div>
+                    </div>
+                </div>
+                <div class="stream-stats"><span id="vibes-count">0</span>n | <span id="vibes-mode">──</span></div>
+            </div>
+        </div>
+
+        <!-- Right: Controls & Logs -->
+        <div class="control-panel">
+            <!-- ASCII Art Header -->
+            <div class="ascii-header">
+<span class="highlight">╔═══════════════════════════════════════╗
+║</span>  ▄▀█ █▀▄▀█ █▄▄ █ █▀▀ █▄░█ ▀█▀  <span class="highlight">║
+║</span>  █▀█ █░▀░█ █▄█ █ ██▄ █░▀█ ░█░  <span class="highlight">║
+║</span>      ░█▀▄ █▀█ █ █▀▀ ▀█▀       <span class="highlight">║
+║</span>      ░█▄▀ █▀▄ █ █▀░ ░█░       <span class="highlight">║
+╚═══════════════════════════════════════╝</span>
+            </div>
+
+            <!-- Ticket-style Info -->
+            <div class="ticket">
+                <div class="ticket-header">
+                    <span>COMPOSITION DATA</span>
+                    <span id="ticketId" title="Unique session identifier">────────</span>
+                </div>
+                <div class="ticket-row" title="The tonal center - all notes relate to this pitch">
+                    <span class="label">ROOT/</span>
+                    <span class="value" id="rootDisplay">──</span>
+                </div>
+                <div class="ticket-row" title="The scale being used - determines available notes and harmonic color">
+                    <span class="label">MODE/</span>
+                    <span class="value" id="modeDisplay">──────</span>
+                </div>
+                <div class="ticket-row" title="Current chord - built from scale degrees, changes every 25-40 seconds">
+                    <span class="label">CHORD/</span>
+                    <span class="value" id="chordDisplay">──────</span>
+                </div>
+                <div class="ticket-row" title="Elapsed time since playback started">
+                    <span class="label">TIME/</span>
+                    <span class="value" id="timeDisplay">00:00</span>
+                </div>
+                <div class="ticket-barcode">║▌│█║▌║▌│║▌│█│║▌║▌│█║</div>
+            </div>
+
+            <!-- Control Buttons -->
+            <div class="controls-section">
+                <div class="btn-row">
+                    <button id="startBtn" title="Initialize audio system and begin generative playback">[▶] INIT</button>
+                    <button id="randomizeBtn" disabled title="Randomize key, mode, and instrument configurations">[↻] RAND</button>
+                    <button id="stopBtn" disabled title="Stop all playback and silence instruments">[■] STOP</button>
+                </div>
+                <div class="btn-row">
+                    <button id="saveBtn" disabled title="Save current configuration to a JSON file">[↓] SAVE</button>
+                    <button id="loadBtn" title="Load a previously saved configuration">[↑] LOAD</button>
+                    <button id="recordBtn" disabled title="Record audio output to a file">[●] REC</button>
+                </div>
+                <input type="file" id="loadFile" accept=".json">
+            </div>
+
+            <!-- Live Log -->
+            <div class="log-section">
+                <div class="log-header">
+                    <span>▌ SYSTEM LOG</span>
+                    <span id="logCount">0</span>
+                </div>
+                <div class="log-container" id="logContainer">
+                    <div class="log-entry">
+                        <span class="log-time">──:──</span>
+                        <span class="log-type system">BOOT</span>
+                        <span class="log-msg">Awaiting initialization...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Global Effects Info (per-channel bars are in instrument columns) -->
+            <div class="effects-bar">
+                <div class="effect-item">
+                    <div class="effect-label" style="font-size: 7px; color: #555">ALL FX PER-CHANNEL ↑</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ═══════════════════════════════════════════════════════════════
+        // INSTRUMENT STREAM LOGGING
+        // ═══════════════════════════════════════════════════════════════
+        
+        const instrumentCounts = {
+            cello: 0, celeste: 0, harp: 0, rhodes: 0, vibraphone: 0
+        };
+        
+        const streamIds = {
+            cello: 'stream-cello',
+            celeste: 'stream-celeste', 
+            harp: 'stream-harp',
+            rhodes: 'stream-rhodes',
+            vibraphone: 'stream-vibes'
+        };
+        
+        const MAX_STREAM_ENTRIES = 50;
+        
+        function streamLog(instrument, type, msg, extra = '') {
+            const streamId = streamIds[instrument];
+            if (!streamId) return;
+            
+            const column = document.getElementById(streamId);
+            if (!column) return;
+            
+            const streamLog = column.querySelector('.stream-log');
+            if (!streamLog) return;
+            
+            const now = new Date();
+            const time = now.toTimeString().slice(3, 8);
+            
+            const entry = document.createElement('div');
+            entry.className = `stream-entry ${type}`;
+            entry.innerHTML = `<span class="time">${time}</span>${msg}${extra ? ` <span class="freq">${extra}</span>` : ''}`;
+            
+            streamLog.appendChild(entry);
+            
+            // Add note bar for notes
+            if (type === 'note') {
+                const bar = document.createElement('div');
+                bar.className = 'note-bar';
+                streamLog.appendChild(bar);
+                
+                // Update count
+                instrumentCounts[instrument]++;
+                const countEl = document.getElementById(`${instrument === 'vibraphone' ? 'vibes' : instrument}-count`);
+                if (countEl) countEl.textContent = instrumentCounts[instrument];
+            }
+            
+            // Limit entries
+            while (streamLog.children.length > MAX_STREAM_ENTRIES) {
+                streamLog.removeChild(streamLog.firstChild);
+            }
+            
+            // Auto-scroll by keeping entries at bottom
+            const content = column.querySelector('.stream-content');
+            if (content) content.scrollTop = content.scrollHeight;
+        }
+        
+        function updateStreamMode(instrument, isMelody, isOff = false) {
+            const modeId = `${instrument === 'vibraphone' ? 'vibes' : instrument}-mode`;
+            const el = document.getElementById(modeId);
+            if (el) {
+                if (isOff) {
+                    el.textContent = 'OFF';
+                    el.classList.add('off');
+                } else {
+                    el.textContent = isMelody ? 'MEL' : 'CHD';
+                    el.classList.remove('off');
+                }
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // LOGGING SYSTEM
+        // ═══════════════════════════════════════════════════════════════
+        
+        let logCount = 0;
+        const logContainer = document.getElementById('logContainer');
+        const MAX_LOGS = 200;
+        
+        function log(type, msg) {
+            const now = new Date();
+            const time = now.toTimeString().slice(0, 5);
+            
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `
+                <span class="log-time">${time}</span>
+                <span class="log-type ${type}">${type.toUpperCase()}</span>
+                <span class="log-msg">${msg}</span>
+            `;
+            
+            logContainer.appendChild(entry);
+            logCount++;
+            document.getElementById('logCount').textContent = logCount;
+            
+            // Auto-scroll
+            logContainer.scrollTop = logContainer.scrollHeight;
+            
+            // Limit logs
+            while (logContainer.children.length > MAX_LOGS) {
+                logContainer.removeChild(logContainer.firstChild);
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // SCALES & MUSIC THEORY
+        // ═══════════════════════════════════════════════════════════════
+        
+        const SCALES = {
+            'Major': [0, 2, 4, 5, 7, 9, 11],
+            'Minor': [0, 2, 3, 5, 7, 8, 10]
+        };
+
+        const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+        
+        const CHORD_TYPES = {
+            triads: [
+                { name: 'I', degrees: [0, 2, 4] },
+                { name: 'ii', degrees: [1, 3, 5] },
+                { name: 'iii', degrees: [2, 4, 6] },
+                { name: 'IV', degrees: [3, 5, 0] },
+                { name: 'V', degrees: [4, 6, 1] },
+                { name: 'vi', degrees: [5, 0, 2] },
+            ],
+            sevenths: [
+                { name: 'Imaj7', degrees: [0, 2, 4, 6] },
+                { name: 'ii7', degrees: [1, 3, 5, 0] },
+                { name: 'IVmaj7', degrees: [3, 5, 0, 2] },
+                { name: 'V7', degrees: [4, 6, 1, 3] },
+                { name: 'vi7', degrees: [5, 0, 2, 4] },
+            ],
+            extended: [
+                { name: 'Iadd9', degrees: [0, 2, 4, 1] },
+                { name: 'IVadd9', degrees: [3, 5, 0, 4] },
+                { name: 'vi add9', degrees: [5, 0, 2, 6] },
+            ]
+        };
+
+        const CHORD_VOICINGS = [
+            // 2 notes - dyads
+            [0, 7], [0, 5], [0, 4], [0, 3], [0, 9], [0, 12],
+            // 3 notes - triads
+            [0, 4, 7], [0, 3, 7], [0, 5, 7], [0, 4, 9], [0, 7, 12], [0, 7, 14],
+            // 4 notes - 7th chords
+            [0, 4, 7, 11], [0, 3, 7, 10], [0, 4, 7, 10], [0, 3, 7, 11], [0, 4, 7, 14],
+            [0, 5, 7, 12], [0, 2, 7, 11], [0, 4, 9, 14],
+            // 5 notes - extended
+            [0, 4, 7, 11, 14], [0, 3, 7, 10, 14], [0, 4, 7, 11, 18], [0, 5, 7, 12, 16],
+            [0, 4, 7, 14, 17], [0, 2, 7, 11, 14],
+            // 6 notes - lush voicings
+            [0, 4, 7, 11, 14, 17], [0, 3, 7, 10, 14, 17], [0, 4, 7, 11, 14, 21],
+            [0, 2, 4, 7, 11, 14], [0, 5, 7, 12, 16, 19],
+            // 7 notes - full orchestral
+            [0, 4, 7, 11, 14, 17, 21], [0, 3, 7, 10, 14, 17, 21], [0, 2, 4, 7, 11, 14, 17],
+            [0, 4, 7, 9, 11, 14, 18]
+        ];
+
+        // ═══════════════════════════════════════════════════════════════
+        // STATE
+        // ═══════════════════════════════════════════════════════════════
+        
+        let audioCtx = null;
+        let masterGain = null;
+        let synths = [];
+        let isPlaying = false;
+        let driftIntervals = [];
+        let startTime = null;
+        
+        // Noise layer state (Disasterpeace style)
+        let noiseSource = null;
+        let noiseGain = null;
+        let noiseFilter = null;
+        let noiseFilter2 = null;  // Second filter for more shaping
+        let noiseResonance = null; // Resonant filter for evolving character
+        let noiseFadeTimeout = null;
+        let noiseEvolveTimeouts = []; // Multiple evolution timers
+        
+        let globalScale = null;
+        let globalRoot = null;
+        let globalScaleIntervals = null;
+        let currentChord = null;
+        let currentChordNotes = [];
+        let chordChangeInterval = null;
+        let chordHistory = [];
+
+        // ═══════════════════════════════════════════════════════════════
+        // INTERCONNECTION SYSTEM - Call and Response
+        // ═══════════════════════════════════════════════════════════════
+        
+        // Recent notes played (for unison/sympathy)
+        let recentNotes = [];  // { note, instrument, time }
+        const RECENT_NOTES_WINDOW = 3000; // 3 second memory
+        
+        // Antiphonal pairs (group A vs group B)
+        const antiphonalPairs = {
+            groupA: ['cello', 'harp'],
+            groupB: ['celeste', 'vibraphone'],
+            mediator: 'rhodes'
+        };
+        
+        // Last phrase ending (for question/answer)
+        let lastPhraseEnding = { note: null, instrument: null, isQuestion: false };
+        
+        // Interconnection chances (0-1)
+        const interconnectChances = {
+            antiphonalResponse: 0.35,    // Chance opposite group responds
+            questionAnswer: 0.4,         // Chance of answering a question phrase
+            unison: 0.15,                // Chance of playing same note as recent
+            proximityInfluence: 0.25,    // Chance nearby pan instruments interact
+            sympathyHarmony: 0.2         // Chance of playing harmony to recent note
+        };
+        
+        // Track if a group just played (for antiphonal)
+        let lastPlayingGroup = null;
+        let groupPlayTime = 0;
+
+        // ═══════════════════════════════════════════════════════════════
+        // WEATHER SYSTEM - Per-channel slow-moving parameters
+        // ═══════════════════════════════════════════════════════════════
+        
+        const CHANNEL_NAMES = ['cello', 'celeste', 'harp', 'rhodes', 'vibraphone'];
+        
+        // Default weather values (each channel gets its own copy)
+        const defaultWeather = {
+            presence: 0.7,      // Volume (low = quiet)
+            density: 0.5,       // Note frequency (low = sparse)
+            intimacy: 0.6,      // Reverb mix (low = wet/distant)
+            drift: 0.3,         // Pitch stability (high = detuned)
+            breath: 0.4,        // Attack time (low = slow)
+            decay: 0.5,         // Release time (high = long)
+            depth: 0.4,         // Octave-down chance (high = more bass notes)
+            suspension: 0.3,    // Sus chord tendency
+            solitude: 0.5,      // Call-response (low = interactive)
+            memory: 0.5         // Delay feedback (high = long trails)
+        };
+        
+        // Per-channel weather state
+        const channelWeather = {};
+        const channelWeatherTargets = {};
+        CHANNEL_NAMES.forEach(ch => {
+            // Start each channel with slightly different values
+            channelWeather[ch] = { ...defaultWeather };
+            Object.keys(channelWeather[ch]).forEach(param => {
+                channelWeather[ch][param] += (Math.random() - 0.5) * 0.3;
+                channelWeather[ch][param] = Math.max(0.1, Math.min(0.9, channelWeather[ch][param]));
+            });
+            channelWeatherTargets[ch] = { ...channelWeather[ch] };
+        });
+        
+        // Drift speed per parameter
+        const weatherSpeeds = {
+            presence: 0.0008,
+            density: 0.0006,
+            intimacy: 0.0007,
+            breath: 0.001,
+            decay: 0.0005,
+            drift: 0.0009,
+            depth: 0.0004,
+            suspension: 0.0007,
+            solitude: 0.0006,
+            memory: 0.0005
+        };
+        
+        // How often to pick new targets (ms)
+        const weatherChangeIntervals = {
+            presence: { min: 180000, max: 420000 },   // 3-7 min
+            density: { min: 240000, max: 540000 },    // 4-9 min
+            intimacy: { min: 150000, max: 360000 },   // 2.5-6 min
+            breath: { min: 120000, max: 300000 },     // 2-5 min
+            decay: { min: 200000, max: 480000 },      // 3.5-8 min
+            drift: { min: 160000, max: 400000 },      // 2.5-7 min
+            depth: { min: 300000, max: 600000 },      // 5-10 min (slowest)
+            suspension: { min: 180000, max: 420000 }, // 3-7 min
+            solitude: { min: 200000, max: 450000 },   // 3.5-7.5 min
+            memory: { min: 240000, max: 500000 }      // 4-8.5 min
+        };
+        
+        let weatherDriftInterval = null;
+        let weatherTargetTimeouts = {};
+        
+        // Legacy global weather - averages all channels for UI display and global effects
+        const weather = { ...defaultWeather };
+        
+        function startWeatherSystem() {
+            // Start the continuous drift
+            weatherDriftInterval = setInterval(driftWeather, 100); // Update 10x per second
+            
+            // Schedule target changes for each channel and parameter
+            CHANNEL_NAMES.forEach(channel => {
+                Object.keys(defaultWeather).forEach(param => {
+                    scheduleWeatherChange(channel, param);
+                });
+            });
+            
+            log('system', '☁ Weather system active (per-channel)');
+        }
+        
+        function stopWeatherSystem() {
+            if (weatherDriftInterval) clearInterval(weatherDriftInterval);
+            Object.values(weatherTargetTimeouts).forEach(t => clearTimeout(t));
+            weatherTargetTimeouts = {};
+        }
+        
+        function driftWeather() {
+            // Each channel's parameters drift toward their targets
+            CHANNEL_NAMES.forEach(channel => {
+                Object.keys(defaultWeather).forEach(param => {
+                    const diff = channelWeatherTargets[channel][param] - channelWeather[channel][param];
+                    channelWeather[channel][param] += diff * weatherSpeeds[param] * 10;
+                    channelWeather[channel][param] = Math.max(0, Math.min(1, channelWeather[channel][param]));
+                });
+            });
+            
+            // Update global weather as average of all channels (for UI and global effects)
+            Object.keys(defaultWeather).forEach(param => {
+                let sum = 0;
+                CHANNEL_NAMES.forEach(ch => sum += channelWeather[ch][param]);
+                weather[param] = sum / CHANNEL_NAMES.length;
+            });
+            
+            // Update UI every ~500ms (every 5th call)
+            if (Math.random() < 0.2) updateWeatherDisplay();
+        }
+        
+        function updateWeatherDisplay() {
+            // Update per-channel weather bars
+            const channelMap = {
+                cello: 'cello',
+                celeste: 'celeste', 
+                harp: 'harp',
+                rhodes: 'rhodes',
+                vibraphone: 'vibes'
+            };
+            
+            CHANNEL_NAMES.forEach(channel => {
+                const prefix = channelMap[channel];
+                Object.keys(defaultWeather).forEach(param => {
+                    const el = document.getElementById(`${prefix}-wx-${param}`);
+                    if (el) {
+                        el.style.setProperty('--wx-level', `${channelWeather[channel][param] * 100}%`);
+                    }
+                });
+            });
+        }
+        
+        function scheduleWeatherChange(channel, param) {
+            const intervals = weatherChangeIntervals[param];
+            const delay = intervals.min + Math.random() * (intervals.max - intervals.min);
+            const timeoutKey = `${channel}_${param}`;
+            
+            weatherTargetTimeouts[timeoutKey] = setTimeout(() => {
+                if (!isPlaying) return;
+                
+                // Pick new target - with momentum
+                const currentVal = channelWeather[channel][param];
+                const currentTarget = channelWeatherTargets[channel][param];
+                const momentum = currentTarget - currentVal;
+                
+                // 60% chance to continue direction, 40% chance to reverse
+                let newTarget;
+                if (Math.random() < 0.6 && Math.abs(momentum) > 0.1) {
+                    newTarget = currentTarget + (momentum > 0 ? 0.2 : -0.2) + (Math.random() - 0.5) * 0.3;
+                } else {
+                    newTarget = Math.random();
+                }
+                
+                // Occasionally go to extremes (10% chance)
+                if (Math.random() < 0.1) {
+                    newTarget = Math.random() < 0.5 ? 0.1 : 0.9;
+                }
+                
+                newTarget = Math.max(0.05, Math.min(0.95, newTarget));
+                channelWeatherTargets[channel][param] = newTarget;
+                
+                // Log significant changes
+                if (Math.abs(newTarget - currentVal) > 0.4) {
+                    const direction = newTarget > currentVal ? '↑' : '↓';
+                    log('weather', `${channel}.${param} ${direction}`);
+                }
+                
+                // Schedule next change
+                scheduleWeatherChange(channel, param);
+            }, delay);
+        }
+        
+        // Get weather-adjusted parameters for note playback (per-channel)
+        function getWeatherAdjustments(channel = null) {
+            // Use channel-specific weather if provided, otherwise use global average
+            const wx = channel && channelWeather[channel] ? channelWeather[channel] : weather;
+            return {
+                // Presence affects volume and attack prominence
+                volumeMultiplier: 0.3 + wx.presence * 0.7, // 0.3-1.0
+                attackMultiplier: 0.5 + (1 - wx.breath) * 4, // 0.5-4.5 (low breath = slow attack)
+                
+                // Density affects whether to play chords or single notes
+                singleNoteChance: 1 - wx.density, // Low density = more single notes
+                silenceMultiplier: 1 + (1 - wx.density) * 2, // Low density = more silence
+                
+                // Intimacy affects reverb mix and pre-delay
+                reverbMixMultiplier: 0.5 + (1 - wx.intimacy) * 1.5, // 0.5-2.0
+                preDelay: (1 - wx.intimacy) * 0.5, // 0-500ms pre-delay when distant
+                
+                // Drift affects pitch stability
+                detuneAmount: wx.drift * 25, // 0-25 cents
+                vibratoMultiplier: 0.5 + wx.drift * 1.5, // 0.5-2.0
+                
+                // Decay affects release time
+                releaseMultiplier: 0.5 + wx.decay * 3, // 0.5-3.5x
+                
+                // Depth affects octave-down chance (x2 lower octave notes)
+                octaveDownChance: wx.depth * 0.5, // 0-50% chance to play octave lower
+                
+                // Suspension affects voicing choices
+                suspendedChance: wx.suspension * 0.6, // 0-60% chance of sus voicing
+                
+                // Solitude affects call-and-response behavior
+                responseChance: (1 - wx.solitude) * 0.5, // 0-50% when not solitary
+                
+                // Memory affects delay feedback and reverb tail
+                delayFeedbackMultiplier: 0.5 + wx.memory * 1.0, // 0.5-1.5
+                reverbDecayMultiplier: 0.7 + wx.memory * 0.8 // 0.7-1.5
+            };
+        }
+
+        // Master output
+        let dryGain = null;  // Main output for all per-channel effects
+        
+        // Per-channel effects state - darker, more reverb
+        let channelEffects = {
+            cello: {
+                // Vibrato - subtle pitch wobble
+                vibratoDepth: 0.008, vibratoAmount: 0.4, vibratoSpeed: 5,
+                // Tremolo - gentle throb
+                tremoloDepth: 0.3, tremoloAmount: 0.4, tremoloSpeed: 4,
+                // Delay - tape echo style
+                delayTime: 0.4, delayAmount: 0.35, delayFeedback: 0.4,
+                // Reverb - deep hall (darker, longer)
+                reverbAmount: 0.65, reverbDecay: 6, reverbTone: 1800,
+                // 3-band EQ (dB, centered at 0)
+                eqLow: 2, eqMid: -1, eqHigh: -4,
+                // Pan
+                pan: -0.3
+            },
+            celeste: {
+                vibratoDepth: 0.006, vibratoAmount: 0.5, vibratoSpeed: 6,
+                tremoloDepth: 0.2, tremoloAmount: 0.3, tremoloSpeed: 5,
+                delayTime: 0.45, delayAmount: 0.4, delayFeedback: 0.45,
+                reverbAmount: 0.7, reverbDecay: 7, reverbTone: 2200,
+                eqLow: -2, eqMid: 1, eqHigh: -2,
+                pan: 0.4
+            },
+            harp: {
+                vibratoDepth: 0.005, vibratoAmount: 0.35, vibratoSpeed: 4,
+                tremoloDepth: 0.25, tremoloAmount: 0.35, tremoloSpeed: 3,
+                delayTime: 0.35, delayAmount: 0.4, delayFeedback: 0.35,
+                reverbAmount: 0.6, reverbDecay: 5.5, reverbTone: 2000,
+                eqLow: 3, eqMid: 0, eqHigh: -3,
+                pan: -0.5
+            },
+            rhodes: {
+                vibratoDepth: 0.004, vibratoAmount: 0.3, vibratoSpeed: 5,
+                tremoloDepth: 0.4, tremoloAmount: 0.5, tremoloSpeed: 5,
+                delayTime: 0.3, delayAmount: 0.35, delayFeedback: 0.3,
+                reverbAmount: 0.55, reverbDecay: 5, reverbTone: 1600,
+                eqLow: 4, eqMid: -2, eqHigh: -3,
+                pan: 0.2
+            },
+            vibraphone: {
+                vibratoDepth: 0.005, vibratoAmount: 0.4, vibratoSpeed: 5.5,
+                tremoloDepth: 0.35, tremoloAmount: 0.55, tremoloSpeed: 6,
+                delayTime: 0.4, delayAmount: 0.45, delayFeedback: 0.45,
+                reverbAmount: 0.65, reverbDecay: 6.5, reverbTone: 2400,
+                eqLow: -1, eqMid: 0, eqHigh: -2,
+                pan: 0.6,
+                filterSweep: 4000  // Lowpass filter cutoff for sweeping
+            }
+        };
+        
+        // Add filterSweep to all instruments
+        Object.keys(channelEffects).forEach(inst => {
+            if (!channelEffects[inst].filterSweep) {
+                channelEffects[inst].filterSweep = 3000 + Math.random() * 3000;
+            }
+        });
+        
+        // Effect parameter ranges - vintage Silvertone/Fender amp style
+        const effectRanges = {
+            // Vibrato (pitch wobble) - Fender "vibrato" circuit style
+            vibratoDepth: { min: 0.002, max: 0.015 },  // Subtle pitch deviation (0.2-1.5%)
+            vibratoAmount: { min: 0, max: 1 },          // Intensity dial 0-10
+            vibratoSpeed: { min: 1, max: 10 },          // Classic range ~1-10 Hz
+            
+            // Tremolo (volume wobble) - Fender/Silvertone tremolo circuit
+            tremoloDepth: { min: 0, max: 0.8 },         // How deep the throb (0-80%)
+            tremoloAmount: { min: 0, max: 1 },          // Intensity dial 0-10
+            tremoloSpeed: { min: 1, max: 12 },          // Slow surf to fast helicopter
+            
+            // Delay - tape echo style (Echoplex, Space Echo)
+            delayTime: { min: 0.05, max: 0.6 },         // 50ms-600ms (tape delay range)
+            delayAmount: { min: 0, max: 0.8 },          // Mix dial 0-10
+            delayFeedback: { min: 0, max: 0.85 },       // Repeats (careful near max!)
+            
+            // Reverb - deep hall/plate style (darker, longer)
+            reverbAmount: { min: 0.2, max: 0.95 },      // More reverb overall
+            reverbDecay: { min: 3, max: 12 },           // Much longer: 3-12 seconds
+            reverbTone: { min: 400, max: 3000 },        // Darker: lower cutoff range
+            
+            // Pan - full stereo field
+            pan: { min: -1, max: 1 },                   // Full left to full right
+            
+            // 3-band EQ - vintage amp style (±12dB like old Fender/Silvertone)
+            eqLow: { min: -12, max: 12 },               // Bass knob (~100Hz)
+            eqMid: { min: -12, max: 12 },               // Mid knob (~1kHz)
+            eqHigh: { min: -12, max: 12 },              // Treble knob (~4kHz)
+            
+            // Filter sweep - Disasterpeace style slow movement
+            filterSweep: { min: 400, max: 8000 }        // Very slow sweeping lowpass
+        };
+        
+        // Disasterpeace-style chances (per note)
+        const disasterpeaceChances = {
+            detunedLayers: 0.25,      // Chance of 2-3 detuned oscillators
+            octaveDouble: 0.2,        // Chance to double octave above/below
+            octaveAbove: 0.5,         // If doubling, 50% above, 50% below
+            octaveDown: 0.15,         // Chance to play note an octave lower (darker)
+            dynamicSwell: 0.35        // Chance of volume swell envelope (Eno-style)
+        };
+        
+        let effectsEbbInterval = null;
+        let modeChangeInterval = null;
+
+        // ═══════════════════════════════════════════════════════════════
+        // UTILITIES
+        // ═══════════════════════════════════════════════════════════════
+        
+        function random(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+        function randomInt(min, max) {
+            return Math.floor(random(min, max + 1));
+        }
+
+        function randomChoice(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        function midiToFreq(midi) {
+            return 440 * Math.pow(2, (midi - 69) / 12);
+        }
+
+        function midiToNoteName(midi) {
+            return NOTE_NAMES[midi % 12] + Math.floor(midi / 12 - 1);
+        }
+
+        function generateScaleNotes(rootMidi, intervals, octaves = 5) {
+            const notes = [];
+            for (let oct = 0; oct < octaves; oct++) {
+                for (const interval of intervals) {
+                    notes.push(rootMidi + interval + (oct * 12));
+                }
+            }
+            return notes;
+        }
+
+        function generateRandomChord() {
+            const typeWeights = { triads: 15, sevenths: 25, extended: 10 };
+            const weightedTypes = [];
+            for (const [type, weight] of Object.entries(typeWeights)) {
+                for (let i = 0; i < weight; i++) weightedTypes.push(type);
+            }
+            
+            const chordType = randomChoice(weightedTypes);
+            const chordsOfType = CHORD_TYPES[chordType];
+            
+            let chord;
+            let attempts = 0;
+            do {
+                chord = randomChoice(chordsOfType);
+                attempts++;
+            } while (chordHistory.includes(chord.name) && attempts < 10);
+            
+            chordHistory.push(chord.name);
+            if (chordHistory.length > 4) chordHistory.shift();
+            
+            log('chord', `Selected: ${chord.name} (type: ${chordType})`);
+            return chord;
+        }
+
+        function getChordNotes(chord) {
+            if (!chord) return [];
+            const rootMidi = 36 + globalRoot;
+            const notes = [];
+            
+            // Weather: Suspension affects voicing style
+            const wx = getWeatherAdjustments();
+            const useSuspension = Math.random() < wx.suspendedChance;
+            
+            for (let octave = 0; octave < 5; octave++) {
+                for (const degree of chord.degrees) {
+                    let scaleNote = globalScaleIntervals[degree % globalScaleIntervals.length];
+                    
+                    // Weather: Transform 3rds into sus2 or sus4 ("Light Through Water")
+                    if (useSuspension) {
+                        // Check if this is a 3rd (typically 3 or 4 semitones from root)
+                        const intervalFromRoot = scaleNote % 12;
+                        if (intervalFromRoot === 3 || intervalFromRoot === 4) {
+                            // Replace with sus2 (2 semitones) or sus4 (5 semitones)
+                            scaleNote = Math.random() < 0.5 ? 
+                                scaleNote - intervalFromRoot + 2 : // sus2
+                                scaleNote - intervalFromRoot + 5;  // sus4
+                        }
+                    }
+                    
+                    const midiNote = rootMidi + scaleNote + (octave * 12);
+                    if (midiNote >= 24 && midiNote <= 108) {
+                        notes.push(midiNote);
+                    }
+                }
+            }
+            
+            return [...new Set(notes)].sort((a, b) => a - b);
+        }
+
+        function findNearestChordTone(currentNote, newChordNotes) {
+            if (newChordNotes.length === 0) return currentNote;
+            return newChordNotes.reduce((nearest, note) => 
+                Math.abs(note - currentNote) < Math.abs(nearest - currentNote) ? note : nearest
+            );
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // INTERCONNECTION HELPERS
+        // ═══════════════════════════════════════════════════════════════
+        
+        // Clean up old notes from recent memory
+        function cleanRecentNotes() {
+            const now = Date.now();
+            recentNotes = recentNotes.filter(n => now - n.time < RECENT_NOTES_WINDOW);
+        }
+        
+        // Record a note that was just played
+        function recordNote(note, instrument) {
+            cleanRecentNotes();
+            recentNotes.push({ note, instrument, time: Date.now() });
+            
+            // Determine if this is a "question" (unstable) or "answer" (stable) ending
+            // Unstable intervals from root: 2nds (1,2), 4ths (5), 7ths (10,11)
+            const intervalFromRoot = note % 12;
+            const unstableIntervals = [1, 2, 5, 6, 10, 11]; // minor 2nd, major 2nd, 4th, tritone, 7ths
+            const isQuestion = unstableIntervals.includes(intervalFromRoot);
+            
+            lastPhraseEnding = { note, instrument, isQuestion };
+            
+            // Track which group just played
+            if (antiphonalPairs.groupA.includes(instrument)) {
+                lastPlayingGroup = 'A';
+                groupPlayTime = Date.now();
+            } else if (antiphonalPairs.groupB.includes(instrument)) {
+                lastPlayingGroup = 'B';
+                groupPlayTime = Date.now();
+            }
+        }
+        
+        // Get which antiphonal group an instrument belongs to
+        function getInstrumentGroup(instrument) {
+            if (antiphonalPairs.groupA.includes(instrument)) return 'A';
+            if (antiphonalPairs.groupB.includes(instrument)) return 'B';
+            return 'mediator';
+        }
+        
+        // Check if instrument should respond antiphonally
+        function shouldRespondAntiphonally(instrument) {
+            if (!lastPlayingGroup || Date.now() - groupPlayTime > 4000) return false;
+            
+            const myGroup = getInstrumentGroup(instrument);
+            
+            // Mediator (rhodes) can respond to either group
+            if (myGroup === 'mediator') {
+                return Math.random() < interconnectChances.antiphonalResponse * 0.5;
+            }
+            
+            // Opposite group responds
+            if ((lastPlayingGroup === 'A' && myGroup === 'B') ||
+                (lastPlayingGroup === 'B' && myGroup === 'A')) {
+                return Math.random() < interconnectChances.antiphonalResponse;
+            }
+            
+            return false;
+        }
+        
+        // Get a unison or harmony note based on recent activity
+        function getInfluencedNote(instrument, availableNotes) {
+            cleanRecentNotes();
+            if (recentNotes.length === 0 || availableNotes.length === 0) return null;
+            
+            const myPan = channelEffects[instrument]?.pan || 0;
+            
+            // Filter recent notes by proximity (pan position)
+            const nearbyNotes = recentNotes.filter(n => {
+                const theirPan = channelEffects[n.instrument]?.pan || 0;
+                const distance = Math.abs(myPan - theirPan);
+                // Closer pan = higher chance of influence
+                return distance < 1.2; // Within reasonable stereo distance
+            });
+            
+            const notesToConsider = nearbyNotes.length > 0 ? nearbyNotes : recentNotes;
+            const recentNote = notesToConsider[notesToConsider.length - 1];
+            
+            // Proximity influence - closer instruments influence more
+            if (nearbyNotes.length > 0) {
+                const theirPan = channelEffects[recentNote.instrument]?.pan || 0;
+                const proximity = 1 - Math.abs(myPan - theirPan) / 2;
+                
+                if (Math.random() < interconnectChances.proximityInfluence * proximity) {
+                    streamLog(instrument, 'decision', `~proximity~`);
+                }
+            }
+            
+            // Chance of exact unison
+            if (Math.random() < interconnectChances.unison) {
+                // Find the same note or closest octave in available notes
+                const targetNote = recentNote.note;
+                const octaveMatches = availableNotes.filter(n => n % 12 === targetNote % 12);
+                if (octaveMatches.length > 0) {
+                    const unison = randomChoice(octaveMatches);
+                    streamLog(instrument, 'effect', `⇄ unison`);
+                    log('decision', `${instrument}: Unison with ${recentNote.instrument} on ${midiToNoteName(unison)}`);
+                    return unison;
+                }
+            }
+            
+            // Chance of harmony (3rd or 5th)
+            if (Math.random() < interconnectChances.sympathyHarmony) {
+                const targetNote = recentNote.note;
+                const harmonyIntervals = [3, 4, 7]; // minor 3rd, major 3rd, 5th
+                const harmonyOffset = randomChoice(harmonyIntervals);
+                const harmonyNote = targetNote + harmonyOffset;
+                
+                // Find closest available note to the harmony
+                const closest = findNearestChordTone(harmonyNote, availableNotes);
+                if (Math.abs(closest - harmonyNote) <= 2) {
+                    streamLog(instrument, 'effect', `⇄ harmony`);
+                    log('decision', `${instrument}: Harmony with ${recentNote.instrument}`);
+                    return closest;
+                }
+            }
+            
+            return null;
+        }
+        
+        // Get an "answer" note if the last phrase was a "question"
+        function getAnswerNote(instrument, availableNotes) {
+            if (!lastPhraseEnding.isQuestion) return null;
+            if (lastPhraseEnding.instrument === instrument) return null;
+            if (Date.now() - groupPlayTime > 5000) return null;
+            
+            if (Math.random() < interconnectChances.questionAnswer) {
+                // Answer with a stable note (root, 3rd, or 5th of current chord)
+                const stableIntervals = [0, 4, 7]; // root, major 3rd, 5th
+                const rootMidi = 36 + globalRoot;
+                
+                // Find stable notes in available range
+                const stableNotes = availableNotes.filter(n => {
+                    const interval = (n - rootMidi) % 12;
+                    return stableIntervals.includes(interval) || stableIntervals.includes((interval + 12) % 12);
+                });
+                
+                if (stableNotes.length > 0) {
+                    // Prefer notes close to the question note for smooth resolution
+                    const questionNote = lastPhraseEnding.note;
+                    const answer = findNearestChordTone(questionNote, stableNotes);
+                    streamLog(instrument, 'effect', `→ answer`);
+                    log('decision', `${instrument}: Answering ${lastPhraseEnding.instrument}'s question`);
+                    lastPhraseEnding.isQuestion = false; // Question has been answered
+                    return answer;
+                }
+            }
+            
+            return null;
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // REVERB
+        // ═══════════════════════════════════════════════════════════════
+        
+        function createReverbIR(duration = 4, decay = 3) {
+            const length = audioCtx.sampleRate * duration;
+            const impulse = audioCtx.createBuffer(2, length, audioCtx.sampleRate);
+            
+            for (let channel = 0; channel < 2; channel++) {
+                const channelData = impulse.getChannelData(channel);
+                for (let i = 0; i < length; i++) {
+                    const t = i / audioCtx.sampleRate;
+                    channelData[i] = (Math.random() * 2 - 1) * Math.pow(1 - t / duration, decay);
+                }
+            }
+            return impulse;
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // SYNTH CLASS
+        // ═══════════════════════════════════════════════════════════════
+        
+        class AmbientSynth {
+            constructor(audioCtx, masterGain, index, config) {
+                this.audioCtx = audioCtx;
+                this.masterGain = masterGain;
+                this.index = index;
+                this.config = config;
+                this.noteIndex = 0;
+                this.loopTimeout = null;
+                
+                const fx = channelEffects[config.synthType];
+                
+                // Per-channel 3-band EQ (vintage amp style)
+                // Low shelf ~100Hz
+                this.eqLow = audioCtx.createBiquadFilter();
+                this.eqLow.type = 'lowshelf';
+                this.eqLow.frequency.value = 100;
+                this.eqLow.gain.value = fx.eqLow;
+                
+                // Mid peaking ~1kHz
+                this.eqMid = audioCtx.createBiquadFilter();
+                this.eqMid.type = 'peaking';
+                this.eqMid.frequency.value = 1000;
+                this.eqMid.Q.value = 0.7;
+                this.eqMid.gain.value = fx.eqMid;
+                
+                // High shelf ~4kHz
+                this.eqHigh = audioCtx.createBiquadFilter();
+                this.eqHigh.type = 'highshelf';
+                this.eqHigh.frequency.value = 4000;
+                this.eqHigh.gain.value = fx.eqHigh;
+                
+                // Chain EQ: low -> mid -> high
+                this.eqLow.connect(this.eqMid);
+                this.eqMid.connect(this.eqHigh);
+                
+                // Per-channel delay chain
+                this.delayNode = audioCtx.createDelay(2.0);
+                this.delayNode.delayTime.value = fx.delayTime;
+                this.delayFeedback = audioCtx.createGain();
+                this.delayFeedback.gain.value = fx.delayFeedback;
+                this.delaySend = audioCtx.createGain();
+                this.delaySend.gain.value = fx.delayAmount;
+                
+                // Delay routing
+                this.delaySend.connect(this.delayNode);
+                this.delayNode.connect(this.delayFeedback);
+                this.delayFeedback.connect(this.delayNode);
+                this.delayNode.connect(dryGain); // Delay output to master
+                
+                // Per-channel reverb chain
+                this.reverbNode = audioCtx.createConvolver();
+                this.reverbNode.buffer = createReverbIR(fx.reverbDecay, 2.5);
+                this.reverbToneFilter = audioCtx.createBiquadFilter();
+                this.reverbToneFilter.type = 'lowpass';
+                this.reverbToneFilter.frequency.value = fx.reverbTone;
+                this.reverbSend = audioCtx.createGain();
+                this.reverbSend.gain.value = fx.reverbAmount;
+                
+                // Reverb routing
+                this.reverbSend.connect(this.reverbNode);
+                this.reverbNode.connect(this.reverbToneFilter);
+                this.reverbToneFilter.connect(dryGain); // Reverb output to master
+                
+                // EQ output connects to master (dry signal goes through EQ chain)
+                this.eqHigh.connect(dryGain);
+            }
+            
+            // Update effect parameters (called by ebb function)
+            updateEffects() {
+                const fx = channelEffects[this.config.synthType];
+                const now = this.audioCtx.currentTime;
+                
+                // EQ parameters
+                this.eqLow.gain.linearRampToValueAtTime(fx.eqLow, now + 2);
+                this.eqMid.gain.linearRampToValueAtTime(fx.eqMid, now + 2);
+                this.eqHigh.gain.linearRampToValueAtTime(fx.eqHigh, now + 2);
+                
+                // Delay parameters
+                this.delayNode.delayTime.linearRampToValueAtTime(fx.delayTime, now + 2);
+                this.delayFeedback.gain.linearRampToValueAtTime(fx.delayFeedback, now + 2);
+                this.delaySend.gain.linearRampToValueAtTime(fx.delayAmount, now + 2);
+                
+                // Reverb parameters (can't change convolver buffer live, but can change tone and send)
+                this.reverbToneFilter.frequency.linearRampToValueAtTime(fx.reverbTone, now + 2);
+                this.reverbSend.gain.linearRampToValueAtTime(fx.reverbAmount, now + 2);
+            }
+
+            start() {
+                log('system', `${this.config.synthType.toUpperCase()} started`);
+                streamLog(this.config.synthType, 'decision', 'INIT');
+                updateStreamMode(this.config.synthType, this.config.isMelody);
+                this.scheduleNote();
+            }
+
+            stop() {
+                if (this.loopTimeout) clearTimeout(this.loopTimeout);
+            }
+
+            scheduleNote() {
+                if (!isPlaying) return;
+                
+                // ═══ WEATHER SYSTEM INTEGRATION ═══
+                const wx = getWeatherAdjustments(this.config.synthType);
+
+                // Check if instrument is OFF
+                if (this.config.isOff) {
+                    streamLog(this.config.synthType, 'silence', '■ off');
+                    const nextTime = this.config.loopLength * 1000;
+                    this.loopTimeout = setTimeout(() => this.scheduleNote(), nextTime);
+                    return;
+                }
+                
+                // Weather: Solitude affects response behavior
+                const respondChance = wx.responseChance;
+
+                // ═══ INTERCONNECTION: Check for call-and-response opportunities ═══
+                let interconnectedNote = null;
+                const inst = this.config.synthType;
+                
+                // Check for antiphonal response opportunity (affected by solitude weather)
+                if (Math.random() < respondChance && shouldRespondAntiphonally(inst)) {
+                    const answerNote = getAnswerNote(inst, this.config.notes);
+                    const influencedNote = getInfluencedNote(inst, this.config.notes);
+                    interconnectedNote = answerNote || influencedNote;
+                    
+                    if (interconnectedNote) {
+                        streamLog(inst, 'effect', `← response`);
+                        this.playNote(interconnectedNote);
+                        const nextTime = this.config.loopLength * 1000;
+                        this.loopTimeout = setTimeout(() => this.scheduleNote(), nextTime);
+                        return;
+                    }
+                }
+                
+                // Check for question/answer opportunity
+                if (Math.random() < respondChance) {
+                    const answerNote = getAnswerNote(inst, this.config.notes);
+                    if (answerNote) {
+                        this.playNote(answerNote);
+                        const nextTime = this.config.loopLength * 1000;
+                        this.loopTimeout = setTimeout(() => this.scheduleNote(), nextTime);
+                        return;
+                    }
+                }
+                // ═══ END INTERCONNECTION ═══
+
+                // Weather: Density affects silence chance
+                const baseSilence = this.config.silenceChance || 0;
+                const weatherSilence = baseSilence * wx.silenceMultiplier;
+                const effectiveSilenceChance = Math.min(0.9, weatherSilence);
+                
+                if (Math.random() >= effectiveSilenceChance) {
+                    const influencedNote = getInfluencedNote(inst, this.config.notes);
+                    
+                    // Weather: Density affects single note vs chord
+                    const forceSingleNote = Math.random() < wx.singleNoteChance;
+                    
+                    if (this.config.isMelody && this.config.notes.length > 1 && !forceSingleNote) {
+                        log('decision', `${this.config.synthType}: Playing melody (${this.config.notes.length} notes)`);
+                        streamLog(this.config.synthType, 'decision', `melody(${this.config.notes.length})`);
+                        
+                        const notesToPlay = [...this.config.notes];
+                        if (influencedNote && !notesToPlay.includes(influencedNote)) {
+                            notesToPlay[0] = influencedNote;
+                        }
+                        
+                        notesToPlay.forEach((note, i) => {
+                            setTimeout(() => {
+                                if (isPlaying && !this.config.isOff) this.playNote(note);
+                            }, i * (this.config.melodySpeed || 0.5) * 1000);
+                        });
+                    } else if (forceSingleNote || this.config.notes.length === 1) {
+                        // Weather: Single note mode (Wave Notation / "Loneliness Without Sadness")
+                        const singleNote = influencedNote || randomChoice(this.config.notes);
+                        streamLog(this.config.synthType, 'note', `∘ alone`);
+                        this.playNote(singleNote);
+                    } else {
+                        log('decision', `${this.config.synthType}: Playing chord [${this.config.notes.map(midiToNoteName).join(' ')}]`);
+                        streamLog(this.config.synthType, 'chord', `chord[${this.config.notes.length}]`);
+                        
+                        const notesToPlay = [...this.config.notes];
+                        if (influencedNote && !notesToPlay.includes(influencedNote)) {
+                            notesToPlay.push(influencedNote);
+                        }
+                        
+                        for (const note of notesToPlay) {
+                            this.playNote(note);
+                        }
+                    }
+                } else {
+                    // Weather affects how we describe silence
+                    if (weather.density < 0.3) {
+                        streamLog(this.config.synthType, 'silence', '     ');  // Deep silence - just space
+                    } else {
+                        streamLog(this.config.synthType, 'silence', '· · ·');
+                    }
+                }
+
+                const nextTime = this.config.loopLength * 1000;
+                this.loopTimeout = setTimeout(() => this.scheduleNote(), nextTime);
+            }
+
+            playNote(midiNote, isOctaveDouble = false) {
+                const now = this.audioCtx.currentTime;
+                
+                // Get weather for this channel first
+                const wx = getWeatherAdjustments(this.config.synthType);
+                
+                // === OCTAVE DOWN CHANCE (weather.depth controls this) ===
+                if (!isOctaveDouble && Math.random() < wx.octaveDownChance) {
+                    const octaveDownNote = midiNote - 12;
+                    if (octaveDownNote >= 24) { // Don't go too low
+                        midiNote = octaveDownNote;
+                        streamLog(this.config.synthType, 'effect', `8vb↓`);
+                    }
+                }
+                
+                const freq = midiToFreq(midiNote);
+                
+                // Record this note for interconnection system
+                if (!isOctaveDouble) recordNote(midiNote, this.config.synthType);
+                
+                // Debug: verify audio context state
+                if (this.audioCtx.state !== 'running') {
+                    console.warn('AudioContext not running:', this.audioCtx.state);
+                    this.audioCtx.resume();
+                }
+                
+                // Weather: Breath affects attack time
+                const baseAttack = Math.max(0.01, this.config.attack);
+                const attack = baseAttack * wx.attackMultiplier;
+                
+                // Weather: Decay affects release time
+                const decay = Math.max(0.1, this.config.decay);
+                const baseRelease = Math.max(0.5, this.config.release);
+                const release = baseRelease * wx.releaseMultiplier;
+                
+                const minDuration = attack + decay + 1 + release;
+                const noteDuration = Math.max(minDuration, Math.min(this.config.loopLength * 1.5, attack + decay + 2 + release));
+
+                // ═══ OCTAVE DOUBLING (Disasterpeace style) ═══
+                if (!isOctaveDouble && this.config.isMelody && Math.random() < disasterpeaceChances.octaveDouble) {
+                    const octaveShift = Math.random() < disasterpeaceChances.octaveAbove ? 12 : -12;
+                    const doubleNote = midiNote + octaveShift;
+                    if (doubleNote >= 24 && doubleNote <= 96) {
+                        setTimeout(() => {
+                            this.playNote(doubleNote, true);
+                        }, 5 + Math.random() * 20);
+                        streamLog(this.config.synthType, 'effect', `8va${octaveShift > 0 ? '↑' : '↓'}`);
+                    }
+                }
+
+                log('note', `♪ ${midiToNoteName(midiNote)} (${freq.toFixed(1)}Hz) via ${this.config.synthType}`);
+                
+                // Stream log for instrument column
+                if (!isOctaveDouble) streamLog(this.config.synthType, 'note', midiToNoteName(midiNote), `${freq.toFixed(0)}Hz`);
+
+                // ═══ DETUNED OSCILLATOR LAYERING ═══
+                // Weather: Drift affects detune amount
+                const useDetunedLayers = Math.random() < disasterpeaceChances.detunedLayers;
+                const oscCount = useDetunedLayers ? 2 + Math.floor(Math.random() * 2) : 1;
+                const oscillators = [];
+                
+                for (let i = 0; i < oscCount; i++) {
+                    const osc = this.audioCtx.createOscillator();
+                    osc.type = this.config.waveform || 'sine';
+                    
+                    // Weather: Drift affects detune amount
+                    if (useDetunedLayers && i > 0) {
+                        const baseDetune = (Math.random() - 0.5) * 30;
+                        const weatherDetune = baseDetune + (Math.random() - 0.5) * wx.detuneAmount;
+                        osc.detune.setValueAtTime(weatherDetune, now);
+                    } else if (wx.detuneAmount > 5) {
+                        // Even single oscillators get slight drift in high-drift weather
+                        osc.detune.setValueAtTime((Math.random() - 0.5) * wx.detuneAmount * 0.5, now);
+                    }
+                    osc.frequency.setValueAtTime(freq, now);
+                    oscillators.push(osc);
+                }
+                
+                if (useDetunedLayers) {
+                    streamLog(this.config.synthType, 'effect', `×${oscCount} detune`);
+                }
+
+                // Get current channel effects (all parameters drift)
+                const fx = channelEffects[this.config.synthType];
+                
+                // Weather: Presence affects volume ("The Note You Almost Missed")
+                const baseVolume = Math.max(0.05, this.config.volume);
+                const weatherVolume = baseVolume * wx.volumeMultiplier;
+                const volumeScale = isOctaveDouble ? 0.4 : (useDetunedLayers ? 1 / oscCount : 1);
+
+                // Vibrato: Weather drift affects intensity
+                oscillators.forEach(osc => {
+                    if (fx.vibratoDepth > 0 && fx.vibratoAmount > 0) {
+                        const vibratoLfo = this.audioCtx.createOscillator();
+                        const vibratoGain = this.audioCtx.createGain();
+                        vibratoLfo.frequency.value = fx.vibratoSpeed;
+                        const vibratoIntensity = freq * fx.vibratoDepth * fx.vibratoAmount * wx.vibratoMultiplier;
+                        vibratoGain.gain.value = vibratoIntensity;
+                        vibratoLfo.connect(vibratoGain);
+                        vibratoGain.connect(osc.frequency);
+                        vibratoLfo.start(now);
+                        vibratoLfo.stop(now + noteDuration + 0.1);
+                    }
+                });
+
+                // Envelope - with optional dynamic swell
+                const gainNode = this.audioCtx.createGain();
+                const volume = weatherVolume * volumeScale;
+                
+                // Dynamic swell: Eno-style breathing envelope
+                const useSwell = !isOctaveDouble && Math.random() < disasterpeaceChances.dynamicSwell;
+                
+                // Weather: Low presence + low breath = "breath entrance" (fade in from nothing)
+                const useBreathEntrance = !isOctaveDouble && weather.presence < 0.4 && weather.breath < 0.3;
+                
+                if (useBreathEntrance) {
+                    // Breath entrance: ultra-slow fade in ("The Note You Almost Missed")
+                    const breathInTime = 3 + Math.random() * 4; // 3-7 seconds fade in
+                    gainNode.gain.setValueAtTime(0.0001, now);
+                    gainNode.gain.exponentialRampToValueAtTime(volume * 0.7, now + breathInTime);
+                    gainNode.gain.setValueAtTime(volume * 0.7, now + breathInTime + 1);
+                    gainNode.gain.exponentialRampToValueAtTime(0.0001, now + noteDuration + breathInTime);
+                    streamLog(this.config.synthType, 'effect', '~breath~');
+                } else if (useSwell) {
+                    // Swell envelope: slow rise, peak, slow fall
+                    const swellPeak = 0.3 + Math.random() * 0.4; // Peak at 30-70% through note
+                    const peakTime = now + (noteDuration * swellPeak);
+                    const peakVolume = volume * (1.2 + Math.random() * 0.5); // 20-70% louder at peak
+                    
+                    gainNode.gain.setValueAtTime(0.001, now);
+                    // Slow fade in to peak
+                    gainNode.gain.exponentialRampToValueAtTime(peakVolume, peakTime);
+                    // Slow fade out
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, now + noteDuration);
+                    
+                    streamLog(this.config.synthType, 'effect', '~swell~');
+                } else {
+                    // Standard ADSR envelope
+                    gainNode.gain.setValueAtTime(0.001, now);
+                    gainNode.gain.exponentialRampToValueAtTime(volume, now + attack);
+                    
+                    const sustainLevel = Math.max(0.001, volume * this.config.sustain);
+                    const decayEnd = now + attack + decay;
+                    gainNode.gain.exponentialRampToValueAtTime(sustainLevel, decayEnd);
+                    
+                    // Make sure sustain hold and release don't overlap
+                    const sustainEnd = Math.max(decayEnd + 0.1, now + noteDuration - release);
+                    gainNode.gain.setValueAtTime(sustainLevel, sustainEnd);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, now + noteDuration);
+                }
+
+                // Tremolo: all parameters from channel effects
+                let tremoloNode = null;
+                if (fx.tremoloDepth > 0 && fx.tremoloAmount > 0) {
+                    tremoloNode = this.audioCtx.createGain();
+                    const tremoloLfo = this.audioCtx.createOscillator();
+                    const tremoloGainMod = this.audioCtx.createGain();
+                    tremoloLfo.frequency.value = fx.tremoloSpeed;
+                    const effectiveDepth = fx.tremoloDepth * fx.tremoloAmount;
+                    tremoloGainMod.gain.value = effectiveDepth;
+                    tremoloLfo.connect(tremoloGainMod);
+                    tremoloGainMod.connect(tremoloNode.gain);
+                    tremoloNode.gain.value = 1 - effectiveDepth / 2;
+                    tremoloLfo.start(now);
+                    tremoloLfo.stop(now + noteDuration + 0.1);
+                }
+
+                // Filter - use channel's sweeping filter value
+                const filter = this.audioCtx.createBiquadFilter();
+                filter.type = 'lowpass';
+                const filterFreq = Math.min(this.config.filterFreq, fx.filterSweep || 4000);
+                filter.frequency.setValueAtTime(filterFreq, now);
+                filter.Q.setValueAtTime(0.7, now);
+
+                // Panner - use channel pan position with slight random variation
+                const panner = this.audioCtx.createStereoPanner();
+                const panVariation = (Math.random() - 0.5) * 0.15;
+                const finalPan = Math.max(-1, Math.min(1, fx.pan + panVariation));
+                panner.pan.setValueAtTime(finalPan, now);
+
+                // Connect all oscillators through per-channel effect chains
+                oscillators.forEach(osc => {
+                    osc.connect(gainNode);
+                });
+                
+                if (tremoloNode) {
+                    gainNode.connect(tremoloNode);
+                    tremoloNode.connect(filter);
+                } else {
+                    gainNode.connect(filter);
+                }
+                filter.connect(panner);
+                
+                // ═══ WEATHER: Intimacy affects wet/dry balance ═══
+                // "The Room Is Playing" - low intimacy = more reverb, distant
+                // "Tenderness at Distance" - sound from another room
+                const dryLevel = 0.3 + weather.intimacy * 0.7; // 0.3-1.0
+                const reverbBoost = wx.reverbMixMultiplier;
+                const delayBoost = wx.delayFeedbackMultiplier;
+                
+                // Create per-note gain nodes to apply weather adjustments
+                const dryOut = this.audioCtx.createGain();
+                dryOut.gain.value = dryLevel;
+                
+                const reverbOut = this.audioCtx.createGain();
+                reverbOut.gain.value = reverbBoost;
+                
+                const delayOut = this.audioCtx.createGain();
+                delayOut.gain.value = delayBoost;
+                
+                // Weather: Pre-delay for distant notes ("Tenderness at Distance")
+                if (wx.preDelay > 0.05) {
+                    const preDelayNode = this.audioCtx.createDelay(1.0);
+                    preDelayNode.delayTime.value = wx.preDelay;
+                    panner.connect(preDelayNode);
+                    preDelayNode.connect(dryOut);
+                    preDelayNode.connect(reverbOut);
+                    preDelayNode.connect(delayOut);
+                    
+                    if (wx.preDelay > 0.2) {
+                        streamLog(this.config.synthType, 'effect', `distant`);
+                    }
+                } else {
+                    panner.connect(dryOut);
+                    panner.connect(reverbOut);
+                    panner.connect(delayOut);
+                }
+                
+                // Route to effect chains
+                dryOut.connect(this.eqLow);
+                delayOut.connect(this.delaySend);
+                reverbOut.connect(this.reverbSend);
+
+                oscillators.forEach(osc => {
+                    osc.start(now);
+                    osc.stop(now + noteDuration + 0.5);
+                });
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // SYNTH CONFIG GENERATION
+        // ═══════════════════════════════════════════════════════════════
+        
+        function generateSynthConfig(index, scaleNotes, forceType = null) {
+            const instrumentOrder = ['cello', 'celeste', 'harp', 'rhodes', 'vibraphone'];
+            const synthType = forceType || instrumentOrder[index] || 'rhodes';
+            
+            const naturalRanges = {
+                cello: { low: 36, high: 72 },
+                celeste: { low: 60, high: 96 },
+                harp: { low: 24, high: 96 },
+                rhodes: { low: 48, high: 84 },
+                vibraphone: { low: 53, high: 89 }
+            };
+            
+            const range = naturalRanges[synthType];
+            const possibleOctaves = [];
+            for (let oct = Math.floor(range.low / 12) * 12; oct <= range.high - 12; oct += 12) {
+                if (oct >= range.low - 6 && oct + 12 <= range.high + 6) {
+                    possibleOctaves.push(oct);
+                }
+            }
+            const baseOctave = possibleOctaves.length > 0 ? randomChoice(possibleOctaves) : Math.floor((range.low + range.high) / 2);
+
+            const inRangeNotes = scaleNotes.filter(n => n >= range.low && n <= range.high);
+            const rootNotes = inRangeNotes.filter(n => n >= baseOctave - 6 && n <= baseOctave + 12);
+            const rootNote = rootNotes.length > 0 ? randomChoice(rootNotes) : Math.floor((range.low + range.high) / 2);
+            
+            const melodyChance = 0.4;
+            const isMelody = Math.random() < melodyChance;
+            
+            log('decision', `${synthType}: ${isMelody ? 'MELODY' : 'CHORD'} mode, base octave ${baseOctave}`);
+            
+            let selectedNotes = [];
+            
+            if (isMelody) {
+                const patternLength = randomInt(2, 6);
+                let currentNote = rootNote;
+                for (let i = 0; i < patternLength; i++) {
+                    selectedNotes.push(currentNote);
+                    const nearbyNotes = scaleNotes.filter(n => Math.abs(n - currentNote) <= 7 && n !== currentNote);
+                    if (nearbyNotes.length > 0) currentNote = randomChoice(nearbyNotes);
+                }
+                log('decision', `${synthType}: Pattern [${selectedNotes.map(midiToNoteName).join(' → ')}]`);
+            } else {
+                const voicing = randomChoice(CHORD_VOICINGS);
+                selectedNotes = voicing.map(interval => {
+                    const targetNote = rootNote + interval;
+                    return scaleNotes.reduce((prev, curr) => 
+                        Math.abs(curr - targetNote) < Math.abs(prev - targetNote) ? curr : prev
+                    , scaleNotes[0]);
+                });
+                selectedNotes = [...new Set(selectedNotes)];
+                log('decision', `${synthType}: Voicing [${selectedNotes.map(midiToNoteName).join(' ')}]`);
+            }
+
+            const configs = {
+                cello: {
+                    attack: random(0.5, 2), decay: random(1, 3), sustain: random(0.6, 0.9),
+                    release: random(2, 6), loopLength: random(8, 30), volume: random(0.12, 0.2),
+                    filterFreq: random(400, 2000), waveform: 'triangle',
+                    silenceChance: random(0.05, 0.2)
+                },
+                celeste: {
+                    attack: random(0.001, 0.01), decay: random(2, 5), sustain: random(0.1, 0.2),
+                    release: random(3, 8), loopLength: random(5, 25), volume: random(0.1, 0.15),
+                    filterFreq: random(4000, 12000), waveform: 'sine',
+                    silenceChance: random(0.1, 0.25)
+                },
+                harp: {
+                    attack: random(0.001, 0.02), decay: random(1, 3), sustain: random(0.15, 0.35),
+                    release: random(2, 6), loopLength: random(4, 20), volume: random(0.1, 0.18),
+                    filterFreq: random(2000, 8000), waveform: 'triangle',
+                    silenceChance: random(0.05, 0.2)
+                },
+                rhodes: {
+                    attack: random(0.001, 0.015), decay: random(1, 3), sustain: random(0.2, 0.5),
+                    release: random(2, 5), loopLength: random(6, 25), volume: random(0.12, 0.18),
+                    filterFreq: random(1500, 5000), waveform: 'sine',
+                    silenceChance: random(0.1, 0.25)
+                },
+                vibraphone: {
+                    attack: random(0.001, 0.01), decay: random(2, 6), sustain: random(0.25, 0.55),
+                    release: random(3, 10), loopLength: random(6, 30), volume: random(0.1, 0.16),
+                    filterFreq: random(3000, 9000), waveform: 'sine',
+                    silenceChance: random(0.1, 0.25)
+                }
+            };
+
+            const baseConfig = configs[synthType];
+            
+            // Randomize starting values - vintage amp style ranges
+            channelEffects[synthType] = {
+                // Vibrato - subtle Fender-style pitch wobble
+                vibratoDepth: random(0.003, 0.012),    // Subtle pitch deviation
+                vibratoAmount: random(0.2, 0.7),       // Intensity
+                vibratoSpeed: random(2, 8),            // Classic 2-8 Hz range
+                
+                // Tremolo - Silvertone/Fender throb
+                tremoloDepth: random(0.1, 0.6),        // How deep the pulse
+                tremoloAmount: random(0.2, 0.6),       // Intensity
+                tremoloSpeed: random(2, 8),            // Slow surf to medium chop
+                
+                // Delay - tape echo character
+                delayTime: random(0.1, 0.5),           // 100-500ms tape delay range
+                delayAmount: random(0.15, 0.5),        // Mix
+                delayFeedback: random(0.2, 0.6),       // Repeats
+                
+                // Reverb - spring tank warmth
+                reverbAmount: random(0.3, 0.7),        // Mix
+                reverbDecay: random(1.5, 3.5),         // Spring tank decay
+                reverbTone: random(1200, 4000),        // Midrange spring character
+                
+                // 3-band EQ - vintage amp tone controls
+                eqLow: random(-6, 6),                  // Bass boost/cut
+                eqMid: random(-4, 4),                  // Mid scoop/boost
+                eqHigh: random(-6, 6),                 // Treble boost/cut
+                
+                // Pan - full stereo field
+                pan: random(-1, 1)                     // Anywhere in the field
+            };
+
+            return {
+                notes: selectedNotes,
+                isMelody: isMelody,
+                isOff: false,
+                melodySpeed: isMelody ? random(0.3, 1.2) : 0,
+                synthType: synthType,
+                baseOctave: baseOctave,
+                ...baseConfig
+            };
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // ═══════════════════════════════════════════════════════════════
+        // NOISE LAYER (Living, breathing background texture)
+        // ═══════════════════════════════════════════════════════════════
+        
+        function createBrownNoise() {
+            // Brown noise: lower frequencies, warmer than pink
+            const bufferSize = audioCtx.sampleRate * 4; // 4 seconds of noise
+            const buffer = audioCtx.createBuffer(2, bufferSize, audioCtx.sampleRate);
+            
+            for (let channel = 0; channel < 2; channel++) {
+                const data = buffer.getChannelData(channel);
+                let lastOut = 0;
+                for (let i = 0; i < bufferSize; i++) {
+                    const white = Math.random() * 2 - 1;
+                    // Brown noise filter: integrate white noise
+                    lastOut = (lastOut + (0.02 * white)) / 1.02;
+                    data[i] = lastOut * 3.5; // Compensate for volume loss
+                }
+            }
+            return buffer;
+        }
+        
+        function setupNoiseLayer() {
+            // Create brown noise buffer
+            const noiseBuffer = createBrownNoise();
+            
+            // Noise source (looping)
+            noiseSource = audioCtx.createBufferSource();
+            noiseSource.buffer = noiseBuffer;
+            noiseSource.loop = true;
+            
+            // Gain for fading in/out (breathing amplitude)
+            noiseGain = audioCtx.createGain();
+            noiseGain.gain.value = 0; // Start silent
+            
+            // Primary filter - bandpass that sweeps for movement
+            noiseFilter = audioCtx.createBiquadFilter();
+            noiseFilter.type = 'bandpass';
+            noiseFilter.frequency.value = 200 + Math.random() * 300;
+            noiseFilter.Q.value = 0.4;
+            
+            // Secondary filter - lowpass that opens/closes
+            noiseFilter2 = audioCtx.createBiquadFilter();
+            noiseFilter2.type = 'lowpass';
+            noiseFilter2.frequency.value = 600;
+            noiseFilter2.Q.value = 0.5;
+            
+            // Resonant peak filter - adds character/shimmer that evolves
+            noiseResonance = audioCtx.createBiquadFilter();
+            noiseResonance.type = 'peaking';
+            noiseResonance.frequency.value = 300 + Math.random() * 400;
+            noiseResonance.Q.value = 2 + Math.random() * 3;
+            noiseResonance.gain.value = 3 + Math.random() * 6;
+            
+            // Stereo widener via slight channel delay
+            const noisePanner = audioCtx.createStereoPanner();
+            noisePanner.pan.value = (Math.random() - 0.5) * 0.6;
+            
+            // Connect chain
+            noiseSource.connect(noiseFilter);
+            noiseFilter.connect(noiseFilter2);
+            noiseFilter2.connect(noiseResonance);
+            noiseResonance.connect(noisePanner);
+            noisePanner.connect(noiseGain);
+            noiseGain.connect(dryGain);
+            
+            noiseSource.start();
+            log('system', 'Living noise layer ready');
+        }
+        
+        function startNoiseLayerDrift() {
+            // Clear any existing timeouts
+            noiseEvolveTimeouts.forEach(t => clearTimeout(t));
+            noiseEvolveTimeouts = [];
+            
+            // === BREATHING: Amplitude swells (integrated with weather) ===
+            function scheduleBreathing() {
+                if (!isPlaying) return;
+                const now = audioCtx.currentTime;
+                
+                // Weather affects noise level
+                // Low intimacy = more ambient noise (distant room)
+                // High presence = slightly more noise too
+                const weatherNoiseBoost = (1 - weather.intimacy) * 0.5 + weather.presence * 0.2;
+                const baseLevel = 0.01 * (1 + weatherNoiseBoost);
+                
+                const roll = Math.random();
+                let targetVol, fadeTime;
+                
+                if (roll < 0.4) {
+                    // Inhale - fade in (always gradual)
+                    targetVol = baseLevel + Math.random() * 0.03;
+                    fadeTime = 12 + Math.random() * 30; // Minimum 12s fade
+                } else if (roll < 0.75) {
+                    // Exhale - fade down (not out, always gradual)
+                    targetVol = baseLevel * 0.3 + Math.random() * 0.01;
+                    fadeTime = 15 + Math.random() * 35;
+                } else {
+                    // Rest - fade to near-silence (never abrupt)
+                    targetVol = 0.001; // Not zero, just very quiet
+                    fadeTime = 20 + Math.random() * 50; // Long fade to silence
+                }
+                
+                // Always use linearRamp for smooth transitions
+                noiseGain.gain.linearRampToValueAtTime(targetVol, now + fadeTime);
+                
+                const nextTime = 15000 + Math.random() * 45000;
+                noiseEvolveTimeouts.push(setTimeout(scheduleBreathing, nextTime));
+            }
+            
+            // === MOVEMENT: Filter sweeps ===
+            function scheduleFilterSweep() {
+                if (!isPlaying) return;
+                const now = audioCtx.currentTime;
+                
+                // Primary bandpass sweep
+                const newBandFreq = 100 + Math.random() * 600;
+                const sweepTime = 10 + Math.random() * 40;
+                noiseFilter.frequency.linearRampToValueAtTime(newBandFreq, now + sweepTime);
+                
+                // Occasionally change Q for width
+                if (Math.random() < 0.3) {
+                    const newQ = 0.2 + Math.random() * 0.8;
+                    noiseFilter.Q.linearRampToValueAtTime(newQ, now + sweepTime);
+                }
+                
+                const nextTime = 20000 + Math.random() * 50000;
+                noiseEvolveTimeouts.push(setTimeout(scheduleFilterSweep, nextTime));
+            }
+            
+            // === OPENING: Lowpass opens/closes ===
+            function scheduleLowpassSweep() {
+                if (!isPlaying) return;
+                const now = audioCtx.currentTime;
+                
+                const newCutoff = 300 + Math.random() * 1200;
+                const sweepTime = 15 + Math.random() * 45;
+                noiseFilter2.frequency.linearRampToValueAtTime(newCutoff, now + sweepTime);
+                
+                const nextTime = 25000 + Math.random() * 60000;
+                noiseEvolveTimeouts.push(setTimeout(scheduleLowpassSweep, nextTime));
+            }
+            
+            // === CHARACTER: Resonant peak shifts ===
+            function scheduleResonanceShift() {
+                if (!isPlaying) return;
+                const now = audioCtx.currentTime;
+                
+                const roll = Math.random();
+                const shiftTime = 8 + Math.random() * 30;
+                
+                if (roll < 0.5) {
+                    // Move the resonant frequency
+                    const newFreq = 200 + Math.random() * 800;
+                    noiseResonance.frequency.linearRampToValueAtTime(newFreq, now + shiftTime);
+                } else if (roll < 0.8) {
+                    // Change resonance amount (shimmer)
+                    const newGain = 2 + Math.random() * 10;
+                    noiseResonance.gain.linearRampToValueAtTime(newGain, now + shiftTime);
+                } else {
+                    // Change Q (width of resonance)
+                    const newQ = 1 + Math.random() * 6;
+                    noiseResonance.Q.linearRampToValueAtTime(newQ, now + shiftTime);
+                }
+                
+                const nextTime = 12000 + Math.random() * 35000;
+                noiseEvolveTimeouts.push(setTimeout(scheduleResonanceShift, nextTime));
+            }
+            
+            // Start all evolution threads with staggered delays
+            setTimeout(scheduleBreathing, 2000 + Math.random() * 5000);
+            setTimeout(scheduleFilterSweep, 5000 + Math.random() * 10000);
+            setTimeout(scheduleLowpassSweep, 8000 + Math.random() * 15000);
+            setTimeout(scheduleResonanceShift, 3000 + Math.random() * 8000);
+            
+            log('effect', 'Noise layer breathing started');
+        }
+        
+        function stopNoiseLayer() {
+            if (noiseFadeTimeout) {
+                clearTimeout(noiseFadeTimeout);
+                noiseFadeTimeout = null;
+            }
+            noiseEvolveTimeouts.forEach(t => clearTimeout(t));
+            noiseEvolveTimeouts = [];
+            if (noiseGain) {
+                noiseGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5);
+            }
+        }
+
+        // Drift a parameter toward a new random value within its range
+        function driftParam(current, range, speed = 0.1) {
+            const drift = (Math.random() - 0.5) * speed * (range.max - range.min);
+            return Math.max(range.min, Math.min(range.max, current + drift));
+        }
+        
+        // Store individual drift timeouts for each channel/parameter group
+        let driftTimeouts = {};
+        
+        // Update UI for a single instrument
+        function updateEffectUI(inst) {
+            const fx = channelEffects[inst];
+            const instId = inst === 'vibraphone' ? 'vibes' : inst;
+            
+            // Helper to normalize value to percentage
+            const norm = (val, range) => ((val - range.min) / (range.max - range.min)) * 100;
+            
+            // Vibrato bars
+            const vibDepthEl = document.getElementById(`${instId}-vib-depth`);
+            if (vibDepthEl) vibDepthEl.style.width = norm(fx.vibratoDepth, effectRanges.vibratoDepth) + '%';
+            const vibEl = document.getElementById(`${instId}-vib`);
+            if (vibEl) vibEl.style.width = (fx.vibratoAmount * 100) + '%';
+            const vibSpeedEl = document.getElementById(`${instId}-vib-speed`);
+            if (vibSpeedEl) vibSpeedEl.style.width = norm(fx.vibratoSpeed, effectRanges.vibratoSpeed) + '%';
+            
+            // Tremolo bars
+            const trmDepthEl = document.getElementById(`${instId}-trm-depth`);
+            if (trmDepthEl) trmDepthEl.style.width = norm(fx.tremoloDepth, effectRanges.tremoloDepth) + '%';
+            const trmEl = document.getElementById(`${instId}-trm`);
+            if (trmEl) trmEl.style.width = (fx.tremoloAmount * 100) + '%';
+            const trmSpeedEl = document.getElementById(`${instId}-trm-speed`);
+            if (trmSpeedEl) trmSpeedEl.style.width = norm(fx.tremoloSpeed, effectRanges.tremoloSpeed) + '%';
+            
+            // Delay bars
+            const delayTimeEl = document.getElementById(`${instId}-delay-time`);
+            if (delayTimeEl) delayTimeEl.style.width = norm(fx.delayTime, effectRanges.delayTime) + '%';
+            const echoEl = document.getElementById(`${instId}-echo`);
+            if (echoEl) echoEl.style.width = norm(fx.delayAmount, effectRanges.delayAmount) + '%';
+            const delayFbEl = document.getElementById(`${instId}-delay-fb`);
+            if (delayFbEl) delayFbEl.style.width = norm(fx.delayFeedback, effectRanges.delayFeedback) + '%';
+            
+            // Reverb bars
+            const reverbEl = document.getElementById(`${instId}-reverb`);
+            if (reverbEl) reverbEl.style.width = norm(fx.reverbAmount, effectRanges.reverbAmount) + '%';
+            const reverbDecayEl = document.getElementById(`${instId}-reverb-decay`);
+            if (reverbDecayEl) reverbDecayEl.style.width = norm(fx.reverbDecay, effectRanges.reverbDecay) + '%';
+            const reverbToneEl = document.getElementById(`${instId}-reverb-tone`);
+            if (reverbToneEl) reverbToneEl.style.width = norm(fx.reverbTone, effectRanges.reverbTone) + '%';
+            
+            // EQ markers (centered at 50%, range -12 to +12 dB)
+            const eqToPercent = (val) => ((val + 12) / 24) * 100;
+            const eqLowEl = document.getElementById(`${instId}-eq-low`);
+            if (eqLowEl) eqLowEl.style.left = eqToPercent(fx.eqLow) + '%';
+            const eqMidEl = document.getElementById(`${instId}-eq-mid`);
+            if (eqMidEl) eqMidEl.style.left = eqToPercent(fx.eqMid) + '%';
+            const eqHighEl = document.getElementById(`${instId}-eq-high`);
+            if (eqHighEl) eqHighEl.style.left = eqToPercent(fx.eqHigh) + '%';
+            
+            // Pan marker (full -1 to +1 range)
+            const panEl = document.getElementById(`${instId}-pan`);
+            if (panEl) {
+                const panPercent = ((fx.pan + 1) / 2) * 100;
+                panEl.style.left = panPercent + '%';
+            }
+        }
+        
+        // Schedule a random drift for a specific parameter group
+        function scheduleDrift(inst, paramGroup, synth) {
+            const key = `${inst}_${paramGroup}`;
+            
+            // Truly random interval: pick random min (1-8s) and random max (10-45s) each time
+            const randomMin = 1000 + Math.random() * 7000;
+            const randomMax = 10000 + Math.random() * 35000;
+            // Additional chaos: sometimes very short, sometimes very long
+            let nextTime;
+            const roll = Math.random();
+            if (roll < 0.15) {
+                // 15% chance: quick change (0.5-3s)
+                nextTime = 500 + Math.random() * 2500;
+            } else if (roll > 0.9) {
+                // 10% chance: very slow change (30-60s)
+                nextTime = 30000 + Math.random() * 30000;
+            } else {
+                // 75% chance: normal random range
+                nextTime = randomMin + Math.random() * (randomMax - randomMin);
+            }
+            
+            driftTimeouts[key] = setTimeout(() => {
+                if (!isPlaying) return;
+                
+                const fx = channelEffects[inst];
+                
+                // Drift only this parameter group
+                switch (paramGroup) {
+                    case 'vibrato':
+                        fx.vibratoDepth = driftParam(fx.vibratoDepth, effectRanges.vibratoDepth, 0.12);
+                        fx.vibratoAmount = driftParam(fx.vibratoAmount, effectRanges.vibratoAmount, 0.15);
+                        fx.vibratoSpeed = driftParam(fx.vibratoSpeed, effectRanges.vibratoSpeed, 0.1);
+                        break;
+                    case 'tremolo':
+                        fx.tremoloDepth = driftParam(fx.tremoloDepth, effectRanges.tremoloDepth, 0.12);
+                        fx.tremoloAmount = driftParam(fx.tremoloAmount, effectRanges.tremoloAmount, 0.15);
+                        fx.tremoloSpeed = driftParam(fx.tremoloSpeed, effectRanges.tremoloSpeed, 0.1);
+                        break;
+                    case 'delay':
+                        fx.delayTime = driftParam(fx.delayTime, effectRanges.delayTime, 0.08);
+                        fx.delayAmount = driftParam(fx.delayAmount, effectRanges.delayAmount, 0.12);
+                        fx.delayFeedback = driftParam(fx.delayFeedback, effectRanges.delayFeedback, 0.1);
+                        break;
+                    case 'reverb':
+                        fx.reverbAmount = driftParam(fx.reverbAmount, effectRanges.reverbAmount, 0.12);
+                        fx.reverbDecay = driftParam(fx.reverbDecay, effectRanges.reverbDecay, 0.08);
+                        fx.reverbTone = driftParam(fx.reverbTone, effectRanges.reverbTone, 0.1);
+                        break;
+                    case 'eq':
+                        fx.eqLow = driftParam(fx.eqLow, effectRanges.eqLow, 0.1);
+                        fx.eqMid = driftParam(fx.eqMid, effectRanges.eqMid, 0.1);
+                        fx.eqHigh = driftParam(fx.eqHigh, effectRanges.eqHigh, 0.1);
+                        break;
+                    case 'pan':
+                        fx.pan = driftParam(fx.pan, effectRanges.pan, 0.08);
+                        break;
+                    case 'filterSweep':
+                        // Very slow filter sweep - Disasterpeace style
+                        fx.filterSweep = driftParam(fx.filterSweep, effectRanges.filterSweep, 0.15);
+                        break;
+                }
+                
+                // Update audio nodes
+                if (synth) synth.updateEffects();
+                
+                // Update UI for this instrument
+                updateEffectUI(inst);
+                
+                // Schedule next drift for this parameter group
+                scheduleDrift(inst, paramGroup, synth);
+                
+            }, nextTime);
+        }
+        
+        function startEffectsEbb() {
+            // Clear any existing timeouts
+            stopEffectsEbb();
+            
+            const paramGroups = ['vibrato', 'tremolo', 'delay', 'reverb', 'eq', 'pan', 'filterSweep'];
+            const instruments = ['cello', 'celeste', 'harp', 'rhodes', 'vibraphone'];
+            
+            // Start independent drift timers for each instrument and parameter group
+            instruments.forEach((inst, i) => {
+                const synth = synths[i];
+                
+                paramGroups.forEach(group => {
+                    // Stagger initial start times randomly
+                    const initialDelay = Math.random() * 5000;
+                    setTimeout(() => {
+                        if (isPlaying) scheduleDrift(inst, group, synth);
+                    }, initialDelay);
+                });
+            });
+            
+            log('effect', 'Independent parameter drift started');
+        }
+        
+        function stopEffectsEbb() {
+            // Clear all drift timeouts
+            Object.values(driftTimeouts).forEach(timeout => clearTimeout(timeout));
+            driftTimeouts = {};
+        }
+        
+        // Random mode changes (CHD/MEL/OFF)
+        function startModeChanges() {
+            if (modeChangeInterval) clearInterval(modeChangeInterval);
+            modeChangeInterval = setInterval(() => {
+                if (!isPlaying) return;
+                
+                // Pick a random synth to potentially change
+                const synthIndex = randomInt(0, synths.length - 1);
+                const synth = synths[synthIndex];
+                if (!synth) return;
+                
+                // 30% chance to change mode
+                if (Math.random() < 0.3) {
+                    const modes = ['melody', 'chord', 'off'];
+                    const newMode = randomChoice(modes);
+                    const oldMode = synth.config.isOff ? 'off' : (synth.config.isMelody ? 'melody' : 'chord');
+                    
+                    if (newMode !== oldMode) {
+                        if (newMode === 'off') {
+                            synth.config.isOff = true;
+                            synth.config.isMelody = false;
+                            log('decision', `${synth.config.synthType}: Mode → OFF`);
+                            streamLog(synth.config.synthType, 'decision', '■ OFF');
+                        } else if (newMode === 'melody') {
+                            synth.config.isOff = false;
+                            synth.config.isMelody = true;
+                            // Regenerate melody pattern
+                            const patternLength = randomInt(2, 6);
+                            let currentNote = synth.config.notes[0] || 60;
+                            synth.config.notes = [];
+                            for (let i = 0; i < patternLength; i++) {
+                                synth.config.notes.push(currentNote);
+                                const nearbyNotes = currentChordNotes.filter(n => Math.abs(n - currentNote) <= 7 && n !== currentNote);
+                                if (nearbyNotes.length > 0) currentNote = randomChoice(nearbyNotes);
+                            }
+                            synth.config.melodySpeed = random(0.3, 1.2);
+                            log('decision', `${synth.config.synthType}: Mode → MELODY`);
+                            streamLog(synth.config.synthType, 'decision', '▶ MEL');
+                        } else {
+                            synth.config.isOff = false;
+                            synth.config.isMelody = false;
+                            // Regenerate chord voicing
+                            const voicing = randomChoice(CHORD_VOICINGS);
+                            const rootNote = synth.config.notes[0] || 60;
+                            synth.config.notes = voicing.map(interval => {
+                                const targetNote = rootNote + interval;
+                                return currentChordNotes.reduce((prev, curr) => 
+                                    Math.abs(curr - targetNote) < Math.abs(prev - targetNote) ? curr : prev
+                                , currentChordNotes[0] || targetNote);
+                            });
+                            synth.config.notes = [...new Set(synth.config.notes)];
+                            log('decision', `${synth.config.synthType}: Mode → CHORD`);
+                            streamLog(synth.config.synthType, 'decision', '▶ CHD');
+                        }
+                        updateStreamMode(synth.config.synthType, synth.config.isMelody, synth.config.isOff);
+                    }
+                }
+            }, 10000); // Check every 10 seconds
+        }
+        
+        function stopModeChanges() {
+            if (modeChangeInterval) {
+                clearInterval(modeChangeInterval);
+                modeChangeInterval = null;
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // CHORD TRANSITIONS
+        // ═══════════════════════════════════════════════════════════════
+        
+        function advanceChord() {
+            const nextChord = generateRandomChord();
+            const nextChordNotes = getChordNotes(nextChord);
+            
+            const transitionOrder = [0, 1, 2, 3, 4].sort(() => Math.random() - 0.5);
+            
+            transitionOrder.forEach((synthIndex, orderIndex) => {
+                const synth = synths[synthIndex];
+                if (!synth) return;
+                
+                const delay = orderIndex * random(2000, 8000);
+                
+                setTimeout(() => {
+                    if (!isPlaying) return;
+                    
+                    graduallyTransitionSynth(synth, nextChordNotes);
+                    
+                    if (orderIndex === transitionOrder.length - 1) {
+                        currentChord = nextChord;
+                        currentChordNotes = nextChordNotes;
+                        updateDisplay();
+                    }
+                }, delay);
+            });
+        }
+        
+        function graduallyTransitionSynth(synth, newChordNotes) {
+            const baseOctave = synth.config.baseOctave || 48;
+            const availableNotes = newChordNotes.filter(n => 
+                n >= baseOctave - 12 && n <= baseOctave + 24
+            );
+            
+            if (availableNotes.length === 0) return;
+            
+            const oldNotes = [...synth.config.notes];
+            const newNotes = oldNotes.map(oldNote => findNearestChordTone(oldNote, availableNotes));
+            synth.config.notes = [...new Set(newNotes)];
+            
+            log('decision', `${synth.config.synthType}: Voice led to [${synth.config.notes.map(midiToNoteName).join(' ')}]`);
+            streamLog(synth.config.synthType, 'chord', `→ ${synth.config.notes.map(midiToNoteName).join(' ')}`);
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // INITIALIZE & PLAYBACK
+        // ═══════════════════════════════════════════════════════════════
+        
+        function initialize() {
+            log('system', '═══════════════════════════════════════');
+            log('system', 'INITIALIZING AMBIENT DRIFT v2');
+            log('system', '═══════════════════════════════════════');
+            
+            if (audioCtx) audioCtx.close();
+            if (chordChangeInterval) {
+                clearTimeout(chordChangeInterval);
+                chordChangeInterval = null;
+            }
+            chordHistory = [];
+
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            // Resume audio context (required by browsers after user gesture)
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume().then(() => {
+                    log('system', 'Audio context resumed');
+                });
+            }
+            masterGain = audioCtx.createGain();
+            masterGain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            
+            // Simplified master chain - per-channel effects handle delay/reverb
+            log('system', 'Building audio chain...');
+            
+            dryGain = audioCtx.createGain();
+            dryGain.gain.value = 0.8;
+            dryGain.connect(audioCtx.destination);
+            
+            // Noise layer (Disasterpeace style)
+            log('system', 'Building noise layer...');
+            setupNoiseLayer();
+
+            log('effect', 'Per-channel delay & reverb enabled');
+
+            // Choose scale
+            const scaleNames = Object.keys(SCALES);
+            globalScale = randomChoice(scaleNames);
+            globalScaleIntervals = SCALES[globalScale];
+            globalRoot = randomInt(0, 11);
+
+            log('system', `Key: ${NOTE_NAMES[globalRoot]} ${globalScale}`);
+
+            // First chord
+            currentChord = generateRandomChord();
+            currentChordNotes = getChordNotes(currentChord);
+
+            const rootMidi = 36 + globalRoot;
+            const scaleNotes = generateScaleNotes(rootMidi, globalScaleIntervals, 5);
+
+            // Create instruments (each has its own delay/reverb chain)
+            log('system', 'Creating instruments with per-channel effects...');
+            synths = [];
+            for (let i = 0; i < 5; i++) {
+                const config = generateSynthConfig(i, currentChordNotes);
+                synths.push(new AmbientSynth(audioCtx, masterGain, i, config));
+            }
+
+            // Generate ticket ID
+            document.getElementById('ticketId').textContent = Math.random().toString(36).substring(2, 10).toUpperCase();
+
+            updateDisplay();
+            log('system', 'Initialization complete. Ready to play.');
+        }
+
+        function updateDisplay() {
+            document.getElementById('modeDisplay').textContent = globalScale || '──────';
+            document.getElementById('rootDisplay').textContent = NOTE_NAMES[globalRoot] || '──';
+            document.getElementById('chordDisplay').textContent = currentChord ? currentChord.name : '──────';
+
+            // Update stream column modes
+            synths.forEach((synth) => {
+                updateStreamMode(synth.config.synthType, synth.config.isMelody);
+            });
+        }
+
+        function startPlayback() {
+            if (isPlaying) return;
+            
+            log('system', '▶ PLAYBACK STARTED');
+            isPlaying = true;
+            startTime = Date.now();
+            synths.forEach(synth => synth.start());
+            startEffectsEbb();
+            startModeChanges();
+            startNoiseLayerDrift();
+            startWeatherSystem();  // Per-channel atmospheric parameters
+            
+            // Chord changes (every 25-40 seconds)
+            const scheduleNextChord = () => {
+                const chordDuration = random(25000, 40000); // 25-40 seconds
+                log('system', `Next chord change in ${(chordDuration/1000).toFixed(0)}s`);
+                chordChangeInterval = setTimeout(() => {
+                    if (isPlaying) {
+                        log('system', '═══ CHORD CHANGE ═══');
+                        advanceChord();
+                        scheduleNextChord();
+                    }
+                }, chordDuration);
+            };
+            scheduleNextChord();
+            
+            // Update time display
+            setInterval(() => {
+                if (isPlaying && startTime) {
+                    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                    const mins = Math.floor(elapsed / 60).toString().padStart(2, '0');
+                    const secs = (elapsed % 60).toString().padStart(2, '0');
+                    document.getElementById('timeDisplay').textContent = `${mins}:${secs}`;
+                }
+            }, 1000);
+        }
+
+        function stopPlayback() {
+            log('system', '■ PLAYBACK STOPPED');
+            isPlaying = false;
+            synths.forEach(synth => synth.stop());
+            stopEffectsEbb();
+            stopModeChanges();
+            stopNoiseLayer();
+            stopWeatherSystem();
+            
+            if (chordChangeInterval) {
+                clearTimeout(chordChangeInterval);
+                chordChangeInterval = null;
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // EVENT HANDLERS
+        // ═══════════════════════════════════════════════════════════════
+        
+        document.getElementById('startBtn').addEventListener('click', () => {
+            initialize();
+            startPlayback();
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('randomizeBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = false;
+            document.getElementById('saveBtn').disabled = false;
+            document.getElementById('recordBtn').disabled = false;
+        });
+
+        document.getElementById('stopBtn').addEventListener('click', stopPlayback);
+
+        document.getElementById('randomizeBtn').addEventListener('click', () => {
+            log('system', '↻ RANDOMIZING...');
+            initialize();
+            if (isPlaying) {
+                stopPlayback();
+                startPlayback();
+            }
+        });
+
+        // Initial log
+        log('system', 'AMBIENT DRIFT v2 loaded');
+        log('system', 'Click [▶] INIT to begin');
+    </script>
+</body>
+</html>
