@@ -344,6 +344,31 @@
             color: #00ff00;
             font-weight: bold;
         }
+        
+        .ticket-row .value-select {
+            color: #00ff00;
+            font-weight: bold;
+            background: transparent;
+            border: none;
+            font-family: inherit;
+            font-size: inherit;
+            cursor: pointer;
+            padding: 0;
+            outline: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            max-width: 120px;
+        }
+        
+        .ticket-row .value-select:hover {
+            background: #1a1a1a;
+        }
+        
+        .ticket-row .value-select option {
+            background: #0a0a0a;
+            color: #00ff00;
+        }
 
         .ticket-barcode {
             text-align: center;
@@ -578,233 +603,243 @@
 <body>
     <div class="main-container">
         <!-- Left: Instrument Code Streams -->
-        <div class="viz-panel">
+        <div class="viz-panel" title="Live visualization of each instrument's activity and parameters">
             <div class="stream-column" id="stream-cello">
                 <div class="stream-header" title="Deep, warm tones in bass-mid register. Sine wave."><span class="inst-name">CELLO</span></div>
-                <div class="stream-content"><div class="stream-log"></div></div>
-                <div class="stream-effects">
-                    <div class="fx-section-label">─ vibrato ─</div>
-                    <div class="fx-row"><span>DPT</span><div class="fx-bar"><div class="fx-fill vib-depth-fill" id="cello-vib-depth"></div></div></div>
-                    <div class="fx-row"><span>AMT</span><div class="fx-bar"><div class="fx-fill" id="cello-vib"></div></div></div>
-                    <div class="fx-row"><span>SPD</span><div class="fx-bar"><div class="fx-fill vib-speed-fill" id="cello-vib-speed"></div></div></div>
-                    <div class="fx-section-label">─ tremolo ─</div>
-                    <div class="fx-row"><span>DPT</span><div class="fx-bar"><div class="fx-fill trm-depth-fill" id="cello-trm-depth"></div></div></div>
-                    <div class="fx-row"><span>AMT</span><div class="fx-bar"><div class="fx-fill" id="cello-trm"></div></div></div>
-                    <div class="fx-row"><span>SPD</span><div class="fx-bar"><div class="fx-fill trm-speed-fill" id="cello-trm-speed"></div></div></div>
-                    <div class="fx-section-label">─ delay ─</div>
-                    <div class="fx-row"><span>TIM</span><div class="fx-bar"><div class="fx-fill delay-time-fill" id="cello-delay-time"></div></div></div>
-                    <div class="fx-row"><span>MIX</span><div class="fx-bar"><div class="fx-fill echo-fill" id="cello-echo"></div></div></div>
-                    <div class="fx-row"><span>FBK</span><div class="fx-bar"><div class="fx-fill delay-fb-fill" id="cello-delay-fb"></div></div></div>
-                    <div class="fx-section-label">─ reverb ─</div>
-                    <div class="fx-row"><span>MIX</span><div class="fx-bar"><div class="fx-fill reverb-fill" id="cello-reverb"></div></div></div>
-                    <div class="fx-row"><span>DEC</span><div class="fx-bar"><div class="fx-fill reverb-decay-fill" id="cello-reverb-decay"></div></div></div>
-                    <div class="fx-row"><span>TON</span><div class="fx-bar"><div class="fx-fill reverb-tone-fill" id="cello-reverb-tone"></div></div></div>
-                    <div class="fx-section-label">─ eq ─</div>
-                    <div class="fx-row"><span>LOW</span><div class="fx-bar eq-bar"><div class="eq-marker eq-low" id="cello-eq-low"></div></div></div>
-                    <div class="fx-row"><span>MID</span><div class="fx-bar eq-bar"><div class="eq-marker eq-mid" id="cello-eq-mid"></div></div></div>
-                    <div class="fx-row"><span>HI</span><div class="fx-bar eq-bar"><div class="eq-marker eq-high" id="cello-eq-high"></div></div></div>
-                    <div class="fx-section-label">─ pan ─</div>
-                    <div class="fx-row"><span>L/R</span><div class="fx-bar pan-bar"><div class="pan-marker" id="cello-pan"></div></div></div>
+                <div class="stream-content" title="Live activity log showing notes, chords, and decisions"><div class="stream-log"></div></div>
+                <div class="stream-effects" title="Audio effects applied to this channel">
+                    <div class="fx-section-label" title="Pitch modulation effect">─ vibrato ─</div>
+                    <div class="fx-row" title="Vibrato depth - how much the pitch bends"><span>DPT</span><div class="fx-bar"><div class="fx-fill vib-depth-fill" id="cello-vib-depth"></div></div></div>
+                    <div class="fx-row" title="Vibrato amount - wet/dry mix"><span>AMT</span><div class="fx-bar"><div class="fx-fill" id="cello-vib"></div></div></div>
+                    <div class="fx-row" title="Vibrato speed - oscillation rate in Hz"><span>SPD</span><div class="fx-bar"><div class="fx-fill vib-speed-fill" id="cello-vib-speed"></div></div></div>
+                    <div class="fx-section-label" title="Volume modulation effect">─ tremolo ─</div>
+                    <div class="fx-row" title="Tremolo depth - how much volume changes"><span>DPT</span><div class="fx-bar"><div class="fx-fill trm-depth-fill" id="cello-trm-depth"></div></div></div>
+                    <div class="fx-row" title="Tremolo amount - wet/dry mix"><span>AMT</span><div class="fx-bar"><div class="fx-fill" id="cello-trm"></div></div></div>
+                    <div class="fx-row" title="Tremolo speed - pulse rate in Hz"><span>SPD</span><div class="fx-bar"><div class="fx-fill trm-speed-fill" id="cello-trm-speed"></div></div></div>
+                    <div class="fx-section-label" title="Echo/repeat effect">─ delay ─</div>
+                    <div class="fx-row" title="Delay time - gap between repeats"><span>TIM</span><div class="fx-bar"><div class="fx-fill delay-time-fill" id="cello-delay-time"></div></div></div>
+                    <div class="fx-row" title="Delay mix - wet/dry balance"><span>MIX</span><div class="fx-bar"><div class="fx-fill echo-fill" id="cello-echo"></div></div></div>
+                    <div class="fx-row" title="Delay feedback - how many repeats"><span>FBK</span><div class="fx-bar"><div class="fx-fill delay-fb-fill" id="cello-delay-fb"></div></div></div>
+                    <div class="fx-section-label" title="Room/space simulation">─ reverb ─</div>
+                    <div class="fx-row" title="Reverb mix - wet/dry balance"><span>MIX</span><div class="fx-bar"><div class="fx-fill reverb-fill" id="cello-reverb"></div></div></div>
+                    <div class="fx-row" title="Reverb decay - how long it rings"><span>DEC</span><div class="fx-bar"><div class="fx-fill reverb-decay-fill" id="cello-reverb-decay"></div></div></div>
+                    <div class="fx-row" title="Reverb tone - brightness of reflections"><span>TON</span><div class="fx-bar"><div class="fx-fill reverb-tone-fill" id="cello-reverb-tone"></div></div></div>
+                    <div class="fx-section-label" title="3-band equalizer">─ eq ─</div>
+                    <div class="fx-row" title="Low shelf EQ - bass frequencies (~100Hz)"><span>LOW</span><div class="fx-bar eq-bar"><div class="eq-marker eq-low" id="cello-eq-low"></div></div></div>
+                    <div class="fx-row" title="Mid peak EQ - midrange frequencies (~1kHz)"><span>MID</span><div class="fx-bar eq-bar"><div class="eq-marker eq-mid" id="cello-eq-mid"></div></div></div>
+                    <div class="fx-row" title="High shelf EQ - treble frequencies (~4kHz)"><span>HI</span><div class="fx-bar eq-bar"><div class="eq-marker eq-high" id="cello-eq-high"></div></div></div>
+                    <div class="fx-section-label" title="Stereo position">─ pan ─</div>
+                    <div class="fx-row" title="Pan position - left/right in stereo field"><span>L/R</span><div class="fx-bar pan-bar"><div class="pan-marker" id="cello-pan"></div></div></div>
                 </div>
-                <div class="channel-weather">
-                    <div class="wx-header">☁ WEATHER</div>
+                <div class="channel-weather" title="Slow-drifting atmospheric parameters unique to this channel">
+                    <div class="wx-header" title="Weather changes every 1-2 minutes">☁ WEATHER</div>
                     <div class="weather-grid">
-                        <div class="weather-item"><span class="wx-label">presence</span><span class="wx-bar" id="cello-wx-presence"></span></div>
-                        <div class="weather-item"><span class="wx-label">density</span><span class="wx-bar" id="cello-wx-density"></span></div>
-                        <div class="weather-item"><span class="wx-label">intimacy</span><span class="wx-bar" id="cello-wx-intimacy"></span></div>
-                        <div class="weather-item"><span class="wx-label">breath</span><span class="wx-bar" id="cello-wx-breath"></span></div>
-                        <div class="weather-item"><span class="wx-label">decay</span><span class="wx-bar" id="cello-wx-decay"></span></div>
-                        <div class="weather-item"><span class="wx-label">drift</span><span class="wx-bar" id="cello-wx-drift"></span></div>
-                        <div class="weather-item"><span class="wx-label">depth</span><span class="wx-bar" id="cello-wx-depth"></span></div>
-                        <div class="weather-item"><span class="wx-label">suspension</span><span class="wx-bar" id="cello-wx-suspension"></span></div>
-                        <div class="weather-item"><span class="wx-label">solitude</span><span class="wx-bar" id="cello-wx-solitude"></span></div>
-                        <div class="weather-item"><span class="wx-label">memory</span><span class="wx-bar" id="cello-wx-memory"></span></div>
+                        <div class="weather-item" title="Volume/presence level - low=quiet, high=prominent"><span class="wx-label">presence</span><span class="wx-bar" id="cello-wx-presence"></span></div>
+                        <div class="weather-item" title="Note frequency - low=sparse, high=busy"><span class="wx-label">density</span><span class="wx-bar" id="cello-wx-density"></span></div>
+                        <div class="weather-item" title="Reverb mix - low=distant/wet, high=close/dry"><span class="wx-label">intimacy</span><span class="wx-bar" id="cello-wx-intimacy"></span></div>
+                        <div class="weather-item" title="Note attack time - low=soft, high=sharp"><span class="wx-label">breath</span><span class="wx-bar" id="cello-wx-breath"></span></div>
+                        <div class="weather-item" title="Note release time - low=short, high=sustained"><span class="wx-label">decay</span><span class="wx-bar" id="cello-wx-decay"></span></div>
+                        <div class="weather-item" title="Pitch instability - low=stable, high=wobbly"><span class="wx-label">drift</span><span class="wx-bar" id="cello-wx-drift"></span></div>
+                        <div class="weather-item" title="Register tendency - low=bass, high=treble"><span class="wx-label">depth</span><span class="wx-bar" id="cello-wx-depth"></span></div>
+                        <div class="weather-item" title="Timing flexibility - low=tight, high=rubato"><span class="wx-label">suspension</span><span class="wx-bar" id="cello-wx-suspension"></span></div>
+                        <div class="weather-item" title="Independence - low=responsive, high=isolated"><span class="wx-label">solitude</span><span class="wx-bar" id="cello-wx-solitude"></span></div>
+                        <div class="weather-item" title="Repetition tendency - low=novel, high=familiar"><span class="wx-label">memory</span><span class="wx-bar" id="cello-wx-memory"></span></div>
+                        <div class="weather-item" title="Harmonic complexity - low=simple triads, high=altered/extended chords"><span class="wx-label">complexity</span><span class="wx-bar" id="cello-wx-complexity"></span></div>
+                        <div class="weather-item" title="Voicing spread - low=tight clusters, high=wide orchestral voicings"><span class="wx-label">expansiveness</span><span class="wx-bar" id="cello-wx-expansiveness"></span></div>
                     </div>
                 </div>
-                <div class="stream-stats"><span id="cello-count">0</span>n | <span id="cello-mode">──</span></div>
+                <div class="stream-stats" title="Note count and current mode"><span id="cello-count" title="Notes played">0</span>n | <span id="cello-mode" title="Current playing mode">──</span></div>
             </div>
             <div class="stream-column" id="stream-celeste">
                 <div class="stream-header" title="Bell-like, crystalline tones in high register. Triangle wave."><span class="inst-name">CELESTE</span></div>
-                <div class="stream-content"><div class="stream-log"></div></div>
-                <div class="stream-effects">
-                    <div class="fx-section-label">─ vibrato ─</div>
-                    <div class="fx-row"><span>DPT</span><div class="fx-bar"><div class="fx-fill vib-depth-fill" id="celeste-vib-depth"></div></div></div>
-                    <div class="fx-row"><span>AMT</span><div class="fx-bar"><div class="fx-fill" id="celeste-vib"></div></div></div>
-                    <div class="fx-row"><span>SPD</span><div class="fx-bar"><div class="fx-fill vib-speed-fill" id="celeste-vib-speed"></div></div></div>
-                    <div class="fx-section-label">─ tremolo ─</div>
-                    <div class="fx-row"><span>DPT</span><div class="fx-bar"><div class="fx-fill trm-depth-fill" id="celeste-trm-depth"></div></div></div>
-                    <div class="fx-row"><span>AMT</span><div class="fx-bar"><div class="fx-fill" id="celeste-trm"></div></div></div>
-                    <div class="fx-row"><span>SPD</span><div class="fx-bar"><div class="fx-fill trm-speed-fill" id="celeste-trm-speed"></div></div></div>
-                    <div class="fx-section-label">─ delay ─</div>
-                    <div class="fx-row"><span>TIM</span><div class="fx-bar"><div class="fx-fill delay-time-fill" id="celeste-delay-time"></div></div></div>
-                    <div class="fx-row"><span>MIX</span><div class="fx-bar"><div class="fx-fill echo-fill" id="celeste-echo"></div></div></div>
-                    <div class="fx-row"><span>FBK</span><div class="fx-bar"><div class="fx-fill delay-fb-fill" id="celeste-delay-fb"></div></div></div>
-                    <div class="fx-section-label">─ reverb ─</div>
-                    <div class="fx-row"><span>MIX</span><div class="fx-bar"><div class="fx-fill reverb-fill" id="celeste-reverb"></div></div></div>
-                    <div class="fx-row"><span>DEC</span><div class="fx-bar"><div class="fx-fill reverb-decay-fill" id="celeste-reverb-decay"></div></div></div>
-                    <div class="fx-row"><span>TON</span><div class="fx-bar"><div class="fx-fill reverb-tone-fill" id="celeste-reverb-tone"></div></div></div>
-                    <div class="fx-section-label">─ eq ─</div>
-                    <div class="fx-row"><span>LOW</span><div class="fx-bar eq-bar"><div class="eq-marker eq-low" id="celeste-eq-low"></div></div></div>
-                    <div class="fx-row"><span>MID</span><div class="fx-bar eq-bar"><div class="eq-marker eq-mid" id="celeste-eq-mid"></div></div></div>
-                    <div class="fx-row"><span>HI</span><div class="fx-bar eq-bar"><div class="eq-marker eq-high" id="celeste-eq-high"></div></div></div>
-                    <div class="fx-section-label">─ pan ─</div>
-                    <div class="fx-row"><span>L/R</span><div class="fx-bar pan-bar"><div class="pan-marker" id="celeste-pan"></div></div></div>
+                <div class="stream-content" title="Live activity log showing notes, chords, and decisions"><div class="stream-log"></div></div>
+                <div class="stream-effects" title="Audio effects applied to this channel">
+                    <div class="fx-section-label" title="Pitch modulation effect">─ vibrato ─</div>
+                    <div class="fx-row" title="Vibrato depth - how much the pitch bends"><span>DPT</span><div class="fx-bar"><div class="fx-fill vib-depth-fill" id="celeste-vib-depth"></div></div></div>
+                    <div class="fx-row" title="Vibrato amount - wet/dry mix"><span>AMT</span><div class="fx-bar"><div class="fx-fill" id="celeste-vib"></div></div></div>
+                    <div class="fx-row" title="Vibrato speed - oscillation rate in Hz"><span>SPD</span><div class="fx-bar"><div class="fx-fill vib-speed-fill" id="celeste-vib-speed"></div></div></div>
+                    <div class="fx-section-label" title="Volume modulation effect">─ tremolo ─</div>
+                    <div class="fx-row" title="Tremolo depth - how much volume changes"><span>DPT</span><div class="fx-bar"><div class="fx-fill trm-depth-fill" id="celeste-trm-depth"></div></div></div>
+                    <div class="fx-row" title="Tremolo amount - wet/dry mix"><span>AMT</span><div class="fx-bar"><div class="fx-fill" id="celeste-trm"></div></div></div>
+                    <div class="fx-row" title="Tremolo speed - pulse rate in Hz"><span>SPD</span><div class="fx-bar"><div class="fx-fill trm-speed-fill" id="celeste-trm-speed"></div></div></div>
+                    <div class="fx-section-label" title="Echo/repeat effect">─ delay ─</div>
+                    <div class="fx-row" title="Delay time - gap between repeats"><span>TIM</span><div class="fx-bar"><div class="fx-fill delay-time-fill" id="celeste-delay-time"></div></div></div>
+                    <div class="fx-row" title="Delay mix - wet/dry balance"><span>MIX</span><div class="fx-bar"><div class="fx-fill echo-fill" id="celeste-echo"></div></div></div>
+                    <div class="fx-row" title="Delay feedback - how many repeats"><span>FBK</span><div class="fx-bar"><div class="fx-fill delay-fb-fill" id="celeste-delay-fb"></div></div></div>
+                    <div class="fx-section-label" title="Room/space simulation">─ reverb ─</div>
+                    <div class="fx-row" title="Reverb mix - wet/dry balance"><span>MIX</span><div class="fx-bar"><div class="fx-fill reverb-fill" id="celeste-reverb"></div></div></div>
+                    <div class="fx-row" title="Reverb decay - how long it rings"><span>DEC</span><div class="fx-bar"><div class="fx-fill reverb-decay-fill" id="celeste-reverb-decay"></div></div></div>
+                    <div class="fx-row" title="Reverb tone - brightness of reflections"><span>TON</span><div class="fx-bar"><div class="fx-fill reverb-tone-fill" id="celeste-reverb-tone"></div></div></div>
+                    <div class="fx-section-label" title="3-band equalizer">─ eq ─</div>
+                    <div class="fx-row" title="Low shelf EQ - bass frequencies (~100Hz)"><span>LOW</span><div class="fx-bar eq-bar"><div class="eq-marker eq-low" id="celeste-eq-low"></div></div></div>
+                    <div class="fx-row" title="Mid peak EQ - midrange frequencies (~1kHz)"><span>MID</span><div class="fx-bar eq-bar"><div class="eq-marker eq-mid" id="celeste-eq-mid"></div></div></div>
+                    <div class="fx-row" title="High shelf EQ - treble frequencies (~4kHz)"><span>HI</span><div class="fx-bar eq-bar"><div class="eq-marker eq-high" id="celeste-eq-high"></div></div></div>
+                    <div class="fx-section-label" title="Stereo position">─ pan ─</div>
+                    <div class="fx-row" title="Pan position - left/right in stereo field"><span>L/R</span><div class="fx-bar pan-bar"><div class="pan-marker" id="celeste-pan"></div></div></div>
                 </div>
-                <div class="channel-weather">
-                    <div class="wx-header">☁ WEATHER</div>
+                <div class="channel-weather" title="Slow-drifting atmospheric parameters unique to this channel">
+                    <div class="wx-header" title="Weather changes every 1-2 minutes">☁ WEATHER</div>
                     <div class="weather-grid">
-                        <div class="weather-item"><span class="wx-label">presence</span><span class="wx-bar" id="celeste-wx-presence"></span></div>
-                        <div class="weather-item"><span class="wx-label">density</span><span class="wx-bar" id="celeste-wx-density"></span></div>
-                        <div class="weather-item"><span class="wx-label">intimacy</span><span class="wx-bar" id="celeste-wx-intimacy"></span></div>
-                        <div class="weather-item"><span class="wx-label">breath</span><span class="wx-bar" id="celeste-wx-breath"></span></div>
-                        <div class="weather-item"><span class="wx-label">decay</span><span class="wx-bar" id="celeste-wx-decay"></span></div>
-                        <div class="weather-item"><span class="wx-label">drift</span><span class="wx-bar" id="celeste-wx-drift"></span></div>
-                        <div class="weather-item"><span class="wx-label">depth</span><span class="wx-bar" id="celeste-wx-depth"></span></div>
-                        <div class="weather-item"><span class="wx-label">suspension</span><span class="wx-bar" id="celeste-wx-suspension"></span></div>
-                        <div class="weather-item"><span class="wx-label">solitude</span><span class="wx-bar" id="celeste-wx-solitude"></span></div>
-                        <div class="weather-item"><span class="wx-label">memory</span><span class="wx-bar" id="celeste-wx-memory"></span></div>
+                        <div class="weather-item" title="Volume/presence level - low=quiet, high=prominent"><span class="wx-label">presence</span><span class="wx-bar" id="celeste-wx-presence"></span></div>
+                        <div class="weather-item" title="Note frequency - low=sparse, high=busy"><span class="wx-label">density</span><span class="wx-bar" id="celeste-wx-density"></span></div>
+                        <div class="weather-item" title="Reverb mix - low=distant/wet, high=close/dry"><span class="wx-label">intimacy</span><span class="wx-bar" id="celeste-wx-intimacy"></span></div>
+                        <div class="weather-item" title="Note attack time - low=soft, high=sharp"><span class="wx-label">breath</span><span class="wx-bar" id="celeste-wx-breath"></span></div>
+                        <div class="weather-item" title="Note release time - low=short, high=sustained"><span class="wx-label">decay</span><span class="wx-bar" id="celeste-wx-decay"></span></div>
+                        <div class="weather-item" title="Pitch instability - low=stable, high=wobbly"><span class="wx-label">drift</span><span class="wx-bar" id="celeste-wx-drift"></span></div>
+                        <div class="weather-item" title="Register tendency - low=bass, high=treble"><span class="wx-label">depth</span><span class="wx-bar" id="celeste-wx-depth"></span></div>
+                        <div class="weather-item" title="Timing flexibility - low=tight, high=rubato"><span class="wx-label">suspension</span><span class="wx-bar" id="celeste-wx-suspension"></span></div>
+                        <div class="weather-item" title="Independence - low=responsive, high=isolated"><span class="wx-label">solitude</span><span class="wx-bar" id="celeste-wx-solitude"></span></div>
+                        <div class="weather-item" title="Repetition tendency - low=novel, high=familiar"><span class="wx-label">memory</span><span class="wx-bar" id="celeste-wx-memory"></span></div>
+                        <div class="weather-item" title="Harmonic complexity - low=simple triads, high=altered/extended chords"><span class="wx-label">complexity</span><span class="wx-bar" id="celeste-wx-complexity"></span></div>
+                        <div class="weather-item" title="Voicing spread - low=tight clusters, high=wide orchestral voicings"><span class="wx-label">expansiveness</span><span class="wx-bar" id="celeste-wx-expansiveness"></span></div>
                     </div>
                 </div>
-                <div class="stream-stats"><span id="celeste-count">0</span>n | <span id="celeste-mode">──</span></div>
+                <div class="stream-stats" title="Note count and current mode"><span id="celeste-count" title="Notes played">0</span>n | <span id="celeste-mode" title="Current playing mode">──</span></div>
             </div>
             <div class="stream-column" id="stream-harp">
                 <div class="stream-header" title="Wide range, plucked character. Sine wave with quick decay."><span class="inst-name">HARP</span></div>
-                <div class="stream-content"><div class="stream-log"></div></div>
-                <div class="stream-effects">
-                    <div class="fx-section-label">─ vibrato ─</div>
-                    <div class="fx-row"><span>DPT</span><div class="fx-bar"><div class="fx-fill vib-depth-fill" id="harp-vib-depth"></div></div></div>
-                    <div class="fx-row"><span>AMT</span><div class="fx-bar"><div class="fx-fill" id="harp-vib"></div></div></div>
-                    <div class="fx-row"><span>SPD</span><div class="fx-bar"><div class="fx-fill vib-speed-fill" id="harp-vib-speed"></div></div></div>
-                    <div class="fx-section-label">─ tremolo ─</div>
-                    <div class="fx-row"><span>DPT</span><div class="fx-bar"><div class="fx-fill trm-depth-fill" id="harp-trm-depth"></div></div></div>
-                    <div class="fx-row"><span>AMT</span><div class="fx-bar"><div class="fx-fill" id="harp-trm"></div></div></div>
-                    <div class="fx-row"><span>SPD</span><div class="fx-bar"><div class="fx-fill trm-speed-fill" id="harp-trm-speed"></div></div></div>
-                    <div class="fx-section-label">─ delay ─</div>
-                    <div class="fx-row"><span>TIM</span><div class="fx-bar"><div class="fx-fill delay-time-fill" id="harp-delay-time"></div></div></div>
-                    <div class="fx-row"><span>MIX</span><div class="fx-bar"><div class="fx-fill echo-fill" id="harp-echo"></div></div></div>
-                    <div class="fx-row"><span>FBK</span><div class="fx-bar"><div class="fx-fill delay-fb-fill" id="harp-delay-fb"></div></div></div>
-                    <div class="fx-section-label">─ reverb ─</div>
-                    <div class="fx-row"><span>MIX</span><div class="fx-bar"><div class="fx-fill reverb-fill" id="harp-reverb"></div></div></div>
-                    <div class="fx-row"><span>DEC</span><div class="fx-bar"><div class="fx-fill reverb-decay-fill" id="harp-reverb-decay"></div></div></div>
-                    <div class="fx-row"><span>TON</span><div class="fx-bar"><div class="fx-fill reverb-tone-fill" id="harp-reverb-tone"></div></div></div>
-                    <div class="fx-section-label">─ eq ─</div>
-                    <div class="fx-row"><span>LOW</span><div class="fx-bar eq-bar"><div class="eq-marker eq-low" id="harp-eq-low"></div></div></div>
-                    <div class="fx-row"><span>MID</span><div class="fx-bar eq-bar"><div class="eq-marker eq-mid" id="harp-eq-mid"></div></div></div>
-                    <div class="fx-row"><span>HI</span><div class="fx-bar eq-bar"><div class="eq-marker eq-high" id="harp-eq-high"></div></div></div>
-                    <div class="fx-section-label">─ pan ─</div>
-                    <div class="fx-row"><span>L/R</span><div class="fx-bar pan-bar"><div class="pan-marker" id="harp-pan"></div></div></div>
+                <div class="stream-content" title="Live activity log showing notes, chords, and decisions"><div class="stream-log"></div></div>
+                <div class="stream-effects" title="Audio effects applied to this channel">
+                    <div class="fx-section-label" title="Pitch modulation effect">─ vibrato ─</div>
+                    <div class="fx-row" title="Vibrato depth - how much the pitch bends"><span>DPT</span><div class="fx-bar"><div class="fx-fill vib-depth-fill" id="harp-vib-depth"></div></div></div>
+                    <div class="fx-row" title="Vibrato amount - wet/dry mix"><span>AMT</span><div class="fx-bar"><div class="fx-fill" id="harp-vib"></div></div></div>
+                    <div class="fx-row" title="Vibrato speed - oscillation rate in Hz"><span>SPD</span><div class="fx-bar"><div class="fx-fill vib-speed-fill" id="harp-vib-speed"></div></div></div>
+                    <div class="fx-section-label" title="Volume modulation effect">─ tremolo ─</div>
+                    <div class="fx-row" title="Tremolo depth - how much volume changes"><span>DPT</span><div class="fx-bar"><div class="fx-fill trm-depth-fill" id="harp-trm-depth"></div></div></div>
+                    <div class="fx-row" title="Tremolo amount - wet/dry mix"><span>AMT</span><div class="fx-bar"><div class="fx-fill" id="harp-trm"></div></div></div>
+                    <div class="fx-row" title="Tremolo speed - pulse rate in Hz"><span>SPD</span><div class="fx-bar"><div class="fx-fill trm-speed-fill" id="harp-trm-speed"></div></div></div>
+                    <div class="fx-section-label" title="Echo/repeat effect">─ delay ─</div>
+                    <div class="fx-row" title="Delay time - gap between repeats"><span>TIM</span><div class="fx-bar"><div class="fx-fill delay-time-fill" id="harp-delay-time"></div></div></div>
+                    <div class="fx-row" title="Delay mix - wet/dry balance"><span>MIX</span><div class="fx-bar"><div class="fx-fill echo-fill" id="harp-echo"></div></div></div>
+                    <div class="fx-row" title="Delay feedback - how many repeats"><span>FBK</span><div class="fx-bar"><div class="fx-fill delay-fb-fill" id="harp-delay-fb"></div></div></div>
+                    <div class="fx-section-label" title="Room/space simulation">─ reverb ─</div>
+                    <div class="fx-row" title="Reverb mix - wet/dry balance"><span>MIX</span><div class="fx-bar"><div class="fx-fill reverb-fill" id="harp-reverb"></div></div></div>
+                    <div class="fx-row" title="Reverb decay - how long it rings"><span>DEC</span><div class="fx-bar"><div class="fx-fill reverb-decay-fill" id="harp-reverb-decay"></div></div></div>
+                    <div class="fx-row" title="Reverb tone - brightness of reflections"><span>TON</span><div class="fx-bar"><div class="fx-fill reverb-tone-fill" id="harp-reverb-tone"></div></div></div>
+                    <div class="fx-section-label" title="3-band equalizer">─ eq ─</div>
+                    <div class="fx-row" title="Low shelf EQ - bass frequencies (~100Hz)"><span>LOW</span><div class="fx-bar eq-bar"><div class="eq-marker eq-low" id="harp-eq-low"></div></div></div>
+                    <div class="fx-row" title="Mid peak EQ - midrange frequencies (~1kHz)"><span>MID</span><div class="fx-bar eq-bar"><div class="eq-marker eq-mid" id="harp-eq-mid"></div></div></div>
+                    <div class="fx-row" title="High shelf EQ - treble frequencies (~4kHz)"><span>HI</span><div class="fx-bar eq-bar"><div class="eq-marker eq-high" id="harp-eq-high"></div></div></div>
+                    <div class="fx-section-label" title="Stereo position">─ pan ─</div>
+                    <div class="fx-row" title="Pan position - left/right in stereo field"><span>L/R</span><div class="fx-bar pan-bar"><div class="pan-marker" id="harp-pan"></div></div></div>
                 </div>
-                <div class="channel-weather">
-                    <div class="wx-header">☁ WEATHER</div>
+                <div class="channel-weather" title="Slow-drifting atmospheric parameters unique to this channel">
+                    <div class="wx-header" title="Weather changes every 1-2 minutes">☁ WEATHER</div>
                     <div class="weather-grid">
-                        <div class="weather-item"><span class="wx-label">presence</span><span class="wx-bar" id="harp-wx-presence"></span></div>
-                        <div class="weather-item"><span class="wx-label">density</span><span class="wx-bar" id="harp-wx-density"></span></div>
-                        <div class="weather-item"><span class="wx-label">intimacy</span><span class="wx-bar" id="harp-wx-intimacy"></span></div>
-                        <div class="weather-item"><span class="wx-label">breath</span><span class="wx-bar" id="harp-wx-breath"></span></div>
-                        <div class="weather-item"><span class="wx-label">decay</span><span class="wx-bar" id="harp-wx-decay"></span></div>
-                        <div class="weather-item"><span class="wx-label">drift</span><span class="wx-bar" id="harp-wx-drift"></span></div>
-                        <div class="weather-item"><span class="wx-label">depth</span><span class="wx-bar" id="harp-wx-depth"></span></div>
-                        <div class="weather-item"><span class="wx-label">suspension</span><span class="wx-bar" id="harp-wx-suspension"></span></div>
-                        <div class="weather-item"><span class="wx-label">solitude</span><span class="wx-bar" id="harp-wx-solitude"></span></div>
-                        <div class="weather-item"><span class="wx-label">memory</span><span class="wx-bar" id="harp-wx-memory"></span></div>
+                        <div class="weather-item" title="Volume/presence level - low=quiet, high=prominent"><span class="wx-label">presence</span><span class="wx-bar" id="harp-wx-presence"></span></div>
+                        <div class="weather-item" title="Note frequency - low=sparse, high=busy"><span class="wx-label">density</span><span class="wx-bar" id="harp-wx-density"></span></div>
+                        <div class="weather-item" title="Reverb mix - low=distant/wet, high=close/dry"><span class="wx-label">intimacy</span><span class="wx-bar" id="harp-wx-intimacy"></span></div>
+                        <div class="weather-item" title="Note attack time - low=soft, high=sharp"><span class="wx-label">breath</span><span class="wx-bar" id="harp-wx-breath"></span></div>
+                        <div class="weather-item" title="Note release time - low=short, high=sustained"><span class="wx-label">decay</span><span class="wx-bar" id="harp-wx-decay"></span></div>
+                        <div class="weather-item" title="Pitch instability - low=stable, high=wobbly"><span class="wx-label">drift</span><span class="wx-bar" id="harp-wx-drift"></span></div>
+                        <div class="weather-item" title="Register tendency - low=bass, high=treble"><span class="wx-label">depth</span><span class="wx-bar" id="harp-wx-depth"></span></div>
+                        <div class="weather-item" title="Timing flexibility - low=tight, high=rubato"><span class="wx-label">suspension</span><span class="wx-bar" id="harp-wx-suspension"></span></div>
+                        <div class="weather-item" title="Independence - low=responsive, high=isolated"><span class="wx-label">solitude</span><span class="wx-bar" id="harp-wx-solitude"></span></div>
+                        <div class="weather-item" title="Repetition tendency - low=novel, high=familiar"><span class="wx-label">memory</span><span class="wx-bar" id="harp-wx-memory"></span></div>
+                        <div class="weather-item" title="Harmonic complexity - low=simple triads, high=altered/extended chords"><span class="wx-label">complexity</span><span class="wx-bar" id="harp-wx-complexity"></span></div>
+                        <div class="weather-item" title="Voicing spread - low=tight clusters, high=wide orchestral voicings"><span class="wx-label">expansiveness</span><span class="wx-bar" id="harp-wx-expansiveness"></span></div>
                     </div>
                 </div>
-                <div class="stream-stats"><span id="harp-count">0</span>n | <span id="harp-mode">──</span></div>
+                <div class="stream-stats" title="Note count and current mode"><span id="harp-count" title="Notes played">0</span>n | <span id="harp-mode" title="Current playing mode">──</span></div>
             </div>
             <div class="stream-column" id="stream-rhodes">
                 <div class="stream-header" title="Warm electric piano tones, mid-register. Sine with tremolo."><span class="inst-name">RHODES</span></div>
-                <div class="stream-content"><div class="stream-log"></div></div>
-                <div class="stream-effects">
-                    <div class="fx-section-label">─ vibrato ─</div>
-                    <div class="fx-row"><span>DPT</span><div class="fx-bar"><div class="fx-fill vib-depth-fill" id="rhodes-vib-depth"></div></div></div>
-                    <div class="fx-row"><span>AMT</span><div class="fx-bar"><div class="fx-fill" id="rhodes-vib"></div></div></div>
-                    <div class="fx-row"><span>SPD</span><div class="fx-bar"><div class="fx-fill vib-speed-fill" id="rhodes-vib-speed"></div></div></div>
-                    <div class="fx-section-label">─ tremolo ─</div>
-                    <div class="fx-row"><span>DPT</span><div class="fx-bar"><div class="fx-fill trm-depth-fill" id="rhodes-trm-depth"></div></div></div>
-                    <div class="fx-row"><span>AMT</span><div class="fx-bar"><div class="fx-fill" id="rhodes-trm"></div></div></div>
-                    <div class="fx-row"><span>SPD</span><div class="fx-bar"><div class="fx-fill trm-speed-fill" id="rhodes-trm-speed"></div></div></div>
-                    <div class="fx-section-label">─ delay ─</div>
-                    <div class="fx-row"><span>TIM</span><div class="fx-bar"><div class="fx-fill delay-time-fill" id="rhodes-delay-time"></div></div></div>
-                    <div class="fx-row"><span>MIX</span><div class="fx-bar"><div class="fx-fill echo-fill" id="rhodes-echo"></div></div></div>
-                    <div class="fx-row"><span>FBK</span><div class="fx-bar"><div class="fx-fill delay-fb-fill" id="rhodes-delay-fb"></div></div></div>
-                    <div class="fx-section-label">─ reverb ─</div>
-                    <div class="fx-row"><span>MIX</span><div class="fx-bar"><div class="fx-fill reverb-fill" id="rhodes-reverb"></div></div></div>
-                    <div class="fx-row"><span>DEC</span><div class="fx-bar"><div class="fx-fill reverb-decay-fill" id="rhodes-reverb-decay"></div></div></div>
-                    <div class="fx-row"><span>TON</span><div class="fx-bar"><div class="fx-fill reverb-tone-fill" id="rhodes-reverb-tone"></div></div></div>
-                    <div class="fx-section-label">─ eq ─</div>
-                    <div class="fx-row"><span>LOW</span><div class="fx-bar eq-bar"><div class="eq-marker eq-low" id="rhodes-eq-low"></div></div></div>
-                    <div class="fx-row"><span>MID</span><div class="fx-bar eq-bar"><div class="eq-marker eq-mid" id="rhodes-eq-mid"></div></div></div>
-                    <div class="fx-row"><span>HI</span><div class="fx-bar eq-bar"><div class="eq-marker eq-high" id="rhodes-eq-high"></div></div></div>
-                    <div class="fx-section-label">─ pan ─</div>
-                    <div class="fx-row"><span>L/R</span><div class="fx-bar pan-bar"><div class="pan-marker" id="rhodes-pan"></div></div></div>
+                <div class="stream-content" title="Live activity log showing notes, chords, and decisions"><div class="stream-log"></div></div>
+                <div class="stream-effects" title="Audio effects applied to this channel">
+                    <div class="fx-section-label" title="Pitch modulation effect">─ vibrato ─</div>
+                    <div class="fx-row" title="Vibrato depth - how much the pitch bends"><span>DPT</span><div class="fx-bar"><div class="fx-fill vib-depth-fill" id="rhodes-vib-depth"></div></div></div>
+                    <div class="fx-row" title="Vibrato amount - wet/dry mix"><span>AMT</span><div class="fx-bar"><div class="fx-fill" id="rhodes-vib"></div></div></div>
+                    <div class="fx-row" title="Vibrato speed - oscillation rate in Hz"><span>SPD</span><div class="fx-bar"><div class="fx-fill vib-speed-fill" id="rhodes-vib-speed"></div></div></div>
+                    <div class="fx-section-label" title="Volume modulation effect">─ tremolo ─</div>
+                    <div class="fx-row" title="Tremolo depth - how much volume changes"><span>DPT</span><div class="fx-bar"><div class="fx-fill trm-depth-fill" id="rhodes-trm-depth"></div></div></div>
+                    <div class="fx-row" title="Tremolo amount - wet/dry mix"><span>AMT</span><div class="fx-bar"><div class="fx-fill" id="rhodes-trm"></div></div></div>
+                    <div class="fx-row" title="Tremolo speed - pulse rate in Hz"><span>SPD</span><div class="fx-bar"><div class="fx-fill trm-speed-fill" id="rhodes-trm-speed"></div></div></div>
+                    <div class="fx-section-label" title="Echo/repeat effect">─ delay ─</div>
+                    <div class="fx-row" title="Delay time - gap between repeats"><span>TIM</span><div class="fx-bar"><div class="fx-fill delay-time-fill" id="rhodes-delay-time"></div></div></div>
+                    <div class="fx-row" title="Delay mix - wet/dry balance"><span>MIX</span><div class="fx-bar"><div class="fx-fill echo-fill" id="rhodes-echo"></div></div></div>
+                    <div class="fx-row" title="Delay feedback - how many repeats"><span>FBK</span><div class="fx-bar"><div class="fx-fill delay-fb-fill" id="rhodes-delay-fb"></div></div></div>
+                    <div class="fx-section-label" title="Room/space simulation">─ reverb ─</div>
+                    <div class="fx-row" title="Reverb mix - wet/dry balance"><span>MIX</span><div class="fx-bar"><div class="fx-fill reverb-fill" id="rhodes-reverb"></div></div></div>
+                    <div class="fx-row" title="Reverb decay - how long it rings"><span>DEC</span><div class="fx-bar"><div class="fx-fill reverb-decay-fill" id="rhodes-reverb-decay"></div></div></div>
+                    <div class="fx-row" title="Reverb tone - brightness of reflections"><span>TON</span><div class="fx-bar"><div class="fx-fill reverb-tone-fill" id="rhodes-reverb-tone"></div></div></div>
+                    <div class="fx-section-label" title="3-band equalizer">─ eq ─</div>
+                    <div class="fx-row" title="Low shelf EQ - bass frequencies (~100Hz)"><span>LOW</span><div class="fx-bar eq-bar"><div class="eq-marker eq-low" id="rhodes-eq-low"></div></div></div>
+                    <div class="fx-row" title="Mid peak EQ - midrange frequencies (~1kHz)"><span>MID</span><div class="fx-bar eq-bar"><div class="eq-marker eq-mid" id="rhodes-eq-mid"></div></div></div>
+                    <div class="fx-row" title="High shelf EQ - treble frequencies (~4kHz)"><span>HI</span><div class="fx-bar eq-bar"><div class="eq-marker eq-high" id="rhodes-eq-high"></div></div></div>
+                    <div class="fx-section-label" title="Stereo position">─ pan ─</div>
+                    <div class="fx-row" title="Pan position - left/right in stereo field"><span>L/R</span><div class="fx-bar pan-bar"><div class="pan-marker" id="rhodes-pan"></div></div></div>
                 </div>
-                <div class="channel-weather">
-                    <div class="wx-header">☁ WEATHER</div>
+                <div class="channel-weather" title="Slow-drifting atmospheric parameters unique to this channel">
+                    <div class="wx-header" title="Weather changes every 1-2 minutes">☁ WEATHER</div>
                     <div class="weather-grid">
-                        <div class="weather-item"><span class="wx-label">presence</span><span class="wx-bar" id="rhodes-wx-presence"></span></div>
-                        <div class="weather-item"><span class="wx-label">density</span><span class="wx-bar" id="rhodes-wx-density"></span></div>
-                        <div class="weather-item"><span class="wx-label">intimacy</span><span class="wx-bar" id="rhodes-wx-intimacy"></span></div>
-                        <div class="weather-item"><span class="wx-label">breath</span><span class="wx-bar" id="rhodes-wx-breath"></span></div>
-                        <div class="weather-item"><span class="wx-label">decay</span><span class="wx-bar" id="rhodes-wx-decay"></span></div>
-                        <div class="weather-item"><span class="wx-label">drift</span><span class="wx-bar" id="rhodes-wx-drift"></span></div>
-                        <div class="weather-item"><span class="wx-label">depth</span><span class="wx-bar" id="rhodes-wx-depth"></span></div>
-                        <div class="weather-item"><span class="wx-label">suspension</span><span class="wx-bar" id="rhodes-wx-suspension"></span></div>
-                        <div class="weather-item"><span class="wx-label">solitude</span><span class="wx-bar" id="rhodes-wx-solitude"></span></div>
-                        <div class="weather-item"><span class="wx-label">memory</span><span class="wx-bar" id="rhodes-wx-memory"></span></div>
+                        <div class="weather-item" title="Volume/presence level - low=quiet, high=prominent"><span class="wx-label">presence</span><span class="wx-bar" id="rhodes-wx-presence"></span></div>
+                        <div class="weather-item" title="Note frequency - low=sparse, high=busy"><span class="wx-label">density</span><span class="wx-bar" id="rhodes-wx-density"></span></div>
+                        <div class="weather-item" title="Reverb mix - low=distant/wet, high=close/dry"><span class="wx-label">intimacy</span><span class="wx-bar" id="rhodes-wx-intimacy"></span></div>
+                        <div class="weather-item" title="Note attack time - low=soft, high=sharp"><span class="wx-label">breath</span><span class="wx-bar" id="rhodes-wx-breath"></span></div>
+                        <div class="weather-item" title="Note release time - low=short, high=sustained"><span class="wx-label">decay</span><span class="wx-bar" id="rhodes-wx-decay"></span></div>
+                        <div class="weather-item" title="Pitch instability - low=stable, high=wobbly"><span class="wx-label">drift</span><span class="wx-bar" id="rhodes-wx-drift"></span></div>
+                        <div class="weather-item" title="Register tendency - low=bass, high=treble"><span class="wx-label">depth</span><span class="wx-bar" id="rhodes-wx-depth"></span></div>
+                        <div class="weather-item" title="Timing flexibility - low=tight, high=rubato"><span class="wx-label">suspension</span><span class="wx-bar" id="rhodes-wx-suspension"></span></div>
+                        <div class="weather-item" title="Independence - low=responsive, high=isolated"><span class="wx-label">solitude</span><span class="wx-bar" id="rhodes-wx-solitude"></span></div>
+                        <div class="weather-item" title="Repetition tendency - low=novel, high=familiar"><span class="wx-label">memory</span><span class="wx-bar" id="rhodes-wx-memory"></span></div>
+                        <div class="weather-item" title="Harmonic complexity - low=simple triads, high=altered/extended chords"><span class="wx-label">complexity</span><span class="wx-bar" id="rhodes-wx-complexity"></span></div>
+                        <div class="weather-item" title="Voicing spread - low=tight clusters, high=wide orchestral voicings"><span class="wx-label">expansiveness</span><span class="wx-bar" id="rhodes-wx-expansiveness"></span></div>
                     </div>
                 </div>
-                <div class="stream-stats"><span id="rhodes-count">0</span>n | <span id="rhodes-mode">──</span></div>
+                <div class="stream-stats" title="Note count and current mode"><span id="rhodes-count" title="Notes played">0</span>n | <span id="rhodes-mode" title="Current playing mode">──</span></div>
             </div>
             <div class="stream-column" id="stream-vibes">
                 <div class="stream-header" title="Metallic, mallet-struck tones. Triangle wave with motor vibrato."><span class="inst-name">VIBES</span></div>
-                <div class="stream-content"><div class="stream-log"></div></div>
-                <div class="stream-effects">
-                    <div class="fx-section-label">─ vibrato ─</div>
-                    <div class="fx-row"><span>DPT</span><div class="fx-bar"><div class="fx-fill vib-depth-fill" id="vibes-vib-depth"></div></div></div>
-                    <div class="fx-row"><span>AMT</span><div class="fx-bar"><div class="fx-fill" id="vibes-vib"></div></div></div>
-                    <div class="fx-row"><span>SPD</span><div class="fx-bar"><div class="fx-fill vib-speed-fill" id="vibes-vib-speed"></div></div></div>
-                    <div class="fx-section-label">─ tremolo ─</div>
-                    <div class="fx-row"><span>DPT</span><div class="fx-bar"><div class="fx-fill trm-depth-fill" id="vibes-trm-depth"></div></div></div>
-                    <div class="fx-row"><span>AMT</span><div class="fx-bar"><div class="fx-fill" id="vibes-trm"></div></div></div>
-                    <div class="fx-row"><span>SPD</span><div class="fx-bar"><div class="fx-fill trm-speed-fill" id="vibes-trm-speed"></div></div></div>
-                    <div class="fx-section-label">─ delay ─</div>
-                    <div class="fx-row"><span>TIM</span><div class="fx-bar"><div class="fx-fill delay-time-fill" id="vibes-delay-time"></div></div></div>
-                    <div class="fx-row"><span>MIX</span><div class="fx-bar"><div class="fx-fill echo-fill" id="vibes-echo"></div></div></div>
-                    <div class="fx-row"><span>FBK</span><div class="fx-bar"><div class="fx-fill delay-fb-fill" id="vibes-delay-fb"></div></div></div>
-                    <div class="fx-section-label">─ reverb ─</div>
-                    <div class="fx-row"><span>MIX</span><div class="fx-bar"><div class="fx-fill reverb-fill" id="vibes-reverb"></div></div></div>
-                    <div class="fx-row"><span>DEC</span><div class="fx-bar"><div class="fx-fill reverb-decay-fill" id="vibes-reverb-decay"></div></div></div>
-                    <div class="fx-row"><span>TON</span><div class="fx-bar"><div class="fx-fill reverb-tone-fill" id="vibes-reverb-tone"></div></div></div>
-                    <div class="fx-section-label">─ eq ─</div>
-                    <div class="fx-row"><span>LOW</span><div class="fx-bar eq-bar"><div class="eq-marker eq-low" id="vibes-eq-low"></div></div></div>
-                    <div class="fx-row"><span>MID</span><div class="fx-bar eq-bar"><div class="eq-marker eq-mid" id="vibes-eq-mid"></div></div></div>
-                    <div class="fx-row"><span>HI</span><div class="fx-bar eq-bar"><div class="eq-marker eq-high" id="vibes-eq-high"></div></div></div>
-                    <div class="fx-section-label">─ pan ─</div>
-                    <div class="fx-row"><span>L/R</span><div class="fx-bar pan-bar"><div class="pan-marker" id="vibes-pan"></div></div></div>
+                <div class="stream-content" title="Live activity log showing notes, chords, and decisions"><div class="stream-log"></div></div>
+                <div class="stream-effects" title="Audio effects applied to this channel">
+                    <div class="fx-section-label" title="Pitch modulation effect">─ vibrato ─</div>
+                    <div class="fx-row" title="Vibrato depth - how much the pitch bends"><span>DPT</span><div class="fx-bar"><div class="fx-fill vib-depth-fill" id="vibes-vib-depth"></div></div></div>
+                    <div class="fx-row" title="Vibrato amount - wet/dry mix"><span>AMT</span><div class="fx-bar"><div class="fx-fill" id="vibes-vib"></div></div></div>
+                    <div class="fx-row" title="Vibrato speed - oscillation rate in Hz"><span>SPD</span><div class="fx-bar"><div class="fx-fill vib-speed-fill" id="vibes-vib-speed"></div></div></div>
+                    <div class="fx-section-label" title="Volume modulation effect">─ tremolo ─</div>
+                    <div class="fx-row" title="Tremolo depth - how much volume changes"><span>DPT</span><div class="fx-bar"><div class="fx-fill trm-depth-fill" id="vibes-trm-depth"></div></div></div>
+                    <div class="fx-row" title="Tremolo amount - wet/dry mix"><span>AMT</span><div class="fx-bar"><div class="fx-fill" id="vibes-trm"></div></div></div>
+                    <div class="fx-row" title="Tremolo speed - pulse rate in Hz"><span>SPD</span><div class="fx-bar"><div class="fx-fill trm-speed-fill" id="vibes-trm-speed"></div></div></div>
+                    <div class="fx-section-label" title="Echo/repeat effect">─ delay ─</div>
+                    <div class="fx-row" title="Delay time - gap between repeats"><span>TIM</span><div class="fx-bar"><div class="fx-fill delay-time-fill" id="vibes-delay-time"></div></div></div>
+                    <div class="fx-row" title="Delay mix - wet/dry balance"><span>MIX</span><div class="fx-bar"><div class="fx-fill echo-fill" id="vibes-echo"></div></div></div>
+                    <div class="fx-row" title="Delay feedback - how many repeats"><span>FBK</span><div class="fx-bar"><div class="fx-fill delay-fb-fill" id="vibes-delay-fb"></div></div></div>
+                    <div class="fx-section-label" title="Room/space simulation">─ reverb ─</div>
+                    <div class="fx-row" title="Reverb mix - wet/dry balance"><span>MIX</span><div class="fx-bar"><div class="fx-fill reverb-fill" id="vibes-reverb"></div></div></div>
+                    <div class="fx-row" title="Reverb decay - how long it rings"><span>DEC</span><div class="fx-bar"><div class="fx-fill reverb-decay-fill" id="vibes-reverb-decay"></div></div></div>
+                    <div class="fx-row" title="Reverb tone - brightness of reflections"><span>TON</span><div class="fx-bar"><div class="fx-fill reverb-tone-fill" id="vibes-reverb-tone"></div></div></div>
+                    <div class="fx-section-label" title="3-band equalizer">─ eq ─</div>
+                    <div class="fx-row" title="Low shelf EQ - bass frequencies (~100Hz)"><span>LOW</span><div class="fx-bar eq-bar"><div class="eq-marker eq-low" id="vibes-eq-low"></div></div></div>
+                    <div class="fx-row" title="Mid peak EQ - midrange frequencies (~1kHz)"><span>MID</span><div class="fx-bar eq-bar"><div class="eq-marker eq-mid" id="vibes-eq-mid"></div></div></div>
+                    <div class="fx-row" title="High shelf EQ - treble frequencies (~4kHz)"><span>HI</span><div class="fx-bar eq-bar"><div class="eq-marker eq-high" id="vibes-eq-high"></div></div></div>
+                    <div class="fx-section-label" title="Stereo position">─ pan ─</div>
+                    <div class="fx-row" title="Pan position - left/right in stereo field"><span>L/R</span><div class="fx-bar pan-bar"><div class="pan-marker" id="vibes-pan"></div></div></div>
                 </div>
-                <div class="channel-weather">
-                    <div class="wx-header">☁ WEATHER</div>
+                <div class="channel-weather" title="Slow-drifting atmospheric parameters unique to this channel">
+                    <div class="wx-header" title="Weather changes every 1-2 minutes">☁ WEATHER</div>
                     <div class="weather-grid">
-                        <div class="weather-item"><span class="wx-label">presence</span><span class="wx-bar" id="vibes-wx-presence"></span></div>
-                        <div class="weather-item"><span class="wx-label">density</span><span class="wx-bar" id="vibes-wx-density"></span></div>
-                        <div class="weather-item"><span class="wx-label">intimacy</span><span class="wx-bar" id="vibes-wx-intimacy"></span></div>
-                        <div class="weather-item"><span class="wx-label">breath</span><span class="wx-bar" id="vibes-wx-breath"></span></div>
-                        <div class="weather-item"><span class="wx-label">decay</span><span class="wx-bar" id="vibes-wx-decay"></span></div>
-                        <div class="weather-item"><span class="wx-label">drift</span><span class="wx-bar" id="vibes-wx-drift"></span></div>
-                        <div class="weather-item"><span class="wx-label">depth</span><span class="wx-bar" id="vibes-wx-depth"></span></div>
-                        <div class="weather-item"><span class="wx-label">suspension</span><span class="wx-bar" id="vibes-wx-suspension"></span></div>
-                        <div class="weather-item"><span class="wx-label">solitude</span><span class="wx-bar" id="vibes-wx-solitude"></span></div>
-                        <div class="weather-item"><span class="wx-label">memory</span><span class="wx-bar" id="vibes-wx-memory"></span></div>
+                        <div class="weather-item" title="Volume/presence level - low=quiet, high=prominent"><span class="wx-label">presence</span><span class="wx-bar" id="vibes-wx-presence"></span></div>
+                        <div class="weather-item" title="Note frequency - low=sparse, high=busy"><span class="wx-label">density</span><span class="wx-bar" id="vibes-wx-density"></span></div>
+                        <div class="weather-item" title="Reverb mix - low=distant/wet, high=close/dry"><span class="wx-label">intimacy</span><span class="wx-bar" id="vibes-wx-intimacy"></span></div>
+                        <div class="weather-item" title="Note attack time - low=soft, high=sharp"><span class="wx-label">breath</span><span class="wx-bar" id="vibes-wx-breath"></span></div>
+                        <div class="weather-item" title="Note release time - low=short, high=sustained"><span class="wx-label">decay</span><span class="wx-bar" id="vibes-wx-decay"></span></div>
+                        <div class="weather-item" title="Pitch instability - low=stable, high=wobbly"><span class="wx-label">drift</span><span class="wx-bar" id="vibes-wx-drift"></span></div>
+                        <div class="weather-item" title="Register tendency - low=bass, high=treble"><span class="wx-label">depth</span><span class="wx-bar" id="vibes-wx-depth"></span></div>
+                        <div class="weather-item" title="Timing flexibility - low=tight, high=rubato"><span class="wx-label">suspension</span><span class="wx-bar" id="vibes-wx-suspension"></span></div>
+                        <div class="weather-item" title="Independence - low=responsive, high=isolated"><span class="wx-label">solitude</span><span class="wx-bar" id="vibes-wx-solitude"></span></div>
+                        <div class="weather-item" title="Repetition tendency - low=novel, high=familiar"><span class="wx-label">memory</span><span class="wx-bar" id="vibes-wx-memory"></span></div>
+                        <div class="weather-item" title="Harmonic complexity - low=simple triads, high=altered/extended chords"><span class="wx-label">complexity</span><span class="wx-bar" id="vibes-wx-complexity"></span></div>
+                        <div class="weather-item" title="Voicing spread - low=tight clusters, high=wide orchestral voicings"><span class="wx-label">expansiveness</span><span class="wx-bar" id="vibes-wx-expansiveness"></span></div>
                     </div>
                 </div>
-                <div class="stream-stats"><span id="vibes-count">0</span>n | <span id="vibes-mode">──</span></div>
+                <div class="stream-stats" title="Note count and current mode"><span id="vibes-count" title="Notes played">0</span>n | <span id="vibes-mode" title="Current playing mode">──</span></div>
             </div>
         </div>
 
         <!-- Right: Controls & Logs -->
-        <div class="control-panel">
+        <div class="control-panel" title="System controls, composition data, and activity log">
             <!-- ASCII Art Header -->
-            <div class="ascii-header">
+            <div class="ascii-header" title="AMBIENT DRIFT - Generative ambient music synthesizer">
 <span class="highlight">╔═══════════════════════════════════════╗
 ║</span>  ▄▀█ █▀▄▀█ █▄▄ █ █▀▀ █▄░█ ▀█▀  <span class="highlight">║
 ║</span>  █▀█ █░▀░█ █▄█ █ ██▄ █░▀█ ░█░  <span class="highlight">║
@@ -815,31 +850,37 @@
 
             <!-- Ticket-style Info -->
             <div class="ticket">
-                <div class="ticket-header">
+                <div class="ticket-header" title="Current musical parameters for this session">
                     <span>COMPOSITION DATA</span>
                     <span id="ticketId" title="Unique session identifier">────────</span>
                 </div>
-                <div class="ticket-row" title="The tonal center - all notes relate to this pitch">
+                <div class="ticket-row" title="The tonal center - all notes relate to this pitch. Click to change.">
                     <span class="label">ROOT/</span>
-                    <span class="value" id="rootDisplay">──</span>
+                    <select class="value-select" id="rootSelect" title="Select root note (C, C#, D, etc.)">
+                        <option value="">──</option>
+                    </select>
                 </div>
-                <div class="ticket-row" title="The scale being used - determines available notes and harmonic color">
+                <div class="ticket-row" title="The scale/mode determines available notes and harmonic color. Click to change.">
                     <span class="label">MODE/</span>
-                    <span class="value" id="modeDisplay">──────</span>
+                    <select class="value-select" id="modeSelect" title="Select scale (Major, Minor, Dorian, etc.)">
+                        <option value="">──────</option>
+                    </select>
                 </div>
-                <div class="ticket-row" title="Current chord - built from scale degrees, changes every 25-40 seconds">
+                <div class="ticket-row" title="Current chord voicing - changes every 15-30 seconds. Click to change.">
                     <span class="label">CHORD/</span>
-                    <span class="value" id="chordDisplay">──────</span>
+                    <select class="value-select" id="chordSelect" title="Select chord (triads, 7ths, inversions, etc.)">
+                        <option value="">──────</option>
+                    </select>
                 </div>
                 <div class="ticket-row" title="Elapsed time since playback started">
                     <span class="label">TIME/</span>
-                    <span class="value" id="timeDisplay">00:00</span>
+                    <span class="value" id="timeDisplay" title="Minutes:Seconds of current session">00:00</span>
                 </div>
-                <div class="ticket-barcode">║▌│█║▌║▌│║▌│█│║▌║▌│█║</div>
+                <div class="ticket-barcode" title="Decorative barcode - purely aesthetic">║▌│█║▌║▌│║▌│█│║▌║▌│█║</div>
             </div>
 
             <!-- Control Buttons -->
-            <div class="controls-section">
+            <div class="controls-section" title="Playback and configuration controls">
                 <div class="btn-row">
                     <button id="startBtn" title="Initialize audio system and begin generative playback">[▶] INIT</button>
                     <button id="randomizeBtn" disabled title="Randomize key, mode, and instrument configurations">[↻] RAND</button>
@@ -855,9 +896,9 @@
 
             <!-- Live Log -->
             <div class="log-section">
-                <div class="log-header">
+                <div class="log-header" title="Real-time log of musical decisions and system events">
                     <span>▌ SYSTEM LOG</span>
-                    <span id="logCount">0</span>
+                    <span id="logCount" title="Total log entries">0</span>
                 </div>
                 <div class="log-container" id="logContainer">
                     <div class="log-entry">
@@ -869,9 +910,9 @@
             </div>
 
             <!-- Global Effects Info (per-channel bars are in instrument columns) -->
-            <div class="effects-bar">
+            <div class="effects-bar" title="Note: All audio effects are applied per-channel in the instrument columns above">
                 <div class="effect-item">
-                    <div class="effect-label" style="font-size: 7px; color: #555">ALL FX PER-CHANNEL ↑</div>
+                    <div class="effect-label" style="font-size: 7px; color: #555" title="Effects are independently controlled for each instrument">ALL FX PER-CHANNEL ↑</div>
                 </div>
             </div>
         </div>
@@ -990,52 +1031,235 @@
         
         const SCALES = {
             'Major': [0, 2, 4, 5, 7, 9, 11],
-            'Minor': [0, 2, 3, 5, 7, 8, 10]
+            'Minor': [0, 2, 3, 5, 7, 8, 10],
+            'Dorian': [0, 2, 3, 5, 7, 9, 10],
+            'Phrygian': [0, 1, 3, 5, 7, 8, 10],
+            'Lydian': [0, 2, 4, 6, 7, 9, 11],
+            'Mixolydian': [0, 2, 4, 5, 7, 9, 10],
+            'Aeolian': [0, 2, 3, 5, 7, 8, 10],
+            'Locrian': [0, 1, 3, 5, 6, 8, 10],
+            'Harmonic Minor': [0, 2, 3, 5, 7, 8, 11],
+            'Melodic Minor': [0, 2, 3, 5, 7, 9, 11],
+            'Whole Tone': [0, 2, 4, 6, 8, 10],
+            'Pentatonic': [0, 2, 4, 7, 9],
+            'Minor Pentatonic': [0, 3, 5, 7, 10],
+            'Blues': [0, 3, 5, 6, 7, 10],
+            'Japanese': [0, 1, 5, 7, 8],
+            'Egyptian': [0, 2, 5, 7, 10],
+            'Hirajoshi': [0, 2, 3, 7, 8]
         };
 
         const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
         
         const CHORD_TYPES = {
+            // Simple - complexity 0-0.3
             triads: [
-                { name: 'I', degrees: [0, 2, 4] },
-                { name: 'ii', degrees: [1, 3, 5] },
-                { name: 'iii', degrees: [2, 4, 6] },
-                { name: 'IV', degrees: [3, 5, 0] },
-                { name: 'V', degrees: [4, 6, 1] },
-                { name: 'vi', degrees: [5, 0, 2] },
+                { name: 'I', degrees: [0, 2, 4], complexity: 0.1 },
+                { name: 'ii', degrees: [1, 3, 5], complexity: 0.1 },
+                { name: 'iii', degrees: [2, 4, 6], complexity: 0.1 },
+                { name: 'IV', degrees: [3, 5, 0], complexity: 0.1 },
+                { name: 'V', degrees: [4, 6, 1], complexity: 0.1 },
+                { name: 'vi', degrees: [5, 0, 2], complexity: 0.1 },
+                { name: 'vii°', degrees: [6, 1, 3], complexity: 0.2 },
+            ],
+            suspended: [
+                { name: 'Isus2', degrees: [0, 1, 4], complexity: 0.15 },
+                { name: 'Isus4', degrees: [0, 3, 4], complexity: 0.15 },
+                { name: 'IIsus4', degrees: [1, 4, 5], complexity: 0.2 },
+                { name: 'IVsus2', degrees: [3, 4, 0], complexity: 0.15 },
+                { name: 'IVsus4', degrees: [3, 6, 0], complexity: 0.15 },
+                { name: 'Vsus2', degrees: [4, 5, 1], complexity: 0.15 },
+                { name: 'Vsus4', degrees: [4, 0, 1], complexity: 0.15 },
+                { name: 'visus4', degrees: [5, 1, 2], complexity: 0.2 },
+            ],
+            // Medium - complexity 0.3-0.5
+            inversions: [
+                { name: 'I/3', degrees: [2, 4, 0], complexity: 0.3 },
+                { name: 'I/5', degrees: [4, 0, 2], complexity: 0.35 },
+                { name: 'ii/3', degrees: [3, 5, 1], complexity: 0.3 },
+                { name: 'IV/3', degrees: [5, 0, 3], complexity: 0.3 },
+                { name: 'IV/5', degrees: [0, 3, 5], complexity: 0.35 },
+                { name: 'V/3', degrees: [6, 1, 4], complexity: 0.35 },
+                { name: 'V/5', degrees: [1, 4, 6], complexity: 0.35 },
+                { name: 'vi/3', degrees: [0, 2, 5], complexity: 0.3 },
+                { name: 'vi/5', degrees: [2, 5, 0], complexity: 0.35 },
+            ],
+            slashChords: [
+                { name: 'I/2', degrees: [1, 0, 2, 4], complexity: 0.4 },
+                { name: 'I/4', degrees: [3, 0, 2, 4], complexity: 0.4 },
+                { name: 'IV/1', degrees: [0, 3, 5, 0], complexity: 0.4 },
+                { name: 'IV/5', degrees: [4, 3, 5, 0], complexity: 0.4 },
+                { name: 'V/1', degrees: [0, 4, 6, 1], complexity: 0.45 },
+                { name: 'vi/5', degrees: [4, 5, 0, 2], complexity: 0.4 },
+                { name: 'ii/1', degrees: [0, 1, 3, 5], complexity: 0.45 },
             ],
             sevenths: [
-                { name: 'Imaj7', degrees: [0, 2, 4, 6] },
-                { name: 'ii7', degrees: [1, 3, 5, 0] },
-                { name: 'IVmaj7', degrees: [3, 5, 0, 2] },
-                { name: 'V7', degrees: [4, 6, 1, 3] },
-                { name: 'vi7', degrees: [5, 0, 2, 4] },
+                { name: 'Imaj7', degrees: [0, 2, 4, 6], complexity: 0.4 },
+                { name: 'ii7', degrees: [1, 3, 5, 0], complexity: 0.4 },
+                { name: 'iii7', degrees: [2, 4, 6, 1], complexity: 0.4 },
+                { name: 'IVmaj7', degrees: [3, 5, 0, 2], complexity: 0.4 },
+                { name: 'V7', degrees: [4, 6, 1, 3], complexity: 0.4 },
+                { name: 'vi7', degrees: [5, 0, 2, 4], complexity: 0.4 },
+                { name: 'viiø7', degrees: [6, 1, 3, 5], complexity: 0.45 },
             ],
+            // Complex - complexity 0.5-0.7
+            seventhInversions: [
+                { name: 'Imaj7/3', degrees: [2, 4, 6, 0], complexity: 0.55 },
+                { name: 'Imaj7/5', degrees: [4, 6, 0, 2], complexity: 0.55 },
+                { name: 'Imaj7/7', degrees: [6, 0, 2, 4], complexity: 0.6 },
+                { name: 'V7/3', degrees: [6, 1, 3, 4], complexity: 0.55 },
+                { name: 'V7/5', degrees: [1, 3, 4, 6], complexity: 0.55 },
+                { name: 'V7/7', degrees: [3, 4, 6, 1], complexity: 0.6 },
+                { name: 'ii7/3', degrees: [3, 5, 0, 1], complexity: 0.55 },
+                { name: 'ii7/5', degrees: [5, 0, 1, 3], complexity: 0.55 },
+            ],
+            susSeventh: [
+                { name: '7sus4', degrees: [0, 3, 4, 6], complexity: 0.5 },
+                { name: '7sus2', degrees: [0, 1, 4, 6], complexity: 0.5 },
+                { name: 'V7sus4', degrees: [4, 0, 1, 3], complexity: 0.55 },
+                { name: 'ii7sus4', degrees: [1, 4, 5, 0], complexity: 0.55 },
+                { name: 'maj7sus4', degrees: [0, 3, 4, 6], complexity: 0.55 },
+            ],
+            addChords: [
+                { name: 'Iadd9', degrees: [0, 2, 4, 1], complexity: 0.45 },
+                { name: 'Iadd4', degrees: [0, 2, 3, 4], complexity: 0.45 },
+                { name: 'iiadd9', degrees: [1, 3, 5, 2], complexity: 0.45 },
+                { name: 'IVadd9', degrees: [3, 5, 0, 4], complexity: 0.45 },
+                { name: 'Vadd9', degrees: [4, 6, 1, 5], complexity: 0.45 },
+                { name: 'viadd9', degrees: [5, 0, 2, 6], complexity: 0.45 },
+                { name: 'Iadd6', degrees: [0, 2, 4, 5], complexity: 0.4 },
+                { name: 'IVadd6', degrees: [3, 5, 0, 1], complexity: 0.4 },
+            ],
+            // Very complex - complexity 0.7-0.9
             extended: [
-                { name: 'Iadd9', degrees: [0, 2, 4, 1] },
-                { name: 'IVadd9', degrees: [3, 5, 0, 4] },
-                { name: 'vi add9', degrees: [5, 0, 2, 6] },
+                { name: 'Imaj9', degrees: [0, 2, 4, 6, 1], complexity: 0.7 },
+                { name: 'ii9', degrees: [1, 3, 5, 0, 2], complexity: 0.7 },
+                { name: 'V9', degrees: [4, 6, 1, 3, 5], complexity: 0.7 },
+                { name: 'Imaj11', degrees: [0, 2, 4, 6, 1, 3], complexity: 0.75 },
+                { name: 'ii11', degrees: [1, 3, 5, 0, 2, 4], complexity: 0.75 },
+                { name: 'V11', degrees: [4, 6, 1, 3, 5, 0], complexity: 0.75 },
+                { name: 'Imaj13', degrees: [0, 2, 4, 6, 1, 5], complexity: 0.8 },
+                { name: 'V13', degrees: [4, 6, 1, 3, 5, 2], complexity: 0.8 },
+                { name: '9sus4', degrees: [0, 3, 4, 6, 1], complexity: 0.7 },
+                { name: '13sus4', degrees: [0, 3, 4, 6, 1, 5], complexity: 0.8 },
+            ],
+            altered: [
+                { name: 'V7#9', degrees: [4, 6, 1, 3, 6], complexity: 0.75 },
+                { name: 'V7b9', degrees: [4, 6, 1, 3, 5], complexity: 0.75 },
+                { name: 'V7#5', degrees: [4, 6, 2, 3], complexity: 0.7 },
+                { name: 'V7b5', degrees: [4, 6, 0, 3], complexity: 0.7 },
+                { name: 'V7alt', degrees: [4, 6, 0, 3, 5], complexity: 0.85 },
+                { name: 'dim7', degrees: [0, 2, 4, 6], complexity: 0.65 },
+                { name: 'aug', degrees: [0, 2, 5], complexity: 0.6 },
+                { name: 'augmaj7', degrees: [0, 2, 5, 6], complexity: 0.7 },
+            ],
+            quartal: [
+                { name: 'Q4', degrees: [0, 3, 6], complexity: 0.5 },
+                { name: 'Q4ext', degrees: [0, 3, 6, 1], complexity: 0.6 },
+                { name: 'Q5', degrees: [0, 4, 1], complexity: 0.5 },
+                { name: 'Q5ext', degrees: [0, 4, 1, 5], complexity: 0.6 },
+                { name: 'Q4wide', degrees: [0, 3, 6, 2], complexity: 0.65 },
+                { name: 'Q5wide', degrees: [0, 4, 1, 5, 2], complexity: 0.7 },
+            ],
+            // Extreme - complexity 0.9+
+            polychords: [
+                { name: 'I/V', degrees: [0, 2, 4, 4, 6, 1], complexity: 0.85 },
+                { name: 'ii/I', degrees: [1, 3, 5, 0, 2, 4], complexity: 0.85 },
+                { name: 'IV/V', degrees: [3, 5, 0, 4, 6, 1], complexity: 0.85 },
+                { name: 'bVII/I', degrees: [6, 1, 3, 0, 2, 4], complexity: 0.9 },
+            ],
+            clusters: [
+                { name: 'cluster2', degrees: [0, 1, 2], complexity: 0.9 },
+                { name: 'cluster3', degrees: [0, 1, 2, 3], complexity: 0.95 },
+                { name: 'wideCluster', degrees: [0, 4, 1, 5], complexity: 0.85 },
+                { name: 'spreadCluster', degrees: [0, 6, 2, 5], complexity: 0.9 },
             ]
         };
 
         const CHORD_VOICINGS = [
-            // 2 notes - dyads
+            // 2 notes - dyads and intervals
             [0, 7], [0, 5], [0, 4], [0, 3], [0, 9], [0, 12],
-            // 3 notes - triads
+            [0, 2], [0, 10], [0, 14], [0, 19],  // 2nds, 7ths, 9ths, 12ths
+            // 3 notes - triads and open voicings
             [0, 4, 7], [0, 3, 7], [0, 5, 7], [0, 4, 9], [0, 7, 12], [0, 7, 14],
-            // 4 notes - 7th chords
+            [0, 7, 16], [0, 5, 12], [0, 4, 11], [0, 3, 10],  // Open triads
+            [0, 12, 19], [0, 12, 16], [0, 7, 19],  // Very open
+            // 4 notes - 7th chords and voicings
             [0, 4, 7, 11], [0, 3, 7, 10], [0, 4, 7, 10], [0, 3, 7, 11], [0, 4, 7, 14],
             [0, 5, 7, 12], [0, 2, 7, 11], [0, 4, 9, 14],
-            // 5 notes - extended
+            [0, 7, 11, 14], [0, 7, 10, 14], [0, 4, 11, 14],  // Drop 2 voicings
+            [0, 10, 14, 17], [0, 11, 14, 19],  // Rootless voicings
+            // 5 notes - extended chords
             [0, 4, 7, 11, 14], [0, 3, 7, 10, 14], [0, 4, 7, 11, 18], [0, 5, 7, 12, 16],
             [0, 4, 7, 14, 17], [0, 2, 7, 11, 14],
+            [0, 7, 11, 14, 21], [0, 4, 10, 14, 17],  // More 9ths/11ths
             // 6 notes - lush voicings
             [0, 4, 7, 11, 14, 17], [0, 3, 7, 10, 14, 17], [0, 4, 7, 11, 14, 21],
             [0, 2, 4, 7, 11, 14], [0, 5, 7, 12, 16, 19],
+            [0, 7, 11, 14, 17, 21], [0, 4, 7, 14, 17, 21],  // Wide 13ths
             // 7 notes - full orchestral
             [0, 4, 7, 11, 14, 17, 21], [0, 3, 7, 10, 14, 17, 21], [0, 2, 4, 7, 11, 14, 17],
-            [0, 4, 7, 9, 11, 14, 18]
+            [0, 4, 7, 9, 11, 14, 18],
+            [0, 7, 12, 14, 19, 21, 24],  // Very spread
+            // Quartal voicings
+            [0, 5, 10], [0, 5, 10, 15], [0, 5, 10, 15, 20],
+            [0, 7, 14], [0, 7, 14, 21], [0, 7, 14, 21, 28],  // Quintal
+            // Cluster voicings
+            [0, 1, 3], [0, 2, 3], [0, 1, 2, 4], [0, 2, 3, 5]
         ];
+        
+        // Voicings categorized by expansiveness (spread)
+        const VOICING_CATEGORIES = {
+            tight: [  // 0-0.25 expansiveness - compact voicings
+                [0, 1, 3], [0, 2, 3], [0, 1, 2, 4], [0, 2, 3, 5],  // Clusters
+                [0, 3, 7], [0, 4, 7], [0, 5, 7],  // Close triads
+                [0, 2], [0, 3], [0, 4],  // Small intervals
+                [0, 3, 7, 10], [0, 4, 7, 10], [0, 4, 7, 11]  // Close position 7ths
+            ],
+            moderate: [  // 0.25-0.5 expansiveness
+                [0, 4, 9], [0, 7], [0, 5], [0, 9],  // Open intervals
+                [0, 4, 7, 11], [0, 3, 7, 10], [0, 5, 7, 12],  // Standard voicings
+                [0, 4, 7, 14], [0, 2, 7, 11], [0, 4, 9, 14],  // With extensions
+                [0, 5, 10], [0, 5, 10, 15],  // Quartal
+                [0, 10, 14, 17], [0, 11, 14, 19]  // Rootless
+            ],
+            open: [  // 0.5-0.75 expansiveness
+                [0, 7, 12], [0, 7, 14], [0, 7, 16], [0, 5, 12],  // Open triads
+                [0, 7, 11, 14], [0, 7, 10, 14], [0, 4, 11, 14],  // Drop 2
+                [0, 4, 7, 11, 14], [0, 3, 7, 10, 14], [0, 4, 7, 11, 18],
+                [0, 4, 7, 14, 17], [0, 2, 7, 11, 14],
+                [0, 12], [0, 14], [0, 19],  // Wide intervals
+                [0, 7, 14, 21], [0, 5, 10, 15, 20]  // Extended quartal/quintal
+            ],
+            expansive: [  // 0.75-1.0 expansiveness - very spread
+                [0, 12, 19], [0, 12, 16], [0, 7, 19],  // Very open triads
+                [0, 7, 11, 14, 21], [0, 4, 10, 14, 17],
+                [0, 4, 7, 11, 14, 17], [0, 3, 7, 10, 14, 17], [0, 4, 7, 11, 14, 21],
+                [0, 7, 11, 14, 17, 21], [0, 4, 7, 14, 17, 21],  // Wide 13ths
+                [0, 4, 7, 11, 14, 17, 21], [0, 3, 7, 10, 14, 17, 21],
+                [0, 7, 12, 14, 19, 21, 24],  // Very spread orchestral
+                [0, 7, 14, 21, 28]  // Super wide quintal
+            ]
+        };
+        
+        // Select voicing based on weather expansiveness
+        function selectVoicingByExpansiveness(expansiveness = 0.5) {
+            // Add some randomness but bias toward the weather value
+            const roll = Math.random() * 0.4 + expansiveness * 0.6;
+            
+            let category;
+            if (roll < 0.25) {
+                category = VOICING_CATEGORIES.tight;
+            } else if (roll < 0.5) {
+                category = VOICING_CATEGORIES.moderate;
+            } else if (roll < 0.75) {
+                category = VOICING_CATEGORIES.open;
+            } else {
+                category = VOICING_CATEGORIES.expansive;
+            }
+            
+            return randomChoice(category);
+        }
 
         // ═══════════════════════════════════════════════════════════════
         // STATE
@@ -1083,13 +1307,20 @@
         // Last phrase ending (for question/answer)
         let lastPhraseEnding = { note: null, instrument: null, isQuestion: false };
         
+        // Track recent melodies for retrograde/inversion
+        let recentMelodies = {}; // Per-instrument melody fragments
+        const MELODY_MEMORY = 6; // Remember last N notes for transformations
+        
         // Interconnection chances (0-1)
         const interconnectChances = {
             antiphonalResponse: 0.35,    // Chance opposite group responds
             questionAnswer: 0.4,         // Chance of answering a question phrase
             unison: 0.15,                // Chance of playing same note as recent
             proximityInfluence: 0.25,    // Chance nearby pan instruments interact
-            sympathyHarmony: 0.2         // Chance of playing harmony to recent note
+            sympathyHarmony: 0.2,        // Chance of playing harmony to recent note
+            retrograde: 0.12,            // Chance to play another's melody backwards
+            inversion: 0.12,             // Chance to play another's melody inverted
+            invertedRetrograde: 0.08     // Chance to play backwards AND inverted (rare)
         };
         
         // Track if a group just played (for antiphonal)
@@ -1113,7 +1344,9 @@
             depth: 0.4,         // Octave-down chance (high = more bass notes)
             suspension: 0.3,    // Sus chord tendency
             solitude: 0.5,      // Call-response (low = interactive)
-            memory: 0.5         // Delay feedback (high = long trails)
+            memory: 0.5,        // Delay feedback (high = long trails)
+            complexity: 0.4,    // Chord complexity (low = triads, high = extended/altered)
+            expansiveness: 0.5  // Voicing spread (low = tight, high = wide/open)
         };
         
         // Per-channel weather state
@@ -1129,32 +1362,36 @@
             channelWeatherTargets[ch] = { ...channelWeather[ch] };
         });
         
-        // Drift speed per parameter
+        // Drift speed per parameter (faster for more noticeable changes)
         const weatherSpeeds = {
-            presence: 0.0008,
-            density: 0.0006,
-            intimacy: 0.0007,
-            breath: 0.001,
-            decay: 0.0005,
-            drift: 0.0009,
-            depth: 0.0004,
-            suspension: 0.0007,
-            solitude: 0.0006,
-            memory: 0.0005
+            presence: 0.003,
+            density: 0.0025,
+            intimacy: 0.0028,
+            breath: 0.004,
+            decay: 0.002,
+            drift: 0.0035,
+            depth: 0.0015,
+            suspension: 0.0028,
+            solitude: 0.0025,
+            memory: 0.002,
+            complexity: 0.002,
+            expansiveness: 0.0025
         };
         
-        // How often to pick new targets (ms)
+        // How often to pick new targets (ms) - 1-2 minute cycles
         const weatherChangeIntervals = {
-            presence: { min: 180000, max: 420000 },   // 3-7 min
-            density: { min: 240000, max: 540000 },    // 4-9 min
-            intimacy: { min: 150000, max: 360000 },   // 2.5-6 min
-            breath: { min: 120000, max: 300000 },     // 2-5 min
-            decay: { min: 200000, max: 480000 },      // 3.5-8 min
-            drift: { min: 160000, max: 400000 },      // 2.5-7 min
-            depth: { min: 300000, max: 600000 },      // 5-10 min (slowest)
-            suspension: { min: 180000, max: 420000 }, // 3-7 min
-            solitude: { min: 200000, max: 450000 },   // 3.5-7.5 min
-            memory: { min: 240000, max: 500000 }      // 4-8.5 min
+            presence: { min: 60000, max: 120000 },    // 1-2 min
+            density: { min: 75000, max: 135000 },    // 1.25-2.25 min
+            intimacy: { min: 55000, max: 110000 },   // ~1-2 min
+            breath: { min: 50000, max: 100000 },     // ~1-1.5 min
+            decay: { min: 70000, max: 130000 },      // ~1-2 min
+            drift: { min: 60000, max: 120000 },      // 1-2 min
+            depth: { min: 90000, max: 150000 },      // 1.5-2.5 min (slowest)
+            suspension: { min: 65000, max: 125000 }, // ~1-2 min
+            solitude: { min: 70000, max: 130000 },   // ~1-2 min
+            memory: { min: 80000, max: 140000 },     // ~1.5-2.5 min
+            complexity: { min: 90000, max: 180000 }, // ~1.5-3 min (slower for chord complexity)
+            expansiveness: { min: 80000, max: 160000 } // ~1.5-2.5 min
         };
         
         let weatherDriftInterval = null;
@@ -1446,7 +1683,23 @@
         }
 
         function generateRandomChord() {
-            const typeWeights = { triads: 15, sevenths: 25, extended: 10 };
+            // Get complexity from weather (average across channels)
+            const avgComplexity = weather.complexity || 0.5;
+            
+            // Weight chord types based on complexity weather
+            // Low complexity = simple chords, high complexity = extended/altered
+            const typeWeights = {};
+            Object.keys(CHORD_TYPES).forEach(type => {
+                const chords = CHORD_TYPES[type];
+                const avgChordComplexity = chords.reduce((sum, c) => sum + (c.complexity || 0.5), 0) / chords.length;
+                
+                // Higher weight when chord complexity matches weather complexity
+                const complexityDiff = Math.abs(avgChordComplexity - avgComplexity);
+                // Bell curve weighting - close matches get high weight
+                const weight = Math.max(1, Math.round(20 * Math.exp(-complexityDiff * 3)));
+                typeWeights[type] = weight;
+            });
+            
             const weightedTypes = [];
             for (const [type, weight] of Object.entries(typeWeights)) {
                 for (let i = 0; i < weight; i++) weightedTypes.push(type);
@@ -1455,18 +1708,78 @@
             const chordType = randomChoice(weightedTypes);
             const chordsOfType = CHORD_TYPES[chordType];
             
+            // Filter chords by complexity range
+            const complexityRange = 0.3; // Allow some variance
+            const filteredChords = chordsOfType.filter(c => {
+                const diff = Math.abs((c.complexity || 0.5) - avgComplexity);
+                return diff < complexityRange || Math.random() < 0.2; // 20% chance to pick outside range
+            });
+            
+            const chordsToChooseFrom = filteredChords.length > 0 ? filteredChords : chordsOfType;
+            
             let chord;
             let attempts = 0;
             do {
-                chord = randomChoice(chordsOfType);
+                chord = randomChoice(chordsToChooseFrom);
                 attempts++;
             } while (chordHistory.includes(chord.name) && attempts < 10);
             
             chordHistory.push(chord.name);
-            if (chordHistory.length > 4) chordHistory.shift();
+            if (chordHistory.length > 6) chordHistory.shift();
             
-            log('chord', `Selected: ${chord.name} (type: ${chordType})`);
+            log('chord', `Selected: ${chord.name} (${chordType}, complexity: ${(chord.complexity || 0.5).toFixed(2)})`);
             return chord;
+        }
+        
+        // Get all available chords as flat array
+        function getAllChords() {
+            const all = [];
+            Object.entries(CHORD_TYPES).forEach(([type, chords]) => {
+                chords.forEach(chord => {
+                    all.push({ ...chord, type });
+                });
+            });
+            return all;
+        }
+        
+        // Set chord by name
+        function setChordByName(name) {
+            const allChords = getAllChords();
+            const found = allChords.find(c => c.name === name);
+            if (found) {
+                currentChord = found;
+                currentChordNotes = getChordNotes(currentChord);
+                updateDisplay();
+                log('chord', `Manual: ${found.name} (${found.type})`);
+                
+                // Update synths with new chord
+                if (synths.length > 0) {
+                    synths.forEach(synth => {
+                        synth.config.notes = currentChordNotes.filter(n => 
+                            n >= synth.config.range[0] && n <= synth.config.range[1]
+                        );
+                    });
+                }
+            }
+        }
+        
+        // Set key (root + scale)
+        function setKey(root, scale) {
+            globalRoot = root;
+            globalScale = scale;
+            globalScaleIntervals = SCALES[scale];
+            currentChordNotes = getChordNotes(currentChord);
+            updateDisplay();
+            log('system', `Key changed: ${NOTE_NAMES[root]} ${scale}`);
+            
+            // Update synths with new key
+            if (synths.length > 0) {
+                synths.forEach(synth => {
+                    synth.config.notes = currentChordNotes.filter(n => 
+                        n >= synth.config.range[0] && n <= synth.config.range[1]
+                    );
+                });
+            }
         }
 
         function getChordNotes(chord) {
@@ -1661,6 +1974,228 @@
             
             return null;
         }
+        
+        // Record a note to an instrument's melody memory
+        function recordToMelody(instrument, note) {
+            if (!recentMelodies[instrument]) {
+                recentMelodies[instrument] = [];
+            }
+            recentMelodies[instrument].push({ note, time: Date.now() });
+            if (recentMelodies[instrument].length > MELODY_MEMORY) {
+                recentMelodies[instrument].shift();
+            }
+        }
+        
+        // Get retrograde (backwards) version of another instrument's melody
+        function getRetrogradeNote(instrument, availableNotes) {
+            // Find another instrument with melody memory
+            const otherInstruments = Object.keys(recentMelodies).filter(i => 
+                i !== instrument && recentMelodies[i].length >= 3
+            );
+            
+            if (otherInstruments.length === 0) return null;
+            if (Math.random() > interconnectChances.retrograde) return null;
+            
+            const sourceInstrument = randomChoice(otherInstruments);
+            const sourceMelody = recentMelodies[sourceInstrument];
+            
+            // Play the melody backwards
+            const reversedIndex = sourceMelody.length - 1 - (Date.now() % sourceMelody.length);
+            const targetNote = sourceMelody[Math.max(0, reversedIndex)].note;
+            
+            // Find closest available note
+            const closest = findNearestChordTone(targetNote, availableNotes);
+            if (closest && Math.abs(closest - targetNote) <= 7) {
+                streamLog(instrument, 'effect', `↩ retro`);
+                log('decision', `${instrument}: Retrograde from ${sourceInstrument}`);
+                return closest;
+            }
+            return null;
+        }
+        
+        // Get inverted version of another instrument's melody
+        function getInversionNote(instrument, availableNotes) {
+            // Find another instrument with melody memory
+            const otherInstruments = Object.keys(recentMelodies).filter(i => 
+                i !== instrument && recentMelodies[i].length >= 3
+            );
+            
+            if (otherInstruments.length === 0) return null;
+            if (Math.random() > interconnectChances.inversion) return null;
+            
+            const sourceInstrument = randomChoice(otherInstruments);
+            const sourceMelody = recentMelodies[sourceInstrument];
+            
+            // Get the most recent interval from source
+            if (sourceMelody.length < 2) return null;
+            
+            const lastNote = sourceMelody[sourceMelody.length - 1].note;
+            const prevNote = sourceMelody[sourceMelody.length - 2].note;
+            const interval = lastNote - prevNote;
+            
+            // Invert: if source went up 3, we go down 3 from the axis
+            const axisNote = availableNotes[Math.floor(availableNotes.length / 2)];
+            const invertedNote = axisNote - interval;
+            
+            // Find closest available note
+            const closest = findNearestChordTone(invertedNote, availableNotes);
+            if (closest && Math.abs(closest - invertedNote) <= 5) {
+                streamLog(instrument, 'effect', `↕ invert`);
+                log('decision', `${instrument}: Inversion from ${sourceInstrument}`);
+                return closest;
+            }
+            return null;
+        }
+        
+        // Get inverted retrograde (backwards AND inverted) - rare contrapuntal technique
+        function getInvertedRetrogradeNote(instrument, availableNotes) {
+            const otherInstruments = Object.keys(recentMelodies).filter(i => 
+                i !== instrument && recentMelodies[i].length >= 4
+            );
+            
+            if (otherInstruments.length === 0) return null;
+            if (Math.random() > interconnectChances.invertedRetrograde) return null;
+            
+            const sourceInstrument = randomChoice(otherInstruments);
+            const sourceMelody = recentMelodies[sourceInstrument];
+            
+            // Get a note from the reversed melody
+            const reversedIndex = sourceMelody.length - 1 - (Date.now() % sourceMelody.length);
+            const retroNote = sourceMelody[Math.max(0, reversedIndex)].note;
+            
+            // Then invert around the axis
+            const axisNote = availableNotes[Math.floor(availableNotes.length / 2)];
+            const invertedRetroNote = axisNote * 2 - retroNote;
+            
+            // Find closest available note
+            const closest = findNearestChordTone(invertedRetroNote, availableNotes);
+            if (closest && Math.abs(closest - invertedRetroNote) <= 7) {
+                streamLog(instrument, 'effect', `⤾ inv-retro`);
+                log('decision', `${instrument}: Inverted Retrograde from ${sourceInstrument}`);
+                return closest;
+            }
+            return null;
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // KEY MODULATION SYSTEM - Complementary key changes
+        // ═══════════════════════════════════════════════════════════════
+        
+        let modulationTimeout = null;
+        
+        // Relationships between scales that can transition smoothly
+        const COMPLEMENTARY_MODES = {
+            'Major': ['Mixolydian', 'Lydian', 'Minor', 'Dorian'],
+            'Minor': ['Dorian', 'Phrygian', 'Aeolian', 'Major'],
+            'Dorian': ['Minor', 'Aeolian', 'Mixolydian', 'Major'],
+            'Phrygian': ['Minor', 'Aeolian', 'Locrian'],
+            'Lydian': ['Major', 'Mixolydian'],
+            'Mixolydian': ['Major', 'Dorian', 'Lydian'],
+            'Aeolian': ['Minor', 'Dorian', 'Phrygian'],
+            'Locrian': ['Phrygian', 'Minor'],
+            'Harmonic Minor': ['Minor', 'Phrygian'],
+            'Melodic Minor': ['Minor', 'Dorian'],
+            'Pentatonic': ['Major', 'Minor Pentatonic'],
+            'Minor Pentatonic': ['Minor', 'Pentatonic', 'Blues'],
+            'Blues': ['Minor Pentatonic', 'Dorian'],
+            'Whole Tone': ['Lydian', 'Mixolydian'],
+            'Japanese': ['Phrygian', 'Minor'],
+            'Egyptian': ['Dorian', 'Pentatonic'],
+            'Hirajoshi': ['Japanese', 'Minor']
+        };
+        
+        // Complementary root relationships (in semitones from current root)
+        const COMPLEMENTARY_ROOTS = [
+            0,   // Same root (mode change only)
+            5,   // Perfect 4th up (subdominant)
+            7,   // Perfect 5th up (dominant)
+            -3,  // Minor 3rd down (relative minor/major)
+            3,   // Minor 3rd up
+            -2,  // Whole step down
+            2,   // Whole step up
+        ];
+        
+        function startKeyModulation() {
+            scheduleModulation();
+            log('system', '🎵 Key modulation system active (~3min cycles)');
+        }
+        
+        function scheduleModulation() {
+            // Schedule next possible modulation in 2.5-4 minutes
+            const delay = 150000 + Math.random() * 90000; // 2.5-4 min
+            
+            modulationTimeout = setTimeout(() => {
+                if (!isPlaying) return;
+                
+                // 40% chance to actually modulate when scheduled
+                if (Math.random() < 0.4) {
+                    performModulation();
+                }
+                
+                scheduleModulation();
+            }, delay);
+        }
+        
+        function performModulation() {
+            const oldRoot = globalRoot;
+            const oldScale = globalScale;
+            
+            // Decide: change root, change mode, or both
+            const modulationType = Math.random();
+            
+            let newRoot = globalRoot;
+            let newScale = globalScale;
+            
+            if (modulationType < 0.4) {
+                // Change mode only (40%)
+                const complementaryModes = COMPLEMENTARY_MODES[globalScale] || ['Major', 'Minor'];
+                newScale = randomChoice(complementaryModes);
+            } else if (modulationType < 0.7) {
+                // Change root only (30%)
+                const rootShift = randomChoice(COMPLEMENTARY_ROOTS);
+                newRoot = (globalRoot + rootShift + 12) % 12;
+            } else {
+                // Change both (30%)
+                const complementaryModes = COMPLEMENTARY_MODES[globalScale] || ['Major', 'Minor'];
+                newScale = randomChoice(complementaryModes);
+                const rootShift = randomChoice(COMPLEMENTARY_ROOTS);
+                newRoot = (globalRoot + rootShift + 12) % 12;
+            }
+            
+            // Don't modulate to the same key
+            if (newRoot === oldRoot && newScale === oldScale) {
+                return;
+            }
+            
+            // Perform the modulation
+            globalRoot = newRoot;
+            globalScale = newScale;
+            globalScaleIntervals = SCALES[newScale];
+            
+            // Update chord notes for new key
+            currentChordNotes = getChordNotes(currentChord);
+            
+            // Update synths
+            if (synths.length > 0) {
+                synths.forEach(synth => {
+                    synth.config.notes = currentChordNotes.filter(n => 
+                        n >= synth.config.range[0] && n <= synth.config.range[1]
+                    );
+                });
+            }
+            
+            updateDisplay();
+            
+            log('modulation', `═══ KEY CHANGE: ${NOTE_NAMES[oldRoot]} ${oldScale} → ${NOTE_NAMES[newRoot]} ${newScale} ═══`);
+            streamLog('system', 'effect', `🎵 ${NOTE_NAMES[newRoot]} ${newScale}`);
+        }
+        
+        function stopKeyModulation() {
+            if (modulationTimeout) {
+                clearTimeout(modulationTimeout);
+                modulationTimeout = null;
+            }
+        }
 
         // ═══════════════════════════════════════════════════════════════
         // REVERB
@@ -1823,6 +2358,43 @@
                     const answerNote = getAnswerNote(inst, this.config.notes);
                     if (answerNote) {
                         this.playNote(answerNote);
+                        recordToMelody(inst, answerNote);
+                        const nextTime = this.config.loopLength * 1000;
+                        this.loopTimeout = setTimeout(() => this.scheduleNote(), nextTime);
+                        return;
+                    }
+                }
+                
+                // Check for retrograde response opportunity
+                if (Math.random() < respondChance) {
+                    const retroNote = getRetrogradeNote(inst, this.config.notes);
+                    if (retroNote) {
+                        this.playNote(retroNote);
+                        recordToMelody(inst, retroNote);
+                        const nextTime = this.config.loopLength * 1000;
+                        this.loopTimeout = setTimeout(() => this.scheduleNote(), nextTime);
+                        return;
+                    }
+                }
+                
+                // Check for inversion response opportunity
+                if (Math.random() < respondChance) {
+                    const invertNote = getInversionNote(inst, this.config.notes);
+                    if (invertNote) {
+                        this.playNote(invertNote);
+                        recordToMelody(inst, invertNote);
+                        const nextTime = this.config.loopLength * 1000;
+                        this.loopTimeout = setTimeout(() => this.scheduleNote(), nextTime);
+                        return;
+                    }
+                }
+                
+                // Check for inverted retrograde response opportunity (rare)
+                if (Math.random() < respondChance * 0.5) {
+                    const invRetroNote = getInvertedRetrogradeNote(inst, this.config.notes);
+                    if (invRetroNote) {
+                        this.playNote(invRetroNote);
+                        recordToMelody(inst, invRetroNote);
                         const nextTime = this.config.loopLength * 1000;
                         this.loopTimeout = setTimeout(() => this.scheduleNote(), nextTime);
                         return;
@@ -1852,7 +2424,10 @@
                         
                         notesToPlay.forEach((note, i) => {
                             setTimeout(() => {
-                                if (isPlaying && !this.config.isOff) this.playNote(note);
+                                if (isPlaying && !this.config.isOff) {
+                                    this.playNote(note);
+                                    recordToMelody(inst, note);
+                                }
                             }, i * (this.config.melodySpeed || 0.5) * 1000);
                         });
                     } else if (forceSingleNote || this.config.notes.length === 1) {
@@ -1860,6 +2435,7 @@
                         const singleNote = influencedNote || randomChoice(this.config.notes);
                         streamLog(this.config.synthType, 'note', `∘ alone`);
                         this.playNote(singleNote);
+                        recordToMelody(inst, singleNote);
                     } else {
                         log('decision', `${this.config.synthType}: Playing chord [${this.config.notes.map(midiToNoteName).join(' ')}]`);
                         streamLog(this.config.synthType, 'chord', `chord[${this.config.notes.length}]`);
@@ -1871,6 +2447,7 @@
                         
                         for (const note of notesToPlay) {
                             this.playNote(note);
+                            recordToMelody(inst, note);
                         }
                     }
                 } else {
@@ -2172,7 +2749,9 @@
                 }
                 log('decision', `${synthType}: Pattern [${selectedNotes.map(midiToNoteName).join(' → ')}]`);
             } else {
-                const voicing = randomChoice(CHORD_VOICINGS);
+                // Select voicing based on weather expansiveness
+                const wxExpansiveness = channelWeather[synthType]?.expansiveness ?? weather.expansiveness ?? 0.5;
+                const voicing = selectVoicingByExpansiveness(wxExpansiveness);
                 selectedNotes = voicing.map(interval => {
                     const targetNote = rootNote + interval;
                     return scaleNotes.reduce((prev, curr) => 
@@ -2180,7 +2759,7 @@
                     , scaleNotes[0]);
                 });
                 selectedNotes = [...new Set(selectedNotes)];
-                log('decision', `${synthType}: Voicing [${selectedNotes.map(midiToNoteName).join(' ')}]`);
+                log('decision', `${synthType}: Voicing [${selectedNotes.map(midiToNoteName).join(' ')}] (exp: ${wxExpansiveness.toFixed(2)})`);
             }
 
             const configs = {
@@ -2661,8 +3240,10 @@
                         } else {
                             synth.config.isOff = false;
                             synth.config.isMelody = false;
-                            // Regenerate chord voicing
-                            const voicing = randomChoice(CHORD_VOICINGS);
+                            // Regenerate chord voicing using weather expansiveness
+                            const inst = synth.config.synthType;
+                            const wxExpansiveness = channelWeather[inst]?.expansiveness ?? weather.expansiveness ?? 0.5;
+                            const voicing = selectVoicingByExpansiveness(wxExpansiveness);
                             const rootNote = synth.config.notes[0] || 60;
                             synth.config.notes = voicing.map(interval => {
                                 const targetNote = rootNote + interval;
@@ -2803,13 +3384,65 @@
         }
 
         function updateDisplay() {
-            document.getElementById('modeDisplay').textContent = globalScale || '──────';
-            document.getElementById('rootDisplay').textContent = NOTE_NAMES[globalRoot] || '──';
-            document.getElementById('chordDisplay').textContent = currentChord ? currentChord.name : '──────';
+            // Update select values (not textContent)
+            const rootSelect = document.getElementById('rootSelect');
+            const modeSelect = document.getElementById('modeSelect');
+            const chordSelect = document.getElementById('chordSelect');
+            
+            if (rootSelect && globalRoot !== undefined) rootSelect.value = globalRoot;
+            if (modeSelect && globalScale) modeSelect.value = globalScale;
+            if (chordSelect && currentChord) chordSelect.value = currentChord.name;
 
             // Update stream column modes
             synths.forEach((synth) => {
                 updateStreamMode(synth.config.synthType, synth.config.isMelody);
+            });
+        }
+        
+        function initializeDropdowns() {
+            const rootSelect = document.getElementById('rootSelect');
+            const modeSelect = document.getElementById('modeSelect');
+            const chordSelect = document.getElementById('chordSelect');
+            
+            // Populate root notes
+            rootSelect.innerHTML = '';
+            NOTE_NAMES.forEach((name, index) => {
+                const opt = document.createElement('option');
+                opt.value = index;
+                opt.textContent = name;
+                rootSelect.appendChild(opt);
+            });
+            
+            // Populate scales/modes
+            modeSelect.innerHTML = '';
+            Object.keys(SCALES).forEach(scaleName => {
+                const opt = document.createElement('option');
+                opt.value = scaleName;
+                opt.textContent = scaleName;
+                modeSelect.appendChild(opt);
+            });
+            
+            // Populate chords
+            chordSelect.innerHTML = '';
+            const allChords = getAllChords();
+            allChords.forEach(chord => {
+                const opt = document.createElement('option');
+                opt.value = chord.name;
+                opt.textContent = chord.name;
+                chordSelect.appendChild(opt);
+            });
+            
+            // Event listeners
+            rootSelect.addEventListener('change', (e) => {
+                setKey(parseInt(e.target.value), globalScale);
+            });
+            
+            modeSelect.addEventListener('change', (e) => {
+                setKey(globalRoot, e.target.value);
+            });
+            
+            chordSelect.addEventListener('change', (e) => {
+                setChordByName(e.target.value);
             });
         }
 
@@ -2824,10 +3457,11 @@
             startModeChanges();
             startNoiseLayerDrift();
             startWeatherSystem();  // Per-channel atmospheric parameters
+            startKeyModulation();  // Complementary key transitions every ~3min
             
-            // Chord changes (every 25-40 seconds)
+            // Chord changes (every 15-30 seconds)
             const scheduleNextChord = () => {
-                const chordDuration = random(25000, 40000); // 25-40 seconds
+                const chordDuration = random(15000, 30000); // 15-30 seconds
                 log('system', `Next chord change in ${(chordDuration/1000).toFixed(0)}s`);
                 chordChangeInterval = setTimeout(() => {
                     if (isPlaying) {
@@ -2858,6 +3492,7 @@
             stopModeChanges();
             stopNoiseLayer();
             stopWeatherSystem();
+            stopKeyModulation();
             
             if (chordChangeInterval) {
                 clearTimeout(chordChangeInterval);
@@ -2868,6 +3503,9 @@
         // ═══════════════════════════════════════════════════════════════
         // EVENT HANDLERS
         // ═══════════════════════════════════════════════════════════════
+        
+        // Initialize dropdowns on page load
+        initializeDropdowns();
         
         document.getElementById('startBtn').addEventListener('click', () => {
             initialize();
