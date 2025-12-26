@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AMBIENT DRIFT v2</title>
+    <title>Drift v2</title>
     <style>
         @font-face {
             font-family: 'IBM';
@@ -18,7 +18,7 @@
 
         body {
             background: #0a0a0a;
-            color: #00ff00;
+            color: #e8e4d9;
             font-family: 'Courier New', 'IBM Plex Mono', monospace;
             min-height: 100vh;
             overflow-x: hidden;
@@ -69,7 +69,7 @@
         }
 
         .stream-header .inst-name {
-            color: #00ff00;
+            color: #f5f5f0;
             font-weight: bold;
         }
 
@@ -105,23 +105,23 @@
         }
 
         .stream-entry.note {
-            color: #00ffff;
+            color: #f0ebe0;
         }
 
         .stream-entry.decision {
-            color: #00ff00;
+            color: #d4cfc4;
         }
 
         .stream-entry.chord {
-            color: #ff00ff;
+            color: #c8c3b8;
         }
 
         .stream-entry.effect {
-            color: #ffff00;
+            color: #9a958a;
         }
 
         .stream-entry.silence {
-            color: #333;
+            color: #3a3a3a;
         }
 
         .stream-entry .time {
@@ -137,7 +137,7 @@
         /* Note visualization bar */
         .note-bar {
             height: 2px;
-            background: linear-gradient(90deg, #00ff00, transparent);
+            background: linear-gradient(90deg, #d4cfc4, transparent);
             margin: 2px 0;
             animation: noteDecay 3s ease-out forwards;
         }
@@ -174,9 +174,9 @@
 
         .fx-fill {
             height: 100%;
-            background: #00ff00;
+            background: #b8b3a8;
             width: 0%;
-            transition: width 0.5s, background 0.5s;
+            transition: width 2s cubic-bezier(0.4, 0, 0.2, 1), background 1s ease;
         }
 
         /* Pan bar with center marker */
@@ -199,34 +199,34 @@
             position: absolute;
             width: 4px;
             height: 100%;
-            background: #00ff00;
+            background: #d4cfc4;
             left: 50%;
             transform: translateX(-50%);
-            transition: left 0.8s ease-out;
+            transition: left 2.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         /* Echo and Reverb specific colors */
         .echo-fill {
-            background: #00aaff;
+            background: #a8a49a;
         }
         .reverb-fill {
-            background: #ff66aa;
+            background: #908c82;
         }
         
         /* Additional effect colors */
-        .delay-time-fill { background: #0088cc; }
-        .delay-fb-fill { background: #00bbff; }
-        .reverb-decay-fill { background: #cc5588; }
-        .reverb-tone-fill { background: #ff88aa; }
-        .vib-depth-fill { background: #88ff88; }
-        .vib-speed-fill { background: #44cc44; }
-        .trm-depth-fill { background: #ffff88; }
-        .trm-speed-fill { background: #cccc44; }
+        .delay-time-fill { background: #9c9890; }
+        .delay-fb-fill { background: #b0aca4; }
+        .reverb-decay-fill { background: #848078; }
+        .reverb-tone-fill { background: #989488; }
+        .vib-depth-fill { background: #c4c0b8; }
+        .vib-speed-fill { background: #a8a4a0; }
+        .trm-depth-fill { background: #d0ccc4; }
+        .trm-speed-fill { background: #b4b0a8; }
         
         /* EQ bars - centered at middle, can go left (cut) or right (boost) */
         .eq-bar {
             position: relative;
-            background: linear-gradient(to right, #220000 0%, #111 50%, #002200 100%);
+            background: linear-gradient(to right, #1a1818 0%, #111 50%, #181a18 100%);
         }
         .eq-bar::after {
             content: '│';
@@ -243,11 +243,11 @@
             height: 100%;
             left: 50%;
             transform: translateX(-50%);
-            transition: left 0.8s ease-out;
+            transition: left 2.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .eq-low { background: #ff6644; }
-        .eq-mid { background: #ffcc44; }
-        .eq-high { background: #44ccff; }
+        .eq-low { background: #8c8880; }
+        .eq-mid { background: #a8a49c; }
+        .eq-high { background: #c0bcb4; }
         
         /* FX section header */
         .fx-section-label {
@@ -268,11 +268,11 @@
         }
 
         .stream-stats span {
-            color: #00ff00;
+            color: #e8e4d9;
         }
 
         .stream-stats span.off {
-            color: #ff3333;
+            color: #6a6560;
         }
 
         /* Fade overlay at top */
@@ -310,7 +310,7 @@
         }
 
         .ascii-header .highlight {
-            color: #00ff00;
+            color: #8a857a;
         }
 
         /* Ticket Style Info */
@@ -341,12 +341,12 @@
         }
 
         .ticket-row .value {
-            color: #00ff00;
+            color: #e8e4d9;
             font-weight: bold;
         }
         
         .ticket-row .value-select {
-            color: #00ff00;
+            color: #e8e4d9;
             font-weight: bold;
             background: transparent;
             border: none;
@@ -367,7 +367,7 @@
         
         .ticket-row .value-select option {
             background: #0a0a0a;
-            color: #00ff00;
+            color: #e8e4d9;
         }
 
         .ticket-barcode {
@@ -393,8 +393,8 @@
         button {
             flex: 1;
             background: #0a0a0a;
-            border: 1px solid #333;
-            color: #00ff00;
+            border: 1px solid #3a3a3a;
+            color: #c8c4b8;
             padding: 8px 4px;
             font-family: inherit;
             font-size: 10px;
@@ -404,19 +404,19 @@
         }
 
         button:hover {
-            background: #111;
-            border-color: #00ff00;
+            background: #151515;
+            border-color: #6a6560;
         }
 
         button:disabled {
-            color: #333;
+            color: #3a3a3a;
             border-color: #1a1a1a;
             cursor: not-allowed;
         }
 
         button.active {
-            background: #0a1a0a;
-            border-color: #00ff00;
+            background: #141414;
+            border-color: #8a857a;
         }
 
         button.recording {
@@ -472,12 +472,12 @@
             min-width: 60px;
         }
 
-        .log-type.note { color: #00ffff; }
-        .log-type.chord { color: #ff00ff; }
-        .log-type.effect { color: #ffff00; }
-        .log-type.system { color: #666; }
-        .log-type.decision { color: #00ff00; }
-        .log-type.weather { color: #446688; }
+        .log-type.note { color: #c8c4b8; }
+        .log-type.chord { color: #a8a49c; }
+        .log-type.effect { color: #908c84; }
+        .log-type.system { color: #5a5a5a; }
+        .log-type.decision { color: #d4d0c8; }
+        .log-type.weather { color: #6a6660; }
 
         .log-msg {
             color: #444;
@@ -544,9 +544,9 @@
             left: 0;
             top: 0;
             height: 100%;
-            background: linear-gradient(90deg, #224, #448);
+            background: linear-gradient(90deg, #4a4640, #7a756c);
             width: var(--wx-level, 50%);
-            transition: width 2s ease-out;
+            transition: width 4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         /* Effects Bar */
@@ -577,8 +577,8 @@
 
         .effect-fill {
             height: 100%;
-            background: #00ff00;
-            transition: width 0.5s;
+            background: #a8a49c;
+            transition: width 2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         /* Scrollbar */
@@ -839,13 +839,11 @@
         <!-- Right: Controls & Logs -->
         <div class="control-panel" title="System controls, composition data, and activity log">
             <!-- ASCII Art Header -->
-            <div class="ascii-header" title="AMBIENT DRIFT - Generative ambient music synthesizer">
-<span class="highlight">╔═══════════════════════════════════════╗
-║</span>  ▄▀█ █▀▄▀█ █▄▄ █ █▀▀ █▄░█ ▀█▀  <span class="highlight">║
-║</span>  █▀█ █░▀░█ █▄█ █ ██▄ █░▀█ ░█░  <span class="highlight">║
-║</span>      ░█▀▄ █▀█ █ █▀▀ ▀█▀       <span class="highlight">║
-║</span>      ░█▄▀ █▀▄ █ █▀░ ░█░       <span class="highlight">║
-╚═══════════════════════════════════════╝</span>
+            <div class="ascii-header" title="Drift v2 - Generative ambient music synthesizer">
+<span class="highlight">┌───────────────────────┐</span>
+<span class="highlight">│</span>   DRIFT <span style="color:#6a6560">v2</span>            <span class="highlight">│</span>
+<span class="highlight">│</span>   <span style="color:#4a4540">generative ambient</span>   <span class="highlight">│</span>
+<span class="highlight">└───────────────────────┘</span>
             </div>
 
             <!-- Ticket-style Info -->
