@@ -116,6 +116,10 @@
             color: #c8c3b8;
         }
 
+        .stream-entry.arpeggio {
+            color: #e6d9a8;  /* Golden color for arpeggios */
+        }
+
         .stream-entry.effect {
             color: #9a958a;
         }
@@ -929,7 +933,7 @@
         
         const streamIds = {
             cello: 'stream-cello',
-            celeste: 'stream-celeste', 
+            celeste: 'stream-celeste',
             harp: 'stream-harp',
             rhodes: 'stream-rhodes',
             vibraphone: 'stream-vibes'
@@ -1305,6 +1309,15 @@
             mediator: 'rhodes'
         };
         
+        // Instruments that can naturally glide/portamento between notes
+        const glissandoInstruments = {
+            cello: { chance: 0.25, maxInterval: 7, speed: 0.15 },     // Expressive string slides
+            vibraphone: { chance: 0.10, maxInterval: 12, speed: 0.25 } // Motor-driven pitch bends
+        };
+        
+        // Track last note per instrument for glissando
+        let lastNoteByInstrument = {};
+        
         // Last phrase ending (for question/answer)
         let lastPhraseEnding = { note: null, instrument: null, isQuestion: false };
         
@@ -1322,6 +1335,52 @@
             retrograde: 0.12,            // Chance to play another's melody backwards
             inversion: 0.12,             // Chance to play another's melody inverted
             invertedRetrograde: 0.08     // Chance to play backwards AND inverted (rare)
+        };
+        
+        // ═══════════════════════════════════════════════════════════════
+        // ARPEGGIATION SYSTEM - Chance to arpeggiate chords instead of playing simultaneously
+        // ═══════════════════════════════════════════════════════════════
+        const arpeggioSettings = {
+            // Per-instrument arpeggio tendencies
+            cello: { chance: 0.12, speed: { min: 0.15, max: 0.35 } },      // Slow, stately arpeggios
+            celeste: { chance: 0.35, speed: { min: 0.08, max: 0.18 } },    // Quick, sparkling arpeggios
+            harp: { chance: 0.55, speed: { min: 0.06, max: 0.14 } },       // Natural harp arpeggiation
+            rhodes: { chance: 0.20, speed: { min: 0.10, max: 0.25 } },     // Jazzy chord rolls
+            vibraphone: { chance: 0.25, speed: { min: 0.10, max: 0.22 } }  // Mallet rolls
+        };
+        
+        // Arpeggio patterns (index offsets for note order)
+        const arpeggioPatterns = {
+            up: (notes) => [...notes].sort((a, b) => a - b),                    // Low to high
+            down: (notes) => [...notes].sort((a, b) => b - a),                  // High to low
+            upDown: (notes) => {                                                 // Up then back down
+                const sorted = [...notes].sort((a, b) => a - b);
+                return [...sorted, ...sorted.slice(1, -1).reverse()];
+            },
+            downUp: (notes) => {                                                 // Down then back up  
+                const sorted = [...notes].sort((a, b) => b - a);
+                return [...sorted, ...sorted.slice(1, -1).reverse()];
+            },
+            random: (notes) => {                                                 // Random order
+                const shuffled = [...notes];
+                for (let i = shuffled.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                }
+                return shuffled;
+            },
+            insideOut: (notes) => {                                              // Middle notes first, then outer
+                const sorted = [...notes].sort((a, b) => a - b);
+                const result = [];
+                let left = 0, right = sorted.length - 1;
+                let fromLeft = true;
+                while (left <= right) {
+                    if (fromLeft) result.push(sorted[left++]);
+                    else result.push(sorted[right--]);
+                    fromLeft = !fromLeft;
+                }
+                return result.reverse();
+            }
         };
         
         // Track if a group just played (for antiphonal)
@@ -1565,11 +1624,11 @@
                 pan: -0.3
             },
             celeste: {
-                vibratoDepth: 0.006, vibratoAmount: 0.5, vibratoSpeed: 6,
+                vibratoDepth: 0.003, vibratoAmount: 0.3, vibratoSpeed: 6,
                 tremoloDepth: 0.2, tremoloAmount: 0.3, tremoloSpeed: 5,
-                delayTime: 0.45, delayAmount: 0.4, delayFeedback: 0.45,
-                reverbAmount: 0.7, reverbDecay: 7, reverbTone: 2200,
-                eqLow: -2, eqMid: 1, eqHigh: -2,
+                delayTime: 0.35, delayAmount: 0.4, delayFeedback: 0.4,
+                reverbAmount: 0.7, reverbDecay: 7, reverbTone: 3000,
+                eqLow: -3, eqMid: 0, eqHigh: 2,
                 pan: 0.4
             },
             harp: {
@@ -1581,11 +1640,11 @@
                 pan: -0.5
             },
             rhodes: {
-                vibratoDepth: 0.004, vibratoAmount: 0.3, vibratoSpeed: 5,
-                tremoloDepth: 0.4, tremoloAmount: 0.5, tremoloSpeed: 5,
-                delayTime: 0.3, delayAmount: 0.35, delayFeedback: 0.3,
-                reverbAmount: 0.55, reverbDecay: 5, reverbTone: 1600,
-                eqLow: 4, eqMid: -2, eqHigh: -3,
+                vibratoDepth: 0.004, vibratoAmount: 0.35, vibratoSpeed: 4.5,
+                tremoloDepth: 0.35, tremoloAmount: 0.5, tremoloSpeed: 4,
+                delayTime: 0.3, delayAmount: 0.35, delayFeedback: 0.35,
+                reverbAmount: 0.55, reverbDecay: 5, reverbTone: 2200,
+                eqLow: 2, eqMid: 1, eqHigh: -3,
                 pan: 0.2
             },
             vibraphone: {
@@ -2418,17 +2477,55 @@
                         this.playNote(singleNote);
                         recordToMelody(inst, singleNote);
                     } else {
-                        log('decision', `${this.config.synthType}: Playing chord [${this.config.notes.map(midiToNoteName).join(' ')}]`);
-                        streamLog(this.config.synthType, 'chord', `chord[${this.config.notes.length}]`);
+                        // Check for arpeggiation
+                        const arpSettings = arpeggioSettings[inst];
+                        const shouldArpeggiate = arpSettings && this.config.notes.length >= 2 && Math.random() < arpSettings.chance;
                         
                         const notesToPlay = [...this.config.notes];
                         if (influencedNote && !notesToPlay.includes(influencedNote)) {
                             notesToPlay.push(influencedNote);
                         }
                         
-                        for (const note of notesToPlay) {
-                            this.playNote(note);
-                            recordToMelody(inst, note);
+                        if (shouldArpeggiate) {
+                            // Arpeggiate the chord!
+                            const patternNames = Object.keys(arpeggioPatterns);
+                            const patternName = randomChoice(patternNames);
+                            const pattern = arpeggioPatterns[patternName];
+                            const arpNotes = pattern(notesToPlay);
+                            
+                            // Calculate arpeggio speed based on instrument settings
+                            const speedRange = arpSettings.speed;
+                            const baseSpeed = speedRange.min + Math.random() * (speedRange.max - speedRange.min);
+                            // Weather can slow down arpeggios
+                            const arpSpeed = baseSpeed * (1 + (1 - wx.tempoMultiplier) * 0.5);
+                            
+                            log('decision', `${this.config.synthType}: Arpeggiating [${arpNotes.map(midiToNoteName).join(' ')}] (${patternName})`);
+                            
+                            // Visual indicator in stream
+                            const arpSymbol = patternName === 'up' ? '↗' : 
+                                              patternName === 'down' ? '↘' :
+                                              patternName === 'upDown' ? '↗↘' :
+                                              patternName === 'downUp' ? '↘↗' :
+                                              patternName === 'random' ? '⤳' : '⥮';
+                            streamLog(this.config.synthType, 'arpeggio', `arp${arpSymbol}[${arpNotes.length}]`);
+                            
+                            arpNotes.forEach((note, i) => {
+                                setTimeout(() => {
+                                    if (isPlaying && !this.config.isOff) {
+                                        this.playNote(note);
+                                        recordToMelody(inst, note);
+                                    }
+                                }, i * arpSpeed * 1000);
+                            });
+                        } else {
+                            // Play chord simultaneously (original behavior)
+                            log('decision', `${this.config.synthType}: Playing chord [${this.config.notes.map(midiToNoteName).join(' ')}]`);
+                            streamLog(this.config.synthType, 'chord', `chord[${this.config.notes.length}]`);
+                            
+                            for (const note of notesToPlay) {
+                                this.playNote(note);
+                                recordToMelody(inst, note);
+                            }
                         }
                     }
                 } else {
@@ -2459,7 +2556,32 @@
                     }
                 }
                 
+                // === GLISSANDO / PORTAMENTO (for instruments that can naturally glide) ===
+                const inst = this.config.synthType;
+                const glideSettings = glissandoInstruments[inst];
+                let useGlide = false;
+                let glideFromNote = null;
+                let glideTime = 0;
+                
+                if (glideSettings && !isOctaveDouble && lastNoteByInstrument[inst]) {
+                    const lastNote = lastNoteByInstrument[inst];
+                    const interval = Math.abs(midiNote - lastNote);
+                    
+                    // Only glide if interval is reasonable and random chance passes
+                    if (interval > 0 && interval <= glideSettings.maxInterval && Math.random() < glideSettings.chance) {
+                        useGlide = true;
+                        glideFromNote = lastNote;
+                        glideTime = glideSettings.speed * (0.8 + Math.random() * 0.4); // Vary glide speed
+                    }
+                }
+                
+                // Track this note for next glide opportunity
+                if (!isOctaveDouble) {
+                    lastNoteByInstrument[inst] = midiNote;
+                }
+                
                 const freq = midiToFreq(midiNote);
+                const startFreq = useGlide ? midiToFreq(glideFromNote) : freq;
                 
                 // Record this note for interconnection system
                 if (!isOctaveDouble) recordNote(midiNote, this.config.synthType);
@@ -2497,7 +2619,13 @@
                 log('note', `♪ ${midiToNoteName(midiNote)} (${freq.toFixed(1)}Hz) via ${this.config.synthType}`);
                 
                 // Stream log for instrument column
-                if (!isOctaveDouble) streamLog(this.config.synthType, 'note', midiToNoteName(midiNote), `${freq.toFixed(0)}Hz`);
+                if (!isOctaveDouble) {
+                    if (useGlide) {
+                        streamLog(this.config.synthType, 'note', `${midiToNoteName(glideFromNote)}~${midiToNoteName(midiNote)}`, `glide`);
+                    } else {
+                        streamLog(this.config.synthType, 'note', midiToNoteName(midiNote), `${freq.toFixed(0)}Hz`);
+                    }
+                }
 
                 // ═══ DETUNED OSCILLATOR LAYERING ═══
                 // Weather: Drift affects detune amount
@@ -2519,7 +2647,14 @@
                         // Even single oscillators get slight drift in high-drift weather
                         osc.detune.setValueAtTime((Math.random() - 0.5) * wx.detuneAmount * 0.5, now);
                     }
-                    osc.frequency.setValueAtTime(freq, now);
+                    
+                    // === GLISSANDO: Start at previous note and glide to target ===
+                    if (useGlide) {
+                        osc.frequency.setValueAtTime(startFreq, now);
+                        osc.frequency.exponentialRampToValueAtTime(freq, now + glideTime);
+                    } else {
+                        osc.frequency.setValueAtTime(freq, now);
+                    }
                     oscillators.push(osc);
                     cleanupNodes.push(osc);
                 }

@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DRIFT v5</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --bg: #0a0a0a;
+            --fg: #888;
+            --dim: #444;
+            --bright: #ccc;
+            --mvoice: #7a9;
+            --tvoice: #a97;
+            --drone: #797;
+            --bells: #aa8;
+        }
+        
+        body {
+            font-family: 'Courier New', 'Monaco', 'Consolas', monospace;
+            background: var(--bg);
+            color: var(--fg);
+            min-height: 100vh;
+            font-size: 11px;
+            line-height: 1.4;
+            overflow: hidden;
+        }
+        
+        /* ═══ HEADER ═══ */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 12px 20px;
+            background: var(--bg);
+            border-bottom: 1px solid #222;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .title {
+            font-size: 11px;
+            letter-spacing: 0.3em;
+            color: var(--dim);
+        }
+        
+        .status {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        
+        .key-select {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        
+        .key-select select {
+            font-family: inherit;
+            font-size: 10px;
+            background: transparent;
+            border: 1px solid #333;
+            color: var(--bright);
+            padding: 4px 8px;
+            cursor: pointer;
+            letter-spacing: 0.05em;
+        }
+        
+        .key-select select:hover {
+            border-color: #555;
+        }
+        
+        .key-select select option {
+            background: #111;
+            color: var(--fg);
+        }
+        
+        .mood {
+            color: var(--dim);
+            font-style: italic;
+        }
+        
+        .time {
+            color: var(--dim);
+            font-variant-numeric: tabular-nums;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .btn {
+            font-family: inherit;
+            font-size: 10px;
+            padding: 6px 14px;
+            background: transparent;
+            border: 1px solid #333;
+            color: var(--fg);
+            cursor: pointer;
+            letter-spacing: 0.1em;
+        }
+        
+        .btn:hover {
+            border-color: #555;
+            color: var(--bright);
+        }
+        
+        .btn.active {
+            border-color: #666;
+            color: var(--bright);
+        }
+        
+        /* ═══ MAIN GRID - 4 COLUMNS ═══ */
+        .main {
+            position: fixed;
+            top: 50px;
+            left: 0;
+            right: 0;
+            bottom: 50px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+            background: #181818;
+        }
+        
+        .voice-column {
+            background: var(--bg);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .voice-header {
+            padding: 10px 12px;
+            border-bottom: 1px solid #222;
+            font-size: 10px;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .voice-header.mvoice { color: var(--mvoice); border-bottom-color: #2a3530; }
+        .voice-header.tvoice { color: var(--tvoice); border-bottom-color: #352a28; }
+        .voice-header.drone { color: var(--drone); border-bottom-color: #2a302a; }
+        .voice-header.bells { color: var(--bells); border-bottom-color: #33302a; }
+        
+        .voice-name {
+            opacity: 0.8;
+        }
+        
+        .voice-count {
+            opacity: 0.4;
+            font-size: 9px;
+        }
+        
+        .voice-log {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 12px;
+            font-size: 10px;
+        }
+        
+        /* ═══ FOOTER - GLOBAL WEATHER ═══ */
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            padding: 0 20px;
+            background: var(--bg);
+            border-top: 1px solid #222;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            font-size: 9px;
+        }
+        
+        .wx {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .wx-label {
+            color: #444;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            width: 50px;
+        }
+        
+        .wx-bar {
+            width: 60px;
+            height: 3px;
+            background: #1a1a1a;
+        }
+        
+        .wx-fill {
+            height: 100%;
+            background: #444;
+            width: 50%;
+            transition: width 0.5s ease;
+        }
+        
+        .wx-val {
+            color: #555;
+            width: 24px;
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+        
+        .voice-log::-webkit-scrollbar {
+            width: 2px;
+        }
+        
+        .voice-log::-webkit-scrollbar-thumb {
+            background: #333;
+        }
+        
+        .note-entry {
+            padding: 2px 0;
+            opacity: 0.7;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-4px); }
+            to { opacity: 0.7; }
+        }
+        
+        .note-entry.new {
+            opacity: 1;
+        }
+        
+        .note-entry .time {
+            color: var(--dim);
+            opacity: 0.5;
+            margin-right: 8px;
+        }
+        
+        .note-entry .note {
+            font-weight: normal;
+        }
+        
+        .note-entry .oct {
+            opacity: 0.5;
+            font-size: 9px;
+        }
+        
+        .note-entry.mvoice .note { color: var(--mvoice); }
+        .note-entry.tvoice .note { color: var(--tvoice); }
+        .note-entry.drone .note { color: var(--drone); }
+        .note-entry.bells .note { color: var(--bells); }
+        
+        /* ═══ RESPONSIVE ═══ */
+        @media (max-width: 800px) {
+            .main {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 500px) {
+            .main {
+                grid-template-columns: 1fr;
+            }
+            
+            .status {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <header class="header">
+        <div class="title">DRIFT v5</div>
+        <div class="status">
+            <div class="key-select">
+                <select id="rootSelect">
+                    <option value="0">C</option>
+                    <option value="1">C#</option>
+                    <option value="2">D</option>
+                    <option value="3">D#</option>
+                    <option value="4">E</option>
+                    <option value="5">F</option>
+                    <option value="6">F#</option>
+                    <option value="7">G</option>
+                    <option value="8">G#</option>
+                    <option value="9">A</option>
+                    <option value="10">A#</option>
+                    <option value="11">B</option>
+                </select>
+                <select id="modeSelect">
+                    <option value="aeolian">Aeolian</option>
+                    <option value="dorian">Dorian</option>
+                    <option value="phrygian">Phrygian</option>
+                    <option value="lydian">Lydian</option>
+                    <option value="mixolydian">Mixolydian</option>
+                    <option value="ionian">Ionian</option>
+                </select>
+            </div>
+            <span id="moodDisplay" class="mood">sorrowful</span>
+            <span id="timeDisplay" class="time">00:00</span>
+        </div>
+        <div class="controls">
+            <button id="playBtn" class="btn">PLAY</button>
+            <button id="randBtn" class="btn">RAND</button>
+        </div>
+    </header>
+    
+    <!-- 4 VOICE COLUMNS -->
+    <main class="main">
+        <div class="voice-column">
+            <div class="voice-header mvoice">
+                <span class="voice-name">M-VOICE</span>
+                <span id="mvoice-count" class="voice-count">0</span>
+            </div>
+            <div id="log-mvoice" class="voice-log"></div>
+        </div>
+        
+        <div class="voice-column">
+            <div class="voice-header tvoice">
+                <span class="voice-name">T-VOICE</span>
+                <span id="tvoice-count" class="voice-count">0</span>
+            </div>
+            <div id="log-tvoice" class="voice-log"></div>
+        </div>
+        
+        <div class="voice-column">
+            <div class="voice-header drone">
+                <span class="voice-name">DRONE</span>
+                <span id="drone-count" class="voice-count">0</span>
+            </div>
+            <div id="log-drone" class="voice-log"></div>
+        </div>
+        
+        <div class="voice-column">
+            <div class="voice-header bells">
+                <span class="voice-name">BELLS</span>
+                <span id="bells-count" class="voice-count">0</span>
+            </div>
+            <div id="log-bells" class="voice-log"></div>
+        </div>
+    </main>
+    
+    <!-- GLOBAL WEATHER -->
+    <footer class="footer">
+        <div class="wx"><span class="wx-label">vol</span><div class="wx-bar"><div class="wx-fill" id="bar-presence"></div></div><span class="wx-val" id="val-presence">55</span></div>
+        <div class="wx"><span class="wx-label">reverb</span><div class="wx-bar"><div class="wx-fill" id="bar-space"></div></div><span class="wx-val" id="val-space">70</span></div>
+        <div class="wx"><span class="wx-label">activity</span><div class="wx-bar"><div class="wx-fill" id="bar-density"></div></div><span class="wx-val" id="val-density">55</span></div>
+        <div class="wx"><span class="wx-label">bright</span><div class="wx-bar"><div class="wx-fill" id="bar-warmth"></div></div><span class="wx-val" id="val-warmth">50</span></div>
+        <div class="wx"><span class="wx-label">motion</span><div class="wx-bar"><div class="wx-fill" id="bar-breath"></div></div><span class="wx-val" id="val-breath">35</span></div>
+    </footer>
+    
+    <script src="drift5.js"></script>
+</body>
+</html>

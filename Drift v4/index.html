@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Drift</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <div class="visualization" id="visualization"></div>
+    
+    <div class="content">
+      <h1 class="title">DRIFT</h1>
+      
+      <button class="initialize-btn" id="initializeBtn">
+        <span class="btn-circle"></span>
+        <span class="btn-text">Initialize</span>
+      </button>
+      
+      <div class="status" id="status">
+        <div class="time" id="elapsed">00:00</div>
+        <div class="phase" id="phase"></div>
+      </div>
+      
+      <div class="controls hidden" id="controls">
+        <button class="control-btn" id="pauseBtn">Pause</button>
+        <div class="volume-control">
+          <label for="volumeSlider">Volume</label>
+          <input type="range" id="volumeSlider" min="0" max="100" value="80" />
+        </div>
+      </div>
+    </div>
+    
+    <div class="info">
+      <p>An emergent ambient soundscape. Different every time.</p>
+    </div>
+  </div>
+
+  <!-- Tone.js from CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+  
+  <!-- App modules -->
+  <script src="js/utils/random.js"></script>
+  <script src="js/utils/music.js"></script>
+  <script src="js/audio/scales.js"></script>
+  <script src="js/audio/effects.js"></script>
+  <script src="js/audio/synths.js"></script>
+  <script src="js/global-listener.js"></script>
+  <script src="js/agents/base-agent.js"></script>
+  <script src="js/agents/drone-agent.js"></script>
+  <script src="js/agents/pad-agent.js"></script>
+  <script src="js/agents/texture-agent.js"></script>
+  <script src="js/agents/pulse-agent.js"></script>
+  <script src="js/agents/melody-agent.js"></script>
+  <script src="js/agents/vocal-agent.js"></script>
+  <script src="js/agents/field-agent.js"></script>
+  <script src="js/agents/ritual-agent.js"></script>
+  <script src="js/agents/granular-agent.js"></script>
+  <script src="js/agents/swell-agent.js"></script>
+  <script src="js/agents/atmosphere-agent.js"></script>
+  <script src="js/conductor.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
