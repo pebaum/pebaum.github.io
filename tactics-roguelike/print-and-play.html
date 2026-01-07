@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mushroom Dungeon - Print and Play</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        @page {
+            size: letter;
+            margin: 0.25in;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #fff;
+        }
+
+        .page {
+            width: 8in;
+            height: 10.5in;
+            page-break-after: always;
+            display: grid;
+            grid-template-columns: repeat(3, 2.5in);
+            grid-template-rows: repeat(4, 2.5in);
+            gap: 0;
+            padding: 0;
+        }
+
+        .page:last-child {
+            page-break-after: avoid;
+        }
+
+        .tile {
+            width: 2.5in;
+            height: 2.5in;
+            border: 3px solid #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 0.15in;
+            background: #fff;
+        }
+
+        .tile-icon {
+            font-size: 48px;
+            margin-bottom: 8px;
+        }
+
+        .tile-name {
+            font-size: 14px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+
+        .tile-effect {
+            font-size: 10px;
+            font-weight: 700;
+            line-height: 1.3;
+            text-transform: uppercase;
+        }
+
+        .tile-back {
+            background: #000;
+            color: #fff;
+        }
+
+        .tile-back .tile-icon {
+            font-size: 72px;
+        }
+
+        /* Counter tiles */
+        .counter-tile {
+            background: #f5f5f5;
+        }
+
+        .counter-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 4px;
+            width: 90%;
+            margin-top: 8px;
+        }
+
+        .counter-box {
+            width: 0.35in;
+            height: 0.35in;
+            border: 2px solid #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 900;
+        }
+
+        /* Item cards (smaller) */
+        .item-card {
+            background: #fffde7;
+            border: 3px dashed #000;
+        }
+
+        /* Rules page */
+        .rules-page {
+            width: 8in;
+            height: 10.5in;
+            padding: 0.25in;
+            page-break-after: always;
+            font-size: 11px;
+        }
+
+        .rules-page h1 {
+            font-size: 24px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-align: center;
+            margin-bottom: 16px;
+            border-bottom: 4px solid #000;
+            padding-bottom: 8px;
+        }
+
+        .rules-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .rules-section {
+            margin-bottom: 12px;
+        }
+
+        .rules-section h2 {
+            font-size: 12px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 2px solid #000;
+            margin-bottom: 6px;
+            padding-bottom: 2px;
+        }
+
+        .rules-section p, .rules-section li {
+            font-size: 10px;
+            line-height: 1.4;
+            margin-bottom: 4px;
+        }
+
+        .rules-section ul {
+            padding-left: 16px;
+        }
+
+        @media print {
+            body {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- PAGE 1: Tiles 1-12 -->
+    <div class="page">
+        <!-- Start Tile -->
+        <div class="tile">
+            <div class="tile-icon">🏁</div>
+            <div class="tile-name">Start</div>
+            <div class="tile-effect">Begin here with 10 HP and 0 coins</div>
+        </div>
+
+        <!-- Key -->
+        <div class="tile">
+            <div class="tile-icon">🔑</div>
+            <div class="tile-name">Key</div>
+            <div class="tile-effect">Required to open the door. Take the key card.</div>
+        </div>
+
+        <!-- Door -->
+        <div class="tile">
+            <div class="tile-icon">🚪</div>
+            <div class="tile-name">Door</div>
+            <div class="tile-effect">Must have Key to open.<br>Discard Key to pass through.<br>🎉 Floor Complete!</div>
+        </div>
+
+        <!-- Boss: Bowser Jr -->
+        <div class="tile">
+            <div class="tile-icon">🐢</div>
+            <div class="tile-name">Bowser Jr</div>
+            <div class="tile-effect">Boss • TO HIT: 4+<br>Take 2 damage each round you miss.<br>Gain 3 coins on defeat.</div>
+        </div>
+
+        <!-- Monster 1: Goomba -->
+        <div class="tile">
+            <div class="tile-icon">🍄</div>
+            <div class="tile-name">Goomba</div>
+            <div class="tile-effect">TO HIT: 2+<br>Take 1 damage each round you miss.<br>Gain 1 coin on defeat.</div>
+        </div>
+
+        <!-- Monster 2: Koopa -->
+        <div class="tile">
+            <div class="tile-icon">🐢</div>
+            <div class="tile-name">Koopa</div>
+            <div class="tile-effect">TO HIT: 3+<br>Take 1 damage each round you miss.<br>Gain 1 coin on defeat.</div>
+        </div>
+
+        <!-- Monster 3: Boo -->
+        <div class="tile">
+            <div class="tile-icon">👻</div>
+            <div class="tile-name">Boo</div>
+            <div class="tile-effect">TO HIT: 3+<br>Take 1 damage each round you miss.<br>Gain 1 coin on defeat.</div>
+        </div>
+
+        <!-- Monster 4: Piranha Plant -->
+        <div class="tile">
+            <div class="tile-icon">🌱</div>
+            <div class="tile-name">Piranha Plant</div>
+            <div class="tile-effect">TO HIT: 3+<br>Take 2 damage each round you miss.<br>Gain 2 coins on defeat.</div>
+        </div>
+
+        <!-- Monster 5: Hammer Bro -->
+        <div class="tile">
+            <div class="tile-icon">🔨</div>
+            <div class="tile-name">Hammer Bro</div>
+            <div class="tile-effect">TO HIT: 4+<br>Take 2 damage each round you miss.<br>Gain 2 coins on defeat.</div>
+        </div>
+
+        <!-- Trap 1: Spike Pit -->
+        <div class="tile">
+            <div class="tile-icon">⚠️</div>
+            <div class="tile-name">Spike Pit</div>
+            <div class="tile-effect">Roll 1d6.<br>1-2: Take 2 damage<br>3+: Safe!</div>
+        </div>
+
+        <!-- Trap 2: Thwomp -->
+        <div class="tile">
+            <div class="tile-icon">🪨</div>
+            <div class="tile-name">Thwomp</div>
+            <div class="tile-effect">Roll 1d6.<br>1-3: Take 1 damage<br>4+: Safe!</div>
+        </div>
+
+        <!-- Blocked 1: Pipe -->
+        <div class="tile">
+            <div class="tile-icon">🟢</div>
+            <div class="tile-name">Pipe</div>
+            <div class="tile-effect">Blocked! Cannot pass through.</div>
+        </div>
+    </div>
+
+    <!-- PAGE 2: Tiles 13-24 -->
+    <div class="page">
+        <!-- Blocked 2: Wall -->
+        <div class="tile">
+            <div class="tile-icon">🧱</div>
+            <div class="tile-name">Wall</div>
+            <div class="tile-effect">Blocked! Cannot pass through.</div>
+        </div>
+
+        <!-- Item 1: Mushroom -->
+        <div class="tile">
+            <div class="tile-icon">🍄</div>
+            <div class="tile-name">Mushroom</div>
+            <div class="tile-effect">Item • Take the card.<br>Use anytime: Heal 3 HP</div>
+        </div>
+
+        <!-- Item 2: Star -->
+        <div class="tile">
+            <div class="tile-icon">⭐</div>
+            <div class="tile-name">Star</div>
+            <div class="tile-effect">Item • Take the card.<br>Use: Block next damage OR auto-defeat non-boss</div>
+        </div>
+
+        <!-- Treasure 1 -->
+        <div class="tile">
+            <div class="tile-icon">❓</div>
+            <div class="tile-name">? Block</div>
+            <div class="tile-effect">Roll 1d6:<br>1-4: Gain 1 coin<br>5-6: Gain 2 coins</div>
+        </div>
+
+        <!-- Treasure 2 -->
+        <div class="tile">
+            <div class="tile-icon">📦</div>
+            <div class="tile-name">Chest</div>
+            <div class="tile-effect">Gain 2 coins!</div>
+        </div>
+
+        <!-- Shop: Toad House -->
+        <div class="tile">
+            <div class="tile-icon">🏠</div>
+            <div class="tile-name">Toad House</div>
+            <div class="tile-effect">Shop!<br>Pay 3 coins: Heal 5 HP<br>Pay 5 coins: Gain Mushroom</div>
+        </div>
+
+        <!-- Rest -->
+        <div class="tile">
+            <div class="tile-icon">💤</div>
+            <div class="tile-name">Rest Stop</div>
+            <div class="tile-effect">Heal 2 HP</div>
+        </div>
+
+        <!-- Challenge 1: Jump -->
+        <div class="tile">
+            <div class="tile-icon">⬆️</div>
+            <div class="tile-name">Jump Challenge</div>
+            <div class="tile-effect">Roll 1d6.<br>4+: Gain 1 coin!<br>1-3: Nothing</div>
+        </div>
+
+        <!-- Challenge 2: Race -->
+        <div class="tile">
+            <div class="tile-icon">🏃</div>
+            <div class="tile-name">Race Challenge</div>
+            <div class="tile-effect">Roll 1d6.<br>5+: Gain 2 coins!<br>1-4: Nothing</div>
+        </div>
+
+        <!-- Environment -->
+        <div class="tile">
+            <div class="tile-icon">🌊</div>
+            <div class="tile-name">Water</div>
+            <div class="tile-effect">Costs 2 moves to cross instead of 1.</div>
+        </div>
+
+        <!-- Empty 1 -->
+        <div class="tile">
+            <div class="tile-icon">⬜</div>
+            <div class="tile-name">Path</div>
+            <div class="tile-effect">Safe passage.</div>
+        </div>
+
+        <!-- Empty 2 -->
+        <div class="tile">
+            <div class="tile-icon">⬜</div>
+            <div class="tile-name">Path</div>
+            <div class="tile-effect">Safe passage.</div>
+        </div>
+    </div>
+
+    <!-- PAGE 3: Tile 25 + Backs + Player Items -->
+    <div class="page">
+        <!-- Empty 3 -->
+        <div class="tile">
+            <div class="tile-icon">⬜</div>
+            <div class="tile-name">Path</div>
+            <div class="tile-effect">Safe passage.</div>
+        </div>
+
+        <!-- ITEM CARD: Key (player holds this) -->
+        <div class="tile item-card">
+            <div class="tile-icon">🔑</div>
+            <div class="tile-name">Key</div>
+            <div class="tile-effect">Hold this card when you have the key.<br>Discard to open Door.</div>
+        </div>
+
+        <!-- ITEM CARD: Mushroom (player holds this) -->
+        <div class="tile item-card">
+            <div class="tile-icon">🍄</div>
+            <div class="tile-name">Mushroom</div>
+            <div class="tile-effect">Hold this card.<br>Discard anytime: Heal 3 HP</div>
+        </div>
+
+        <!-- ITEM CARD: Star (player holds this) -->
+        <div class="tile item-card">
+            <div class="tile-icon">⭐</div>
+            <div class="tile-name">Star</div>
+            <div class="tile-effect">Hold this card.<br>Discard: Block next damage OR auto-defeat non-boss</div>
+        </div>
+
+        <!-- Tile Backs -->
+        <div class="tile tile-back">
+            <div class="tile-icon">❓</div>
+        </div>
+        <div class="tile tile-back">
+            <div class="tile-icon">❓</div>
+        </div>
+        <div class="tile tile-back">
+            <div class="tile-icon">❓</div>
+        </div>
+        <div class="tile tile-back">
+            <div class="tile-icon">❓</div>
+        </div>
+        <div class="tile tile-back">
+            <div class="tile-icon">❓</div>
+        </div>
+        <div class="tile tile-back">
+            <div class="tile-icon">❓</div>
+        </div>
+        <div class="tile tile-back">
+            <div class="tile-icon">❓</div>
+        </div>
+        <div class="tile tile-back">
+            <div class="tile-icon">❓</div>
+        </div>
+    </div>
+
+    <!-- PAGE 4: More Backs + Counters -->
+    <div class="page">
+        <!-- More Tile Backs -->
+        <div class="tile tile-back">
+            <div class="tile-icon">❓</div>
+        </div>
+        <div class="tile tile-back">
+            <div class="tile-icon">❓</div>
+        </div>
+        <div class="tile tile-back">
+            <div class="tile-icon">❓</div>
+        </div>
+        <div class="tile tile-back">
+            <div class="tile-icon">❓</div>
+        </div>
+
+        <!-- HEALTH COUNTER -->
+        <div class="tile counter-tile">
+            <div class="tile-icon">❤️</div>
+            <div class="tile-name">Health</div>
+            <div class="tile-effect">Max 10 • Place marker on current HP</div>
+            <div class="counter-grid">
+                <div class="counter-box">1</div>
+                <div class="counter-box">2</div>
+                <div class="counter-box">3</div>
+                <div class="counter-box">4</div>
+                <div class="counter-box">5</div>
+                <div class="counter-box">6</div>
+                <div class="counter-box">7</div>
+                <div class="counter-box">8</div>
+                <div class="counter-box">9</div>
+                <div class="counter-box">10</div>
+            </div>
+        </div>
+
+        <!-- COIN COUNTER -->
+        <div class="tile counter-tile">
+            <div class="tile-icon">🪙</div>
+            <div class="tile-name">Coins</div>
+            <div class="tile-effect">Max 10 • Place marker on current coins</div>
+            <div class="counter-grid">
+                <div class="counter-box">1</div>
+                <div class="counter-box">2</div>
+                <div class="counter-box">3</div>
+                <div class="counter-box">4</div>
+                <div class="counter-box">5</div>
+                <div class="counter-box">6</div>
+                <div class="counter-box">7</div>
+                <div class="counter-box">8</div>
+                <div class="counter-box">9</div>
+                <div class="counter-box">10</div>
+            </div>
+        </div>
+
+        <!-- PLAYER PAWN marker -->
+        <div class="tile">
+            <div class="tile-icon">🧍</div>
+            <div class="tile-name">Player Marker</div>
+            <div class="tile-effect">Cut out and fold to stand.<br>Or use any small object!</div>
+        </div>
+
+        <!-- HP MARKER -->
+        <div class="tile" style="background: #ffcdd2;">
+            <div class="tile-icon">💗</div>
+            <div class="tile-name">HP Marker</div>
+            <div class="tile-effect">Place on Health counter<br>to track current HP.</div>
+        </div>
+
+        <!-- COIN MARKER -->
+        <div class="tile" style="background: #fff9c4;">
+            <div class="tile-icon">●</div>
+            <div class="tile-name">Coin Marker</div>
+            <div class="tile-effect">Place on Coin counter<br>to track current coins.</div>
+        </div>
+
+        <!-- Extra path tile -->
+        <div class="tile">
+            <div class="tile-icon">⬜</div>
+            <div class="tile-name">Path</div>
+            <div class="tile-effect">Safe passage.</div>
+        </div>
+
+        <!-- Extra tile back -->
+        <div class="tile tile-back">
+            <div class="tile-icon">❓</div>
+        </div>
+    </div>
+
+    <!-- PAGE 5: Rules -->
+    <div class="rules-page">
+        <h1>🍄 Mushroom Dungeon 🍄</h1>
+        
+        <div class="rules-columns">
+            <div class="rules-col">
+                <div class="rules-section">
+                    <h2>Setup</h2>
+                    <ul>
+                        <li>Shuffle all tiles face-down (❓ side up)</li>
+                        <li>Arrange in a 5×5 grid</li>
+                        <li>Place START tile face-up in one corner</li>
+                        <li>Start with 10 HP and 0 coins</li>
+                        <li>Place HP marker on 10, Coin marker on 0</li>
+                        <li>Keep item cards (Key, Mushroom, Star) to the side</li>
+                    </ul>
+                </div>
+
+                <div class="rules-section">
+                    <h2>Your Turn</h2>
+                    <ul>
+                        <li>Move 1 tile orthogonally (up/down/left/right)</li>
+                        <li>Flip the tile face-up if hidden</li>
+                        <li>Resolve the tile effect</li>
+                        <li>You cannot move diagonally</li>
+                        <li>You cannot move through Blocked tiles</li>
+                    </ul>
+                </div>
+
+                <div class="rules-section">
+                    <h2>Combat (TO HIT System)</h2>
+                    <p>When you encounter a monster:</p>
+                    <ul>
+                        <li>Roll 1d6 each round</li>
+                        <li>If you roll ≥ TO HIT number: You win!</li>
+                        <li>If you roll below: Take damage, roll again</li>
+                        <li>Keep rolling until you hit</li>
+                    </ul>
+                    <p style="margin-top: 6px;"><strong>Example:</strong> Koopa has TO HIT: 3+. You roll a 2, take 1 damage. Roll again, get 4, you win! Gain 1 coin.</p>
+                </div>
+
+                <div class="rules-section">
+                    <h2>Monster Reference</h2>
+                    <ul>
+                        <li><strong>Goomba:</strong> TO HIT 2+ • 1 dmg/miss • 1 coin</li>
+                        <li><strong>Koopa:</strong> TO HIT 3+ • 1 dmg/miss • 1 coin</li>
+                        <li><strong>Boo:</strong> TO HIT 3+ • 1 dmg/miss • 1 coin</li>
+                        <li><strong>Piranha:</strong> TO HIT 3+ • 2 dmg/miss • 2 coins</li>
+                        <li><strong>Hammer Bro:</strong> TO HIT 4+ • 2 dmg/miss • 2 coins</li>
+                        <li><strong>Bowser Jr:</strong> TO HIT 4+ • 2 dmg/miss • 3 coins</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="rules-col">
+                <div class="rules-section">
+                    <h2>Items</h2>
+                    <ul>
+                        <li><strong>Key:</strong> Required to pass Door tile</li>
+                        <li><strong>Mushroom:</strong> Use anytime to heal 3 HP</li>
+                        <li><strong>Star:</strong> Block next damage taken OR auto-defeat any non-boss monster</li>
+                    </ul>
+                    <p style="margin-top: 6px;">When you get an item, take the matching item card and hold it. Discard when used.</p>
+                </div>
+
+                <div class="rules-section">
+                    <h2>Toad House (Shop)</h2>
+                    <ul>
+                        <li>Pay 3 coins: Heal 5 HP</li>
+                        <li>Pay 5 coins: Gain Mushroom item</li>
+                    </ul>
+                </div>
+
+                <div class="rules-section">
+                    <h2>Health & Coins</h2>
+                    <ul>
+                        <li>Max HP: 10 (cannot exceed)</li>
+                        <li>Max Coins: 10 (cannot exceed)</li>
+                        <li>Move markers on counters to track</li>
+                        <li>If HP reaches 0: Game Over!</li>
+                    </ul>
+                </div>
+
+                <div class="rules-section">
+                    <h2>Winning</h2>
+                    <ul>
+                        <li>Find the Key tile</li>
+                        <li>Reach the Door tile</li>
+                        <li>Discard Key to pass through Door</li>
+                        <li>🎉 Floor Complete!</li>
+                    </ul>
+                    <p style="margin-top: 6px;"><em>Bowser Jr is optional but gives 3 coins!</em></p>
+                </div>
+
+                <div class="rules-section">
+                    <h2>Tips</h2>
+                    <ul>
+                        <li>Save your Star for tough fights or emergencies</li>
+                        <li>Visit Toad House when low on HP</li>
+                        <li>Goombas are easy - fight them for coins!</li>
+                        <li>Coins are precious - spend wisely</li>
+                    </ul>
+                </div>
+
+                <div class="rules-section">
+                    <h2>Difficulty Variants</h2>
+                    <ul>
+                        <li><strong>Easy:</strong> Start with 1 Mushroom</li>
+                        <li><strong>Hard:</strong> Start with 7 HP</li>
+                        <li><strong>Brutal:</strong> No rest stops heal</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

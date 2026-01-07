@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tactics Roguelike - Tabletop Edition</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: Georgia, 'Times New Roman', serif;
+            color: #2c1810;
+            /* Wood table texture */
+            background: 
+                repeating-linear-gradient(
+                    90deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(0,0,0,0.03) 2px,
+                    rgba(0,0,0,0.03) 4px
+                ),
+                linear-gradient(
+                    180deg,
+                    #8B6914 0%,
+                    #A0782C 10%,
+                    #8B6914 20%,
+                    #9A7B2F 30%,
+                    #8B6914 45%,
+                    #A07B28 55%,
+                    #8B6914 70%,
+                    #96752A 85%,
+                    #8B6914 100%
+                );
+            padding: 20px;
+        }
+
+        h1 {
+            margin-bottom: 15px;
+            color: #2c1810;
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.3);
+            font-weight: normal;
+            font-size: 1.8em;
+            letter-spacing: 2px;
+        }
+
+        /* Player card / character sheet */
+        .player-card {
+            background: #f4e4bc;
+            border: 3px solid #8B6914;
+            border-radius: 8px;
+            padding: 15px 25px;
+            margin-bottom: 15px;
+            box-shadow: 
+                3px 3px 10px rgba(0,0,0,0.3),
+                inset 0 0 20px rgba(139,105,20,0.1);
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.7em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #666;
+            margin-bottom: 3px;
+        }
+
+        .stat-value {
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+
+        .stat-value.hp { color: #8B0000; }
+        .stat-value.floor { color: #2E4A2E; }
+        .stat-value.gold { color: #8B6914; }
+        .stat-value.has-key { color: #4A2E6A; }
+
+        /* Game board */
+        .game-board {
+            background: 
+                linear-gradient(45deg, #1a472a 25%, transparent 25%),
+                linear-gradient(-45deg, #1a472a 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, #1a472a 75%),
+                linear-gradient(-45deg, transparent 75%, #1a472a 75%),
+                #2d5a3d;
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            border: 8px solid #3d2914;
+            border-radius: 4px;
+            padding: 30px;
+            box-shadow: 
+                5px 5px 20px rgba(0,0,0,0.4),
+                inset 0 0 30px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        .game-board::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.2) 100%);
+            pointer-events: none;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(5, 70px);
+            grid-template-rows: repeat(5, 70px);
+            gap: 4px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Tile token - physical cardboard look */
+        .tile {
+            width: 70px;
+            height: 70px;
+            cursor: pointer;
+            position: relative;
+            perspective: 500px;
+            transition: transform 0.1s ease;
+        }
+
+        .tile:hover:not(.blocked) {
+            transform: scale(1.05);
+        }
+
+        .tile-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.5s ease;
+            transform-style: preserve-3d;
+        }
+
+        .tile.revealed .tile-inner {
+            transform: rotateY(180deg);
+        }
+
+        .tile-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            box-shadow: 
+                2px 2px 5px rgba(0,0,0,0.3),
+                inset 0 1px 0 rgba(255,255,255,0.2);
+        }
+
+        /* Back of tile - cardboard */
+        .tile-back {
+            background: 
+                linear-gradient(135deg, #a08060 0%, #8a7050 50%, #a08060 100%);
+            border: 2px solid #6d5030;
+        }
+
+        .tile-back::before {
+            content: '';
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border: 2px solid #6d5030;
+            border-radius: 50%;
+            opacity: 0.5;
+        }
+
+        .tile-back::after {
+            content: '?';
+            font-size: 24px;
+            color: #5a4530;
+            font-weight: bold;
+        }
+
+        /* Front of tile */
+        .tile-front {
+            transform: rotateY(180deg);
+            border: 2px solid #444;
+        }
+
+        .tile-label {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 2px;
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+        }
+
+        /* Adjacent tiles glow */
+        .tile.adjacent:not(.revealed) .tile-back {
+            box-shadow: 
+                2px 2px 5px rgba(0,0,0,0.3),
+                0 0 15px rgba(255,215,0,0.6),
+                inset 0 1px 0 rgba(255,255,255,0.2);
+        }
+
+        /* Player position marker */
+        .tile.player-here::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-bottom: 12px solid #ffd700;
+            filter: drop-shadow(0 2px 3px rgba(0,0,0,0.4));
+            z-index: 10;
+        }
+
+        /* Player pawn on tile */
+        .player-pawn {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 24px;
+            height: 30px;
+            background: linear-gradient(180deg, #4169E1 0%, #2E4A8E 100%);
+            border-radius: 50% 50% 45% 45%;
+            border: 2px solid #1a2a5e;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.4);
+            z-index: 20;
+        }
+
+        .player-pawn::before {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 12px;
+            height: 12px;
+            background: linear-gradient(180deg, #ffd9b3 0%, #e5c4a1 100%);
+            border-radius: 50%;
+            border: 1px solid #c9a882;
+        }
+
+        /* Tile type styles */
+        .type-start .tile-front {
+            background: linear-gradient(135deg, #5ce1d6 0%, #3db8ae 100%);
+            border-color: #2a8a82;
+        }
+        .type-start .tile-label { color: #1a5a55; }
+
+        .type-staircase .tile-front {
+            background: linear-gradient(135deg, #9b7dd4 0%, #7b5db4 100%);
+            border-color: #5a3d94;
+        }
+        .type-staircase .tile-label { color: #3a2d54; }
+
+        .type-key .tile-front {
+            background: linear-gradient(135deg, #f5c0fc 0%, #d590dc 100%);
+            border-color: #a560ac;
+        }
+        .type-key .tile-label { color: #6a3070; }
+
+        .type-blocked .tile-front {
+            background: linear-gradient(135deg, #5a5a5a 0%, #3a3a3a 100%);
+            border-color: #2a2a2a;
+            cursor: not-allowed;
+        }
+        .type-blocked .tile-label { color: #888; }
+
+        .type-trap .tile-front {
+            background: linear-gradient(135deg, #ff8080 0%, #dd5555 100%);
+            border-color: #aa3333;
+        }
+        .type-trap .tile-label { color: #5a1515; }
+
+        .type-monster .tile-front {
+            background: linear-gradient(135deg, #e06050 0%, #b84030 100%);
+            border-color: #882820;
+        }
+        .type-monster .tile-label { color: #4a1810; }
+
+        .type-boss .tile-front {
+            background: linear-gradient(135deg, #a855bd 0%, #7a3590 100%);
+            border-color: #5a2570;
+        }
+        .type-boss .tile-label { color: #2a1530; }
+
+        .type-treasure .tile-front {
+            background: linear-gradient(135deg, #ffd700 0%, #daa520 100%);
+            border-color: #b8860b;
+        }
+        .type-treasure .tile-label { color: #5a4000; }
+
+        .type-empty .tile-front {
+            background: linear-gradient(135deg, #a0a8b0 0%, #808890 100%);
+            border-color: #606870;
+        }
+        .type-empty .tile-label { color: #404448; }
+
+        /* Message scroll */
+        .message {
+            background: #f4e4bc;
+            border: 2px solid #8B6914;
+            border-radius: 4px;
+            padding: 12px 20px;
+            margin: 15px 0;
+            min-width: 350px;
+            text-align: center;
+            box-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+            font-style: italic;
+        }
+
+        .message.danger { 
+            background: #f4d4c4;
+            border-color: #8B2020;
+            color: #5a1010;
+        }
+        .message.success { 
+            background: #d4e4c4;
+            border-color: #2a6a20;
+            color: #1a4a10;
+        }
+        .message.info { 
+            background: #f4e4bc;
+            border-color: #8B6914;
+            color: #4a3a10;
+        }
+
+        /* Buttons - wooden tokens */
+        .buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        button {
+            background: linear-gradient(180deg, #d4a45a 0%, #b8863a 100%);
+            color: #2c1810;
+            border: 3px solid #8B6914;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-family: Georgia, serif;
+            box-shadow: 
+                2px 2px 5px rgba(0,0,0,0.3),
+                inset 0 1px 0 rgba(255,255,255,0.3);
+            transition: all 0.15s ease;
+        }
+
+        button:hover {
+            background: linear-gradient(180deg, #e4b46a 0%, #c8964a 100%);
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+            box-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+        }
+
+        /* Legend - reference card */
+        .legend {
+            background: #f4e4bc;
+            border: 2px solid #8B6914;
+            border-radius: 6px;
+            padding: 12px 15px;
+            margin-top: 15px;
+            box-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .legend-title {
+            font-size: 0.8em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            color: #666;
+            text-align: center;
+        }
+
+        .legend-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            background: rgba(139,105,20,0.1);
+            border-radius: 3px;
+        }
+
+        /* Game over overlay */
+        .game-over {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(44,24,16,0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .game-over-card {
+            background: #f4e4bc;
+            border: 5px solid #8B6914;
+            border-radius: 10px;
+            padding: 40px 60px;
+            text-align: center;
+            box-shadow: 5px 5px 20px rgba(0,0,0,0.5);
+        }
+
+        .game-over h2 {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+            font-weight: normal;
+        }
+
+        .game-over.victory h2 { color: #8B6914; }
+        .game-over.defeat h2 { color: #8B0000; }
+
+        .game-over p {
+            margin-bottom: 20px;
+            font-size: 1.1em;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Key token in hand */
+        .key-token {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(135deg, #ffd700 0%, #daa520 100%);
+            border: 2px solid #b8860b;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 26px;
+            font-size: 16px;
+            box-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+            vertical-align: middle;
+        }
+
+        .key-token.empty {
+            background: linear-gradient(135deg, #ccc 0%, #999 100%);
+            border-color: #777;
+        }
+    </style>
+</head>
+<body>
+    <h1>⚔ TACTICS ROGUELIKE ⚔</h1>
+    
+    <div class="player-card">
+        <div class="stat">
+            <div class="stat-label">Floor</div>
+            <div class="stat-value floor" id="floor">1 / 100</div>
+        </div>
+        <div class="stat">
+            <div class="stat-label">Health</div>
+            <div class="stat-value hp" id="hp">❤️ 10 / 10</div>
+        </div>
+        <div class="stat">
+            <div class="stat-label">Gold</div>
+            <div class="stat-value gold" id="gold">🪙 0</div>
+        </div>
+        <div class="stat">
+            <div class="stat-label">Key</div>
+            <div class="stat-value has-key" id="key"><span class="key-token empty">🔑</span></div>
+        </div>
+    </div>
+
+    <div class="game-board">
+        <div class="grid-container" id="grid"></div>
+    </div>
+
+    <div class="message info" id="message">Draw tiles to explore. Find the key, then reach the exit.</div>
+
+    <div class="buttons">
+        <button onclick="restartGame()">🔄 New Game</button>
+        <button onclick="generateFloor()">⏭ Next Floor</button>
+    </div>
+
+    <div class="legend">
+        <div class="legend-title">Tile Reference</div>
+        <div class="legend-items">
+            <div class="legend-item">🏁 Start</div>
+            <div class="legend-item">🚪 Exit</div>
+            <div class="legend-item">🔑 Key</div>
+            <div class="legend-item">👹 Monster</div>
+            <div class="legend-item">💀 Boss</div>
+            <div class="legend-item">⚡ Trap</div>
+            <div class="legend-item">💎 Treasure</div>
+            <div class="legend-item">🪨 Blocked</div>
+            <div class="legend-item">· Empty</div>
+        </div>
+    </div>
+
+    <div class="game-over hidden" id="gameOver">
+        <div class="game-over-card">
+            <h2 id="gameOverText">GAME OVER</h2>
+            <p id="gameOverStats"></p>
+            <button onclick="restartGame()">🔄 Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let gameState = {
+            floor: 1,
+            hp: 10,
+            maxHp: 10,
+            gold: 0,
+            hasKey: false,
+            playerPos: { x: 0, y: 0 },
+            grid: [],
+            gameOver: false
+        };
+
+        // Tile types with counts
+        const TILE_TYPES = {
+            start: { count: 1, icon: '🏁', name: 'START' },
+            staircase: { count: 1, icon: '🚪', name: 'EXIT' },
+            key: { count: 1, icon: '🔑', name: 'KEY' },
+            blocked: { count: 5, icon: '🪨', name: 'BLOCKED' },
+            trap: { count: 5, icon: '⚡', name: 'TRAP' },
+            monster: { count: 5, icon: '👹', name: 'MONSTER' },
+            boss: { count: 1, icon: '💀', name: 'BOSS' },
+            treasure: { count: 3, icon: '💎', name: 'TREASURE' },
+            empty: { count: 3, icon: '·', name: 'EMPTY' }
+        };
+
+        // Shuffle array
+        function shuffle(array) {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        // Generate floor tiles
+        function generateTilePool() {
+            const pool = [];
+            for (const [type, data] of Object.entries(TILE_TYPES)) {
+                for (let i = 0; i < data.count; i++) {
+                    pool.push(type);
+                }
+            }
+            return shuffle(pool);
+        }
+
+        // Check if two positions are adjacent (4-directional)
+        function isAdjacent(pos1, pos2) {
+            const dx = Math.abs(pos1.x - pos2.x);
+            const dy = Math.abs(pos1.y - pos2.y);
+            return (dx + dy === 1);
+        }
+
+        // Generate a new floor
+        function generateFloor() {
+            gameState.hasKey = false;
+            gameState.grid = [];
+            
+            const tilePool = generateTilePool();
+            let tileIndex = 0;
+            let startPos = null;
+
+            // Create 5x5 grid
+            for (let y = 0; y < 5; y++) {
+                gameState.grid[y] = [];
+                for (let x = 0; x < 5; x++) {
+                    const type = tilePool[tileIndex++];
+                    gameState.grid[y][x] = {
+                        type: type,
+                        revealed: false,
+                        x: x,
+                        y: y
+                    };
+                    if (type === 'start') {
+                        startPos = { x, y };
+                    }
+                }
+            }
+
+            // Place player at start
+            gameState.playerPos = startPos;
+            gameState.grid[startPos.y][startPos.x].revealed = true;
+
+            renderGrid();
+            updateUI();
+            showMessage('Floor ' + gameState.floor + ' — Find the key and reach the exit.', 'info');
+        }
+
+        // Render the grid
+        function renderGrid() {
+            const gridEl = document.getElementById('grid');
+            gridEl.innerHTML = '';
+
+            for (let y = 0; y < 5; y++) {
+                for (let x = 0; x < 5; x++) {
+                    const tile = gameState.grid[y][x];
+                    
+                    const tileEl = document.createElement('div');
+                    tileEl.className = 'tile';
+
+                    const inner = document.createElement('div');
+                    inner.className = 'tile-inner';
+
+                    // Back face (unrevealed)
+                    const backFace = document.createElement('div');
+                    backFace.className = 'tile-face tile-back';
+                    
+                    // Front face (revealed)
+                    const frontFace = document.createElement('div');
+                    frontFace.className = 'tile-face tile-front';
+                    frontFace.innerHTML = `
+                        <span>${TILE_TYPES[tile.type].icon}</span>
+                        <span class="tile-label">${TILE_TYPES[tile.type].name}</span>
+                    `;
+
+                    inner.appendChild(backFace);
+                    inner.appendChild(frontFace);
+                    tileEl.appendChild(inner);
+
+                    // Add state classes
+                    if (tile.revealed) {
+                        tileEl.classList.add('revealed');
+                        tileEl.classList.add('type-' + tile.type);
+                    }
+                    if (tile.type === 'blocked' && tile.revealed) {
+                        tileEl.classList.add('blocked');
+                    }
+                    
+                    // Player pawn
+                    if (x === gameState.playerPos.x && y === gameState.playerPos.y) {
+                        tileEl.classList.add('player-here');
+                        const pawn = document.createElement('div');
+                        pawn.className = 'player-pawn';
+                        tileEl.appendChild(pawn);
+                    }
+                    
+                    if (isAdjacent(gameState.playerPos, { x, y }) && !tile.revealed) {
+                        tileEl.classList.add('adjacent');
+                    }
+
+                    // Click handler
+                    tileEl.addEventListener('click', () => handleTileClick(x, y));
+
+                    gridEl.appendChild(tileEl);
+                }
+            }
+        }
+
+        // Handle clicking a tile
+        function handleTileClick(x, y) {
+            if (gameState.gameOver) return;
+
+            const tile = gameState.grid[y][x];
+            
+            // Can only move to adjacent tiles
+            if (!isAdjacent(gameState.playerPos, { x, y })) {
+                showMessage('Move to an adjacent tile.', 'info');
+                return;
+            }
+
+            // Can't move to revealed blocked tiles
+            if (tile.revealed && tile.type === 'blocked') {
+                showMessage('That path is blocked.', 'info');
+                return;
+            }
+
+            // Reveal tile if hidden
+            if (!tile.revealed) {
+                tile.revealed = true;
+                
+                // Check if it's blocked
+                if (tile.type === 'blocked') {
+                    showMessage('Path blocked. Try another direction.', 'info');
+                    renderGrid();
+                    return;
+                }
+            }
+
+            // Move player
+            gameState.playerPos = { x, y };
+
+            // Handle tile effect
+            handleTileEffect(tile);
+
+            renderGrid();
+            updateUI();
+        }
+
+        // Handle effects of stepping on a tile
+        function handleTileEffect(tile) {
+            switch (tile.type) {
+                case 'trap':
+                    const trapDmg = Math.floor(Math.random() * 2) + 1;
+                    gameState.hp -= trapDmg;
+                    showMessage(`⚡ Trap triggered! Take ${trapDmg} damage.`, 'danger');
+                    checkDeath();
+                    break;
+
+                case 'monster':
+                    const monsterDmg = Math.floor(Math.random() * 2) + 2;
+                    gameState.hp -= monsterDmg;
+                    showMessage(`👹 Monster! Combat deals ${monsterDmg} damage.`, 'danger');
+                    tile.type = 'empty';
+                    checkDeath();
+                    break;
+
+                case 'boss':
+                    const bossDmg = Math.floor(Math.random() * 3) + 3;
+                    gameState.hp -= bossDmg;
+                    const bossGold = Math.floor(Math.random() * 10) + 10;
+                    gameState.gold += bossGold;
+                    showMessage(`💀 Boss defeated! Take ${bossDmg} damage, gain ${bossGold} gold.`, 'danger');
+                    tile.type = 'empty';
+                    checkDeath();
+                    break;
+
+                case 'treasure':
+                    const roll = Math.random();
+                    if (roll < 0.5) {
+                        const gold = Math.floor(Math.random() * 5) + 3;
+                        gameState.gold += gold;
+                        showMessage(`💎 Treasure! Found ${gold} gold.`, 'success');
+                    } else {
+                        const heal = Math.floor(Math.random() * 3) + 2;
+                        gameState.hp = Math.min(gameState.maxHp, gameState.hp + heal);
+                        showMessage(`💎 Treasure! Potion restores ${heal} HP.`, 'success');
+                    }
+                    tile.type = 'empty';
+                    break;
+
+                case 'key':
+                    gameState.hasKey = true;
+                    showMessage('🔑 Key acquired! Find the exit.', 'success');
+                    tile.type = 'empty';
+                    break;
+
+                case 'staircase':
+                    if (gameState.hasKey) {
+                        if (gameState.floor >= 100) {
+                            victory();
+                        } else {
+                            gameState.floor++;
+                            showMessage(`🚪 Descending to floor ${gameState.floor}...`, 'success');
+                            setTimeout(() => generateFloor(), 800);
+                        }
+                    } else {
+                        showMessage('🚪 Exit is locked. Find the key first.', 'info');
+                    }
+                    break;
+
+                case 'empty':
+                case 'start':
+                    showMessage('Safe ground.', 'info');
+                    break;
+            }
+        }
+
+        // Check if player died
+        function checkDeath() {
+            if (gameState.hp <= 0) {
+                gameState.hp = 0;
+                gameState.gameOver = true;
+                showGameOver(false);
+            }
+        }
+
+        // Victory!
+        function victory() {
+            gameState.gameOver = true;
+            showGameOver(true);
+        }
+
+        // Show game over screen
+        function showGameOver(won) {
+            const overlay = document.getElementById('gameOver');
+            const text = document.getElementById('gameOverText');
+            const stats = document.getElementById('gameOverStats');
+            
+            overlay.classList.remove('hidden', 'victory', 'defeat');
+            overlay.classList.add(won ? 'victory' : 'defeat');
+            
+            text.textContent = won ? '🏆 VICTORY 🏆' : '💀 DEFEAT 💀';
+            stats.textContent = `Reached Floor ${gameState.floor} · Collected ${gameState.gold} Gold`;
+        }
+
+        // Show message
+        function showMessage(text, type) {
+            const msgEl = document.getElementById('message');
+            msgEl.textContent = text;
+            msgEl.className = 'message ' + type;
+        }
+
+        // Update UI
+        function updateUI() {
+            document.getElementById('floor').textContent = `${gameState.floor} / 100`;
+            document.getElementById('hp').textContent = `❤️ ${gameState.hp} / ${gameState.maxHp}`;
+            document.getElementById('gold').textContent = `🪙 ${gameState.gold}`;
+            
+            const keyEl = document.getElementById('key');
+            if (gameState.hasKey) {
+                keyEl.innerHTML = '<span class="key-token">🔑</span>';
+            } else {
+                keyEl.innerHTML = '<span class="key-token empty">·</span>';
+            }
+        }
+
+        // Restart game
+        function restartGame() {
+            document.getElementById('gameOver').classList.add('hidden');
+            gameState = {
+                floor: 1,
+                hp: 10,
+                maxHp: 10,
+                gold: 0,
+                hasKey: false,
+                playerPos: { x: 0, y: 0 },
+                grid: [],
+                gameOver: false
+            };
+            generateFloor();
+        }
+
+        // Start game
+        generateFloor();
+    </script>
+</body>
+</html>

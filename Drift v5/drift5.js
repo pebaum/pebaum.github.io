@@ -55,7 +55,7 @@ let melodyDirection = 1;  // 1 = ascending, -1 = descending
 
 // Atmosphere - global, drifts slowly like weather
 let atmosphere = {
-    presence: 0.55,     // Overall volume
+    presence: 1.0,      // Overall volume (fixed at max)
     space: 0.7,         // Reverb amount
     density: 0.55,      // Note density
     warmth: 0.5,        // Filter brightness
@@ -717,7 +717,8 @@ function scheduleAtmosphereChange() {
     atmosphereChangeTimeout = setTimeout(() => {
         if (!isPlaying) return;
         
-        const params = Object.keys(atmosphere);
+        // Exclude presence (volume) from drifting parameters
+        const params = Object.keys(atmosphere).filter(p => p !== 'presence');
         
         // Change 1-2 parameters
         const numChanges = Math.random() < 0.4 ? 2 : 1;
@@ -746,8 +747,8 @@ function applyAtmosphere() {
     
     const now = audioCtx.currentTime;
     
-    // Presence -> master volume
-    const vol = 0.25 + atmosphere.presence * 0.35;
+    // Fixed maximum volume
+    const vol = 0.6;
     masterGain.gain.setTargetAtTime(vol, now, 2);
     
     // Space -> reverb wetness
@@ -998,8 +999,8 @@ function randomize() {
     // Reset melody
     lastMelodyNote = sacredRoot + 60;
     
-    // Randomize atmosphere targets
-    Object.keys(atmosphere).forEach(param => {
+    // Randomize atmosphere targets (except presence/volume)
+    Object.keys(atmosphere).filter(p => p !== 'presence').forEach(param => {
         atmosphereTargets[param] = random(0.25, 0.75);
     });
     
@@ -1025,8 +1026,8 @@ function randomizeOnLoad() {
     // Reset melody
     lastMelodyNote = sacredRoot + 60;
     
-    // Randomize atmosphere
-    Object.keys(atmosphere).forEach(param => {
+    // Randomize atmosphere (except presence/volume which stays at max)
+    Object.keys(atmosphere).filter(p => p !== 'presence').forEach(param => {
         const val = random(0.25, 0.75);
         atmosphere[param] = val;
         atmosphereTargets[param] = val;
