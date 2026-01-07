@@ -1045,6 +1045,17 @@ function init() {
     // Initialize notation (no-op in brutal version)
     initNotation();
     
+    // Auto-play on first user interaction (required by browsers)
+    const autoPlay = () => {
+        if (!isPlaying) {
+            startPlayback();
+        }
+        document.removeEventListener('click', autoPlay);
+        document.removeEventListener('keydown', autoPlay);
+    };
+    document.addEventListener('click', autoPlay);
+    document.addEventListener('keydown', autoPlay);
+    
     // Play button
     const playBtn = document.getElementById('playBtn');
     if (playBtn) {
