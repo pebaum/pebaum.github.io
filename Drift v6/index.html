@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DRIFT v6 — Stellar Round</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background: #000;
+            color: #aab;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        canvas {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        
+        .ui {
+            position: fixed;
+            z-index: 100;
+            pointer-events: none;
+        }
+        
+        .header {
+            top: 20px;
+            left: 20px;
+            font-size: 10px;
+            letter-spacing: 0.3em;
+            opacity: 0.6;
+        }
+        
+        .header h1 {
+            font-weight: normal;
+            font-size: 11px;
+            margin-bottom: 8px;
+        }
+        
+        .stats {
+            bottom: 20px;
+            left: 20px;
+            font-size: 10px;
+            line-height: 1.8;
+            opacity: 0.5;
+        }
+        
+        .timer {
+            top: 20px;
+            right: 20px;
+            font-size: 24px;
+            font-weight: 100;
+            letter-spacing: 0.1em;
+            opacity: 0.4;
+        }
+        
+        .phase {
+            top: 50px;
+            right: 20px;
+            font-size: 10px;
+            letter-spacing: 0.2em;
+            opacity: 0.4;
+            text-transform: uppercase;
+        }
+        
+        .progress-ring {
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+        }
+        
+        .progress-ring svg {
+            transform: rotate(-90deg);
+        }
+        
+        .progress-ring circle {
+            fill: none;
+            stroke-width: 2;
+        }
+        
+        .progress-ring .bg { stroke: #222; }
+        .progress-ring .fg { 
+            stroke: #668;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.5s;
+        }
+        
+        /* Start overlay */
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            cursor: pointer;
+            transition: opacity 1.5s ease;
+        }
+        
+        .overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .overlay h1 {
+            font-size: 12px;
+            font-weight: normal;
+            letter-spacing: 0.5em;
+            color: #556;
+            margin-bottom: 30px;
+        }
+        
+        .overlay p {
+            font-size: 11px;
+            color: #445;
+            max-width: 320px;
+            text-align: center;
+            line-height: 2;
+            margin-bottom: 40px;
+        }
+        
+        .overlay .start {
+            font-size: 10px;
+            letter-spacing: 0.3em;
+            color: #778;
+            padding: 15px 40px;
+            border: 1px solid #334;
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.3s;
+            pointer-events: auto;
+        }
+        
+        .overlay .start:hover {
+            border-color: #556;
+            color: #aab;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    
+    <div class="ui header">
+        <h1>DRIFT v6</h1>
+        <div id="root">Root: C2</div>
+    </div>
+    
+    <div class="ui timer" id="timer">5:00</div>
+    <div class="ui phase" id="phase">Genesis</div>
+    
+    <div class="ui stats">
+        <div>Explorers: <span id="nodeCount">0</span></div>
+        <div>Max Ring: <span id="currentRing">0</span></div>
+    </div>
+    
+    <div class="ui progress-ring">
+        <svg width="60" height="60">
+            <circle class="bg" cx="30" cy="30" r="26"/>
+            <circle class="fg" id="progressCircle" cx="30" cy="30" r="26" 
+                    stroke-dasharray="163.36" stroke-dashoffset="163.36"/>
+        </svg>
+    </div>
+    
+    <div class="overlay" id="overlay">
+        <h1>DRIFT v6</h1>
+        <p>
+            A five-minute generative round.
+            <br><br>
+            Explorers depart the home star on each pulse,
+            weaving an Eno-esque canon through the galaxy.
+        </p>
+        <button class="start" id="startBtn">CLICK TO BEGIN</button>
+    </div>
+    
+    <script src="drift6.js"></script>
+</body>
+</html>
