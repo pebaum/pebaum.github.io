@@ -32,111 +32,111 @@ const MODES = {
 const MODE_NAMES = Object.keys(MODES);
 const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
-// Star timbres - each star will have one of these
+// Star timbres - glacial, spacious sounds
 const TIMBRES = [
     {
         name: 'Bell',
         color: [100, 180, 255],
         waveform: 'sine',
-        harmonics: [1, 2.4, 4.2],      // Frequency multipliers
-        harmonicGains: [1, 0.3, 0.1],  // Relative loudness
-        attack: 0.01,
-        decay: 0.3,
-        sustain: 0.4,
-        release: 4,
-        filterMult: 6,
-        filterQ: 1
+        harmonics: [1, 2.4, 4.2],
+        harmonicGains: [1, 0.2, 0.06],
+        attack: 2,
+        decay: 1.5,
+        sustain: 0.3,
+        release: 8,
+        filterMult: 4,
+        filterQ: 0.5
     },
     {
         name: 'Glass',
         color: [180, 255, 200],
         waveform: 'sine',
         harmonics: [1, 3, 5],
-        harmonicGains: [1, 0.25, 0.08],
-        attack: 0.005,
-        decay: 0.1,
+        harmonicGains: [1, 0.15, 0.04],
+        attack: 3,
+        decay: 2,
         sustain: 0.2,
-        release: 5,
-        filterMult: 8,
-        filterQ: 0.5
+        release: 10,
+        filterMult: 5,
+        filterQ: 0.3
     },
     {
         name: 'Pad',
         color: [255, 180, 200],
-        waveform: 'sawtooth',
-        harmonics: [1],
-        harmonicGains: [1],
-        attack: 1.5,
-        decay: 0.5,
-        sustain: 0.6,
-        release: 3,
+        waveform: 'sine',
+        harmonics: [1, 2],
+        harmonicGains: [1, 0.3],
+        attack: 5,
+        decay: 2,
+        sustain: 0.5,
+        release: 8,
         filterMult: 2,
-        filterQ: 1
+        filterQ: 0.5
     },
     {
-        name: 'Chime',
+        name: 'Breath',
         color: [255, 220, 140],
         waveform: 'sine',
-        harmonics: [1, 2.2, 3.8],
-        harmonicGains: [1, 0.35, 0.12],
-        attack: 0.01,
-        decay: 0.2,
-        sustain: 0.3,
-        release: 6,
-        filterMult: 5,
-        filterQ: 0.7
+        harmonics: [1, 1.5, 2],
+        harmonicGains: [1, 0.25, 0.1],
+        attack: 4,
+        decay: 3,
+        sustain: 0.4,
+        release: 12,
+        filterMult: 3,
+        filterQ: 0.4
     },
     {
         name: 'Hum',
         color: [200, 160, 255],
         waveform: 'sine',
         harmonics: [1, 2],
-        harmonicGains: [1, 0.15],
-        attack: 2,
-        decay: 1,
-        sustain: 0.7,
-        release: 4,
+        harmonicGains: [1, 0.1],
+        attack: 6,
+        decay: 3,
+        sustain: 0.6,
+        release: 10,
         filterMult: 1.5,
-        filterQ: 2
+        filterQ: 1
     },
     {
-        name: 'Pluck',
+        name: 'Whisper',
         color: [140, 255, 220],
-        waveform: 'triangle',
+        waveform: 'sine',
         harmonics: [1, 2, 3],
-        harmonicGains: [1, 0.5, 0.2],
-        attack: 0.002,
-        decay: 0.15,
-        sustain: 0.1,
-        release: 2.5,
-        filterMult: 4,
-        filterQ: 1.5
+        harmonicGains: [1, 0.2, 0.05],
+        attack: 3,
+        decay: 2,
+        sustain: 0.2,
+        release: 9,
+        filterMult: 3,
+        filterQ: 0.6
     },
     {
         name: 'Drone',
         color: [255, 140, 140],
         waveform: 'sine',
         harmonics: [1, 1.5, 2],
-        harmonicGains: [1, 0.4, 0.3],
-        attack: 3,
-        decay: 1,
-        sustain: 0.8,
-        release: 5,
+        harmonicGains: [1, 0.3, 0.2],
+        attack: 8,
+        decay: 4,
+        sustain: 0.7,
+        release: 12,
         filterMult: 1.2,
-        filterQ: 3
+        filterQ: 1.5
     },
     {
         name: 'Shimmer',
         color: [220, 200, 255],
         waveform: 'sine',
-        harmonics: [1, 2, 4, 6],
-        harmonicGains: [1, 0.2, 0.15, 0.05],
-        attack: 0.5,
-        decay: 0.3,
-        sustain: 0.5,
-        release: 7,
-        filterMult: 10,
-        filterQ: 0.3
+        harmonics: [1, 2, 4],
+        harmonicGains: [1, 0.15, 0.05],
+        attack: 4,
+        decay: 2,
+        sustain: 0.4,
+        release: 14,
+        filterMult: 6,
+        filterQ: 0.2
     }
 ];
 
@@ -149,7 +149,7 @@ const EXPLORER_COLORS = [
     [220, 255, 220],  // Green white
 ];
 
-const MAX_EXPLORERS = 5;
+const MAX_EXPLORERS = 3;
 const NUM_RINGS = 8; // 8 octaves worth of distance
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -175,7 +175,7 @@ let startTime = 0;
 let lastTime = 0;
 let pulseCount = 0;
 let lastPulseTime = 0;
-let pulseInterval = 8000; // ms between pulses - very slow, ritualistic
+let pulseInterval = 12000; // ms between pulses - glacial, spacious
 let currentPulseRadius = 0; // Current radius of expanding pulse wave
 
 // Galaxy
@@ -228,15 +228,16 @@ function generateScale() {
     modeName = pick(MODE_NAMES);
     mode = MODES[modeName];
     
-    // Root MIDI - middle of our range (C3 = 48)
-    rootMidi = 48 + rootNote;
+    // Root MIDI - low octave (C1 = 24)
+    rootMidi = 24 + rootNote;
     
-    // Build scale across 8 octaves (4 below root, 4 above)
+    // Build scale ONLY ABOVE root (stars are always higher than home)
     scale = [];
-    for (let octave = -4; octave <= 4; octave++) {
+    for (let octave = 1; octave <= 6; octave++) {
         mode.forEach(interval => {
             const midi = rootMidi + (octave * 12) + interval;
-            if (midi >= 24 && midi <= 96) { // Keep in reasonable range
+            // Only include notes above the root, up to reasonable high range
+            if (midi > rootMidi && midi <= 96) {
                 scale.push(midi);
             }
         });
@@ -245,10 +246,7 @@ function generateScale() {
     // Sort and remove duplicates
     scale = [...new Set(scale)].sort((a, b) => a - b);
     
-    // Find index of root in middle octave
-    const rootIndex = scale.indexOf(rootMidi);
-    
-    return rootIndex;
+    return 0; // Root is always at index 0 conceptually (but not in scale array)
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -263,10 +261,47 @@ class Star {
         this.ring = ring; // Distance tier from center (0 = home)
         
         // Each star has its own timbre/instrument
-        this.timbre = ring === 0 ? null : pick(TIMBRES);
+        const baseTimbre = ring === 0 ? null : pick(TIMBRES);
+        this.timbre = baseTimbre;
         
-        // Visual - color based on timbre
-        this.size = ring === 0 ? 12 : rand(2, 5);
+        // UNIQUE per-star ADSR (vary from base timbre)
+        if (baseTimbre) {
+            this.adsr = {
+                attack: baseTimbre.attack * rand(0.5, 1.5),
+                decay: baseTimbre.decay * rand(0.6, 1.4),
+                sustain: clamp(baseTimbre.sustain * rand(0.7, 1.3), 0.1, 0.95),
+                release: baseTimbre.release * rand(0.6, 1.5)
+            };
+            
+            // UNIQUE per-star EFFECTS - glacial, spacious
+            this.effects = {
+                // Reverb: creates space/depth
+                reverb: {
+                    length: rand(4, 12),     // longer reverbs
+                    mix: rand(0.3, 0.8),     // wetter
+                    density: rand(1.5, 3)    // gentler decay
+                },
+                // Tremolo: very slow amplitude modulation
+                tremolo: {
+                    speed: rand(0.1, 0.8),   // very slow
+                    mix: rand(0, 0.3),       // subtle
+                    intensity: rand(0.2, 0.5)
+                },
+                // Vibrato: gentle pitch wavering
+                vibrato: {
+                    speed: rand(0.2, 1.5),   // very slow
+                    depth: rand(0, 8),       // subtle
+                    mix: rand(0, 0.4)
+                }
+            };
+        } else {
+            this.adsr = null;
+            this.effects = null;
+        }
+        
+        // Visual - color based on timbre, SIZE determines VOLUME
+        this.size = ring === 0 ? 12 : rand(2, 7); // Wider size range
+        this.volume = ring === 0 ? 0.3 : (this.size / 7) * 0.3; // Softer overall
         this.color = ring === 0 ? [255, 240, 200] : this.timbre.color;
         this.brightness = ring === 0 ? 1 : 0.3;
         this.pulse = 0;
@@ -362,14 +397,14 @@ function generateGalaxy() {
             const x = cx + Math.cos(angle) * r;
             const y = cy + Math.sin(angle) * r;
             
-            // Assign pitch - further rings get pitches further from root
-            // Ring 1-2: close intervals, Ring 7-8: far intervals
-            const scaleRange = Math.floor(scale.length / 2);
-            const minIndex = Math.max(0, rootScaleIndex - scaleRange + Math.floor((ring - 1) * scaleRange / NUM_RINGS));
-            const maxIndex = Math.min(scale.length - 1, rootScaleIndex + scaleRange - Math.floor((NUM_RINGS - ring) * scaleRange / NUM_RINGS));
+            // Assign pitch - all stars above root, distributed by ring
+            // Inner rings = lower pitches, outer rings = higher pitches
+            const ringProgress = (ring - 1) / (NUM_RINGS - 1); // 0 to 1
+            const minIndex = Math.floor(ringProgress * scale.length * 0.5);
+            const maxIndex = Math.min(scale.length - 1, minIndex + Math.floor(scale.length * 0.4));
             
             const pitchIndex = randInt(minIndex, maxIndex);
-            const midi = scale[pitchIndex] || rootMidi;
+            const midi = scale[pitchIndex] || scale[0];
             
             const star = new Star(x, y, midi, ring);
             stars.push(star);
@@ -446,18 +481,20 @@ class Explorer {
     step() {
         if (this.traveling) return; // Still moving from last step
         
-        // Find outward neighbors (prefer going further out)
+        // Find ONLY unvisited neighbors (stars never visited before)
         let candidates = this.currentStar.neighbors.filter(s => 
-            s.ring >= this.currentStar.ring && !this.path.slice(-3).includes(s)
+            !s.visited && s.ring >= this.currentStar.ring
         );
         
-        // If no outward options, allow lateral or slight backtrack
+        // If no outward unvisited, allow any unvisited neighbor
         if (candidates.length === 0) {
-            candidates = this.currentStar.neighbors.filter(s => !this.path.slice(-2).includes(s));
+            candidates = this.currentStar.neighbors.filter(s => !s.visited);
         }
         
+        // If all neighbors visited, explorer stops (no more moves)
         if (candidates.length === 0) {
-            candidates = this.currentStar.neighbors;
+            this.respondedToPulse = false;
+            return;
         }
         
         if (candidates.length > 0) {
@@ -554,21 +591,24 @@ function initAudio() {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     
     masterGain = audioCtx.createGain();
-    masterGain.gain.value = 0.5;
+    masterGain.gain.value = 0.35; // Softer overall
     
-    // Long reverb for ambient sound
-    reverb = createReverb(8, 3);
+    // Very long reverb for glacial, spacious sound
+    reverb = createReverb(12, 2); // 12 second reverb, gentler decay
     const reverbGain = audioCtx.createGain();
-    reverbGain.gain.value = 0.5;
+    reverbGain.gain.value = 0.7; // Wetter
     
     const dryGain = audioCtx.createGain();
-    dryGain.gain.value = 0.5;
+    dryGain.gain.value = 0.4;
     
     masterGain.connect(dryGain);
     masterGain.connect(reverb);
     reverb.connect(reverbGain);
     dryGain.connect(audioCtx.destination);
     reverbGain.connect(audioCtx.destination);
+    
+    // Start sustained root drone
+    startDrone();
 }
 
 function createReverb(duration, decay) {
@@ -589,6 +629,68 @@ function createReverb(duration, decay) {
     return conv;
 }
 
+// Sustained root drone - plays continuously underneath
+let droneOscs = [];
+let droneGain = null;
+
+function startDrone() {
+    if (!audioCtx) return;
+    
+    const freq = midiToFreq(rootMidi);
+    droneGain = audioCtx.createGain();
+    droneGain.gain.value = 0; // Start silent, fade in
+    droneGain.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime + 8);
+    
+    // Multiple detuned oscillators for richness
+    const detunes = [-5, 0, 5, 7]; // cents
+    detunes.forEach(detune => {
+        const osc = audioCtx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        osc.detune.value = detune;
+        
+        // Also add octave above, very quiet
+        const osc2 = audioCtx.createOscillator();
+        osc2.type = 'sine';
+        osc2.frequency.value = freq * 2;
+        osc2.detune.value = detune * 1.5;
+        
+        const oscGain = audioCtx.createGain();
+        oscGain.gain.value = 0.25;
+        
+        const osc2Gain = audioCtx.createGain();
+        osc2Gain.gain.value = 0.08;
+        
+        osc.connect(oscGain);
+        osc2.connect(osc2Gain);
+        oscGain.connect(droneGain);
+        osc2Gain.connect(droneGain);
+        
+        osc.start();
+        osc2.start();
+        droneOscs.push(osc, osc2);
+    });
+    
+    // Filter the drone
+    const droneFilter = audioCtx.createBiquadFilter();
+    droneFilter.type = 'lowpass';
+    droneFilter.frequency.value = freq * 2;
+    droneFilter.Q.value = 0.5;
+    
+    droneGain.connect(droneFilter);
+    droneFilter.connect(masterGain);
+}
+
+function stopDrone() {
+    if (droneGain) {
+        droneGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 4);
+    }
+    setTimeout(() => {
+        droneOscs.forEach(osc => osc.stop());
+        droneOscs = [];
+    }, 5000);
+}
+
 function playSound(type, midi, vel, pan) {
     if (!audioCtx) return;
     
@@ -601,44 +703,90 @@ function playSound(type, midi, vel, pan) {
     }
 }
 
-// Play a star using its own timbre properties
+// Create per-star reverb impulse response
+function createStarReverb(length, density) {
+    const len = Math.floor(audioCtx.sampleRate * length);
+    const impulse = audioCtx.createBuffer(2, len, audioCtx.sampleRate);
+    const L = impulse.getChannelData(0);
+    const R = impulse.getChannelData(1);
+    
+    for (let i = 0; i < len; i++) {
+        const t = i / audioCtx.sampleRate;
+        const env = Math.pow(1 - t / length, density);
+        L[i] = (Math.random() * 2 - 1) * env * 0.3;
+        R[i] = (Math.random() * 2 - 1) * env * 0.3;
+    }
+    
+    const conv = audioCtx.createConvolver();
+    conv.buffer = impulse;
+    return conv;
+}
+
+// Play a star using its own timbre, ADSR, and effects
 function playStar(star, pan) {
     if (!audioCtx || !star.timbre) return;
     
+    // Resume audio context if suspended (background tab fix)
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+    
+    // Humanize timing - small random delay for organic feel
+    const humanDelay = rand(0, 0.08);
+    
     activeVoices++;
     const t = star.timbre;
+    const adsr = star.adsr;
+    const fx = star.effects;
     const freq = midiToFreq(star.midi);
-    const now = audioCtx.currentTime;
-    const vel = 0.35;
+    const now = audioCtx.currentTime + humanDelay;
+    const vel = star.volume;
     
-    // Calculate total duration from ADSR
-    const totalDur = t.attack + t.decay + t.release + rand(0, 2);
+    // Calculate total duration from star's unique ADSR (longer for glacial feel)
+    const totalDur = adsr.attack + adsr.decay + adsr.release + rand(2, 6);
     
-    // Create oscillators for each harmonic
+    // Create oscillators for each harmonic - with detuning for shimmer
     const oscillators = [];
     const envelopes = [];
     
     t.harmonics.forEach((harmMult, i) => {
-        const osc = audioCtx.createOscillator();
-        osc.type = t.waveform;
-        osc.frequency.value = freq * harmMult;
+        const baseFreq = freq * harmMult;
         
-        const env = audioCtx.createGain();
-        const harmGain = t.harmonicGains[i] || 0.1;
-        
-        // ADSR envelope
-        env.gain.setValueAtTime(0, now);
-        // Attack
-        env.gain.linearRampToValueAtTime(vel * harmGain * 0.4, now + t.attack);
-        // Decay to sustain
-        env.gain.linearRampToValueAtTime(vel * harmGain * 0.4 * t.sustain, now + t.attack + t.decay);
-        // Hold sustain briefly
-        env.gain.setValueAtTime(vel * harmGain * 0.4 * t.sustain, now + totalDur - t.release);
-        // Release
-        env.gain.exponentialRampToValueAtTime(0.001, now + totalDur);
-        
-        oscillators.push(osc);
-        envelopes.push(env);
+        // Create multiple detuned oscillators per harmonic for shimmer
+        const detunes = [-4, 0, 4]; // cents
+        detunes.forEach((detune, di) => {
+            const osc = audioCtx.createOscillator();
+            osc.type = t.waveform;
+            osc.frequency.value = baseFreq;
+            osc.detune.value = detune;
+            
+            // VIBRATO - pitch modulation (if mix > 0)
+            if (fx.vibrato.mix > 0.05 && fx.vibrato.depth > 0) {
+                const vibratoLfo = audioCtx.createOscillator();
+                const vibratoGain = audioCtx.createGain();
+                vibratoLfo.type = 'sine';
+                vibratoLfo.frequency.value = fx.vibrato.speed;
+                const deviationHz = baseFreq * (Math.pow(2, fx.vibrato.depth / 1200) - 1);
+                vibratoGain.gain.value = deviationHz * fx.vibrato.mix;
+                vibratoLfo.connect(vibratoGain);
+                vibratoGain.connect(osc.frequency);
+                vibratoLfo.start(now);
+                vibratoLfo.stop(now + totalDur);
+            }
+            
+            const env = audioCtx.createGain();
+            const harmGain = (t.harmonicGains[i] || 0.1) / detunes.length; // Divide by number of detuned oscs
+            
+            // ADSR envelope with exponential attack for smoother sound
+            env.gain.setValueAtTime(0.001, now);
+            env.gain.exponentialRampToValueAtTime(Math.max(0.001, vel * harmGain * 0.4), now + adsr.attack);
+            env.gain.exponentialRampToValueAtTime(Math.max(0.001, vel * harmGain * 0.4 * adsr.sustain), now + adsr.attack + adsr.decay);
+            env.gain.setValueAtTime(Math.max(0.001, vel * harmGain * 0.4 * adsr.sustain), now + totalDur - adsr.release);
+            env.gain.exponentialRampToValueAtTime(0.001, now + totalDur);
+            
+            oscillators.push(osc);
+            envelopes.push(env);
+        });
     });
     
     // Filter
@@ -647,17 +795,66 @@ function playStar(star, pan) {
     filter.frequency.value = freq * t.filterMult;
     filter.Q.value = t.filterQ;
     
+    // TREMOLO - amplitude modulation (if mix > 0)
+    let tremoloNode = null;
+    if (fx.tremolo.mix > 0.05) {
+        const tremoloLfo = audioCtx.createOscillator();
+        tremoloNode = audioCtx.createGain();
+        const tremoloDepth = audioCtx.createGain();
+        
+        tremoloLfo.type = 'sine';
+        tremoloLfo.frequency.value = fx.tremolo.speed;
+        
+        // Tremolo modulates between (1 - intensity*mix) and 1
+        tremoloNode.gain.value = 1 - (fx.tremolo.intensity * fx.tremolo.mix * 0.5);
+        tremoloDepth.gain.value = fx.tremolo.intensity * fx.tremolo.mix * 0.5;
+        
+        tremoloLfo.connect(tremoloDepth);
+        tremoloDepth.connect(tremoloNode.gain);
+        tremoloLfo.start(now);
+        tremoloLfo.stop(now + totalDur);
+    }
+    
     // Panner
     const panner = audioCtx.createStereoPanner();
     panner.pan.value = clamp(pan, -0.8, 0.8);
     
-    // Connect: oscillators -> envelopes -> filter -> panner -> master
+    // PER-STAR REVERB (if mix > 0)
+    let starReverb = null;
+    let reverbGain = null;
+    let dryGain = null;
+    if (fx.reverb.mix > 0.05) {
+        starReverb = createStarReverb(fx.reverb.length, fx.reverb.density);
+        reverbGain = audioCtx.createGain();
+        dryGain = audioCtx.createGain();
+        reverbGain.gain.value = fx.reverb.mix;
+        dryGain.gain.value = 1 - fx.reverb.mix * 0.5;
+    }
+    
+    // Connect chain: oscillators -> envelopes -> filter -> [tremolo] -> panner -> [reverb mix] -> master
     oscillators.forEach((osc, i) => {
         osc.connect(envelopes[i]);
         envelopes[i].connect(filter);
     });
-    filter.connect(panner);
-    panner.connect(masterGain);
+    
+    let currentNode = filter;
+    
+    if (tremoloNode) {
+        filter.connect(tremoloNode);
+        currentNode = tremoloNode;
+    }
+    
+    currentNode.connect(panner);
+    
+    if (starReverb) {
+        panner.connect(dryGain);
+        panner.connect(starReverb);
+        starReverb.connect(reverbGain);
+        dryGain.connect(masterGain);
+        reverbGain.connect(masterGain);
+    } else {
+        panner.connect(masterGain);
+    }
     
     // Start and stop
     oscillators.forEach(osc => {
@@ -854,7 +1051,8 @@ function drawHoverTooltip() {
     const noteName = midiToName(hoveredStar.midi);
     const ringText = hoveredStar.ring === 0 ? 'Home' : `Ring ${hoveredStar.ring}`;
     const timbreName = hoveredStar.timbre ? hoveredStar.timbre.name : 'Root';
-    const text = `${noteName} · ${timbreName}`;
+    const sizeText = hoveredStar.ring === 0 ? '' : ` · Vol ${Math.round(hoveredStar.volume * 100)}%`;
+    const text = `${noteName} · ${timbreName}${sizeText}`;
     const subText = ringText;
     
     ctx.font = '12px "Courier New", monospace';
@@ -906,6 +1104,11 @@ function tick() {
     const now = Date.now();
     const progress = getProgress();
     
+    // Resume audio context if suspended (background tab fix)
+    if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+    
     // Check for new pulse cycle (works even in background)
     if (now - lastPulseTime >= pulseInterval && progress < 0.95) {
         if (pulseCount > 0) {
@@ -938,8 +1141,14 @@ function tick() {
 function update() {
     if (!running) return;
     
+    // Skip heavy rendering if tab is hidden (performance fix)
+    if (document.hidden) {
+        requestAnimationFrame(update);
+        return;
+    }
+    
     const now = Date.now();
-    const dt = Math.min(now - lastTime, 100);
+    const dt = Math.min(now - lastTime, 50); // Cap dt lower to prevent jumps
     lastTime = now;
     
     const progress = getProgress();
@@ -951,8 +1160,10 @@ function update() {
     // Check hover
     checkHover();
     
-    // Draw
-    drawBackground();
+    // Draw - clear fully instead of partial fade for smoother visuals
+    ctx.fillStyle = 'rgb(2, 3, 8)';
+    ctx.fillRect(0, 0, W, H);
+    
     drawRingLines();
     drawConnections();
     drawPulseRing();
@@ -996,8 +1207,11 @@ function endPiece() {
         tickInterval = null;
     }
     
+    // Fade out drone
+    stopDrone();
+    
     if (masterGain) {
-        masterGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 4);
+        masterGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 6);
     }
 }
 
@@ -1048,6 +1262,17 @@ canvas.addEventListener('mousemove', (e) => {
 
 canvas.addEventListener('mouseleave', () => {
     hoveredStar = null;
+});
+
+// Handle tab visibility changes - resume audio when returning
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && running && audioCtx) {
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+        lastTime = Date.now(); // Reset time delta to prevent jumps
+        requestAnimationFrame(update);
+    }
 });
 
 document.getElementById('overlay').addEventListener('click', start);
