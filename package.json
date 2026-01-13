@@ -1,0 +1,11 @@
+{
+  "name": "pebaum-portfolio",
+  "version": "1.0.0",
+  "description": "Auto-updating portfolio site",
+  "scripts": {
+    "build": "node build-index.js"
+  },
+  "dependencies": {
+    "@notionhq/client": "^5.6.0"
+  }
+}
