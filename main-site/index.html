@@ -3,14 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <meta name="description" content="Peter Baumgartner">
-    <link rel="icon" type="image/jpeg" href="../assets/images/Peter Baumgartner Silvertone Headshot.jpg">
-    <title>PETER BAUMGARTNER</title>
+    <title>Peter Baumgartner</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
+        @font-face {
+            font-family: 'Alexandria';
+            src: url('../assets/fonts/Alexandria.ttf') format('truetype');
+        }
 
         * {
             margin: 0;
@@ -19,540 +17,206 @@
         }
 
         body {
-            font-family: 'Space Mono', monospace;
-            background: #000;
-            color: #fff;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            cursor: default;
-        }
-
-        /* Scanline effect */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: repeating-linear-gradient(
-                0deg,
-                rgba(255,255,255,0.03) 0px,
-                rgba(255,255,255,0.03) 1px,
-                transparent 1px,
-                transparent 2px
-            );
-            pointer-events: none;
-            z-index: 1000;
-            animation: scanline 8s linear infinite;
-        }
-
-        @keyframes scanline {
-            0% { transform: translateY(0); }
-            100% { transform: translateY(100vh); }
-        }
-
-        /* Static noise overlay */
-        body::after {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
-            pointer-events: none;
-            z-index: 999;
-            animation: noise 0.2s infinite;
-        }
-
-        @keyframes noise {
-            0%, 100% { opacity: 0.03; }
-            50% { opacity: 0.05; }
-        }
-
-        .terminal-container {
-            position: relative;
-            z-index: 1;
-            width: 90%;
-            max-width: 800px;
+            background: #000000;
+            color: #FFFFFF;
+            font-family: 'Alexandria', 'Courier New', monospace;
+            font-size: 16px;
+            line-height: 1.6;
             padding: 40px;
-            border: 3px solid #fff;
-            background: rgba(0, 0, 0, 0.8);
-            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1);
+            cursor: none;
+            overflow-x: hidden;
         }
 
-        .terminal-header {
+        #custom-cursor {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            font-size: 20px;
+            color: #FFFFFF;
+            transform: translate(-50%, -50%);
+            mix-blend-mode: difference;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
             margin-bottom: 40px;
             padding-bottom: 20px;
             border-bottom: 1px solid #333;
         }
 
-        .terminal-title {
-            font-size: 2em;
-            font-weight: 700;
-            letter-spacing: 8px;
+        .header h1 {
+            font-size: 28px;
+            font-weight: normal;
             margin-bottom: 10px;
-            text-align: center;
-        }
-
-        .terminal-subtitle {
-            font-size: 0.7em;
-            letter-spacing: 4px;
-            opacity: 0.4;
-            text-align: center;
-        }
-
-        .terminal-prompt {
-            margin-bottom: 30px;
-        }
-
-        .prompt-line {
-            font-size: 0.9em;
-            letter-spacing: 1px;
-            line-height: 1.8;
-            opacity: 0.7;
-        }
-
-        .prompt-line.blink {
-            animation: blink 1.5s infinite;
-        }
-
-        @keyframes blink {
-            0%, 49% { opacity: 0.7; }
-            50%, 100% { opacity: 0; }
-        }
-
-        .menu-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 2px;
-            margin-bottom: 30px;
-            border: 2px solid #fff;
-        }
-
-        .menu-item {
-            aspect-ratio: 1;
-            border: 1px solid #333;
-            background: #000;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.15s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .menu-item::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background:
-                repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(255,255,255,0.02) 4px, rgba(255,255,255,0.02) 8px);
-        }
-
-        .menu-item:hover {
-            background: #fff;
-            color: #000;
-            border-color: #fff;
-        }
-
-        .menu-item:hover .item-number {
-            transform: scale(1.2);
-        }
-
-        .item-number {
-            font-size: 3em;
-            font-weight: 700;
-            margin-bottom: 10px;
-            transition: transform 0.15s ease;
-        }
-
-        .item-label {
-            font-size: 0.7em;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            opacity: 0.6;
-        }
-
-        .menu-item:hover .item-label {
-            opacity: 1;
-        }
-
-        .footer-info {
-            text-align: center;
-            font-size: 0.7em;
             letter-spacing: 2px;
-            opacity: 0.3;
+        }
+
+        .header .subtitle {
+            color: #888;
+            font-size: 14px;
+        }
+
+        .about {
+            margin-bottom: 40px;
+            padding: 20px 0;
+        }
+
+        .about h2 {
+            font-size: 18px;
+            font-weight: normal;
+            margin-bottom: 15px;
+            color: #FFFFFF;
+        }
+
+        .about p {
+            color: #CCC;
+            margin-bottom: 10px;
+            max-width: 800px;
+        }
+
+        .tree {
+            font-size: 15px;
+            line-height: 1.8;
+            white-space: pre;
+        }
+
+        .tree-line {
+            display: block;
+            transition: background 0.1s ease;
+        }
+
+        .tree-line:hover {
+            background: #222;
+        }
+
+        .tree-link {
+            color: #FFFFFF;
+            text-decoration: none;
+            display: inline;
+            transition: color 0.1s ease;
+        }
+
+        .tree-link:hover {
+            color: #888;
+            background: #222;
+        }
+
+        .tree-folder {
+            color: #AAA;
+        }
+
+        .tree-indent {
+            color: #555;
+        }
+
+        .footer {
+            margin-top: 60px;
             padding-top: 20px;
             border-top: 1px solid #333;
+            color: #666;
+            font-size: 13px;
         }
 
-        .footer-info .cursor {
-            animation: blink 1s infinite;
+        a {
+            color: inherit;
         }
 
-        /* Detail modal */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.95);
-            z-index: 2000;
-            align-items: center;
-            justify-content: center;
-            animation: fadeIn 0.2s ease;
+        ::selection {
+            background: #FFFFFF;
+            color: #000000;
         }
 
-        .modal.active {
-            display: flex;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .modal-content {
-            width: 90%;
-            max-width: 700px;
-            max-height: 80vh;
-            overflow-y: auto;
-            border: 3px solid #fff;
-            background: #000;
-            padding: 40px;
-            position: relative;
-        }
-
-        .modal-close {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            font-size: 1.5em;
-            cursor: pointer;
-            opacity: 0.5;
-            transition: opacity 0.15s ease;
-        }
-
-        .modal-close:hover {
-            opacity: 1;
-        }
-
-        .modal-title {
-            font-size: 1.8em;
-            font-weight: 700;
-            letter-spacing: 6px;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #fff;
-        }
-
-        .modal-body {
-            font-size: 0.85em;
-            line-height: 1.8;
-            letter-spacing: 1px;
-        }
-
-        .modal-body a {
-            color: #fff;
-            text-decoration: underline;
-            opacity: 0.7;
-            transition: opacity 0.15s ease;
-        }
-
-        .modal-body a:hover {
-            opacity: 1;
-        }
-
-        .modal-body ul {
-            list-style: none;
-            margin: 15px 0;
-        }
-
-        .modal-body li {
-            padding: 8px 0;
-            border-bottom: 1px solid #111;
-        }
-
-        .modal-body li::before {
-            content: '> ';
-            opacity: 0.5;
-        }
-
-        @media (max-width: 768px) {
-            .terminal-container {
-                padding: 20px;
-            }
-
-            .terminal-title {
-                font-size: 1.5em;
-                letter-spacing: 4px;
-            }
-
-            .menu-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .item-number {
-                font-size: 2.5em;
-            }
+        /* Hide default cursor */
+        body * {
+            cursor: none !important;
         }
     </style>
 </head>
 <body>
-    <div class="terminal-container">
-        <div class="terminal-header">
-            <div class="terminal-title">PETER BAUMGARTNER</div>
-            <div class="terminal-subtitle">SELECT AN OPTION</div>
+    <div id="custom-cursor">█</div>
+
+    <div class="container">
+        <div class="header">
+            <h1>PETER BAUMGARTNER</h1>
+            <div class="subtitle">Developer • Designer • Creative Technologist</div>
         </div>
 
-        <div class="terminal-prompt">
-            <div class="prompt-line">&gt; SYSTEM READY</div>
-            <div class="prompt-line">&gt; AWAITING INPUT...</div>
-            <div class="prompt-line blink">&gt; _</div>
+        <div class="about">
+            <h2>$ cat about.txt</h2>
+            <p>Building interactive experiences at the intersection of code, sound, and visuals.</p>
+            <p>Focused on generative systems, procedural audio, game design, and experimental web experiences.</p>
+            <p>Currently exploring emergent behavior, algorithmic composition, and narrative mechanics.</p>
         </div>
 
-        <div class="menu-grid">
-            <div class="menu-item" data-option="1">
-                <div class="item-number">1</div>
-                <div class="item-label">STATUS</div>
-            </div>
-            <div class="menu-item" data-option="2">
-                <div class="item-number">2</div>
-                <div class="item-label">RESUME</div>
-            </div>
-            <div class="menu-item" data-option="3">
-                <div class="item-number">3</div>
-                <div class="item-label">MUSIC</div>
-            </div>
-            <div class="menu-item" data-option="4">
-                <div class="item-number">4</div>
-                <div class="item-label">PROJECTS</div>
-            </div>
-            <div class="menu-item" data-option="5">
-                <div class="item-number">5</div>
-                <div class="item-label">DRIFT V5</div>
-            </div>
-            <div class="menu-item" data-option="6">
-                <div class="item-number">6</div>
-                <div class="item-label">BLADE & HONOR</div>
-            </div>
-            <div class="menu-item" data-option="7">
-                <div class="item-number">7</div>
-                <div class="item-label">ASCII ART</div>
-            </div>
-            <div class="menu-item" data-option="8">
-                <div class="item-number">8</div>
-                <div class="item-label">CONTACT</div>
-            </div>
-            <div class="menu-item" data-option="9">
-                <div class="item-number">9</div>
-                <div class="item-label">EXIT</div>
-            </div>
+        <div class="tree">
+<span class="tree-line"><span class="tree-folder">pebaum.github.io/</span></span>
+<span class="tree-line"><span class="tree-indent">│</span></span>
+<span class="tree-line"><span class="tree-indent">├──</span> <span class="tree-folder">Interactive Experiences</span></span>
+<span class="tree-line"><span class="tree-indent">│   ├──</span> <a href="../Drift v6/index.html" class="tree-link">Drift v6: Stellar Round</a> <span style="color: #555;">// Generative ambient music</span></span>
+<span class="tree-line"><span class="tree-indent">│   ├──</span> <a href="../Emergence v7/emergence.html" class="tree-link">Emergence v7</a> <span style="color: #555;">// Evolving soundscapes</span></span>
+<span class="tree-line"><span class="tree-indent">│   ├──</span> <a href="../Drift v5/index.html" class="tree-link">Drift v5</a></span>
+<span class="tree-line"><span class="tree-indent">│   ├──</span> <a href="../Drift v4/index.html" class="tree-link">Drift v4</a></span>
+<span class="tree-line"><span class="tree-indent">│   ├──</span> <a href="../Drift v3/index.html" class="tree-link">Drift v3</a></span>
+<span class="tree-line"><span class="tree-indent">│   ├──</span> <a href="../Drift v2/index.html" class="tree-link">Drift v2</a></span>
+<span class="tree-line"><span class="tree-indent">│   ├──</span> <a href="../Drift v1/index-v2.html" class="tree-link">Drift v1</a></span>
+<span class="tree-line"><span class="tree-indent">│   ├──</span> <a href="../blade-honor/index.html" class="tree-link">Blade & Honor</a> <span style="color: #555;">// Tactical combat game</span></span>
+<span class="tree-line"><span class="tree-indent">│   └──</span> <a href="../forward-playground/play.html" class="tree-link">Forward</a> <span style="color: #555;">// Deck-building adventure</span></span>
+<span class="tree-line"><span class="tree-indent">│</span></span>
+<span class="tree-line"><span class="tree-indent">├──</span> <span class="tree-folder">Artworks</span></span>
+<span class="tree-line"><span class="tree-indent">│   ├──</span> <a href="../artworks/blocksnow.html" class="tree-link">Block Snow</a></span>
+<span class="tree-line"><span class="tree-indent">│   ├──</span> <a href="../artworks/colorexplore.html" class="tree-link">Color Explore</a></span>
+<span class="tree-line"><span class="tree-indent">│   ├──</span> <a href="../artworks/dungeongame.html" class="tree-link">Dungeon Game</a></span>
+<span class="tree-line"><span class="tree-indent">│   ├──</span> <a href="../artworks/mazesend.html" class="tree-link">Maze Send</a></span>
+<span class="tree-line"><span class="tree-indent">│   ├──</span> <a href="../artworks/viewofaburningcity.html" class="tree-link">View of a Burning City</a></span>
+<span class="tree-line"><span class="tree-indent">│   ├──</span> <a href="../artworks/waterlillies.html" class="tree-link">Water Lillies</a></span>
+<span class="tree-line"><span class="tree-indent">│   └──</span> <a href="../artworks/wordprocessor.html" class="tree-link">Word Processor</a></span>
+<span class="tree-line"><span class="tree-indent">│</span></span>
+<span class="tree-line"><span class="tree-indent">├──</span> <span class="tree-folder">Archives</span></span>
+<span class="tree-line"><span class="tree-indent">│   ├──</span> <a href="../benji-site/index.html" class="tree-link">Benji Site</a></span>
+<span class="tree-line"><span class="tree-indent">│   └──</span> <a href="../ffix-site-archive/index.html" class="tree-link">FFIX Site Archive</a></span>
+<span class="tree-line"><span class="tree-indent">│</span></span>
+<span class="tree-line"><span class="tree-indent">└──</span> <span class="tree-folder">Contact</span></span>
+<span class="tree-line">    └── <a href="https://github.com/pebaum" class="tree-link" target="_blank">github.com/pebaum</a></span>
         </div>
 
-        <div class="footer-info">
-            TERMINAL V1.0 — <span id="current-time"></span> PST <span class="cursor">█</span>
-        </div>
-    </div>
-
-    <!-- Modal -->
-    <div class="modal" id="modal">
-        <div class="modal-content">
-            <div class="modal-close" onclick="closeModal()">×</div>
-            <div class="modal-title" id="modal-title"></div>
-            <div class="modal-body" id="modal-body"></div>
+        <div class="footer">
+            <p>Built with ASCII. No frameworks, no dependencies, no trackers.</p>
+            <p>© 2026 Peter Baumgartner</p>
         </div>
     </div>
 
     <script>
-        // Menu data
-        const menuData = {
-            1: {
-                title: 'STATUS',
-                content: `
-                    <p><strong>NAME:</strong> PETER BAUMGARTNER</p>
-                    <p><strong>LEVEL:</strong> 37</p>
-                    <p><strong>CLASS:</strong> SENIOR PROGRAM MANAGER</p>
-                    <p><strong>LOCATION:</strong> CALIFORNIA, S.COAST</p>
-                    <p><strong>EXP:</strong> 10+ YEARS</p>
-                    <br>
-                    <p><strong>ATTRIBUTES:</strong></p>
-                    <ul>
-                        <li>PRODUCT STRATEGY & ROADMAPPING</li>
-                        <li>AI INTEGRATION & AUTOMATION</li>
-                        <li>CROSS-FUNCTIONAL TEAM LEADERSHIP</li>
-                        <li>CREATIVE CODING & GENERATIVE ART</li>
-                        <li>MUSIC COMPOSITION & PRODUCTION</li>
-                    </ul>
-                `
-            },
-            2: {
-                title: 'RESUME',
-                content: `
-                    <p><strong>SENIOR CONTENT PROGRAM MANAGER</strong><br>
-                    Microsoft Corporation — 2016 to 2025</p>
-                    <ul>
-                        <li>Led content strategy for Microsoft 365</li>
-                        <li>Launched AI-powered video creation system</li>
-                        <li>Reduced operational costs by 100x</li>
-                        <li>Improved content accuracy from 50% to 90%</li>
-                    </ul>
-                    <br>
-                    <p><strong>SALES ENGINEER</strong><br>
-                    Wave Broadband — 2015 to 2016</p>
-                    <ul>
-                        <li>Designed custom network solutions</li>
-                        <li>Closed multi-year contracts exceeding targets</li>
-                    </ul>
-                    <br>
-                    <p><strong>TECHNICAL WRITER</strong><br>
-                    Microsoft (Contract) — 2014 to 2015</p>
-                    <ul>
-                        <li>Created Office 365 support content</li>
-                        <li>Led content refresh initiatives</li>
-                    </ul>
-                    <br>
-                    <p><a href="../resume/Peter Baumgartner.docx" download>DOWNLOAD RESUME (.DOCX)</a></p>
-                `
-            },
-            3: {
-                title: 'MUSIC',
-                content: `
-                    <p><strong>SOLO RELEASES</strong></p>
-                    <ul>
-                        <li><a href="https://open.spotify.com/artist/4T87J20L8uHSVkOuhP2oYX" target="_blank">SPOTIFY ARTIST PAGE</a></li>
-                        <li><a href="https://open.spotify.com/album/4DZCyZqEWIXzdPey4lNdrM" target="_blank">SECTION OF INGRID</a></li>
-                        <li><a href="https://open.spotify.com/album/4AsYtbaOdaMUYewuquvomO" target="_blank">UPPER ROOM</a></li>
-                        <li><a href="https://open.spotify.com/album/2necIl7Jrp8X6WkeO38k3M" target="_blank">THROUGH THE CORRIDORS OF SLEEP</a></li>
-                        <li><a href="https://open.spotify.com/album/5SxwvQeGKK9Y2HHOoa1Iw7" target="_blank">LOCAL FAILURES</a></li>
-                    </ul>
-                    <br>
-                    <p><strong>COLLABORATIONS</strong></p>
-                    <ul>
-                        <li>IN THE INFINITE REPRISE</li>
-                        <li>PROTO EVANGELION</li>
-                        <li>MOUNTLAKE MUSIC</li>
-                    </ul>
-                `
-            },
-            4: {
-                title: 'PROJECTS',
-                content: `
-                    <p><strong>ACTIVE PROJECTS</strong></p>
-                    <ul>
-                        <li>DRIFT V6 — SPIRAL COLLAPSE (GENERATIVE AMBIENT)</li>
-                        <li>DRIFT V5 — ATMOSPHERIC SYNTH</li>
-                        <li>BLADE & HONOR — CARD DUELING GAME</li>
-                        <li>ASCII ART DRAWER — CREATIVE TOOL</li>
-                    </ul>
-                    <br>
-                    <p><strong>ARCHIVED</strong></p>
-                    <ul>
-                        <li>BUG HUNT — DEBUGGING GAME</li>
-                        <li>TACTICS ROGUELIKE — STRATEGY GAME</li>
-                        <li>VARIOUS GENERATIVE ART EXPERIMENTS</li>
-                    </ul>
-                `
-            },
-            8: {
-                title: 'CONTACT',
-                content: `
-                    <p><strong>EMAIL</strong></p>
-                    <p><a href="mailto:p.l.baumgartner@gmail.com">P.L.BAUMGARTNER@GMAIL.COM</a></p>
-                    <br>
-                    <p><strong>LINKEDIN</strong></p>
-                    <p><a href="https://linkedin.com/in/peterbaumgartner" target="_blank">LINKEDIN.COM/IN/PETERBAUMGARTNER</a></p>
-                    <br>
-                    <p><strong>PHONE</strong></p>
-                    <p>206.518.3344</p>
-                `
-            }
-        };
+        // Custom cursor that follows mouse
+        const cursor = document.getElementById('custom-cursor');
 
-        // Menu click handlers
-        document.querySelectorAll('.menu-item').forEach(item => {
-            item.addEventListener('click', function() {
-                const option = this.dataset.option;
-                handleMenuSelection(option);
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+
+        // Hide cursor when mouse leaves window
+        document.addEventListener('mouseleave', () => {
+            cursor.style.opacity = '0';
+        });
+
+        document.addEventListener('mouseenter', () => {
+            cursor.style.opacity = '1';
+        });
+
+        // Change cursor on hover over links
+        const links = document.querySelectorAll('.tree-link');
+        links.forEach(link => {
+            link.addEventListener('mouseenter', () => {
+                cursor.textContent = '▓';
+            });
+            link.addEventListener('mouseleave', () => {
+                cursor.textContent = '█';
             });
         });
-
-        // Keyboard navigation
-        document.addEventListener('keydown', (e) => {
-            const key = e.key;
-            if (key >= '1' && key <= '9') {
-                handleMenuSelection(key);
-            } else if (key === 'Escape') {
-                closeModal();
-            }
-        });
-
-        function handleMenuSelection(option) {
-            switch(option) {
-                case '5':
-                    window.open('../Drift v5/', '_blank');
-                    break;
-                case '6':
-                    window.open('../blade-honor/', '_blank');
-                    break;
-                case '7':
-                    window.open('../asciiartdrawer/', '_blank');
-                    break;
-                case '9':
-                    // Exit - black screen
-                    document.body.style.background = '#000';
-                    document.body.innerHTML = '';
-                    break;
-                default:
-                    if (menuData[option]) {
-                        showModal(option);
-                    }
-            }
-        }
-
-        function showModal(option) {
-            const data = menuData[option];
-            document.getElementById('modal-title').textContent = data.title;
-            document.getElementById('modal-body').innerHTML = data.content;
-            document.getElementById('modal').classList.add('active');
-        }
-
-        function closeModal() {
-            document.getElementById('modal').classList.remove('active');
-        }
-
-        // Close modal on outside click
-        document.getElementById('modal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeModal();
-            }
-        });
-
-        // Clock
-        function updateClock() {
-            const now = new Date();
-            const pstTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Los_Angeles"}));
-            let hours = pstTime.getHours();
-            const minutes = pstTime.getMinutes();
-            const seconds = pstTime.getSeconds();
-            const ampm = hours >= 12 ? 'PM' : 'AM';
-            hours = hours % 12 || 12;
-
-            const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')} ${ampm}`;
-            document.getElementById('current-time').textContent = timeString;
-        }
-
-        updateClock();
-        setInterval(updateClock, 1000);
     </script>
 </body>
 </html>
