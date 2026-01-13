@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forward - Solo Card Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #2a2a2a;
+            border-radius: 8px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            color: #f4d03f;
+            margin-bottom: 10px;
+        }
+
+        .game-stats {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+            padding: 20px;
+            background: #2a2a2a;
+            border-radius: 8px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #f4d03f;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #888;
+            text-transform: uppercase;
+        }
+
+        .hp-bar {
+            width: 200px;
+            height: 30px;
+            background: #444;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .hp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #e74c3c, #c0392b);
+            transition: width 0.3s ease;
+        }
+
+        .hp-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+        }
+
+        .equipment-slots {
+            display: flex;
+            gap: 10px;
+        }
+
+        .equipment-slot {
+            padding: 10px 15px;
+            background: #3a3a3a;
+            border-radius: 5px;
+            border: 2px solid #555;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .equipment-slot.filled {
+            border-color: #f4d03f;
+            background: #4a4a2a;
+        }
+
+        .card-draw-area {
+            margin: 30px 0;
+            padding: 30px;
+            background: #2a2a2a;
+            border-radius: 8px;
+        }
+
+        .cards-container {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .card {
+            width: 200px;
+            height: 280px;
+            background: #3a3a3a;
+            border: 3px solid #555;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            position: relative;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            border-color: #f4d03f;
+            box-shadow: 0 10px 30px rgba(244, 208, 63, 0.3);
+        }
+
+        .card.face-down {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+        }
+
+        .card.face-up {
+            background: #4a4a4a;
+            flex-direction: column;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .card-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #f4d03f;
+            margin-bottom: 10px;
+        }
+
+        .card-type {
+            font-size: 0.9em;
+            color: #888;
+            margin-bottom: 15px;
+        }
+
+        .card-effect {
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+
+        .combat-area {
+            margin: 30px 0;
+            padding: 30px;
+            background: #2a2a2a;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .combat-area.active {
+            display: block;
+        }
+
+        .combat-info {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .enemy-stats {
+            font-size: 1.5em;
+            margin: 10px 0;
+        }
+
+        .dice-area {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 30px 0;
+        }
+
+        .dice-roll {
+            text-align: center;
+        }
+
+        .dice {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .die {
+            width: 60px;
+            height: 60px;
+            background: white;
+            color: black;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            font-weight: bold;
+            border: 3px solid #555;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .die:hover {
+            transform: scale(1.1);
+            border-color: #f4d03f;
+        }
+
+        .die.selected {
+            border-color: #2ecc71;
+            background: #d5f4e6;
+            transform: scale(1.15);
+        }
+
+        .die.enemy {
+            cursor: default;
+            background: #e74c3c;
+            color: white;
+        }
+
+        button {
+            padding: 12px 30px;
+            font-size: 1.1em;
+            background: #f4d03f;
+            color: #1a1a1a;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #f39c12;
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .lux-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .lux-actions button {
+            background: #9b59b6;
+            font-size: 0.9em;
+            padding: 8px 16px;
+        }
+
+        .lux-actions button:hover {
+            background: #8e44ad;
+        }
+
+        .log {
+            margin: 30px 0;
+            padding: 20px;
+            background: #2a2a2a;
+            border-radius: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            margin: 5px 0;
+            padding: 8px;
+            background: #3a3a3a;
+            border-radius: 4px;
+            border-left: 3px solid #555;
+        }
+
+        .log-entry.damage {
+            border-left-color: #e74c3c;
+        }
+
+        .log-entry.heal {
+            border-left-color: #2ecc71;
+        }
+
+        .log-entry.info {
+            border-left-color: #3498db;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #2a2a2a;
+            padding: 40px;
+            border-radius: 10px;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .modal-content h2 {
+            color: #f4d03f;
+            margin-bottom: 20px;
+        }
+
+        .choice-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .pit-tracker {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .pit-counter {
+            padding: 10px 20px;
+            background: #3a3a3a;
+            border-radius: 5px;
+            border: 2px solid #555;
+        }
+
+        .pit-counter.success {
+            border-color: #2ecc71;
+        }
+
+        .pit-counter.failure {
+            border-color: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚔️ FORWARD ⚔️</h1>
+            <p>A Solo Adventure Card Game</p>
+        </header>
+
+        <div class="game-stats">
+            <div class="stat">
+                <div class="stat-label">Health</div>
+                <div class="hp-bar">
+                    <div class="hp-fill" id="hpFill" style="width: 100%"></div>
+                    <div class="hp-text" id="hpText">20 / 20</div>
+                </div>
+            </div>
+
+            <div class="stat">
+                <div class="stat-label">Lux</div>
+                <div class="stat-value" id="luxValue">0</div>
+                <div style="font-size: 0.8em; color: #666;">max 3</div>
+            </div>
+
+            <div class="stat">
+                <div class="stat-label">Equipment</div>
+                <div class="equipment-slots" id="equipmentSlots">
+                    <div class="equipment-slot">Empty</div>
+                    <div class="equipment-slot">Empty</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-draw-area" id="drawArea">
+            <h2 style="text-align: center; margin-bottom: 20px;">Draw 3 Cards</h2>
+            <div class="lux-actions" id="luxActions" style="display: none;">
+                <button onclick="peekCards()">Peek (1 Lux)</button>
+            </div>
+            <div class="cards-container" id="cardsContainer"></div>
+            <div style="text-align: center; margin-top: 20px;">
+                <button onclick="startGame()" id="startBtn">Start Game</button>
+            </div>
+        </div>
+
+        <div class="combat-area" id="combatArea">
+            <div class="combat-info">
+                <h2 id="enemyName">Enemy</h2>
+                <div class="enemy-stats">
+                    <span id="enemyHp">5 HP</span>
+                </div>
+            </div>
+
+            <div class="dice-area">
+                <div class="dice-roll">
+                    <h3>Your Roll (Choose One)</h3>
+                    <div class="dice" id="playerDice"></div>
+                </div>
+                <div class="dice-roll">
+                    <h3>Enemy Roll</h3>
+                    <div class="dice" id="enemyDice"></div>
+                </div>
+            </div>
+
+            <div style="text-align: center;">
+                <button onclick="rollCombat()" id="rollBtn">Roll Dice</button>
+                <button onclick="resolveRound()" id="resolveBtn" style="display: none;">Resolve Round</button>
+            </div>
+
+            <div class="lux-actions" style="margin-top: 20px;">
+                <button onclick="rerollDie()">Reroll (1 Lux)</button>
+            </div>
+        </div>
+
+        <div class="log" id="gameLog">
+            <div class="log-entry info">Game initialized. Click "Start Game" to begin.</div>
+        </div>
+
+        <div class="modal" id="terrorModal">
+            <div class="modal-content">
+                <h2>Terror: Parents Slain</h2>
+                <p>A moment of dread and difficult choice.</p>
+                <div class="choice-buttons">
+                    <button onclick="chooseTerror('hp')">Lose 5 HP</button>
+                    <button onclick="chooseTerror('lux')">Lose 1 Lux</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal" id="pitModal">
+            <div class="modal-content">
+                <h2 id="pitName">Pit Challenge</h2>
+                <p>Roll for 3 successes before 3 failures. TN: 3+</p>
+                <div class="pit-tracker" id="pitTracker">
+                    <div class="pit-counter success">
+                        Successes: <span id="pitSuccesses">0</span> / 3
+                    </div>
+                    <div class="pit-counter failure">
+                        Failures: <span id="pitFailures">0</span> / 3
+                    </div>
+                </div>
+                <div style="margin: 20px 0;">
+                    <div style="font-size: 1.5em; margin: 10px 0;">
+                        Roll: <span id="pitRoll">-</span>
+                    </div>
+                </div>
+                <button onclick="rollPit()">Roll d6</button>
+            </div>
+        </div>
+
+        <div class="modal" id="gameOverModal">
+            <div class="modal-content">
+                <h2 id="gameOverTitle">Game Over</h2>
+                <p id="gameOverMessage"></p>
+                <button onclick="location.reload()">Play Again</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let gameState = {
+            hp: 20,
+            maxHp: 20,
+            lux: 0,
+            equipment: [],
+            deck: [],
+            currentCards: [],
+            combatState: null,
+            pitState: null
+        };
+
+        // Create deck
+        function createDeck() {
+            const deck = [];
+
+            // Items (dummy)
+            deck.push({ type: 'Item', name: 'Old Boot', effect: 'Does nothing' });
+            deck.push({ type: 'Item', name: 'Older Boot', effect: 'Does nothing' });
+
+            // Equipment
+            deck.push({ type: 'Equipment', name: 'Gnarled Branch', effect: 'Miss (1) becomes Hit' });
+            deck.push({ type: 'Equipment', name: 'Empty Prism', effect: 'Enables Lux usage' });
+
+            // Beasts
+            deck.push({ type: 'Beast', name: 'Ravenous Boar', hp: 3 });
+            deck.push({ type: 'Beast', name: 'Mangy Wolf', hp: 3 });
+            deck.push({ type: 'Beast', name: 'Feral Dog Pack', hp: 3 });
+            deck.push({ type: 'Beast', name: 'Territorial Stag', hp: 5 });
+            deck.push({ type: 'Beast', name: 'Carrion Crow Flock', hp: 5 });
+
+            // Hollow
+            deck.push({ type: 'Hollow', name: "Magistrate's Lackeys", hp: 7 });
+
+            // Terror
+            deck.push({ type: 'Terror', name: 'Parents Slain by the Magistrate' });
+
+            // Pits
+            deck.push({ type: 'Pit', name: 'Trapped Corridor' });
+            deck.push({ type: 'Pit', name: 'Treacherous Ravine' });
+            deck.push({ type: 'Pit', name: 'Escape Through Flames' });
+
+            // Snare
+            deck.push({ type: 'Snare', name: 'Overwhelming Dread', effect: 'Cannot spend Lux' });
+
+            // Blessing
+            deck.push({ type: 'Blessing', name: 'A Moment of Grace', heal: 10 });
+
+            // Caesuras
+            deck.push({ type: 'Caesura', name: 'Cold Hearth Shadows' });
+            deck.push({ type: 'Caesura', name: 'Moon on the Well' });
+            deck.push({ type: 'Caesura', name: 'Orchard at Dusk' });
+
+            return deck;
+        }
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function startGame() {
+            gameState.deck = shuffle(createDeck());
+
+            // Guarantee Empty Prism first
+            const prismIndex = gameState.deck.findIndex(c => c.name === 'Empty Prism');
+            if (prismIndex !== -1) {
+                const prism = gameState.deck.splice(prismIndex, 1)[0];
+                gameState.deck.unshift(prism);
+            }
+
+            log('Game started! Draw 3 cards.', 'info');
+            document.getElementById('startBtn').style.display = 'none';
+            drawCards();
+        }
+
+        function drawCards() {
+            if (gameState.deck.length === 0) {
+                endGame(true);
+                return;
+            }
+
+            const count = Math.min(3, gameState.deck.length);
+            gameState.currentCards = [];
+
+            for (let i = 0; i < count; i++) {
+                gameState.currentCards.push(gameState.deck.shift());
+            }
+
+            renderCards();
+            updateLuxActions();
+        }
+
+        function renderCards() {
+            const container = document.getElementById('cardsContainer');
+            container.innerHTML = '';
+
+            gameState.currentCards.forEach((card, index) => {
+                const cardEl = document.createElement('div');
+                cardEl.className = 'card face-down';
+                cardEl.textContent = '?';
+                cardEl.onclick = () => chooseCard(index);
+                container.appendChild(cardEl);
+            });
+        }
+
+        function chooseCard(index) {
+            const card = gameState.currentCards[index];
+            log(`Drew: ${card.name} (${card.type})`, 'info');
+
+            // Remove from currentCards
+            gameState.currentCards.splice(index, 1);
+
+            // Return other cards to deck and shuffle
+            gameState.deck.push(...gameState.currentCards);
+            gameState.deck = shuffle(gameState.deck);
+            gameState.currentCards = [];
+
+            // Resolve card
+            resolveCard(card);
+        }
+
+        function resolveCard(card) {
+            switch (card.type) {
+                case 'Item':
+                    log(`${card.name}: ${card.effect}`, 'info');
+                    drawCards();
+                    break;
+
+                case 'Equipment':
+                    if (gameState.equipment.length < 2) {
+                        gameState.equipment.push(card);
+                        log(`Equipped: ${card.name}`, 'info');
+                        updateEquipment();
+                    }
+                    drawCards();
+                    break;
+
+                case 'Beast':
+                case 'Hollow':
+                    startCombat(card);
+                    break;
+
+                case 'Terror':
+                    showTerrorModal();
+                    break;
+
+                case 'Pit':
+                    startPit(card);
+                    break;
+
+                case 'Snare':
+                    gameState.snareActive = true;
+                    log(`${card.name}: Cannot spend Lux!`, 'damage');
+                    drawCards();
+                    break;
+
+                case 'Blessing':
+                    heal(card.heal);
+                    gameState.snareActive = false;
+                    log('Snare cleansed!', 'heal');
+                    drawCards();
+                    break;
+
+                case 'Caesura':
+                    gainLux(1);
+                    log(`${card.name}: Gained 1 Lux`, 'heal');
+                    drawCards();
+                    break;
+            }
+        }
+
+        function startCombat(enemy) {
+            gameState.combatState = {
+                enemy: enemy,
+                enemyHp: enemy.hp,
+                playerRolls: [],
+                enemyRoll: null,
+                selectedDie: null
+            };
+
+            document.getElementById('drawArea').style.display = 'none';
+            document.getElementById('combatArea').classList.add('active');
+            document.getElementById('enemyName').textContent = enemy.name;
+            document.getElementById('enemyHp').textContent = `${enemy.hp} HP`;
+            log(`Combat started: ${enemy.name} (${enemy.hp} HP)`, 'damage');
+        }
+
+        function rollCombat() {
+            const state = gameState.combatState;
+
+            // Player rolls 3d6
+            state.playerRolls = [
+                Math.floor(Math.random() * 6) + 1,
+                Math.floor(Math.random() * 6) + 1,
+                Math.floor(Math.random() * 6) + 1
+            ];
+
+            // Enemy rolls 1d6
+            state.enemyRoll = Math.floor(Math.random() * 6) + 1;
+
+            renderDice();
+            document.getElementById('rollBtn').style.display = 'none';
+            log('Dice rolled! Choose your die.', 'info');
+        }
+
+        function renderDice() {
+            const state = gameState.combatState;
+            const playerDiv = document.getElementById('playerDice');
+            const enemyDiv = document.getElementById('enemyDice');
+
+            playerDiv.innerHTML = '';
+            state.playerRolls.forEach((roll, i) => {
+                const die = document.createElement('div');
+                die.className = 'die';
+                die.textContent = roll;
+                die.onclick = () => selectDie(i);
+                playerDiv.appendChild(die);
+            });
+
+            enemyDiv.innerHTML = '';
+            const enemyDie = document.createElement('div');
+            enemyDie.className = 'die enemy';
+            enemyDie.textContent = state.enemyRoll;
+            enemyDiv.appendChild(enemyDie);
+        }
+
+        function selectDie(index) {
+            gameState.combatState.selectedDie = index;
+
+            // Visual feedback
+            document.querySelectorAll('#playerDice .die').forEach((die, i) => {
+                die.classList.toggle('selected', i === index);
+            });
+
+            document.getElementById('resolveBtn').style.display = 'inline-block';
+        }
+
+        function resolveRound() {
+            const state = gameState.combatState;
+            if (state.selectedDie === null) return;
+
+            const playerRoll = state.playerRolls[state.selectedDie];
+            const enemyRoll = state.enemyRoll;
+
+            // Apply Gnarled Branch
+            const hasBranch = gameState.equipment.some(e => e.name === 'Gnarled Branch');
+            const playerResult = getCombatResult(playerRoll, hasBranch);
+            const enemyResult = getCombatResult(enemyRoll, false);
+
+            // Resolve
+            let playerDmg = playerResult.damage;
+            let enemyDmg = enemyResult.damage;
+
+            if (playerResult.blocks) enemyDmg = 0;
+            if (enemyResult.blocks) playerDmg = 0;
+
+            state.enemyHp -= playerDmg;
+            gameState.hp -= enemyDmg;
+
+            log(`You: ${playerResult.name} (${playerDmg} dmg) | Enemy: ${enemyResult.name} (${enemyDmg} dmg)`,
+                enemyDmg > 0 ? 'damage' : 'info');
+
+            updateStats();
+
+            if (gameState.hp <= 0) {
+                endGame(false);
+                return;
+            }
+
+            if (state.enemyHp <= 0) {
+                log(`${state.enemy.name} defeated!`, 'heal');
+                endCombat();
+                return;
+            }
+
+            // Next round
+            document.getElementById('enemyHp').textContent = `${state.enemyHp} HP`;
+            state.selectedDie = null;
+            state.playerRolls = [];
+            state.enemyRoll = null;
+
+            document.getElementById('rollBtn').style.display = 'inline-block';
+            document.getElementById('resolveBtn').style.display = 'none';
+            document.getElementById('playerDice').innerHTML = '';
+            document.getElementById('enemyDice').innerHTML = '';
+        }
+
+        function getCombatResult(roll, hasBranch) {
+            if (roll === 1) {
+                return hasBranch ?
+                    { name: 'Hit', damage: 1, blocks: false } :
+                    { name: 'Miss', damage: 0, blocks: false };
+            }
+            if (roll === 2) return { name: 'Block', damage: 0, blocks: true };
+            if (roll === 3 || roll === 4) return { name: 'Hit', damage: 1, blocks: false };
+            if (roll === 5) return { name: 'Hit (2)', damage: 2, blocks: false };
+            if (roll === 6) return { name: 'Counter', damage: 1, blocks: true };
+        }
+
+        function endCombat() {
+            document.getElementById('combatArea').classList.remove('active');
+            document.getElementById('drawArea').style.display = 'block';
+            gameState.combatState = null;
+            drawCards();
+        }
+
+        function showTerrorModal() {
+            document.getElementById('terrorModal').classList.add('active');
+        }
+
+        function chooseTerror(choice) {
+            if (choice === 'hp') {
+                gameState.hp -= 5;
+                log('Terror: Lost 5 HP', 'damage');
+            } else {
+                if (gameState.lux > 0) {
+                    gameState.lux--;
+                    log('Terror: Lost 1 Lux', 'damage');
+                } else {
+                    gameState.hp -= 5;
+                    log('Terror: No Lux! Lost 5 HP', 'damage');
+                }
+            }
+
+            updateStats();
+            document.getElementById('terrorModal').classList.remove('active');
+
+            if (gameState.hp <= 0) {
+                endGame(false);
+                return;
+            }
+
+            drawCards();
+        }
+
+        function startPit(card) {
+            gameState.pitState = {
+                name: card.name,
+                successes: 0,
+                failures: 0
+            };
+
+            document.getElementById('pitName').textContent = card.name;
+            document.getElementById('pitSuccesses').textContent = '0';
+            document.getElementById('pitFailures').textContent = '0';
+            document.getElementById('pitRoll').textContent = '-';
+            document.getElementById('pitModal').classList.add('active');
+        }
+
+        function rollPit() {
+            const roll = Math.floor(Math.random() * 6) + 1;
+            document.getElementById('pitRoll').textContent = roll;
+
+            if (roll >= 3) {
+                gameState.pitState.successes++;
+                log(`Pit roll: ${roll} (Success!)`, 'heal');
+            } else {
+                gameState.pitState.failures++;
+                gameState.hp -= 2;
+                log(`Pit roll: ${roll} (Failure! -2 HP)`, 'damage');
+                updateStats();
+            }
+
+            document.getElementById('pitSuccesses').textContent = gameState.pitState.successes;
+            document.getElementById('pitFailures').textContent = gameState.pitState.failures;
+
+            if (gameState.hp <= 0) {
+                endGame(false);
+                return;
+            }
+
+            if (gameState.pitState.successes >= 3) {
+                log('Pit challenge succeeded!', 'heal');
+                document.getElementById('pitModal').classList.remove('active');
+                gameState.pitState = null;
+                drawCards();
+            } else if (gameState.pitState.failures >= 3) {
+                log('Pit challenge failed!', 'damage');
+                document.getElementById('pitModal').classList.remove('active');
+                gameState.pitState = null;
+                drawCards();
+            }
+        }
+
+        function peekCards() {
+            if (gameState.lux < 1 || gameState.snareActive) return;
+            // Simplified peek - just show all 3 cards
+            alert('Peek mechanic simplified for web version. Cards revealed!');
+            gameState.lux--;
+            updateStats();
+        }
+
+        function rerollDie() {
+            if (gameState.lux < 1 || gameState.snareActive) return;
+            alert('Reroll not fully implemented yet');
+        }
+
+        function gainLux(amount) {
+            gameState.lux = Math.min(3, gameState.lux + amount);
+            updateStats();
+        }
+
+        function heal(amount) {
+            gameState.hp = Math.min(gameState.maxHp, gameState.hp + amount);
+            log(`Healed ${amount} HP`, 'heal');
+            updateStats();
+        }
+
+        function updateStats() {
+            const hpPercent = (gameState.hp / gameState.maxHp) * 100;
+            document.getElementById('hpFill').style.width = `${hpPercent}%`;
+            document.getElementById('hpText').textContent = `${gameState.hp} / ${gameState.maxHp}`;
+            document.getElementById('luxValue').textContent = gameState.lux;
+        }
+
+        function updateEquipment() {
+            const container = document.getElementById('equipmentSlots');
+            container.innerHTML = '';
+
+            for (let i = 0; i < 2; i++) {
+                const slot = document.createElement('div');
+                slot.className = 'equipment-slot';
+
+                if (gameState.equipment[i]) {
+                    slot.classList.add('filled');
+                    slot.textContent = gameState.equipment[i].name;
+                } else {
+                    slot.textContent = 'Empty';
+                }
+
+                container.appendChild(slot);
+            }
+        }
+
+        function updateLuxActions() {
+            const hasPrism = gameState.equipment.some(e => e.name === 'Empty Prism');
+            const actions = document.getElementById('luxActions');
+
+            if (hasPrism && gameState.lux > 0 && !gameState.snareActive) {
+                actions.style.display = 'flex';
+            } else {
+                actions.style.display = 'none';
+            }
+        }
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('gameLog');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = message;
+            logDiv.insertBefore(entry, logDiv.firstChild);
+        }
+
+        function endGame(won) {
+            const modal = document.getElementById('gameOverModal');
+            const title = document.getElementById('gameOverTitle');
+            const message = document.getElementById('gameOverMessage');
+
+            if (won) {
+                title.textContent = 'Victory!';
+                message.textContent = `You completed Location 1 with ${gameState.hp} HP remaining!`;
+            } else {
+                title.textContent = 'Defeated';
+                message.textContent = 'You have fallen. Try again?';
+            }
+
+            modal.classList.add('active');
+        }
+    </script>
+</body>
+</html>

@@ -3,95 +3,151 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DRIFT v6 — Stellar Round</title>
+    <title>DRIFT v6 — Stellar Departure</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@200;300;400&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             background: #000;
-            color: #aab;
-            font-family: 'Courier New', monospace;
+            color: #999;
+            font-family: 'IBM Plex Mono', 'Courier New', monospace;
             overflow: hidden;
             height: 100vh;
         }
-        
+
         canvas {
             display: block;
             position: absolute;
             top: 0;
             left: 0;
         }
-        
+
         .ui {
             position: fixed;
             z-index: 100;
             pointer-events: none;
+            font-size: 9px;
+            letter-spacing: 0.15em;
+            font-weight: 200;
         }
-        
-        .header {
+
+        .top-left {
             top: 20px;
             left: 20px;
-            font-size: 10px;
-            letter-spacing: 0.3em;
-            opacity: 0.6;
         }
-        
-        .header h1 {
-            font-weight: normal;
-            font-size: 11px;
-            margin-bottom: 8px;
+
+        .top-right {
+            top: 20px;
+            right: 20px;
+            text-align: right;
         }
-        
-        .stats {
+
+        .bottom-left {
             bottom: 20px;
             left: 20px;
-            font-size: 10px;
-            line-height: 1.8;
-            opacity: 0.5;
         }
-        
-        .timer {
-            top: 20px;
+
+        .bottom-right {
+            bottom: 20px;
             right: 20px;
-            font-size: 24px;
-            font-weight: 100;
-            letter-spacing: 0.1em;
-            opacity: 0.4;
+            text-align: right;
         }
-        
-        .phase {
-            top: 50px;
-            right: 20px;
-            font-size: 10px;
-            letter-spacing: 0.2em;
-            opacity: 0.4;
+
+        .label {
+            color: #444;
             text-transform: uppercase;
+            font-size: 7px;
+            letter-spacing: 0.2em;
+            margin-bottom: 4px;
         }
-        
-        .progress-ring {
+
+        .value {
+            color: #777;
+            font-size: 10px;
+            margin-bottom: 12px;
+        }
+
+        .title {
+            color: #aaa;
+            font-size: 10px;
+            font-weight: 300;
+            letter-spacing: 0.4em;
+            margin-bottom: 16px;
+        }
+
+        /* Controls */
+        .controls {
+            position: fixed;
             bottom: 20px;
-            right: 20px;
-            width: 60px;
-            height: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 16px;
+            pointer-events: auto;
+            z-index: 100;
         }
-        
-        .progress-ring svg {
-            transform: rotate(-90deg);
+
+        .controls button {
+            background: transparent;
+            border: 1px solid #222;
+            color: #555;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 8px;
+            letter-spacing: 0.3em;
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            font-weight: 200;
         }
-        
-        .progress-ring circle {
-            fill: none;
-            stroke-width: 2;
+
+        .controls button:hover {
+            border-color: #444;
+            color: #888;
         }
-        
-        .progress-ring .bg { stroke: #222; }
-        .progress-ring .fg { 
-            stroke: #668;
-            stroke-linecap: round;
-            transition: stroke-dashoffset 0.5s;
+
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 8px;
+            color: #444;
+            letter-spacing: 0.2em;
         }
-        
-        /* Start overlay */
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 70px;
+            height: 1px;
+            background: #222;
+            outline: none;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 6px;
+            height: 6px;
+            background: #555;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 6px;
+            height: 6px;
+            background: #555;
+            border: none;
+            cursor: pointer;
+        }
+
+        /* Overlay */
         .overlay {
             position: fixed;
             inset: 0;
@@ -101,85 +157,109 @@
             align-items: center;
             justify-content: center;
             z-index: 200;
-            cursor: pointer;
             transition: opacity 1.5s ease;
         }
-        
+
         .overlay.hidden {
             opacity: 0;
             pointer-events: none;
         }
-        
-        .overlay h1 {
-            font-size: 12px;
-            font-weight: normal;
+
+        .overlay-title {
+            font-size: 9px;
+            font-weight: 300;
             letter-spacing: 0.5em;
-            color: #556;
+            color: #666;
             margin-bottom: 30px;
+            text-transform: uppercase;
         }
-        
-        .overlay p {
-            font-size: 11px;
-            color: #445;
-            max-width: 320px;
+
+        .overlay-description {
+            font-size: 8px;
+            font-weight: 200;
+            line-height: 2.2;
+            color: #444;
+            max-width: 500px;
             text-align: center;
-            line-height: 2;
             margin-bottom: 40px;
+            letter-spacing: 0.1em;
         }
-        
-        .overlay .start {
-            font-size: 10px;
-            letter-spacing: 0.3em;
-            color: #778;
-            padding: 15px 40px;
-            border: 1px solid #334;
+
+        .overlay button {
             background: transparent;
+            border: 1px solid #333;
+            color: #666;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 8px;
+            letter-spacing: 0.4em;
+            padding: 12px 30px;
             cursor: pointer;
             transition: all 0.3s;
-            pointer-events: auto;
+            text-transform: uppercase;
+            font-weight: 200;
         }
-        
-        .overlay .start:hover {
-            border-color: #556;
-            color: #aab;
+
+        .overlay button:hover {
+            border-color: #666;
+            color: #999;
         }
     </style>
 </head>
 <body>
     <canvas id="canvas"></canvas>
-    
-    <div class="ui header">
-        <h1>DRIFT v6</h1>
-        <div id="root">Root: C2</div>
+
+    <!-- UI Corners -->
+    <div class="ui top-left">
+        <div class="title">DRIFT v6</div>
+        <div class="label">root</div>
+        <div class="value" id="root">—</div>
+        <div class="label">time</div>
+        <div class="value" id="time">0:00</div>
     </div>
-    
-    <div class="ui timer" id="timer">5:00</div>
-    <div class="ui phase" id="phase">Genesis</div>
-    
-    <div class="ui stats">
-        <div>Explorers: <span id="nodeCount">0</span></div>
-        <div>Max Ring: <span id="currentRing">0</span></div>
+
+    <div class="ui top-right">
+        <div class="label">explorers</div>
+        <div class="value" id="explorers">0</div>
+        <div class="label">depth</div>
+        <div class="value" id="depth">0</div>
     </div>
-    
-    <div class="ui progress-ring">
-        <svg width="60" height="60">
-            <circle class="bg" cx="30" cy="30" r="26"/>
-            <circle class="fg" id="progressCircle" cx="30" cy="30" r="26" 
-                    stroke-dasharray="163.36" stroke-dashoffset="163.36"/>
-        </svg>
+
+    <div class="ui bottom-left">
+        <div class="label">phase</div>
+        <div class="value" id="phase">—</div>
     </div>
-    
+
+    <div class="ui bottom-right">
+        <div class="label">mode</div>
+        <div class="value" id="mode">—</div>
+        <div class="label">voices</div>
+        <div class="value" id="voices">0</div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+        <button id="pauseBtn">pause</button>
+        <button id="restartBtn">restart</button>
+        <div class="volume-control">
+            <span>vol</span>
+            <input type="range" id="volumeSlider" min="0" max="100" value="70">
+        </div>
+    </div>
+
+    <!-- Overlay -->
     <div class="overlay" id="overlay">
-        <h1>DRIFT v6</h1>
-        <p>
-            A five-minute generative round.
-            <br><br>
-            Explorers depart the home star on each pulse,
-            weaving an Eno-esque canon through the galaxy.
-        </p>
-        <button class="start" id="startBtn">CLICK TO BEGIN</button>
+        <div class="overlay-title">drift v6 — stellar departure</div>
+        <div class="overlay-description">
+            explorers leave a home star<br>
+            traveling to distant points of light<br><br>
+            each star plays a note<br>
+            chords and melodies emerge<br>
+            over five minutes of contemplation<br><br>
+            space · pause  —  r · restart  —  ↑↓ · volume
+        </div>
+        <button id="startBtn">begin</button>
     </div>
-    
+
     <script src="drift6.js"></script>
 </body>
 </html>
