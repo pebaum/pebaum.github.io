@@ -1,0 +1,263 @@
+{
+  "_readme": "VAD (Valence-Arousal-Dominance) to Musical Parameter Interpolation Rules",
+  "_usage": "These rules define how continuous VAD scores map to musical parameters. Used when exact emotion matches aren't found.",
+
+  "valence_to_mood": {
+    "description": "Valence directly maps to mood/brightness",
+    "formula": "valence",
+    "range": [-1, 1],
+    "output": "mood (-1 = dark, 1 = bright)"
+  },
+
+  "valence_to_scale": {
+    "description": "Valence determines which scale/mode family to use",
+    "ranges": [
+      {
+        "min": -1.0,
+        "max": -0.7,
+        "description": "Very negative - darkest modes",
+        "scales": [
+          { "name": "Locrian", "weight": 0.9 },
+          { "name": "Phrygian", "weight": 0.7 },
+          { "name": "Bhairav", "weight": 0.6 }
+        ]
+      },
+      {
+        "min": -0.7,
+        "max": -0.4,
+        "description": "Negative - minor modes",
+        "scales": [
+          { "name": "Phrygian", "weight": 0.8 },
+          { "name": "Aeolian", "weight": 0.7 },
+          { "name": "Bhairavi", "weight": 0.6 }
+        ]
+      },
+      {
+        "min": -0.4,
+        "max": -0.1,
+        "description": "Slightly negative - balanced minor",
+        "scales": [
+          { "name": "Aeolian", "weight": 0.8 },
+          { "name": "Dorian", "weight": 0.7 },
+          { "name": "Minor Pentatonic", "weight": 0.5 }
+        ]
+      },
+      {
+        "min": -0.1,
+        "max": 0.1,
+        "description": "Neutral - balanced modes",
+        "scales": [
+          { "name": "Dorian", "weight": 0.8 },
+          { "name": "Mixolydian", "weight": 0.7 },
+          { "name": "Kafi", "weight": 0.5 }
+        ]
+      },
+      {
+        "min": 0.1,
+        "max": 0.4,
+        "description": "Slightly positive - bright minor",
+        "scales": [
+          { "name": "Dorian", "weight": 0.7 },
+          { "name": "Mixolydian", "weight": 0.8 },
+          { "name": "Ionian", "weight": 0.6 }
+        ]
+      },
+      {
+        "min": 0.4,
+        "max": 0.7,
+        "description": "Positive - major modes",
+        "scales": [
+          { "name": "Ionian", "weight": 0.8 },
+          { "name": "Mixolydian", "weight": 0.7 },
+          { "name": "Bilawal", "weight": 0.6 }
+        ]
+      },
+      {
+        "min": 0.7,
+        "max": 1.0,
+        "description": "Very positive - brightest modes",
+        "scales": [
+          { "name": "Lydian", "weight": 0.9 },
+          { "name": "Ionian", "weight": 0.8 },
+          { "name": "Major Pentatonic", "weight": 0.7 }
+        ]
+      }
+    ]
+  },
+
+  "arousal_to_tempo": {
+    "description": "Arousal controls tempo/speed",
+    "formula": "0.5 + (arousal * 0.8)",
+    "min": 0.5,
+    "max": 1.3,
+    "output": "tempo multiplier",
+    "examples": {
+      "arousal_0.0": "tempo = 0.5 (very slow)",
+      "arousal_0.5": "tempo = 0.9 (moderate)",
+      "arousal_1.0": "tempo = 1.3 (very fast)"
+    }
+  },
+
+  "arousal_to_density": {
+    "description": "High arousal increases note density",
+    "formula": "0.3 + (arousal * 0.4)",
+    "min": 0.3,
+    "max": 0.7,
+    "output": "note probability/density"
+  },
+
+  "dominance_to_volume": {
+    "description": "Dominance affects overall presence/volume",
+    "formula": "0.4 + (dominance * 0.4)",
+    "min": 0.4,
+    "max": 0.8,
+    "output": "volume/presence multiplier"
+  },
+
+  "dominance_to_register": {
+    "description": "Dominance affects octave range",
+    "formula": {
+      "low_dominance": "Lower octaves (48-72)",
+      "mid_dominance": "Middle octaves (60-84)",
+      "high_dominance": "Higher octaves (72-96)"
+    },
+    "ranges": [
+      { "dom_min": 0.0, "dom_max": 0.3, "midi_min": 48, "midi_max": 72 },
+      { "dom_min": 0.3, "dom_max": 0.7, "midi_min": 60, "midi_max": 84 },
+      { "dom_min": 0.7, "dom_max": 1.0, "midi_min": 72, "midi_max": 96 }
+    ]
+  },
+
+  "tension_calculation": {
+    "description": "Tension combines arousal and emotional extremity",
+    "formula": "(arousal + abs(valence * 0.5)) / 2",
+    "range": [0, 1],
+    "output": "musical tension (affects dissonance, dynamics)",
+    "examples": {
+      "neutral_calm": "valence=0, arousal=0.2 → tension=0.1 (very relaxed)",
+      "excited_happy": "valence=0.8, arousal=0.9 → tension=0.65 (energetic)",
+      "intense_sad": "valence=-0.8, arousal=0.3 → tension=0.35 (subdued intensity)"
+    }
+  },
+
+  "vad_to_voice_weights": {
+    "description": "VAD scores determine which voice types are active",
+    "rules": {
+      "drone": {
+        "condition": "arousal < 0.4 OR dominance < 0.3",
+        "weight": "1.0 - arousal",
+        "description": "Dominant in low-energy, submissive contexts"
+      },
+      "pad": {
+        "condition": "always active",
+        "weight": "0.7",
+        "description": "Always provides harmonic foundation"
+      },
+      "melody": {
+        "condition": "arousal > 0.4 AND abs(valence) > 0.3",
+        "weight": "arousal * 0.8",
+        "description": "Active in energetic, emotionally charged contexts"
+      },
+      "texture": {
+        "condition": "arousal > 0.5 OR tension > 0.6",
+        "weight": "arousal * 0.6",
+        "description": "Adds complexity in high-energy situations"
+      },
+      "pulse": {
+        "condition": "arousal > 0.6",
+        "weight": "arousal * 0.7",
+        "description": "Rhythmic elements in very energetic contexts"
+      },
+      "atmosphere": {
+        "condition": "arousal < 0.5",
+        "weight": "1.0 - arousal",
+        "description": "Environmental wash in calm contexts"
+      }
+    }
+  },
+
+  "vad_to_effects": {
+    "description": "VAD scores affect audio effects parameters",
+    "reverb_size": {
+      "formula": "0.5 + (0.4 * (1 - dominance))",
+      "description": "Low dominance = larger reverb (more space)"
+    },
+    "reverb_mix": {
+      "formula": "0.3 + (0.5 * (1 - arousal))",
+      "description": "Low arousal = more reverb mix (dreamier)"
+    },
+    "delay_time": {
+      "formula": "0.15 + (0.4 * (1 - arousal))",
+      "description": "Low arousal = longer delay times"
+    },
+    "low_pass_filter": {
+      "formula": "0.4 + (valence * 0.3)",
+      "description": "Positive valence = brighter (higher cutoff)"
+    },
+    "high_pass_filter": {
+      "formula": "0.05 + (arousal * 0.25)",
+      "description": "High arousal = remove more lows (clearer)"
+    }
+  },
+
+  "vad_quadrants": {
+    "description": "Pre-defined parameter sets for VAD quadrants",
+    "Q1_high_valence_high_arousal": {
+      "vad_range": { "v_min": 0.2, "v_max": 1.0, "a_min": 0.6, "a_max": 1.0 },
+      "description": "Excited, energetic positive (joy, elation, excitement)",
+      "scales": ["Lydian", "Ionian", "Mixolydian"],
+      "tempo": 1.25,
+      "density": 0.7,
+      "tension": 0.45,
+      "voices": ["melody", "texture", "pulse"],
+      "register": "high"
+    },
+    "Q2_low_valence_high_arousal": {
+      "vad_range": { "v_min": -1.0, "v_max": -0.2, "a_min": 0.6, "a_max": 1.0 },
+      "description": "Intense negative (anger, panic, rage)",
+      "scales": ["Phrygian", "Locrian", "Bhairav"],
+      "tempo": 1.35,
+      "density": 0.8,
+      "tension": 0.9,
+      "voices": ["pulse", "texture", "melody"],
+      "register": "mid"
+    },
+    "Q3_low_valence_low_arousal": {
+      "vad_range": { "v_min": -1.0, "v_max": -0.2, "a_min": 0.0, "a_max": 0.4 },
+      "description": "Depressed, sad, melancholic",
+      "scales": ["Aeolian", "Phrygian", "Minor Pentatonic"],
+      "tempo": 0.55,
+      "density": 0.3,
+      "tension": 0.6,
+      "voices": ["drone", "pad", "atmosphere"],
+      "register": "low"
+    },
+    "Q4_high_valence_low_arousal": {
+      "vad_range": { "v_min": 0.2, "v_max": 1.0, "a_min": 0.0, "a_max": 0.4 },
+      "description": "Calm positive (peace, contentment, serenity)",
+      "scales": ["Ionian", "Major Pentatonic", "Bilawal"],
+      "tempo": 0.65,
+      "density": 0.4,
+      "tension": 0.15,
+      "voices": ["drone", "pad", "atmosphere"],
+      "register": "mid-low"
+    }
+  },
+
+  "interpolation_method": {
+    "description": "How to interpolate between discrete values",
+    "method": "weighted_average",
+    "example": "If valence=0.5, find bracketing ranges and interpolate scales using weights"
+  },
+
+  "fallback_defaults": {
+    "description": "Default values when VAD scores are unavailable",
+    "valence": 0.0,
+    "arousal": 0.5,
+    "dominance": 0.5,
+    "scale": "Dorian",
+    "tempo": 0.8,
+    "density": 0.5,
+    "tension": 0.4
+  }
+}

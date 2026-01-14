@@ -92,7 +92,12 @@ class TextscapeApp {
 
             await this.continuousEngine.start(this.currentParams);
 
-            this.statusText.textContent = 'Generating ambient music...';
+            // Display key and mode in status
+            const keyInfo = this.currentParams.tonalCenter ?
+                `${this.currentParams.tonalCenter.globalKeyName} ${this.currentParams.tonalCenter.globalModeName}` :
+                `${this.midiToNoteName(this.currentParams.rootNote)} ${this.currentParams.scaleName}`;
+
+            this.statusText.textContent = `Playing in ${keyInfo}`;
 
             // Start updating time display
             this.startTimeUpdates();
@@ -157,12 +162,23 @@ class TextscapeApp {
             { label: 'Tempo', value: `${tempo.toFixed(2)}x`, detail: tempo > 1 ? 'Faster than base' : 'Slower than base' }
         ]);
 
-        // Scale Selection
-        html += this.createCategory('Scale & Harmony', [
-            { label: 'Scale', value: scaleName, detail: scale.description || '' },
-            { label: 'Cultural Origin', value: scale.culture || 'Multicultural' },
-            { label: 'Root Note', value: this.midiToNoteName(params.rootNote) }
-        ]);
+        // Tonal Center (Global Key) - Highlighted if available
+        if (params.tonalCenter) {
+            html += this.createCategory('🎵 Global Tonal Center (Locked)', [
+                { label: 'Key', value: params.tonalCenter.globalKeyName, detail: 'Root note for entire piece' },
+                { label: 'Mode', value: params.tonalCenter.globalModeName, detail: scale.description || '' },
+                { label: 'Cultural Origin', value: scale.culture || 'Multicultural' },
+                { label: 'Compound Valence', value: params.tonalCenter.compoundMetrics.valence.toFixed(3), detail: 'Average emotional tone' },
+                { label: 'Compound Arousal', value: params.tonalCenter.compoundMetrics.arousal.toFixed(3), detail: 'Average energy level' }
+            ]);
+        } else {
+            // Fallback if no tonal center
+            html += this.createCategory('Scale & Harmony', [
+                { label: 'Scale', value: scaleName, detail: scale.description || '' },
+                { label: 'Cultural Origin', value: scale.culture || 'Multicultural' },
+                { label: 'Root Note', value: this.midiToNoteName(params.rootNote) }
+            ]);
+        }
 
         // Active Voices
         const voiceList = activeVoices.map(v => {

@@ -1,0 +1,330 @@
+{
+  "_readme": "Emotion to Musical Parameter Mappings - Template for Textscape Knowledge Base",
+  "_usage": "This file maps emotion keywords to specific musical parameters. The app uses these to translate detected emotions into sound.",
+
+  "joy": {
+    "scales": [
+      { "name": "Ionian", "culture": "western", "weight": 0.8 },
+      { "name": "Lydian", "culture": "western", "weight": 0.6 },
+      { "name": "Bilawal", "culture": "indian", "weight": 0.5 }
+    ],
+    "rootNotes": ["C", "D", "G"],
+    "tempo": { "min": 1.1, "max": 1.4, "default": 1.2 },
+    "density": { "min": 0.5, "max": 0.8, "default": 0.65 },
+    "tension": 0.2,
+    "voices": [
+      { "type": "melody", "weight": 0.8 },
+      { "type": "pad", "weight": 0.6 },
+      { "type": "texture", "weight": 0.5 }
+    ],
+    "register": { "min": 60, "max": 84 },
+    "timbres": [
+      { "oscillator": "sine", "detune": 0, "weight": 0.7 },
+      { "oscillator": "triangle", "detune": 5, "weight": 0.5 }
+    ],
+    "effects": {
+      "reverbSize": 0.6,
+      "reverbMix": 0.4,
+      "delayTime": 0.25,
+      "lowPass": 0.75,
+      "highPass": 0.1
+    }
+  },
+
+  "sadness": {
+    "scales": [
+      { "name": "Aeolian", "culture": "western", "weight": 0.8 },
+      { "name": "Phrygian", "culture": "western", "weight": 0.6 },
+      { "name": "Bhairavi", "culture": "indian", "weight": 0.5 }
+    ],
+    "rootNotes": ["D", "A", "E"],
+    "tempo": { "min": 0.4, "max": 0.7, "default": 0.6 },
+    "density": { "min": 0.2, "max": 0.4, "default": 0.3 },
+    "tension": 0.5,
+    "voices": [
+      { "type": "drone", "weight": 0.9 },
+      { "type": "pad", "weight": 0.7 },
+      { "type": "atmosphere", "weight": 0.6 }
+    ],
+    "register": { "min": 48, "max": 72 },
+    "timbres": [
+      { "oscillator": "sine", "detune": -7, "weight": 0.8 },
+      { "oscillator": "triangle", "detune": 0, "weight": 0.4 }
+    ],
+    "effects": {
+      "reverbSize": 0.9,
+      "reverbMix": 0.7,
+      "delayTime": 0.5,
+      "lowPass": 0.4,
+      "highPass": 0.05
+    }
+  },
+
+  "anger": {
+    "scales": [
+      { "name": "Phrygian", "culture": "western", "weight": 0.7 },
+      { "name": "Locrian", "culture": "western", "weight": 0.6 },
+      { "name": "Bhairav", "culture": "indian", "weight": 0.5 }
+    ],
+    "rootNotes": ["E", "F", "B"],
+    "tempo": { "min": 1.2, "max": 1.5, "default": 1.3 },
+    "density": { "min": 0.6, "max": 0.9, "default": 0.75 },
+    "tension": 0.85,
+    "voices": [
+      { "type": "pulse", "weight": 0.9 },
+      { "type": "melody", "weight": 0.7 },
+      { "type": "texture", "weight": 0.8 }
+    ],
+    "register": { "min": 54, "max": 78 },
+    "timbres": [
+      { "oscillator": "square", "detune": 3, "weight": 0.6 },
+      { "oscillator": "sawtooth", "detune": -3, "weight": 0.5 }
+    ],
+    "effects": {
+      "reverbSize": 0.4,
+      "reverbMix": 0.3,
+      "delayTime": 0.15,
+      "lowPass": 0.6,
+      "highPass": 0.3
+    }
+  },
+
+  "fear": {
+    "scales": [
+      { "name": "Locrian", "culture": "western", "weight": 0.8 },
+      { "name": "Phrygian", "culture": "western", "weight": 0.6 },
+      { "name": "Hijaz", "culture": "middle_eastern", "weight": 0.5 }
+    ],
+    "rootNotes": ["B", "F", "C#"],
+    "tempo": { "min": 0.8, "max": 1.2, "default": 1.0 },
+    "density": { "min": 0.4, "max": 0.7, "default": 0.55 },
+    "tension": 0.9,
+    "voices": [
+      { "type": "texture", "weight": 0.9 },
+      { "type": "atmosphere", "weight": 0.8 },
+      { "type": "pulse", "weight": 0.5 }
+    ],
+    "register": { "min": 66, "max": 90 },
+    "timbres": [
+      { "oscillator": "triangle", "detune": 12, "weight": 0.7 },
+      { "oscillator": "sine", "detune": -12, "weight": 0.6 }
+    ],
+    "effects": {
+      "reverbSize": 0.95,
+      "reverbMix": 0.8,
+      "delayTime": 0.35,
+      "lowPass": 0.5,
+      "highPass": 0.2
+    }
+  },
+
+  "anticipation": {
+    "scales": [
+      { "name": "Mixolydian", "culture": "western", "weight": 0.7 },
+      { "name": "Dorian", "culture": "western", "weight": 0.6 },
+      { "name": "Yaman", "culture": "indian", "weight": 0.5 }
+    ],
+    "rootNotes": ["G", "D", "A"],
+    "tempo": { "min": 0.9, "max": 1.2, "default": 1.05 },
+    "density": { "min": 0.5, "max": 0.7, "default": 0.6 },
+    "tension": 0.5,
+    "voices": [
+      { "type": "melody", "weight": 0.7 },
+      { "type": "pad", "weight": 0.6 },
+      { "type": "pulse", "weight": 0.5 }
+    ],
+    "register": { "min": 57, "max": 81 },
+    "timbres": [
+      { "oscillator": "triangle", "detune": 5, "weight": 0.7 },
+      { "oscillator": "sine", "detune": 0, "weight": 0.6 }
+    ],
+    "effects": {
+      "reverbSize": 0.65,
+      "reverbMix": 0.5,
+      "delayTime": 0.3,
+      "lowPass": 0.7,
+      "highPass": 0.15
+    }
+  },
+
+  "trust": {
+    "scales": [
+      { "name": "Ionian", "culture": "western", "weight": 0.7 },
+      { "name": "Lydian", "culture": "western", "weight": 0.6 },
+      { "name": "Rast", "culture": "middle_eastern", "weight": 0.5 }
+    ],
+    "rootNotes": ["C", "F", "G"],
+    "tempo": { "min": 0.7, "max": 1.0, "default": 0.85 },
+    "density": { "min": 0.4, "max": 0.6, "default": 0.5 },
+    "tension": 0.25,
+    "voices": [
+      { "type": "pad", "weight": 0.9 },
+      { "type": "drone", "weight": 0.7 },
+      { "type": "atmosphere", "weight": 0.6 }
+    ],
+    "register": { "min": 54, "max": 78 },
+    "timbres": [
+      { "oscillator": "sine", "detune": 0, "weight": 0.9 },
+      { "oscillator": "triangle", "detune": 3, "weight": 0.5 }
+    ],
+    "effects": {
+      "reverbSize": 0.75,
+      "reverbMix": 0.6,
+      "delayTime": 0.4,
+      "lowPass": 0.65,
+      "highPass": 0.05
+    }
+  },
+
+  "disgust": {
+    "scales": [
+      { "name": "Phrygian", "culture": "western", "weight": 0.7 },
+      { "name": "Locrian", "culture": "western", "weight": 0.6 },
+      { "name": "Saba", "culture": "middle_eastern", "weight": 0.5 }
+    ],
+    "rootNotes": ["E", "B", "D"],
+    "tempo": { "min": 0.6, "max": 0.9, "default": 0.75 },
+    "density": { "min": 0.3, "max": 0.5, "default": 0.4 },
+    "tension": 0.7,
+    "voices": [
+      { "type": "texture", "weight": 0.8 },
+      { "type": "drone", "weight": 0.6 },
+      { "type": "atmosphere", "weight": 0.5 }
+    ],
+    "register": { "min": 51, "max": 69 },
+    "timbres": [
+      { "oscillator": "square", "detune": -5, "weight": 0.6 },
+      { "oscillator": "triangle", "detune": 7, "weight": 0.5 }
+    ],
+    "effects": {
+      "reverbSize": 0.7,
+      "reverbMix": 0.55,
+      "delayTime": 0.2,
+      "lowPass": 0.45,
+      "highPass": 0.25
+    }
+  },
+
+  "surprise": {
+    "scales": [
+      { "name": "Lydian", "culture": "western", "weight": 0.7 },
+      { "name": "Whole Tone", "culture": "western", "weight": 0.6 },
+      { "name": "In Scale", "culture": "east_asian", "weight": 0.5 }
+    ],
+    "rootNotes": ["F", "C", "D"],
+    "tempo": { "min": 1.0, "max": 1.4, "default": 1.2 },
+    "density": { "min": 0.5, "max": 0.8, "default": 0.65 },
+    "tension": 0.6,
+    "voices": [
+      { "type": "texture", "weight": 0.9 },
+      { "type": "melody", "weight": 0.7 },
+      { "type": "pulse", "weight": 0.5 }
+    ],
+    "register": { "min": 63, "max": 87 },
+    "timbres": [
+      { "oscillator": "triangle", "detune": 10, "weight": 0.7 },
+      { "oscillator": "sine", "detune": -5, "weight": 0.6 }
+    ],
+    "effects": {
+      "reverbSize": 0.8,
+      "reverbMix": 0.6,
+      "delayTime": 0.18,
+      "lowPass": 0.85,
+      "highPass": 0.2
+    }
+  },
+
+  "peace": {
+    "scales": [
+      { "name": "Ionian", "culture": "western", "weight": 0.7 },
+      { "name": "Major Pentatonic", "culture": "east_asian", "weight": 0.8 },
+      { "name": "Bilawal", "culture": "indian", "weight": 0.6 }
+    ],
+    "rootNotes": ["C", "G", "F"],
+    "tempo": { "min": 0.5, "max": 0.7, "default": 0.6 },
+    "density": { "min": 0.2, "max": 0.4, "default": 0.3 },
+    "tension": 0.1,
+    "voices": [
+      { "type": "drone", "weight": 0.8 },
+      { "type": "pad", "weight": 0.9 },
+      { "type": "atmosphere", "weight": 0.7 }
+    ],
+    "register": { "min": 48, "max": 72 },
+    "timbres": [
+      { "oscillator": "sine", "detune": 0, "weight": 0.9 },
+      { "oscillator": "triangle", "detune": 2, "weight": 0.4 }
+    ],
+    "effects": {
+      "reverbSize": 0.95,
+      "reverbMix": 0.75,
+      "delayTime": 0.5,
+      "lowPass": 0.6,
+      "highPass": 0.0
+    }
+  },
+
+  "love": {
+    "scales": [
+      { "name": "Lydian", "culture": "western", "weight": 0.8 },
+      { "name": "Ionian", "culture": "western", "weight": 0.7 },
+      { "name": "Yaman", "culture": "indian", "weight": 0.6 }
+    ],
+    "rootNotes": ["F", "C", "A"],
+    "tempo": { "min": 0.7, "max": 1.0, "default": 0.85 },
+    "density": { "min": 0.5, "max": 0.7, "default": 0.6 },
+    "tension": 0.3,
+    "voices": [
+      { "type": "melody", "weight": 0.8 },
+      { "type": "pad", "weight": 0.9 },
+      { "type": "atmosphere", "weight": 0.6 }
+    ],
+    "register": { "min": 57, "max": 81 },
+    "timbres": [
+      { "oscillator": "sine", "detune": 3, "weight": 0.8 },
+      { "oscillator": "triangle", "detune": -3, "weight": 0.6 }
+    ],
+    "effects": {
+      "reverbSize": 0.85,
+      "reverbMix": 0.65,
+      "delayTime": 0.35,
+      "lowPass": 0.7,
+      "highPass": 0.05
+    }
+  },
+
+  "_vad_defaults": {
+    "description": "Default musical parameters based on VAD scores when specific emotions are not detected",
+    "high_valence_high_arousal": {
+      "description": "Excited, energetic positive emotions (e.g., elation, excitement)",
+      "scales": ["Lydian", "Ionian", "Mixolydian"],
+      "tempo": 1.3,
+      "density": 0.7,
+      "tension": 0.4,
+      "voices": ["melody", "texture", "pulse"]
+    },
+    "high_valence_low_arousal": {
+      "description": "Calm positive emotions (e.g., contentment, serenity)",
+      "scales": ["Ionian", "Major Pentatonic"],
+      "tempo": 0.7,
+      "density": 0.4,
+      "tension": 0.2,
+      "voices": ["drone", "pad", "atmosphere"]
+    },
+    "low_valence_high_arousal": {
+      "description": "Intense negative emotions (e.g., rage, panic)",
+      "scales": ["Phrygian", "Locrian"],
+      "tempo": 1.4,
+      "density": 0.8,
+      "tension": 0.9,
+      "voices": ["pulse", "texture", "melody"]
+    },
+    "low_valence_low_arousal": {
+      "description": "Depressed, melancholic emotions",
+      "scales": ["Aeolian", "Phrygian", "Minor Pentatonic"],
+      "tempo": 0.5,
+      "density": 0.3,
+      "tension": 0.6,
+      "voices": ["drone", "pad", "atmosphere"]
+    }
+  }
+}

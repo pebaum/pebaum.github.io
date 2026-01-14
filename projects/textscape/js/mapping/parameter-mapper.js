@@ -14,6 +14,9 @@ const ParameterMapper = {
      * Main mapping function - combines all analyses
      */
     mapTextToMusic(text, culturalContext = 'multicultural', userBias = {}) {
+        // STEP 0: Calculate global tonal center FIRST to ensure musical coherence
+        const tonalCenter = TonalCenterCalculator.calculateTonalCenter(text, culturalContext);
+
         // Run all analyzers
         const phonetic = PhoneticAnalyzer.analyze(text);
         const lexical = LexicalAnalyzer.analyze(text);
@@ -37,8 +40,11 @@ const ParameterMapper = {
         // Apply cultural context
         const culturalParams = this.applyCulturalContext(baseParams, sentiment, culturalContext);
 
-        // Select scale and mode
-        const scaleSelection = this.selectScale(culturalParams, culturalContext);
+        // Use GLOBAL scale and mode (already calculated from tonal center)
+        const scaleSelection = {
+            scale: tonalCenter.globalMode,
+            rootNote: tonalCenter.globalKey
+        };
 
         // Calculate voice weights
         const voiceWeights = this.calculateVoiceWeights(
@@ -62,6 +68,9 @@ const ParameterMapper = {
         const constrainedParams = CompositionRules.constrainParameters(finalParams);
 
         return {
+            // Global tonal center (LOCKED for entire piece)
+            tonalCenter: tonalCenter,
+
             // Global parameters
             mood: constrainedParams.mood, // -1 to 1
             tension: constrainedParams.tension, // 0 to 1
@@ -167,8 +176,13 @@ const ParameterMapper = {
 
     /**
      * Select scale based on parameters and cultural context
+     *
+     * DEPRECATED: This function is kept for backward compatibility but should not be used
+     * for new code as it can cause key-jumping issues. Use TonalCenterCalculator instead.
      */
     selectScale(params, culturalContext) {
+        console.warn('⚠️ selectScale() is deprecated. Use TonalCenterCalculator.calculateTonalCenter() instead.');
+
         // Use ScaleLibrary to select appropriate scale
         const scale = ScaleLibrary.selectScale(params.mood, params.tension, culturalContext);
 
