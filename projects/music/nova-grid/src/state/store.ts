@@ -42,7 +42,7 @@ import {
   resizeMatrix,
 } from '../engine/matrix';
 import { getScaleLibraryAsMap } from '../scales/scaleLibrary';
-import { getGlobalSynth } from '../audio/synth';
+import { getGlobalOrchestralSynth } from '../audio/orchestral-synth';
 import { getGlobalScheduler } from '../audio/scheduler';
 
 // ============================================================================
@@ -129,7 +129,7 @@ export const useNova3Store = create<Nova3Store>((set, get) => ({
   // ====================
 
   initializeAudio: async () => {
-    const synth = getGlobalSynth();
+    const synth = getGlobalOrchestralSynth();
     await synth.initialize();
 
     const scheduler = getGlobalScheduler();
@@ -159,7 +159,7 @@ export const useNova3Store = create<Nova3Store>((set, get) => ({
     const scheduler = getGlobalScheduler();
     scheduler.stop();
 
-    const synth = getGlobalSynth();
+    const synth = getGlobalOrchestralSynth();
     synth.stopAll();
 
     set({ engineState: stop(get().engineState) });
@@ -181,9 +181,9 @@ export const useNova3Store = create<Nova3Store>((set, get) => ({
 
     const result = runCycle(engineState, scaleLibrary);
 
-    // Play notes
+    // Play notes with orchestral instruments
     if (result.noteEvents.length > 0) {
-      const synth = getGlobalSynth();
+      const synth = getGlobalOrchestralSynth();
       synth.playNotes(result.noteEvents);
     }
 

@@ -127,6 +127,20 @@ export const Controls: React.FC = () => {
         </button>
       </div>
 
+      {/* Orchestral Instruments */}
+      <div style={{ marginBottom: '20px' }}>
+        <h3>Orchestral Instruments</h3>
+        <div style={{ fontSize: '12px', lineHeight: '1.6' }}>
+          <p>🎻 <strong>North Wall</strong> → Harp</p>
+          <p>🎹 <strong>East Wall</strong> → Vibraphone</p>
+          <p>🎼 <strong>South Wall</strong> → Piano</p>
+          <p>🎺 <strong>West Wall</strong> → Flute</p>
+        </div>
+        <p style={{ fontSize: '11px', color: '#888', marginTop: '10px', fontStyle: 'italic' }}>
+          Inspired by Satoshi Ashikawa's "Wave Notation 2"
+        </p>
+      </div>
+
       {/* Stats */}
       <div>
         <h3>Stats</h3>
