@@ -1,0 +1,19 @@
+; Nova Generative Sequencer scale definition
+; Scale: Kourd - Atar Todi
+7     note  1    G   
+12    note  2    C   
+13    note  3    Db  
+15    note  4    Eb  
+18    note  5    F#  
+19    note  6    G   
+20    note  7    Ab  
+23    note  8    B   
+24    note  9    C   
+25    note 10    Db  
+27    note 11    Eb  
+30    note 12    F#  
+31    note 13    G   
+32    note 14    Ab  
+35    note 15    B   
+36    note 16    C   
+37    note 17    Db  

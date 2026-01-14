@@ -8,13 +8,14 @@ class CRTEffects {
         this.sourceCanvas = sourceCanvas;
         this.sourceCtx = sourceCanvas.getContext('2d');
 
-        this.scanlineOpacity = 0.15;
-        this.scanlineSpeed = 0.5;
+        // Subtle Ico-inspired effects instead of harsh CRT
+        this.scanlineOpacity = 0.03; // Very subtle
+        this.scanlineSpeed = 0.2;
         this.scanlineOffset = 0;
 
-        this.vignetteStrength = 0.6;
+        this.vignetteStrength = 0.3; // Gentler vignette
         this.bloomEnabled = true;
-        this.chromaticAberration = 0.5;
+        this.atmosphericHaze = true;
 
         this.time = 0;
     }
@@ -26,13 +27,16 @@ class CRTEffects {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.ctx.drawImage(this.sourceCanvas, 0, 0);
 
-        // Apply effects in order
+        // Apply soft atmospheric effects
         if (this.bloomEnabled) {
             this.applyBloom();
         }
-        this.applyScanlines();
+        if (this.atmosphericHaze) {
+            this.applyAtmosphericHaze();
+        }
+        this.applyScanlines(); // Very subtle
         this.applyVignette();
-        this.applyFlicker();
+        // No harsh flicker for Ico aesthetic
     }
 
     applyBloom() {
@@ -111,15 +115,22 @@ class CRTEffects {
         this.ctx.globalCompositeOperation = 'source-over';
     }
 
-    applyFlicker() {
-        // Subtle random flicker like old CRT
-        if (Math.random() < 0.02) {
-            const flicker = 0.95 + Math.random() * 0.05;
-            this.ctx.globalCompositeOperation = 'multiply';
-            this.ctx.fillStyle = `rgba(255, 255, 255, ${flicker})`;
-            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-            this.ctx.globalCompositeOperation = 'source-over';
-        }
+    applyAtmosphericHaze() {
+        // Soft, warm atmospheric haze inspired by Ico
+        const gradient = this.ctx.createRadialGradient(
+            this.canvas.width / 2, this.canvas.height / 3, 0,
+            this.canvas.width / 2, this.canvas.height / 2, this.canvas.width * 0.8
+        );
+
+        // Warm, soft light from above
+        gradient.addColorStop(0, 'rgba(255, 250, 235, 0.05)');
+        gradient.addColorStop(0.6, 'rgba(255, 248, 220, 0.02)');
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+        this.ctx.globalCompositeOperation = 'lighter';
+        this.ctx.fillStyle = gradient;
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.globalCompositeOperation = 'source-over';
     }
 
     // Optional chromatic aberration (expensive, disabled by default)

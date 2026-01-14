@@ -1,0 +1,19 @@
+; Nova Generative Sequencer scale definition
+; Scale: Minor
+9     note  1    A   
+12    note  2    C   
+14    note  3    D   
+16    note  4    E   
+19    note  5    G   
+21    note  6    A   
+24    note  7    C   
+26    note  8    D   
+28    note  9    E   
+31    note 10    G   
+33    note 11    A   
+36    note 12    C   
+38    note 13    D   
+40    note 14    E   
+43    note 15    G   
+45    note 16    A   
+48    note 17    C   

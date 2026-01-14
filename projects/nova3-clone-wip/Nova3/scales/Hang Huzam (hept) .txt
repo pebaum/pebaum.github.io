@@ -1,0 +1,19 @@
+; Nova Generative Sequencer scale definition
+; Scale: Huzam
+9     note  1    A   
+14    note  2    D   
+17    note  3    F   
+18    note  4    F#  
+19    note  5    G   
+21    note  6    A   
+23    note  7    B   
+25    note  8    C#  
+26    note  9    D   
+29    note 10    F   
+30    note 11    F#  
+31    note 12    G   
+33    note 13    A   
+35    note 14    B   
+37    note 15    C#  
+38    note 16    D   
+41    note 17    F   

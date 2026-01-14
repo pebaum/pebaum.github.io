@@ -1,0 +1,19 @@
+; Nova Generative Sequencer scale definition
+; Scale: Hijaz
+11    note  1    B   
+18    note  2    F#  
+19    note  3    G   
+22    note  4    A#  
+23    note  5    B   
+25    note  6    C#  
+26    note  7    D   
+28    note  8    E   
+30    note  9    F#  
+31    note 10    G   
+34    note 11    A#  
+35    note 12    B   
+37    note 13    C#  
+38    note 14    D   
+40    note 15    E   
+42    note 16    F#  
+43    note 17    G   

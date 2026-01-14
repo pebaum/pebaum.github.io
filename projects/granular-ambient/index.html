@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generative Granular Ambient</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Overlay for sample loading -->
+  <div id="overlay">
+    <div class="overlay-content">
+      <h1>Generative Granular Ambient</h1>
+      <p class="subtitle">Turn any sound into generative ambient music</p>
+
+      <div class="input-section">
+        <h2>Load a Sample</h2>
+        <div class="sample-controls">
+          <button id="record-btn" class="btn-primary">Record from Microphone</button>
+          <button id="upload-btn" class="btn-secondary">Upload Audio File</button>
+          <input type="file" id="file-input" accept="audio/*" style="display: none;">
+        </div>
+        <div id="drop-zone" class="drop-zone">
+          <p>or drag and drop an audio file here</p>
+        </div>
+      </div>
+
+      <div id="recording-ui" class="recording-ui" style="display: none;">
+        <div class="recording-indicator">
+          <span class="rec-dot"></span>
+          <span id="rec-timer">00:00</span> / 10:00
+        </div>
+        <button id="stop-record-btn" class="btn-danger">Stop Recording</button>
+      </div>
+
+      <div id="sample-loaded" class="sample-loaded" style="display: none;">
+        <p class="success-message">✓ Sample loaded: <span id="sample-name">-</span></p>
+        <button id="start-btn" class="btn-start">Start Generative Composition</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main canvas visualization -->
+  <canvas id="canvas"></canvas>
+
+  <!-- Info overlay (appears when running) -->
+  <div id="info" class="info" style="display: none;">
+    <div class="info-row">
+      <span>Time: <strong id="elapsed">00:00</strong></span>
+    </div>
+    <div class="info-row">
+      <span>Scale: <strong id="scale-name">-</strong></span>
+    </div>
+    <div class="info-row">
+      <span>Voices: <strong id="voice-count">-</strong></span>
+    </div>
+    <div class="info-row">
+      <span>Active Grains: <strong id="active-grains">-</strong></span>
+    </div>
+  </div>
+
+  <!-- Controls (appears when running) -->
+  <div id="controls" class="controls" style="display: none;">
+    <button id="pause-btn" class="btn-control">Pause</button>
+    <button id="restart-btn" class="btn-control">Restart</button>
+    <div class="volume-control">
+      <label for="volume-slider">Volume</label>
+      <input type="range" id="volume-slider" min="0" max="100" value="100" step="1">
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="utils/random.js"></script>
+  <script src="audio-io.js"></script>
+  <script src="granular-engine.js"></script>
+  <script src="voice.js"></script>
+  <script src="conductor.js"></script>
+  <script src="visualization.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>

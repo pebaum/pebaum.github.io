@@ -1,0 +1,22 @@
+; 00-default.txt 
+; default scale for Nova sequencers
+
+50   D     note 1
+57   A     note 2
+58   Bb    note 3
+60   C     note 4
+62   D     note 5
+64   E     note 6
+65   F     note 7
+69   A     note 8
+72   C     note 9 
+
+74   D     note 10 
+76   E     note 11
+77   F     note 12
+81   A     note 13
+82   Bb    note 14
+84   C     note 15
+
+86   D     note 16 
+88   F     note 17 

@@ -1,0 +1,19 @@
+; Nova Generative Sequencer scale definition
+; Scale: Deshvara
+0     note  1    C   
+5     note  2    F   
+7     note  3    G   
+11    note  4    B   
+12    note  5    C   
+14    note  6    D   
+17    note  7    F   
+19    note  8    G   
+23    note  9    B   
+24    note 10    C   
+26    note 11    D   
+29    note 12    F   
+31    note 13    G   
+35    note 14    B   
+36    note 15    C   
+38    note 16    D   
+41    note 17    F   

@@ -1,0 +1,19 @@
+; Nova Generative Sequencer scale definition
+; Scale: Symmetric
+0     note  1    C   
+1     note  2    Db  
+3     note  3    Eb  
+6     note  4    F#  
+7     note  5    G   
+9     note  6    A   
+10    note  7    Bb  
+12    note  8    C   
+13    note  9    Db  
+15    note 10    Eb  
+18    note 11    F#  
+19    note 12    G   
+21    note 13    A   
+22    note 14    Bb  
+24    note 15    C   
+25    note 16    Db  
+27    note 17    Eb  

@@ -66,7 +66,7 @@ const FIRELINK_SHRINE = {
         'F': {
             name: 'Fire Keeper',
             char: '♀',
-            color: '#ffaa00',
+            color: '#f5d9b8',
             category: 'about',
             title: 'About Me',
             description: 'The Fire Keeper tends the bonfire, holding secrets of the shrine.',
@@ -79,7 +79,7 @@ const FIRELINK_SHRINE = {
         'B': {
             name: 'Bard',
             char: '♪',
-            color: '#00ff41',
+            color: '#a8c9a8',
             category: 'music',
             title: 'Musical Creations',
             description: 'The Bard weaves ambient soundscapes from the essence of drift.',
@@ -96,7 +96,7 @@ const FIRELINK_SHRINE = {
         'S': {
             name: 'Blacksmith',
             char: '⚒',
-            color: '#ff6600',
+            color: '#d4a574',
             category: 'miscellaneous',
             title: 'Forged Creations',
             description: 'The Blacksmith crafts various projects in the fires of creativity.',
@@ -109,7 +109,7 @@ const FIRELINK_SHRINE = {
         'P': {
             name: 'Painter',
             char: '✎',
-            color: '#ff00ff',
+            color: '#c4a8c9',
             category: 'art',
             title: 'Interactive Art',
             description: 'The Painter creates interactive visions and digital canvases.',
@@ -126,7 +126,7 @@ const FIRELINK_SHRINE = {
         'K': {
             name: 'Knight',
             char: '♞',
-            color: '#c0c0c0',
+            color: '#b8c4d0',
             category: 'work',
             title: 'Work & Honor',
             description: 'The Knight stands ready, bearing the marks of battles fought.',
@@ -139,7 +139,7 @@ const FIRELINK_SHRINE = {
         'L': {
             name: 'Librarian',
             char: '📚',
-            color: '#8080ff',
+            color: '#a8b8c8',
             category: 'writing',
             title: 'Written Words',
             description: 'The Librarian guards ancient texts and fresh inscriptions.',
@@ -152,7 +152,7 @@ const FIRELINK_SHRINE = {
         'A': {
             name: 'Archivist',
             char: '⚱',
-            color: '#d4af37',
+            color: '#c9b896',
             category: 'secret',
             title: 'Hidden Archives',
             description: 'The Archivist guards secrets of the past, treasures meant to be forgotten...',
@@ -164,18 +164,18 @@ const FIRELINK_SHRINE = {
         }
     },
 
-    // Tile rendering configuration
+    // Tile rendering configuration - Ico-inspired aesthetic
     tiles: {
-        ' ': { char: ' ', walkable: false, color: '#000000' },
-        '.': { char: '░', walkable: true, color: '#1a1a1a' },
-        ',': { char: '▒', walkable: true, color: '#1a1a1a' },
-        '#': { char: '█', walkable: false, color: '#808080' },
-        '~': { char: '≈', walkable: false, color: '#0088ff' },
-        'f': { char: '♨', walkable: false, color: '#ff6600', glow: true },
-        't': { char: '♣', walkable: false, color: '#00ff41', glow: true },
-        'k': { char: '◊', walkable: true, color: '#d4af37', glow: true, pickup: true },
-        'D': { char: '█', walkable: false, color: '#909090', secret: true },
-        '@': { char: ' ', walkable: true, color: '#1a1a1a' } // Player start, render as floor
+        ' ': { char: ' ', walkable: false, color: '#2a2520', depth: 0 }, // Void/shadows
+        '.': { char: '·', walkable: true, color: '#d4c4b0', depth: 0, floor: true }, // Stone floor
+        ',': { char: '·', walkable: true, color: '#e8d5c4', depth: 0, floor: true }, // Lighter floor
+        '#': { char: '█', walkable: false, color: '#b8a890', depth: 2, wall: true }, // Stone walls
+        '~': { char: '≈', walkable: false, color: '#7ba3c0', depth: 0 }, // Water
+        'f': { char: '✦', walkable: false, color: '#ffb366', glow: true, light: 4 }, // Bonfire
+        't': { char: '♠', walkable: false, color: '#6b8e6b', glow: false }, // Plants
+        'k': { char: '◊', walkable: true, color: '#d4af37', glow: true, pickup: true, light: 2 }, // Key
+        'D': { char: '█', walkable: false, color: '#9a8a7a', depth: 2, secret: true, wall: true }, // Secret door
+        '@': { char: ' ', walkable: true, color: '#d4c4b0', depth: 0, floor: true } // Player start
     },
 
     // Secret room (revealed when door opens)

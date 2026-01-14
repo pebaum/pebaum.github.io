@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Textscape - Text to Ambient Music</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Textscape</h1>
+            <p class="subtitle">Transform text into continuously evolving ambient music</p>
+        </header>
+
+        <main>
+            <section class="input-section">
+                <textarea
+                    id="textInput"
+                    placeholder="Paste your text here... poems, prose, thoughts, anything.
+
+The music will begin generating immediately and evolve continuously based on the emotional, structural, and semantic qualities of your writing."
+                    spellcheck="false"
+                ></textarea>
+
+                <div class="controls">
+                    <button id="generateBtn" class="primary-btn">Generate Ambient Music</button>
+                    <button id="stopBtn" class="stop-btn" style="display: none;">Stop Music</button>
+                </div>
+            </section>
+
+            <section class="playback-section" id="playbackSection" style="display: none;">
+                <div class="playback-status">
+                    <div class="status-indicator">
+                        <div class="pulse"></div>
+                        <span id="statusText">Generating...</span>
+                    </div>
+                    <span class="time" id="timeDisplay">0:00</span>
+                </div>
+
+                <div class="visualization">
+                    <canvas id="visualizer"></canvas>
+                </div>
+            </section>
+
+            <section class="associations-section" id="associationsSection" style="display: none;">
+                <h3>Text → Music Associations</h3>
+                <div class="associations-tree" id="associationsTree"></div>
+            </section>
+
+            <section class="analysis-section" id="analysisSection" style="display: none;">
+                <h3>Musical Parameters</h3>
+                <div class="param-grid" id="paramGrid"></div>
+            </section>
+        </main>
+
+        <footer>
+            <p>Textscape uses multi-cultural music theory to transform text into beautiful ambient soundscapes.</p>
+            <p style="font-size: 0.8em; margin-top: 10px;">
+                <a href="tools/build-sentiment-library.html" style="color: #667eea;">Sentiment Library Builder</a> |
+                <a href="README.md" style="color: #667eea;">Documentation</a>
+            </p>
+        </footer>
+    </div>
+
+    <!-- Analysis modules -->
+    <script src="js/analysis/phonetic-analyzer.js"></script>
+    <script src="js/analysis/lexical-analyzer.js"></script>
+    <script src="js/analysis/sentiment-analyzer.js"></script>
+    <script src="js/analysis/structural-analyzer.js"></script>
+    <script src="js/analysis/complexity-analyzer.js"></script>
+
+    <!-- Mapping modules -->
+    <script src="js/mapping/scale-library.js"></script>
+    <script src="js/mapping/cultural-theories.js"></script>
+    <script src="js/mapping/parameter-mapper.js"></script>
+    <script src="js/mapping/composition-rules.js"></script>
+
+    <!-- Audio modules -->
+    <script src="js/audio/effects.js"></script>
+    <script src="js/audio/synth-patches.js"></script>
+    <script src="js/audio/voice-types.js"></script>
+    <script src="js/audio/audio-engine.js"></script>
+
+    <!-- Generation modules -->
+    <script src="js/generation/continuous-engine.js"></script>
+
+    <!-- Main application -->
+    <script src="js/main.js"></script>
+</body>
+</html>

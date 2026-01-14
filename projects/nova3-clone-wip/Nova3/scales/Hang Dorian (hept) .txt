@@ -1,0 +1,19 @@
+; Nova Generative Sequencer scale definition
+; Scale: Dorian
+9     note  1    A   
+14    note  2    D   
+16    note  3    E   
+17    note  4    F   
+19    note  5    G   
+21    note  6    A   
+23    note  7    B   
+24    note  8    C   
+26    note  9    D   
+28    note 10    E   
+29    note 11    F   
+31    note 12    G   
+33    note 13    A   
+35    note 14    B   
+36    note 15    C   
+38    note 16    D   
+40    note 17    E   

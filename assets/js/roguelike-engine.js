@@ -6,13 +6,18 @@
 // ============================================================================
 
 const CONFIG = {
-    tileSize: 16,
-    canvasWidth: 800,
-    canvasHeight: 560,
-    playerColor: '#00ffff',
-    playerChar: '@',
-    moveSpeed: 8, // pixels per frame when moving between tiles
-    interactionDistance: 1.5 // tiles
+    tileSize: 24, // Larger tiles for more detail
+    canvasWidth: 960,
+    canvasHeight: 640,
+    playerColor: '#e8d5c4',
+    playerChar: '●',
+    moveSpeed: 8,
+    interactionDistance: 1.5,
+    // Ico-inspired visual settings
+    ambientLight: 0.7,
+    wallHeight: 32, // Visual height for pseudo-3D walls
+    shadowOpacity: 0.4,
+    lightFalloff: 0.15
 };
 
 // ============================================================================
@@ -249,35 +254,37 @@ class ParticleSystem {
         this.particles.forEach(p => p.render(ctx, tileSize, offsetX, offsetY));
     }
 
-    // Create bonfire particles
+    // Create bonfire particles - soft and warm
     createBonfireEffect(x, y) {
-        if (Math.random() < 0.3) {
-            const offsetX = (Math.random() - 0.5) * 0.5;
-            const chars = ['·', '•', '°', '˙'];
-            const colors = ['#ff6600', '#ff9900', '#ffaa00'];
+        if (Math.random() < 0.2) {
+            const offsetX = (Math.random() - 0.5) * 0.6;
+            const chars = ['·', '·', '°', '˙', '⋅'];
+            const colors = ['#ffb366', '#ffc999', '#ffd5b3', '#ffe6cc'];
             this.emit(
                 x + offsetX,
                 y,
                 chars[Math.floor(Math.random() * chars.length)],
                 colors[Math.floor(Math.random() * colors.length)],
-                30 + Math.random() * 30,
-                (Math.random() - 0.5) * 0.05,
-                -0.05 - Math.random() * 0.05
+                40 + Math.random() * 40,
+                (Math.random() - 0.5) * 0.03,
+                -0.04 - Math.random() * 0.04
             );
         }
     }
 
-    // Create ambient dust particles
+    // Create ambient dust particles - soft atmospheric motes
     createAmbientDust(worldWidth, worldHeight) {
-        if (Math.random() < 0.05) {
+        if (Math.random() < 0.03) {
+            const chars = ['·', '˙', '⋅'];
+            const colors = ['#8a8278', '#9a9288', '#b0a898'];
             this.emit(
                 Math.random() * worldWidth,
                 Math.random() * worldHeight,
-                '·',
-                '#404040',
-                60 + Math.random() * 60,
-                (Math.random() - 0.5) * 0.02,
-                (Math.random() - 0.5) * 0.02
+                chars[Math.floor(Math.random() * chars.length)],
+                colors[Math.floor(Math.random() * colors.length)],
+                80 + Math.random() * 80,
+                (Math.random() - 0.5) * 0.01,
+                -0.01 + (Math.random() - 0.5) * 0.01
             );
         }
     }
@@ -366,17 +373,27 @@ class Player {
     render(ctx, tileSize, offsetX, offsetY) {
         ctx.save();
 
-        // Apply glow effect
-        ctx.shadowBlur = 10;
+        const renderX = (this.x * tileSize) + offsetX + tileSize / 2;
+        const renderY = (this.y * tileSize) + offsetY + tileSize / 2;
+
+        // Soft shadow beneath player
+        ctx.fillStyle = 'rgba(42, 37, 32, 0.4)';
+        ctx.beginPath();
+        ctx.ellipse(renderX, renderY + tileSize * 0.4, tileSize * 0.4, tileSize * 0.15, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Player character with soft glow
+        ctx.shadowBlur = 15;
         ctx.shadowColor = CONFIG.playerColor;
 
         ctx.fillStyle = CONFIG.playerColor;
-        ctx.font = `${tileSize}px Alexandria, monospace`;
+        ctx.font = `${tileSize * 0.8}px Alexandria, monospace`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
-        const renderX = (this.x * tileSize) + offsetX + tileSize / 2;
-        const renderY = (this.y * tileSize) + offsetY + tileSize / 2;
+        // Gentle pulsing
+        const pulse = Math.sin(Date.now() / 800) * 0.05 + 0.95;
+        ctx.globalAlpha = pulse;
 
         ctx.fillText(CONFIG.playerChar, renderX, renderY);
 
@@ -455,13 +472,15 @@ class NPC {
     render(ctx, tileSize, offsetX, offsetY) {
         ctx.save();
 
-        // Apply glow effect
-        ctx.shadowBlur = 15;
+        // Soft, warm glow instead of harsh glow
+        ctx.shadowBlur = 20;
         ctx.shadowColor = this.data.color;
 
         // Subtle breathing animation
-        const scale = 1 + (this.animFrame === 0 ? 0 : 0.05);
+        const scale = 1 + (this.animFrame === 0 ? 0 : 0.03);
+        const opacity = 0.9 + (this.animFrame === 0 ? 0 : 0.1);
 
+        ctx.globalAlpha = opacity;
         ctx.fillStyle = this.data.color;
         ctx.font = `${tileSize * scale}px Alexandria, monospace`;
         ctx.textAlign = 'center';
@@ -470,6 +489,8 @@ class NPC {
         const renderX = (this.x * tileSize) + offsetX + tileSize / 2;
         const renderY = (this.y * tileSize) + offsetY + tileSize / 2;
 
+        // Add soft halo
+        ctx.shadowBlur = 30;
         ctx.fillText(this.data.char, renderX, renderY);
 
         ctx.restore();
@@ -556,6 +577,121 @@ class World {
     }
 
     render(ctx, tileSize, offsetX, offsetY) {
+        // Multi-pass rendering for depth and atmosphere
+
+        // Pass 1: Floor layer with subtle shading
+        this.renderFloor(ctx, tileSize, offsetX, offsetY);
+
+        // Pass 2: Shadows cast by walls
+        this.renderShadows(ctx, tileSize, offsetX, offsetY);
+
+        // Pass 3: Walls with height/depth
+        this.renderWalls(ctx, tileSize, offsetX, offsetY);
+
+        // Pass 4: Props (bonfire, plants, etc.)
+        this.renderProps(ctx, tileSize, offsetX, offsetY);
+
+        // Pass 5: Lighting layer
+        this.renderLighting(ctx, tileSize, offsetX, offsetY);
+
+        // Pass 6: NPCs on top
+        this.npcs.forEach(npc => npc.render(ctx, tileSize, offsetX, offsetY));
+    }
+
+    renderFloor(ctx, tileSize, offsetX, offsetY) {
+        ctx.font = `${tileSize * 0.5}px Alexandria, monospace`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        for (let y = 0; y < this.height; y++) {
+            for (let x = 0; x < this.width; x++) {
+                const tile = this.tiles[y][x];
+                const config = this.tileConfig[tile];
+
+                if (!config || !config.floor) continue;
+
+                const renderX = (x * tileSize) + offsetX + tileSize / 2;
+                const renderY = (y * tileSize) + offsetY + tileSize / 2;
+
+                // Fill floor tile with stone color
+                ctx.fillStyle = config.color;
+                ctx.fillRect(
+                    (x * tileSize) + offsetX,
+                    (y * tileSize) + offsetY,
+                    tileSize,
+                    tileSize
+                );
+
+                // Add subtle texture
+                ctx.fillStyle = this.adjustColor(config.color, -0.05);
+                ctx.fillText(config.char, renderX, renderY);
+            }
+        }
+    }
+
+    renderShadows(ctx, tileSize, offsetX, offsetY) {
+        ctx.fillStyle = `rgba(42, 37, 32, ${CONFIG.shadowOpacity})`;
+
+        for (let y = 0; y < this.height; y++) {
+            for (let x = 0; x < this.width; x++) {
+                const tile = this.tiles[y][x];
+                const config = this.tileConfig[tile];
+
+                if (!config || !config.wall) continue;
+
+                // Cast shadow downward and to the right
+                const shadowOffset = 4;
+                ctx.fillRect(
+                    (x * tileSize) + offsetX + shadowOffset,
+                    (y * tileSize) + offsetY + tileSize - shadowOffset,
+                    tileSize,
+                    shadowOffset * 2
+                );
+            }
+        }
+    }
+
+    renderWalls(ctx, tileSize, offsetX, offsetY) {
+        for (let y = 0; y < this.height; y++) {
+            for (let x = 0; x < this.width; x++) {
+                const tile = this.tiles[y][x];
+                const config = this.tileConfig[tile];
+
+                if (!config || !config.wall) continue;
+                if (FIRELINK_SHRINE.npcs[tile]) continue;
+
+                const renderX = (x * tileSize) + offsetX;
+                const renderY = (y * tileSize) + offsetY;
+
+                // Draw wall with height/depth
+                // Top edge (lighter)
+                ctx.fillStyle = this.adjustColor(config.color, 0.1);
+                ctx.fillRect(renderX, renderY - CONFIG.wallHeight * 0.3, tileSize, 4);
+
+                // Main wall body
+                const gradient = ctx.createLinearGradient(
+                    renderX, renderY - CONFIG.wallHeight * 0.3,
+                    renderX, renderY + tileSize
+                );
+                gradient.addColorStop(0, this.adjustColor(config.color, 0.05));
+                gradient.addColorStop(1, this.adjustColor(config.color, -0.1));
+
+                ctx.fillStyle = gradient;
+                ctx.fillRect(
+                    renderX,
+                    renderY - CONFIG.wallHeight * 0.3 + 4,
+                    tileSize,
+                    tileSize + CONFIG.wallHeight * 0.3
+                );
+
+                // Edge highlights for depth
+                ctx.fillStyle = this.adjustColor(config.color, 0.15);
+                ctx.fillRect(renderX, renderY, 2, tileSize);
+            }
+        }
+    }
+
+    renderProps(ctx, tileSize, offsetX, offsetY) {
         ctx.font = `${tileSize}px Alexandria, monospace`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -565,32 +701,80 @@ class World {
                 const tile = this.tiles[y][x];
                 const config = this.tileConfig[tile];
 
-                if (!config) continue;
-
-                // Skip NPC tiles (they render separately)
+                if (!config || config.wall || config.floor) continue;
                 if (FIRELINK_SHRINE.npcs[tile]) continue;
-
-                ctx.save();
-
-                // Apply glow to glowing tiles
-                if (config.glow) {
-                    ctx.shadowBlur = 8;
-                    ctx.shadowColor = config.color;
-                }
-
-                ctx.fillStyle = config.color;
 
                 const renderX = (x * tileSize) + offsetX + tileSize / 2;
                 const renderY = (y * tileSize) + offsetY + tileSize / 2;
 
+                ctx.save();
+
+                // Gentle glow for light sources
+                if (config.glow && config.light) {
+                    ctx.shadowBlur = config.light * 8;
+                    ctx.shadowColor = config.color;
+                }
+
+                ctx.fillStyle = config.color;
                 ctx.fillText(config.char, renderX, renderY);
 
                 ctx.restore();
             }
         }
+    }
 
-        // Render NPCs on top
-        this.npcs.forEach(npc => npc.render(ctx, tileSize, offsetX, offsetY));
+    renderLighting(ctx, tileSize, offsetX, offsetY) {
+        // Soft atmospheric lighting from light sources
+        ctx.globalCompositeOperation = 'lighter';
+
+        for (let y = 0; y < this.height; y++) {
+            for (let x = 0; x < this.width; x++) {
+                const tile = this.tiles[y][x];
+                const config = this.tileConfig[tile];
+
+                if (!config || !config.light) continue;
+
+                const lightRadius = config.light * tileSize * 2;
+                const centerX = (x * tileSize) + offsetX + tileSize / 2;
+                const centerY = (y * tileSize) + offsetY + tileSize / 2;
+
+                const gradient = ctx.createRadialGradient(
+                    centerX, centerY, 0,
+                    centerX, centerY, lightRadius
+                );
+
+                const lightColor = config.color;
+                gradient.addColorStop(0, this.hexToRGBA(lightColor, 0.3));
+                gradient.addColorStop(0.5, this.hexToRGBA(lightColor, 0.1));
+                gradient.addColorStop(1, this.hexToRGBA(lightColor, 0));
+
+                ctx.fillStyle = gradient;
+                ctx.fillRect(
+                    centerX - lightRadius,
+                    centerY - lightRadius,
+                    lightRadius * 2,
+                    lightRadius * 2
+                );
+            }
+        }
+
+        ctx.globalCompositeOperation = 'source-over';
+    }
+
+    adjustColor(hex, amount) {
+        const num = parseInt(hex.replace('#', ''), 16);
+        const r = Math.max(0, Math.min(255, ((num >> 16) & 0xff) + amount * 255));
+        const g = Math.max(0, Math.min(255, ((num >> 8) & 0xff) + amount * 255));
+        const b = Math.max(0, Math.min(255, (num & 0xff) + amount * 255));
+        return `rgb(${r}, ${g}, ${b})`;
+    }
+
+    hexToRGBA(hex, alpha) {
+        const num = parseInt(hex.replace('#', ''), 16);
+        const r = (num >> 16) & 0xff;
+        const g = (num >> 8) & 0xff;
+        const b = num & 0xff;
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
     }
 }
 
@@ -984,20 +1168,35 @@ class Game {
 
     renderInteractionPrompt(npc, offsetX, offsetY) {
         this.ctx.save();
-        this.ctx.font = '12px Alexandria, monospace';
+        this.ctx.font = '14px Alexandria, monospace';
         this.ctx.textAlign = 'center';
-        this.ctx.fillStyle = '#00ff41';
 
         const promptX = (npc.x * CONFIG.tileSize) + offsetX + CONFIG.tileSize / 2;
-        const promptY = (npc.y * CONFIG.tileSize) + offsetY - 10;
+        const promptY = (npc.y * CONFIG.tileSize) + offsetY - 12;
+
+        // Soft glow
+        this.ctx.shadowBlur = 10;
+        this.ctx.shadowColor = npc.data.color;
 
         // Pulsing animation
-        const pulse = Math.sin(Date.now() / 200) * 0.2 + 0.8;
+        const pulse = Math.sin(Date.now() / 300) * 0.15 + 0.85;
         this.ctx.globalAlpha = pulse;
+
+        // Use NPC's color but lighter
+        const color = this.adjustLightness(npc.data.color, 0.2);
+        this.ctx.fillStyle = color;
 
         this.ctx.fillText('[E] Talk', promptX, promptY);
 
         this.ctx.restore();
+    }
+
+    adjustLightness(hex, amount) {
+        const num = parseInt(hex.replace('#', ''), 16);
+        const r = Math.max(0, Math.min(255, ((num >> 16) & 0xff) + amount * 255));
+        const g = Math.max(0, Math.min(255, ((num >> 8) & 0xff) + amount * 255));
+        const b = Math.max(0, Math.min(255, (num & 0xff) + amount * 255));
+        return `rgb(${r}, ${g}, ${b})`;
     }
 
     showMessage(text) {

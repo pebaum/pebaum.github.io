@@ -3,14 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Firelink Shrine</title>
-    <link rel="preload" href="assets/fonts/Alexandria.ttf" as="font" type="font/ttf" crossorigin>
+    <title>Peter Baumgartner</title>
     <style>
-        @font-face {
-            font-family: 'Alexandria';
-            src: url('assets/fonts/Alexandria.ttf') format('truetype');
-        }
-
         * {
             margin: 0;
             padding: 0;
@@ -20,114 +14,300 @@
         body {
             background: #000;
             color: #fff;
-            font-family: 'Alexandria', 'Courier New', monospace;
+            font-family: 'Courier New', monospace;
             overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            image-rendering: pixelated;
-            image-rendering: crisp-edges;
+            height: 100vh;
         }
 
-        #gameContainer {
-            position: relative;
-            background: #000;
-            box-shadow: 0 0 50px rgba(0, 255, 65, 0.1);
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
-        #gameCanvas {
-            display: block;
-            background: #0a0a0a;
-            border-radius: 8px;
-            image-rendering: pixelated;
-            image-rendering: crisp-edges;
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        #effectsCanvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            pointer-events: none;
-            border-radius: 8px;
-        }
-
-        #loadingScreen {
-            position: absolute;
-            top: 0;
-            left: 0;
+        #canvas {
+            position: fixed;
+            inset: 0;
             width: 100%;
             height: 100%;
-            background: #000;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            transition: opacity 1s ease-out;
+            opacity: 0;
+            animation: fadeIn 1.5s ease-out 0.3s forwards;
         }
 
-        #loadingScreen.fade-out {
+        .ui {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 30px;
+        }
+
+        .top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .info-block {
+            font-size: 10px;
+            letter-spacing: 0.15em;
+            line-height: 1.8;
+            text-transform: uppercase;
+            text-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+            opacity: 0;
+        }
+
+        .info-block.loaded {
+            animation: fadeInUp 1.2s ease-out forwards;
+        }
+
+        .info-block.loaded strong,
+        .info-block.loaded a,
+        .info-block.loaded span,
+        .info-block.loaded br + * {
+            opacity: 0.5;
+        }
+
+        .info-block strong {
+            opacity: 1;
+            font-weight: normal;
+        }
+
+        .info-block a {
+            color: #fff;
+            text-decoration: none;
+            opacity: 0.5;
+            transition: opacity 0.3s;
+            pointer-events: all;
+        }
+
+        .info-block a:hover {
+            opacity: 1;
+        }
+
+        .controls {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            pointer-events: all;
+            z-index: 100;
+            opacity: 0;
+        }
+
+        .controls.loaded {
+            animation: fadeInUp 1.2s ease-out forwards;
+        }
+
+        button {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: rgba(255, 255, 255, 0.6);
+            padding: 10px 25px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 9px;
+            letter-spacing: 0.3em;
+            transition: all 0.3s;
+            text-transform: uppercase;
+        }
+
+        button:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.6);
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .volume-control {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            pointer-events: all;
+            font-size: 9px;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            z-index: 100;
+            opacity: 0;
+        }
+
+        .volume-control.loaded {
+            animation: fadeInUp 1.2s ease-out forwards;
+        }
+
+        .volume-control.loaded span {
+            opacity: 0.8;
+        }
+
+        .volume-slider {
+            width: 80px;
+            height: 2px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: rgba(255, 255, 255, 0.3);
+            outline: none;
+            cursor: pointer;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 10px;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            border-radius: 50%;
+        }
+
+        .volume-slider::-moz-range-thumb {
+            width: 10px;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            border-radius: 50%;
+            border: none;
+        }
+
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: opacity 1.5s;
+        }
+
+        .overlay.hidden {
             opacity: 0;
             pointer-events: none;
         }
 
-        .loading-text {
-            font-size: 1.2rem;
-            color: #808080;
-            letter-spacing: 0.1em;
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 0.5; }
-            50% { opacity: 1; }
-        }
-
-        .controls-hint {
-            position: absolute;
-            bottom: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 0.8rem;
-            color: #606060;
-            text-align: center;
-            z-index: 10;
-        }
-
-        .controls-hint span {
-            color: #00ff41;
-        }
-
-        #audioIndicator {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            font-size: 0.8rem;
-            color: #808080;
-            z-index: 10;
-        }
     </style>
 </head>
 <body>
-    <div id="gameContainer">
-        <canvas id="gameCanvas"></canvas>
-        <canvas id="effectsCanvas"></canvas>
+    <canvas id="canvas"></canvas>
 
-        <div id="loadingScreen">
-            <div class="loading-text">LIGHTING THE BONFIRE...</div>
+    <div class="ui">
+        <div class="top">
+            <div class="info-block" id="infoLeft">
+                <strong>Peter Baumgartner</strong><br>
+                37 · Mission Viejo<br>
+                <a href="about/index.html">PM @ Microsoft</a><br>
+                <a href="https://open.spotify.com/artist/YOUR_SPOTIFY_ID" target="_blank">musician</a> · <a href="#" id="builderLink">builder</a><br>
+                <a href="mailto:p.l.baumgartner@gmail.com">contact</a>
+            </div>
+            <div class="info-block" id="infoRight" style="text-align: right;">
+                <strong id="elapsed">00:00</strong><br>
+                <span id="key">—</span> <span id="mode">—</span><br>
+                <strong id="active-voices">0</strong> ACTIVE<br>
+                <span id="voice-count">0</span> VOICES
+            </div>
         </div>
-
-        <div class="controls-hint">
-            <span>WASD/Arrows</span> to move | <span>E</span> to interact | <span>M</span> to mute | <span>+/-</span> volume
-        </div>
-
-        <div id="audioIndicator"></div>
     </div>
 
-    <!-- Core game scripts -->
-    <script src="assets/js/level-data.js"></script>
-    <script src="assets/js/crt-effects.js"></script>
-    <script src="assets/js/roguelike-engine.js"></script>
+    <div class="controls" id="controls">
+        <button id="pauseBtn">PAUSE</button>
+        <button id="restartBtn">RESTART</button>
+    </div>
+
+    <div class="volume-control" id="volumeControl">
+        <span>VOL</span>
+        <input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="100">
+    </div>
+
+    <!-- Projects modal -->
+    <div id="projectsModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000; padding: 60px; overflow-y: auto; font-family: 'Courier New', monospace;">
+        <button onclick="document.getElementById('projectsModal').style.display='none'" style="position: absolute; top: 30px; right: 30px; background: transparent; border: 1px solid rgba(255,255,255,0.3); color: rgba(255,255,255,0.6); padding: 10px 25px; cursor: pointer; font-family: 'Courier New', monospace; font-size: 9px; letter-spacing: 0.3em; text-transform: uppercase;">CLOSE</button>
+        <div style="max-width: 800px; margin: 0 auto; font-size: 12px; line-height: 2; letter-spacing: 0.05em;">
+            <h2 style="margin-bottom: 30px; letter-spacing: 0.3em; opacity: 0.9; font-size: 14px; text-transform: uppercase;">Projects</h2>
+
+            <h3 style="margin-top: 30px; margin-bottom: 15px; opacity: 0.5; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;">Music</h3>
+            <div style="margin: 5px 0;"><a href="projects/drift/Drift v7/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Drift v7 - Generative Ambient</a></div>
+            <div style="margin: 5px 0;"><a href="projects/drift/Drift v6/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Drift v6</a></div>
+            <div style="margin: 5px 0;"><a href="projects/drift/Drift v5/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Drift v5</a></div>
+
+            <h3 style="margin-top: 30px; margin-bottom: 15px; opacity: 0.5; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;">Interactive Art</h3>
+            <div style="margin: 5px 0;"><a href="projects/interactive-art/dungeongame.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Dungeon Game</a></div>
+            <div style="margin: 5px 0;"><a href="projects/interactive-art/mazesend.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Maze Send</a></div>
+            <div style="margin: 5px 0;"><a href="projects/interactive-art/waterlillies.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Water Lillies</a></div>
+
+            <h3 style="margin-top: 30px; margin-bottom: 15px; opacity: 0.5; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;">Code</h3>
+            <div style="margin: 5px 0;"><a href="projects/benji-site/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Benji Site</a></div>
+            <div style="margin: 5px 0;"><a href="projects/blade-honor/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Blade Honor</a></div>
+            <div style="margin: 5px 0;"><a href="projects/forward-playground/play.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Forward Playground</a></div>
+        </div>
+    </div>
+
+    <!-- Click-to-start overlay (required for browser autoplay policy) -->
+    <div class="overlay" id="overlay" style="cursor: pointer;">
+        <div style="font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 0.2em; opacity: 0.5; text-transform: uppercase;">
+            enter ⏎
+        </div>
+        <button id="startBtn" style="display: none;"></button>
+    </div>
+
+    <script src="projects/drift/Drift v7/drift7.js"></script>
+    <script>
+        // Handle builder link
+        document.getElementById('builderLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('projectsModal').style.display = 'block';
+        });
+
+        // Accept any interaction to start (required for browser autoplay policy)
+        const overlay = document.getElementById('overlay');
+        const startBtn = document.getElementById('startBtn');
+
+        function triggerStart() {
+            if (overlay.classList.contains('hidden')) return;
+            startBtn.click();
+            // Remove listeners after first interaction
+            document.removeEventListener('keydown', triggerStart);
+            overlay.removeEventListener('click', triggerStart);
+        }
+
+        // Accept any key press or click anywhere
+        document.addEventListener('keydown', triggerStart);
+        overlay.addEventListener('click', triggerStart);
+
+        // Staggered fade-in animations
+        window.addEventListener('load', () => {
+            const elements = [
+                { id: 'infoLeft', delay: 800 },
+                { id: 'infoRight', delay: 1200 },
+                { id: 'controls', delay: 1600 },
+                { id: 'volumeControl', delay: 1900 }
+            ];
+
+            // Randomize delays slightly
+            elements.forEach(item => {
+                const randomDelay = item.delay + (Math.random() * 400 - 200); // +/- 200ms
+                setTimeout(() => {
+                    const el = document.getElementById(item.id);
+                    if (el) {
+                        el.classList.add('loaded');
+                    }
+                }, randomDelay);
+            });
+        });
+    </script>
 </body>
 </html>

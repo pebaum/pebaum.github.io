@@ -1,0 +1,19 @@
+; Nova Generative Sequencer scale definition
+; Scale: Blues
+0     note  1    C   
+5     note  2    F   
+8     note  3    Ab  
+10    note  4    Bb  
+11    note  5    B   
+12    note  6    C   
+15    note  7    Eb  
+17    note  8    F   
+20    note  9    Ab  
+22    note 10    Bb  
+23    note 11    B   
+24    note 12    C   
+27    note 13    Eb  
+29    note 14    F   
+32    note 15    Ab  
+34    note 16    Bb  
+35    note 17    B   

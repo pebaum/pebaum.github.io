@@ -1,0 +1,19 @@
+; Nova Generative Sequencer scale definition
+; Scale: Chromatic
+0     note  1    C   
+1     note  2    C#  
+2     note  3    D   
+3     note  4    D#  
+4     note  5    E   
+5     note  6    F   
+6     note  7    F#  
+7     note  8    G   
+8     note  9    G#  
+9     note 10    A   
+10    note 11    A#  
+11    note 12    B   
+12    note 13    C   
+13    note 14    C#  
+14    note 15    D   
+15    note 16    D#  
+16    note 17    E   

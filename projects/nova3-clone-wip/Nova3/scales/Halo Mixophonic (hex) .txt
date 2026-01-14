@@ -1,0 +1,19 @@
+; Nova Generative Sequencer scale definition
+; Scale: Mixophonic
+0     note  1    C   
+5     note  2    F   
+7     note  3    G   
+10    note  4    Bb  
+12    note  5    C   
+14    note  6    D   
+16    note  7    E   
+19    note  8    G   
+22    note  9    Bb  
+24    note 10    C   
+26    note 11    D   
+28    note 12    E   
+31    note 13    G   
+34    note 14    Bb  
+36    note 15    C   
+38    note 16    D   
+40    note 17    E   

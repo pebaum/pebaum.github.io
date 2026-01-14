@@ -1,0 +1,19 @@
+; Nova Generative Sequencer scale definition
+; Scale: Sho
+7     note  1    G   
+12    note  2    C   
+14    note  3    D   
+15    note  4    Eb  
+17    note  5    F   
+19    note  6    G   
+21    note  7    A   
+24    note  8    C   
+26    note  9    D   
+27    note 10    Eb  
+29    note 11    F   
+31    note 12    G   
+33    note 13    A   
+36    note 14    C   
+38    note 15    D   
+39    note 16    Eb  
+41    note 17    F   

@@ -1,0 +1,19 @@
+; Nova Generative Sequencer scale definition
+; Scale: Minor Pentatonic 9
+0     note  1    C   
+5     note  2    F   
+8     note  3    Ab  
+10    note  4    Bb  
+12    note  5    C   
+15    note  6    Eb  
+17    note  7    F   
+19    note  8    G   
+20    note  9    Ab  
+22    note 10    Bb  
+24    note 11    C   
+27    note 12    Eb  
+29    note 13    F   
+31    note 14    G   
+32    note 15    Ab  
+34    note 16    Bb  
+36    note 17    C   

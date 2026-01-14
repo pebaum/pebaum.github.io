@@ -1,0 +1,151 @@
+; NovaMidiMap.txt 
+; Midi mappings for Nova3
+; 
+; target cc#
+; target cc#:chan
+; target k#
+; target k#:chan
+
+Velocity    cc7
+VelJitt     cc11
+
+NumRows     cc16
+NumColums   cc17
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;   The following lines list the possible targets
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+;; ======================== General ======================
+; 
+; Enabled    ccXX
+; Channel    ccXX
+; 
+;; ========================= Time ========================
+; 
+; TimeUnits    cc12   ; 
+; TimeDbl      ccXX
+; TimeHlf      ccXX
+; Slow         cc14   ;
+; LengthUnits  cc13   ;
+; Swing        ccXX
+; Human        ccXX
+; 
+;; ======================= Dynamics ========================
+; 
+; Velocity     cc11   ;
+; VelJitt      cc16   ;
+; 
+;; ======================== Pattern ========================
+; 
+; NumRows       ccXX
+; NumColums     ccXX
+; 
+; NoteProb      ccXX
+; Tilt          ccXX
+; ObsProb       ccXX
+; RepeatProb    ccXX
+; NearProb      ccXX
+; Simple        ccXX
+; Wobble        ccXX
+; WrapProb      ccXX
+; GrpLim        ccXX
+; 
+; ClimbN        ccXX
+; ClimbE        ccXX
+; ClimbS        ccXX
+; ClimbW        ccXX
+; 
+; RvDelOld      ccXX
+; RvDelNew      ccXX
+; ClrRov        ccXX
+; ClrObs        ccXX
+; ClrAll        ccXX
+; 
+;; ====================== Sequencer ========================
+; 
+; SeqNStep    ccXX
+; SeqOn       ccXX
+; 
+;; ==== Wall/Scale association (radio buttons) =============
+; 
+; ScaleN   ccXX
+; ScaleE   ccXX
+; ScaleS   ccXX
+; ScaleW   ccXX
+; 
+; MuteN    ccXX
+; MuteE    ccXX
+; MuteS    ccXX
+; MuteW    ccXX
+;    
+;; ================= Scale variations ======================
+; 
+; Transp1    ccXX
+; Transp2    ccXX
+; Transp3    ccXX
+; Transp4    ccXX
+; 
+; Trans1up   ccXX
+; Trans2up   ccXX
+; Trans3up   ccXX
+; Trans4up   ccXX
+; 
+; Trans1dn   ccXX
+; Trans2dn   ccXX
+; Trans3dn   ccXX
+; Trans4dn   ccXX
+; 
+; Mutate1    ccXX  ; forward/reverse
+; Mutate2    ccXX
+; Mutate3    ccXX
+; Mutate4    ccXX
+; 
+; Rotate1    ccXX
+; Rotate2    ccXX
+; Rotate3    ccXX
+; Rotate4    ccXX
+; 
+;; ==================== Matrix Flips ==============================
+; 
+; MFlipH     ccXX
+; MFlipV     ccXX
+; MShiftR    ccXX
+; MShiftL    ccXX
+; MShiftU    ccXX
+; MShiftD    ccXX
+; MRotR      ccXX
+; MRotL      ccXX
+; MStagrU    ccXX
+; MStagrD    ccXX
+; 
+;; ========================= Pattern ====================================
+; 
+; Save1     kXX
+; Save2     kXX
+; Save3     kXX
+; Save4     kXX
+; Save5     kXX
+; Save6     kXX
+; Save7     kXX
+; Save8     kXX
+; 
+; Restore1  kXX
+; Restore2  kXX
+; Restore3  kXX
+; Restore4  kXX
+; Restore5  kXX
+; Restore6  kXX
+; Restore7  kXX
+; Restore8  kXX
+;    
+; Clear1    kXX
+; Clear2    kXX
+; Clear3    kXX
+; Clear4    kXX
+; Clear5    kXX
+; Clear6    kXX
+; Clear7    kcXX
+; Clear8    kXX
+; 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
