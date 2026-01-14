@@ -147,121 +147,266 @@ class TextscapeApp {
     }
 
     /**
-     * Display hierarchical associations
+     * Display hierarchical decision tree - shows how all music was determined
      */
     displayAssociations(params, text) {
-        const {mood, tension, density, tempo, scale, scaleName, voiceWeights, activeVoices, effects, analyses} = params;
+        const {mood, tension, density, tempo, scale, scaleName, voiceWeights, activeVoices, effects, analyses, tonalCenter} = params;
 
         let html = '';
 
-        // Global Musical Parameters
-        html += this.createCategory('Global Musical Parameters', [
-            { label: 'Mood', value: this.formatValue(mood), detail: `${mood > 0 ? 'Bright' : 'Dark'} (${mood > 0 ? '+' : ''}${mood.toFixed(2)})` },
-            { label: 'Tension', value: this.formatValue(tension), detail: tension > 0.6 ? 'High intensity' : 'Calm atmosphere' },
-            { label: 'Density', value: this.formatValue(density), detail: `${(density * 100).toFixed(0)}% note probability` },
-            { label: 'Tempo', value: `${tempo.toFixed(2)}x`, detail: tempo > 1 ? 'Faster than base' : 'Slower than base' }
-        ]);
-
-        // Tonal Center (Global Key) - Highlighted if available
-        if (params.tonalCenter) {
-            html += this.createCategory('🎵 Global Tonal Center (Locked)', [
-                { label: 'Key', value: params.tonalCenter.globalKeyName, detail: 'Root note for entire piece' },
-                { label: 'Mode', value: params.tonalCenter.globalModeName, detail: scale.description || '' },
-                { label: 'Cultural Origin', value: scale.culture || 'Multicultural' },
-                { label: 'Compound Valence', value: params.tonalCenter.compoundMetrics.valence.toFixed(3), detail: 'Average emotional tone' },
-                { label: 'Compound Arousal', value: params.tonalCenter.compoundMetrics.arousal.toFixed(3), detail: 'Average energy level' }
-            ]);
-        } else {
-            // Fallback if no tonal center
-            html += this.createCategory('Scale & Harmony', [
-                { label: 'Scale', value: scaleName, detail: scale.description || '' },
-                { label: 'Cultural Origin', value: scale.culture || 'Multicultural' },
-                { label: 'Root Note', value: this.midiToNoteName(params.rootNote) }
-            ]);
-        }
-
-        // Active Voices
-        const voiceList = activeVoices.map(v => {
-            const weight = voiceWeights[`${v}Weight`];
-            return { voice: v, weight: weight ? weight.toFixed(2) : '0.00' };
-        });
-
-        html += '<div class="assoc-category">';
-        html += '<div class="assoc-header">▸ Active Voices</div>';
-        for (const { voice, weight } of voiceList) {
-            html += `<div class="assoc-item">`;
-            html += `<span class="assoc-label">${voice}:</span> `;
-            html += `<span class="assoc-value">weight ${weight}</span>`;
-            html += `</div>`;
-        }
+        // Title
+        html += '<div style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1);">';
+        html += '<div style="font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; opacity: 0.5; margin-bottom: 10px;">Decision tree showing how text → music</div>';
         html += '</div>';
 
-        // Word Associations
-        const wordCats = analyses.sentiment.detectedEmotions;
-        if (wordCats && wordCats.length > 0) {
-            html += '<div class="assoc-category">';
-            html += '<div class="assoc-header">▸ Detected Emotions</div>';
-            for (const emotion of wordCats.slice(0, 5)) {
-                html += `<div class="assoc-item">`;
-                html += `<span class="assoc-value">${emotion.emotion}</span>`;
-                if (emotion.description) {
-                    html += `<div class="assoc-detail">${emotion.description}</div>`;
-                }
-                html += `</div>`;
-            }
-            html += '</div>';
-        }
-
-        // Detected Word Categories
-        const categories = params.analyses.wordCategories;
-        if (categories) {
-            const catNames = ['temporal', 'spatial', 'textural', 'colors', 'nature', 'abstract'];
-
-            for (const catName of catNames) {
-                const words = categories[catName];
-                if (words && words.length > 0) {
-                    html += '<div class="assoc-category">';
-                    html += `<div class="assoc-header">▸ ${catName.charAt(0).toUpperCase() + catName.slice(1)} Words</div>`;
-
-                    for (const wordData of words.slice(0, 5)) {
-                        html += `<div class="assoc-item">`;
-                        html += `<span class="assoc-value">"${wordData.word}"</span>`;
-
-                        // Show mapped parameters
-                        const params = wordData.params;
-                        const paramKeys = Object.keys(params).slice(0, 3);
-                        for (const key of paramKeys) {
-                            html += `<div class="assoc-subitem">${key}: ${this.formatParamValue(params[key])}</div>`;
-                        }
-
-                        html += `</div>`;
+        // ROOT: Tonal Center (Most Important - Always Expanded)
+        if (tonalCenter) {
+            html += this.createTreeNode({
+                id: 'tonal-center',
+                label: '🎵 Global Tonal Center',
+                value: `${tonalCenter.globalKeyName} ${tonalCenter.globalModeName}`,
+                expanded: true,
+                highlight: true,
+                children: [
+                    {
+                        label: 'Root Note',
+                        value: tonalCenter.globalKeyName,
+                        detail: `MIDI ${tonalCenter.globalKey} - locked for entire piece`
+                    },
+                    {
+                        label: 'Mode/Scale',
+                        value: tonalCenter.globalModeName,
+                        detail: scale.description || ''
+                    },
+                    {
+                        label: 'Cultural Origin',
+                        value: scale.culture || 'multicultural',
+                        detail: ''
+                    },
+                    {
+                        id: 'compound-metrics',
+                        label: 'Compound Metrics',
+                        expanded: true,
+                        children: [
+                            {
+                                label: 'Valence (mood)',
+                                value: tonalCenter.compoundMetrics.valence.toFixed(3),
+                                detail: `${tonalCenter.compoundMetrics.valence > 0.5 ? 'Positive' : tonalCenter.compoundMetrics.valence < 0.5 ? 'Negative' : 'Neutral'} - weighted avg of all words`
+                            },
+                            {
+                                label: 'Arousal (energy)',
+                                value: tonalCenter.compoundMetrics.arousal.toFixed(3),
+                                detail: `${tonalCenter.compoundMetrics.arousal > 0.6 ? 'High energy' : tonalCenter.compoundMetrics.arousal < 0.4 ? 'Low energy' : 'Moderate'}`
+                            },
+                            {
+                                label: 'Dominance (presence)',
+                                value: tonalCenter.compoundMetrics.dominance.toFixed(3),
+                                detail: `${tonalCenter.compoundMetrics.dominance > 0.6 ? 'Strong presence' : tonalCenter.compoundMetrics.dominance < 0.4 ? 'Subtle' : 'Balanced'}`
+                            },
+                            {
+                                label: 'Tension (calculated)',
+                                value: tonalCenter.compoundMetrics.tension.toFixed(3),
+                                detail: 'From arousal + |valence|'
+                            }
+                        ]
+                    },
+                    {
+                        id: 'word-analysis',
+                        label: 'Word Analysis Profile',
+                        expanded: false,
+                        children: [
+                            {
+                                label: 'Total words analyzed',
+                                value: tonalCenter.tonalProfile.totalWords
+                            },
+                            {
+                                label: 'Words with VAD data',
+                                value: tonalCenter.tonalProfile.wordsWithVAD
+                            },
+                            {
+                                label: 'Content words',
+                                value: tonalCenter.tonalProfile.contentWords,
+                                detail: 'Nouns, verbs, adjectives (weight 1.0)'
+                            },
+                            {
+                                label: 'Function words',
+                                value: tonalCenter.tonalProfile.functionWords,
+                                detail: 'The, and, of, etc. (weight 0.1)'
+                            }
+                        ]
                     }
+                ]
+            });
+        }
 
-                    html += '</div>';
+        // Global Musical Parameters
+        html += this.createTreeNode({
+            id: 'global-params',
+            label: 'Global Musical Parameters',
+            expanded: true,
+            children: [
+                {
+                    label: 'Mood',
+                    value: mood.toFixed(3),
+                    detail: `${mood > 0 ? 'Bright/Positive' : 'Dark/Negative'} (${mood > 0 ? '+' : ''}${mood.toFixed(2)})`
+                },
+                {
+                    label: 'Tension',
+                    value: tension.toFixed(3),
+                    detail: tension > 0.6 ? 'High intensity' : tension < 0.3 ? 'Very calm' : 'Moderate'
+                },
+                {
+                    label: 'Density',
+                    value: density.toFixed(3),
+                    detail: `${(density * 100).toFixed(0)}% note probability - ${density > 0.6 ? 'dense' : density < 0.3 ? 'sparse' : 'moderate'}`
+                },
+                {
+                    label: 'Tempo',
+                    value: `${tempo.toFixed(2)}x`,
+                    detail: tempo > 1.2 ? 'Very fast' : tempo > 1 ? 'Faster than base' : tempo < 0.6 ? 'Very slow' : 'Slower than base'
+                }
+            ]
+        });
+
+        // Active Voices (what's playing)
+        html += this.createTreeNode({
+            id: 'active-voices',
+            label: 'Active Voice Types',
+            value: `${activeVoices.length} voices`,
+            expanded: false,
+            children: activeVoices.map(v => ({
+                label: v,
+                value: `weight ${voiceWeights[`${v}Weight`]?.toFixed(2) || '0.00'}`,
+                detail: this.getVoiceDescription(v)
+            }))
+        });
+
+        // Text Analysis Sources
+        if (analyses) {
+            // Detected Emotions
+            const detectedEmotions = analyses.sentiment?.detectedEmotions || [];
+            if (detectedEmotions.length > 0) {
+                html += this.createTreeNode({
+                    id: 'detected-emotions',
+                    label: 'Detected Emotions',
+                    value: `${detectedEmotions.length} emotions`,
+                    expanded: false,
+                    children: detectedEmotions.slice(0, 8).map(em => ({
+                        label: em.emotion,
+                        value: '',
+                        detail: em.description || ''
+                    }))
+                });
+            }
+
+            // Word Categories with Musical Effects
+            const categories = analyses.wordCategories;
+            if (categories) {
+                const catNames = ['temporal', 'spatial', 'textural', 'colors', 'nature', 'abstract'];
+                const categoriesWithWords = catNames.filter(cat => categories[cat] && categories[cat].length > 0);
+
+                if (categoriesWithWords.length > 0) {
+                    html += this.createTreeNode({
+                        id: 'word-categories',
+                        label: 'Special Word Categories',
+                        value: `${categoriesWithWords.length} categories`,
+                        expanded: false,
+                        children: categoriesWithWords.map(catName => {
+                            const words = categories[catName];
+                            return {
+                                id: `cat-${catName}`,
+                                label: catName.charAt(0).toUpperCase() + catName.slice(1),
+                                value: `${words.length} words`,
+                                expanded: false,
+                                children: words.slice(0, 5).map(wordData => {
+                                    const wordParams = wordData.params;
+                                    const paramsList = Object.keys(wordParams).slice(0, 3).map(key => {
+                                        return {
+                                            label: key,
+                                            value: this.formatParamValue(wordParams[key])
+                                        };
+                                    });
+                                    return {
+                                        id: `word-${wordData.word}`,
+                                        label: `"${wordData.word}"`,
+                                        value: '',
+                                        expanded: false,
+                                        children: paramsList
+                                    };
+                                })
+                            };
+                        })
+                    });
                 }
             }
         }
 
-        // Effects Settings
-        html += this.createCategory('Effects & Timbre', [
-            { label: 'Reverb Size', value: effects.reverbSize, detail: 'Spatial depth' },
-            { label: 'Reverb Mix', value: `${(effects.reverbMix * 100).toFixed(0)}%` },
-            { label: 'Delay Time', value: `${(effects.delayTime * 1000).toFixed(0)}ms` },
-            { label: 'Low-Pass Filter', value: `${(effects.lowPass * 100).toFixed(0)}%`, detail: 'Brightness' }
-        ]);
+        // Audio Effects
+        html += this.createTreeNode({
+            id: 'effects',
+            label: 'Audio Effects',
+            expanded: false,
+            children: [
+                {
+                    id: 'reverb',
+                    label: 'Reverb',
+                    expanded: false,
+                    children: [
+                        { label: 'Size', value: effects.reverbSize, detail: 'Spatial depth' },
+                        { label: 'Mix', value: `${(effects.reverbMix * 100).toFixed(0)}%`, detail: 'Wet/dry balance' }
+                    ]
+                },
+                {
+                    id: 'delay',
+                    label: 'Delay',
+                    expanded: false,
+                    children: [
+                        { label: 'Time', value: `${(effects.delayTime * 1000).toFixed(0)}ms`, detail: 'Echo timing' }
+                    ]
+                },
+                {
+                    id: 'filters',
+                    label: 'Filters',
+                    expanded: false,
+                    children: [
+                        { label: 'Low-Pass', value: `${(effects.lowPass * 100).toFixed(0)}%`, detail: 'Brightness control' },
+                        { label: 'High-Pass', value: `${(effects.highPass * 100).toFixed(0)}%`, detail: 'Warmth control' }
+                    ]
+                }
+            ]
+        });
 
         // Structural Analysis
         if (analyses.structural) {
             const struct = analyses.structural;
-            html += this.createCategory('Text Structure', [
-                { label: 'Sentences', value: struct.sentenceCount },
-                { label: 'Paragraphs', value: struct.paragraphCount },
-                { label: 'Avg Sentence Length', value: `${struct.averageSentenceLength.toFixed(1)} words` },
-                { label: 'Narrative Arc', value: struct.structure.arc, detail: struct.structure.type }
-            ]);
+            html += this.createTreeNode({
+                id: 'structure',
+                label: 'Text Structure',
+                expanded: false,
+                children: [
+                    { label: 'Sentences', value: struct.sentenceCount },
+                    { label: 'Paragraphs', value: struct.paragraphCount },
+                    { label: 'Avg Sentence Length', value: `${struct.averageSentenceLength.toFixed(1)} words` },
+                    { label: 'Narrative Arc', value: struct.structure.arc, detail: struct.structure.type },
+                    {
+                        id: 'punctuation',
+                        label: 'Punctuation Effects',
+                        expanded: false,
+                        children: [
+                            { label: 'Periods (.)' , value: struct.punctuationProfile.counts.period, detail: 'Resolution points' },
+                            { label: 'Exclamations (!)', value: struct.punctuationProfile.counts.exclamation, detail: 'Dynamic accents' },
+                            { label: 'Questions (?)', value: struct.punctuationProfile.counts.question, detail: 'Rising contours' },
+                            { label: 'Ellipses (...)', value: struct.punctuationProfile.counts.ellipsis, detail: 'Suspensions' }
+                        ]
+                    }
+                ]
+            });
         }
 
         this.associationsTree.innerHTML = html;
+
+        // Add click handlers for expandable nodes
+        this.addTreeExpandHandlers();
     }
 
     /**
@@ -311,6 +456,88 @@ class TextscapeApp {
     }
 
     /**
+     * Create a hierarchical tree node (expandable/collapsible)
+     */
+    createTreeNode(node) {
+        const id = node.id || `node-${Math.random().toString(36).substr(2, 9)}`;
+        const expanded = node.expanded !== undefined ? node.expanded : false;
+        const hasChildren = node.children && node.children.length > 0;
+        const highlight = node.highlight || false;
+
+        let html = '<div class="tree-node' + (expanded ? ' expanded' : '') + (highlight ? ' tonal-center-highlight' : '') + `" data-node-id="${id}">`;
+
+        // Header (clickable if has children)
+        html += '<div class="tree-node-header" ' + (hasChildren ? 'onclick="window.textscapeApp.toggleTreeNode(\'' + id + '\')"' : '') + '>';
+        if (hasChildren) {
+            html += '<span class="tree-expand">▸</span>';
+        } else {
+            html += '<span class="tree-expand" style="opacity: 0">▸</span>';
+        }
+        html += `<span class="tree-node-label">${node.label}</span>`;
+        if (node.value) {
+            html += `<span class="tree-node-value">${node.value}</span>`;
+        }
+        html += '</div>';
+
+        // Children
+        if (hasChildren) {
+            html += '<div class="tree-children">';
+            for (const child of node.children) {
+                if (child.children) {
+                    // Nested node
+                    html += this.createTreeNode(child);
+                } else {
+                    // Leaf node
+                    html += '<div class="tree-leaf">';
+                    html += `<span class="tree-leaf-label">${child.label}</span>`;
+                    html += `<span class="tree-leaf-value">${child.value !== undefined ? child.value : ''}</span>`;
+                    html += '</div>';
+                    if (child.detail) {
+                        html += `<div class="tree-leaf-detail">${child.detail}</div>`;
+                    }
+                }
+            }
+            html += '</div>';
+        }
+
+        html += '</div>';
+        return html;
+    }
+
+    /**
+     * Toggle a tree node's expanded state
+     */
+    toggleTreeNode(nodeId) {
+        const node = document.querySelector(`[data-node-id="${nodeId}"]`);
+        if (node) {
+            node.classList.toggle('expanded');
+        }
+    }
+
+    /**
+     * Add click handlers to all tree nodes
+     */
+    addTreeExpandHandlers() {
+        // Handlers are inline in createTreeNode, so nothing needed here
+        // But we could add keyboard navigation here in the future
+    }
+
+    /**
+     * Get description for a voice type
+     */
+    getVoiceDescription(voiceType) {
+        const descriptions = {
+            drone: 'Sustained low notes, grounding',
+            pad: 'Harmonic foundation, chords',
+            melody: 'Lead melodic lines',
+            texture: 'Complex layered sounds',
+            pulse: 'Rhythmic elements',
+            atmosphere: 'Ambient wash, spatial'
+        };
+        return descriptions[voiceType] || '';
+    }
+
+    /**
      * Display musical parameters
      */
     displayParameters(params) {
@@ -353,60 +580,113 @@ class TextscapeApp {
     }
 
     /**
-     * Update visualizer
+     * Update visualizer - multi-layered waveform visualization
      */
     updateVisualizer(elapsed) {
         const ctx = this.vizCtx;
         const width = this.visualizer.width;
         const height = this.visualizer.height;
 
-        // Clear canvas with fade
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+        // Clear canvas (full black, no fade for cleaner look)
+        ctx.fillStyle = '#000';
         ctx.fillRect(0, 0, width, height);
 
         if (!this.currentParams) return;
 
-        const { mood, tension, density } = this.currentParams;
-        const t = (elapsed / 10000) % 1; // Normalized time
+        const { mood, tension, density, tempo } = this.currentParams;
+        const tonalCenter = this.currentParams.tonalCenter;
+        const t = (elapsed / 8000) * tempo; // Time varies with tempo
 
-        // Draw flowing waveforms
-        ctx.strokeStyle = `rgba(102, 126, 234, ${0.3 + density * 0.4})`;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-
-        for (let x = 0; x < width; x++) {
-            const normalX = x / width;
-            const y = height / 2 +
-                Math.sin((normalX + t) * Math.PI * 4) * (20 + tension * 40) * Math.sin(t * Math.PI * 2) +
-                Math.sin((normalX * 2 + t * 2) * Math.PI * 3) * (10 + density * 20);
-
-            if (x === 0) {
-                ctx.moveTo(x, y);
-            } else {
-                ctx.lineTo(x, y);
-            }
+        // Base grid (subtle)
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.02)';
+        ctx.lineWidth = 1;
+        for (let y = 0; y < height; y += 40) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(width, y);
+            ctx.stroke();
         }
 
-        ctx.stroke();
-
-        // Additional layer for mood
-        ctx.strokeStyle = `rgba(118, 75, 162, ${0.2 + Math.abs(mood) * 0.3})`;
-        ctx.lineWidth = 1.5;
+        // Layer 1: Drone (slowest, continuous)
+        ctx.strokeStyle = `rgba(255, 255, 255, ${0.1 + density * 0.15})`;
+        ctx.lineWidth = 1;
         ctx.beginPath();
-
-        for (let x = 0; x < width; x++) {
+        for (let x = 0; x < width; x += 2) {
             const normalX = x / width;
             const y = height / 2 +
-                Math.sin((normalX * 3 - t) * Math.PI * 2) * (15 + Math.abs(mood) * 30);
+                Math.sin((normalX * 2 + t * 0.3) * Math.PI) * (30 + Math.abs(mood) * 20);
 
-            if (x === 0) {
-                ctx.moveTo(x, y);
-            } else {
-                ctx.lineTo(x, y);
+            if (x === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        // Layer 2: Pad (medium frequency)
+        ctx.strokeStyle = `rgba(255, 255, 255, ${0.15 + density * 0.1})`;
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        for (let x = 0; x < width; x += 2) {
+            const normalX = x / width;
+            const y = height / 2 +
+                Math.sin((normalX * 4 + t * 0.5) * Math.PI * 2) * (15 + tension * 25) +
+                Math.cos((normalX * 3 - t * 0.4) * Math.PI) * 10;
+
+            if (x === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        // Layer 3: Melody/Texture (faster, more complex)
+        ctx.strokeStyle = `rgba(255, 255, 255, ${0.2 + tension * 0.3})`;
+        ctx.lineWidth = 0.6;
+        ctx.beginPath();
+        for (let x = 0; x < width; x += 1) {
+            const normalX = x / width;
+            const y = height / 2 +
+                Math.sin((normalX * 8 + t) * Math.PI * 2) * (10 + tension * 30) * Math.sin(t * Math.PI) +
+                Math.sin((normalX * 12 + t * 1.5) * Math.PI * 3) * (5 + density * 15);
+
+            if (x === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        // Layer 4: Pulse (rhythmic if high arousal)
+        if (tension > 0.5) {
+            const pulseOpacity = Math.sin(t * Math.PI * 4) * 0.5 + 0.5;
+            ctx.strokeStyle = `rgba(255, 255, 255, ${pulseOpacity * 0.2})`;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            for (let x = 0; x < width; x += 3) {
+                const normalX = x / width;
+                const y = height / 2 +
+                    Math.sin((normalX * 6 + t * 2) * Math.PI * 2) * (20 + tension * 20);
+
+                if (x === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
             }
+            ctx.stroke();
         }
 
+        // Centerline (reference)
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, height / 2);
+        ctx.lineTo(width, height / 2);
         ctx.stroke();
+
+        // Display current key/mode at bottom right
+        if (tonalCenter) {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.font = '9px "Courier New", monospace';
+            ctx.textAlign = 'right';
+            ctx.fillText(
+                `${tonalCenter.globalKeyName} ${tonalCenter.globalModeName}`.toUpperCase(),
+                width - 10,
+                height - 10
+            );
+        }
     }
 
     /**
@@ -433,6 +713,22 @@ class TextscapeApp {
 
 // Initialize app when DOM is ready
 document.addEventListener('DOMContentLoaded', async () => {
+    console.log('Loading Textscape...');
+
+    // Load the main word-emotion database for tonal center calculation
+    try {
+        console.log('Loading word-emotion database...');
+        const response = await fetch('data/word-emotion-database.json');
+        if (response.ok) {
+            window.wordEmotionDatabase = await response.json();
+            console.log(`✓ Loaded word-emotion database with ${Object.keys(window.wordEmotionDatabase).length} words`);
+        } else {
+            console.warn('Could not load word-emotion-database.json');
+        }
+    } catch (error) {
+        console.warn('Error loading word-emotion database:', error);
+    }
+
     // Try to load cached sentiment library for enhanced analysis
     await SentimentAnalyzer.loadCachedLibrary();
 
