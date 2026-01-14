@@ -182,6 +182,7 @@
             <div class="info-block" id="infoRight" style="text-align: right;">
                 <strong id="elapsed">00:00</strong><br>
                 <span id="key">—</span> <span id="mode">—</span><br>
+                <span id="mood">—</span><br>
                 <strong id="active-voices">0</strong> ACTIVE<br>
                 <span id="voice-count">0</span> VOICES<br>
                 <a href="#" id="pauseBtn" style="pointer-events: all;">pause</a> · <a href="#" id="restartBtn" style="pointer-events: all;">restart</a>
@@ -195,35 +196,47 @@
     </div>
 
     <!-- Projects modal -->
-    <div id="projectsModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000; padding: 60px; overflow-y: auto; font-family: 'Courier New', monospace;">
-        <button onclick="document.getElementById('projectsModal').style.display='none'" style="position: absolute; top: 30px; right: 30px; background: transparent; border: 1px solid rgba(255,255,255,0.3); color: rgba(255,255,255,0.6); padding: 10px 25px; cursor: pointer; font-family: 'Courier New', monospace; font-size: 9px; letter-spacing: 0.3em; text-transform: uppercase;">CLOSE</button>
-        <div style="max-width: 800px; margin: 0 auto; font-size: 12px; line-height: 2; letter-spacing: 0.05em;">
-            <h2 style="margin-bottom: 30px; letter-spacing: 0.3em; opacity: 0.9; font-size: 14px; text-transform: uppercase;">Projects</h2>
+    <div id="projectsModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); z-index: 2000; font-family: 'Courier New', monospace; align-items: center; justify-content: center;">
+        <div style="background: rgba(0,0,0,0.9); border: 1px solid rgba(255,255,255,0.1); padding: 50px; max-width: 900px; max-height: 80vh; overflow-y: auto; position: relative; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
+            <a href="#" id="closeModal" style="position: absolute; top: 25px; right: 25px; color: rgba(255,255,255,0.5); text-decoration: none; font-size: 9px; letter-spacing: 0.3em; text-transform: uppercase; transition: opacity 0.3s;">CLOSE</a>
 
-            <h3 style="margin-top: 30px; margin-bottom: 15px; opacity: 0.5; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;">Music</h3>
-            <div style="margin: 5px 0;"><a href="projects/drift/Drift v7/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Drift v7 - Generative Ambient</a></div>
-            <div style="margin: 5px 0;"><a href="projects/drift/Drift v6/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Drift v6</a></div>
-            <div style="margin: 5px 0;"><a href="projects/drift/Drift v5/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Drift v5</a></div>
-            <div style="margin: 5px 0;"><a href="projects/drift/Drift v4/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Drift v4</a></div>
-            <div style="margin: 5px 0;"><a href="projects/drift/Drift v3/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Drift v3</a></div>
-            <div style="margin: 5px 0;"><a href="projects/drift/Drift v2/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Drift v2</a></div>
-            <div style="margin: 5px 0;"><a href="projects/nova-grid/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Nova Grid - Cellular Automata Sequencer</a></div>
-            <div style="margin: 5px 0;"><a href="projects/granular-ambient/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Granular Ambient</a></div>
-            <div style="margin: 5px 0;"><a href="projects/textscape/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Textscape</a></div>
+            <h2 style="margin-bottom: 40px; letter-spacing: 0.3em; opacity: 0.9; font-size: 14px; text-transform: uppercase;">Projects</h2>
 
-            <h3 style="margin-top: 30px; margin-bottom: 15px; opacity: 0.5; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;">Interactive Art</h3>
-            <div style="margin: 5px 0;"><a href="projects/interactive-art/dungeongame.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Dungeon Game</a></div>
-            <div style="margin: 5px 0;"><a href="projects/interactive-art/mazesend.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Maze Send</a></div>
-            <div style="margin: 5px 0;"><a href="projects/interactive-art/waterlillies.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Water Lillies</a></div>
-            <div style="margin: 5px 0;"><a href="projects/interactive-art/viewofaburningcity.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">View of a Burning City</a></div>
-            <div style="margin: 5px 0;"><a href="projects/interactive-art/wordprocessor.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Word Processor</a></div>
-            <div style="margin: 5px 0;"><a href="projects/interactive-art/colorexplore.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Color Explore</a></div>
-            <div style="margin: 5px 0;"><a href="projects/interactive-art/blocksnow.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Block Snow</a></div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 50px; font-size: 11px; line-height: 2.2; letter-spacing: 0.05em;">
+                <!-- Music Column -->
+                <div>
+                    <h3 style="margin-bottom: 20px; opacity: 0.5; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;">Music</h3>
+                    <div style="margin: 5px 0;"><a href="projects/drift/Drift v7/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Drift v7 - Generative Ambient</a></div>
+                    <div style="margin: 5px 0;"><a href="projects/drift/Drift v6/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Drift v6</a></div>
+                    <div style="margin: 5px 0;"><a href="projects/drift/Drift v5/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Drift v5</a></div>
+                    <div style="margin: 5px 0;"><a href="projects/drift/Drift v4/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Drift v4</a></div>
+                    <div style="margin: 5px 0;"><a href="projects/drift/Drift v3/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Drift v3</a></div>
+                    <div style="margin: 5px 0;"><a href="projects/drift/Drift v2/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Drift v2</a></div>
+                    <div style="margin: 5px 0;"><a href="projects/nova-grid/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Nova Grid - Cellular Automata Sequencer</a></div>
+                    <div style="margin: 5px 0;"><a href="projects/granular-ambient/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Granular Ambient</a></div>
+                    <div style="margin: 5px 0;"><a href="projects/textscape/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Textscape</a></div>
+                </div>
 
-            <h3 style="margin-top: 30px; margin-bottom: 15px; opacity: 0.5; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;">Code</h3>
-            <div style="margin: 5px 0;"><a href="projects/benji-site/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Benji Site</a></div>
-            <div style="margin: 5px 0;"><a href="projects/blade-honor/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Blade Honor</a></div>
-            <div style="margin: 5px 0;"><a href="projects/forward-playground/play.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Forward Playground</a></div>
+                <!-- Interactive Art Column -->
+                <div>
+                    <h3 style="margin-bottom: 20px; opacity: 0.5; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;">Interactive Art</h3>
+                    <div style="margin: 5px 0;"><a href="projects/interactive-art/dungeongame.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Dungeon Game</a></div>
+                    <div style="margin: 5px 0;"><a href="projects/interactive-art/mazesend.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Maze Send</a></div>
+                    <div style="margin: 5px 0;"><a href="projects/interactive-art/waterlillies.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Water Lillies</a></div>
+                    <div style="margin: 5px 0;"><a href="projects/interactive-art/viewofaburningcity.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">View of a Burning City</a></div>
+                    <div style="margin: 5px 0;"><a href="projects/interactive-art/wordprocessor.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Word Processor</a></div>
+                    <div style="margin: 5px 0;"><a href="projects/interactive-art/colorexplore.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Color Explore</a></div>
+                    <div style="margin: 5px 0;"><a href="projects/interactive-art/blocksnow.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Block Snow</a></div>
+                </div>
+
+                <!-- Code Column -->
+                <div>
+                    <h3 style="margin-bottom: 20px; opacity: 0.5; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;">Code</h3>
+                    <div style="margin: 5px 0;"><a href="projects/benji-site/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Benji Site</a></div>
+                    <div style="margin: 5px 0;"><a href="projects/blade-honor/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Blade Honor</a></div>
+                    <div style="margin: 5px 0;"><a href="projects/forward-playground/play.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Forward Playground</a></div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -240,7 +253,30 @@
         // Handle builder link
         document.getElementById('builderLink').addEventListener('click', (e) => {
             e.preventDefault();
-            document.getElementById('projectsModal').style.display = 'block';
+            document.getElementById('projectsModal').style.display = 'flex';
+        });
+
+        // Handle close modal link
+        document.getElementById('closeModal').addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('projectsModal').style.display = 'none';
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const modal = document.getElementById('projectsModal');
+                if (modal.style.display === 'flex') {
+                    modal.style.display = 'none';
+                }
+            }
+        });
+
+        // Close modal when clicking backdrop
+        document.getElementById('projectsModal').addEventListener('click', (e) => {
+            if (e.target.id === 'projectsModal') {
+                e.target.style.display = 'none';
+            }
         });
 
         // Prevent default behavior for pause and restart links

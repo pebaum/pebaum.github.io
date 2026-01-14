@@ -1,0 +1,302 @@
+/* PS4 Synth - Bauhaus Abstract Black & White */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --black: #000000;
+  --white: #FFFFFF;
+  --grid-size: 2px;
+}
+
+body {
+  font-family: 'Courier New', 'Courier', monospace;
+  background: var(--black);
+  color: var(--white);
+  line-height: 1.2;
+  min-height: 100vh;
+  padding: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Header */
+header {
+  border-bottom: var(--grid-size) solid var(--white);
+  padding-bottom: 20px;
+  margin-bottom: 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+h1 {
+  font-size: 2.5rem;
+  font-weight: normal;
+  letter-spacing: 0.2em;
+}
+
+h2 {
+  font-size: 0.75rem;
+  font-weight: normal;
+  letter-spacing: 0.15em;
+  margin-bottom: 15px;
+  border-bottom: 1px solid var(--white);
+  padding-bottom: 5px;
+}
+
+.status {
+  font-size: 0.875rem;
+  letter-spacing: 0.1em;
+  padding: 8px 16px;
+  border: var(--grid-size) solid var(--white);
+}
+
+/* Main Grid */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 40px;
+  margin-bottom: 40px;
+}
+
+.module {
+  border: var(--grid-size) solid var(--white);
+  padding: 20px;
+  min-height: 300px;
+}
+
+/* Waveform Canvas */
+#waveform-canvas {
+  width: 100%;
+  height: 250px;
+  background: var(--black);
+  border: 1px solid var(--white);
+}
+
+/* Note Grid - Abstract geometric shapes */
+.note-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  height: 250px;
+}
+
+.note-cell {
+  border: 1px solid var(--white);
+  position: relative;
+  transition: background 0.05s ease;
+}
+
+.note-cell.active {
+  background: var(--white);
+}
+
+.note-cell::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 40%;
+  height: 40%;
+  border: 1px solid var(--white);
+  transition: all 0.1s ease;
+}
+
+.note-cell.active::before {
+  transform: translate(-50%, -50%) scale(1.5);
+  border-color: var(--black);
+}
+
+/* Effects Canvas */
+#effects-canvas {
+  width: 100%;
+  height: 250px;
+  background: var(--black);
+  border: 1px solid var(--white);
+}
+
+/* Parameter Meters - Minimal abstract bars */
+.param-meters {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  height: 250px;
+  overflow-y: auto;
+}
+
+.param-meter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.65rem;
+}
+
+.param-label {
+  width: 100px;
+  flex-shrink: 0;
+}
+
+.param-bar {
+  flex: 1;
+  height: 4px;
+  background: var(--black);
+  border: 1px solid var(--white);
+  position: relative;
+}
+
+.param-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  background: var(--white);
+  transition: width 0.05s linear;
+}
+
+/* Controls */
+.controls {
+  display: flex;
+  gap: 20px;
+  padding-top: 20px;
+  border-top: var(--grid-size) solid var(--white);
+  flex-wrap: wrap;
+}
+
+.btn {
+  background: var(--black);
+  color: var(--white);
+  border: var(--grid-size) solid var(--white);
+  padding: 15px 30px;
+  font-family: inherit;
+  font-size: 0.875rem;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  text-transform: uppercase;
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--white);
+  color: var(--black);
+}
+
+.btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.btn:active:not(:disabled) {
+  transform: translate(2px, 2px);
+}
+
+/* Mappings Panel */
+.mappings {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--black);
+  border: var(--grid-size) solid var(--white);
+  padding: 40px;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+.mappings.hidden {
+  display: none;
+}
+
+.mappings h3 {
+  font-size: 1.2rem;
+  margin-bottom: 20px;
+  letter-spacing: 0.15em;
+}
+
+.mapping-section {
+  margin-bottom: 25px;
+}
+
+.mapping-section h4 {
+  font-size: 0.75rem;
+  margin-bottom: 10px;
+  opacity: 0.7;
+}
+
+.mapping-section ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.mapping-section li {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--white);
+  font-size: 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.mapping-section li:last-child {
+  border-bottom: none;
+}
+
+.mapping-section strong {
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+
+  h1 {
+    font-size: 2rem;
+  }
+
+  .module {
+    min-height: 250px;
+  }
+
+  .controls {
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--black);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--white);
+  border: 1px solid var(--black);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--white);
+}

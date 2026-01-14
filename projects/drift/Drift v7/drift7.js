@@ -25,6 +25,20 @@ const SCALES = {
     'Ryukyu': [0, 4, 5, 7, 11] // Okinawan (Drift v5 vibes)
 };
 
+// Emotional tone descriptors for each scale/mode
+const SCALE_MOODS = {
+    'Minor Pent': 'Melancholic',
+    'Major Pent': 'Joyful',
+    'Dorian': 'Sophisticated',
+    'Phrygian': 'Passionate',
+    'Lydian': 'Dreamy',
+    'Mixolydian': 'Bluesy',
+    'Natural Minor': 'Somber',
+    'Hirajoshi': 'Serene',
+    'In Sen': 'Yearning',
+    'Ryukyu': 'Peaceful'
+};
+
 // Continuous like Music for Airports
 const DENSITY = 0.85; // High probability - always something playing
 
@@ -864,6 +878,13 @@ function updateUI() {
         `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     document.getElementById('key').textContent = rootName;
     document.getElementById('mode').textContent = scaleName;
+
+    // Update mood descriptor if element exists
+    const moodElement = document.getElementById('mood');
+    if (moodElement) {
+        moodElement.textContent = SCALE_MOODS[scaleName] || '—';
+    }
+
     document.getElementById('active-voices').textContent = activeNotes;
     document.getElementById('voice-count').textContent = voices.length;
 }

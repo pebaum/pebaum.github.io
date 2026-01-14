@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PS4 SYNTH</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <h1>PS4 SYNTH</h1>
+      <div id="status" class="status">WAITING FOR CONTROLLER</div>
+    </header>
+
+    <!-- Main Visualization Grid -->
+    <main class="grid">
+      <!-- Waveform Display -->
+      <section class="module waveform-module">
+        <h2>WAVEFORM</h2>
+        <canvas id="waveform-canvas"></canvas>
+      </section>
+
+      <!-- Note Activity -->
+      <section class="module notes-module">
+        <h2>NOTES</h2>
+        <div id="note-grid" class="note-grid"></div>
+      </section>
+
+      <!-- Effects Visualization -->
+      <section class="module effects-module">
+        <h2>EFFECTS</h2>
+        <canvas id="effects-canvas"></canvas>
+      </section>
+
+      <!-- Parameters -->
+      <section class="module params-module">
+        <h2>PARAMETERS</h2>
+        <div id="param-meters" class="param-meters"></div>
+      </section>
+    </main>
+
+    <!-- Controls -->
+    <footer class="controls">
+      <button id="start-button" class="btn">START</button>
+      <button id="randomize-button" class="btn" disabled>RE-RANDOMIZE</button>
+      <button id="toggle-mappings" class="btn" disabled>REVEAL</button>
+    </footer>
+
+    <!-- Hidden Mappings Panel -->
+    <aside id="mappings-display" class="mappings hidden"></aside>
+  </div>
+
+  <!-- Load scripts -->
+  <script src="js/utils/random.js"></script>
+  <script src="js/gamepad-manager.js"></script>
+  <script src="js/synth-engine.js"></script>
+  <script src="js/generative-sequencer.js"></script>
+  <script src="js/parameter-mapper.js"></script>
+  <script src="js/visualizer.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
