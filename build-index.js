@@ -93,7 +93,7 @@ function generateTreeHTML(items, indent = '') {
             html += generateTreeHTML(item.children, nextIndent);
         } else {
             const cleanName = item.name.replace('.html', '').replace('.htm', '');
-            html += `<span class="tree-line"><span class="tree-indent">${indent}${prefix}</span><a href="../${item.path}" class="tree-link">${cleanName}</a></span>\n`;
+            html += `<span class="tree-line"><span class="tree-indent">${indent}${prefix}</span><a href="./${item.path}" class="tree-link">${cleanName}</a></span>\n`;
         }
     });
 
@@ -118,7 +118,7 @@ function buildIndex() {
     <style>
         @font-face {
             font-family: 'Alexandria';
-            src: url('../assets/fonts/Alexandria.ttf') format('truetype');
+            src: url('./assets/fonts/Alexandria.ttf') format('truetype');
         }
 
         * {
@@ -234,7 +234,7 @@ ${treeHTML}
 </body>
 </html>`;
 
-    const outputPath = path.join(repoRoot, 'main-site', 'index.html');
+    const outputPath = path.join(repoRoot, 'index.html');
     fs.writeFileSync(outputPath, html);
     console.log(`✓ Generated ${outputPath}`);
     console.log('\nRun this script whenever you add new content to auto-update the homepage.');

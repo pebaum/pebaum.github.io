@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peter Baumgartner</title>
+    <style>
+        @font-face {
+            font-family: 'Alexandria';
+            src: url('./assets/fonts/Alexandria.ttf') format('truetype');
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            color: #FFF;
+            font-family: 'Alexandria', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.8;
+            padding: 30px;
+            cursor: none;
+        }
+
+        #cursor {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            font-size: 16px;
+            transform: translate(-50%, -50%);
+            mix-blend-mode: difference;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0;
+        }
+
+        h1 {
+            font-size: 18px;
+            font-weight: normal;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+        }
+
+        .tree {
+            white-space: pre;
+            font-size: 13px;
+        }
+
+        .tree-line {
+            display: block;
+            transition: background 0.05s;
+        }
+
+        .tree-line:hover {
+            background: #111;
+        }
+
+        .tree-link {
+            color: #FFF;
+            text-decoration: none;
+        }
+
+        .tree-link:hover {
+            color: #888;
+        }
+
+        .tree-folder {
+            color: #666;
+        }
+
+        .tree-indent {
+            color: #333;
+        }
+
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #222;
+            color: #444;
+            font-size: 11px;
+        }
+
+        body * {
+            cursor: none !important;
+        }
+
+        ::selection {
+            background: #FFF;
+            color: #000;
+        }
+    </style>
+</head>
+<body>
+    <div id="cursor">█</div>
+    <div class="container">
+        <h1>PETER BAUMGARTNER</h1>
+        <div class="tree">
+<span class="tree-line"><span class="tree-folder">pebaum.github.io/</span></span>
+<span class="tree-line"><span class="tree-indent">├── </span><span class="tree-folder">archive/</span></span>
+<span class="tree-line"><span class="tree-indent">│   ├── </span><span class="tree-folder">drift-legacy/</span></span>
+<span class="tree-line"><span class="tree-indent">│   │   ├── </span><a href="./archive/drift-legacy/Drift v1/index-v2.html" class="tree-link">Drift v1</a></span>
+<span class="tree-line"><span class="tree-indent">│   │   ├── </span><a href="./archive/drift-legacy/Drift v2/index.html" class="tree-link">Drift v2</a></span>
+<span class="tree-line"><span class="tree-indent">│   │   ├── </span><a href="./archive/drift-legacy/Drift v3/index.html" class="tree-link">Drift v3</a></span>
+<span class="tree-line"><span class="tree-indent">│   │   ├── </span><a href="./archive/drift-legacy/Drift v4/index.html" class="tree-link">Drift v4</a></span>
+<span class="tree-line"><span class="tree-indent">│   │   └── </span><a href="./archive/drift-legacy/Drift v5/index.html" class="tree-link">Drift v5</a></span>
+<span class="tree-line"><span class="tree-indent">│   └── </span><span class="tree-folder">ffix-site/</span></span>
+<span class="tree-line"><span class="tree-indent">│       └── </span><a href="./archive/ffix-site/index.html" class="tree-link">index</a></span>
+<span class="tree-line"><span class="tree-indent">└── </span><span class="tree-folder">projects/</span></span>
+<span class="tree-line"><span class="tree-indent">    ├── </span><span class="tree-folder">benji-site/</span></span>
+<span class="tree-line"><span class="tree-indent">    │   ├── </span><span class="tree-folder">benjisyoshigame/</span></span>
+<span class="tree-line"><span class="tree-indent">    │   │   └── </span><a href="./projects/benji-site/benjisyoshigame/index.html" class="tree-link">index</a></span>
+<span class="tree-line"><span class="tree-indent">    │   └── </span><a href="./projects/benji-site/index.html" class="tree-link">index</a></span>
+<span class="tree-line"><span class="tree-indent">    ├── </span><span class="tree-folder">blade-honor/</span></span>
+<span class="tree-line"><span class="tree-indent">    │   └── </span><a href="./projects/blade-honor/index.html" class="tree-link">index</a></span>
+<span class="tree-line"><span class="tree-indent">    ├── </span><span class="tree-folder">drift/</span></span>
+<span class="tree-line"><span class="tree-indent">    │   ├── </span><a href="./projects/drift/emergence.html" class="tree-link">emergence</a></span>
+<span class="tree-line"><span class="tree-indent">    │   └── </span><a href="./projects/drift/index.html" class="tree-link">index</a></span>
+<span class="tree-line"><span class="tree-indent">    ├── </span><span class="tree-folder">emergence/</span></span>
+<span class="tree-line"><span class="tree-indent">    │   └── </span><a href="./projects/emergence/emergence.html" class="tree-link">emergence</a></span>
+<span class="tree-line"><span class="tree-indent">    ├── </span><span class="tree-folder">forward-playground/</span></span>
+<span class="tree-line"><span class="tree-indent">    │   └── </span><a href="./projects/forward-playground/play.html" class="tree-link">play</a></span>
+<span class="tree-line"><span class="tree-indent">    └── </span><span class="tree-folder">interactive-art/</span></span>
+<span class="tree-line"><span class="tree-indent">        ├── </span><a href="./projects/interactive-art/blocksnow.html" class="tree-link">blocksnow</a></span>
+<span class="tree-line"><span class="tree-indent">        ├── </span><a href="./projects/interactive-art/colorexplore.html" class="tree-link">colorexplore</a></span>
+<span class="tree-line"><span class="tree-indent">        ├── </span><a href="./projects/interactive-art/dungeongame.html" class="tree-link">dungeongame</a></span>
+<span class="tree-line"><span class="tree-indent">        ├── </span><a href="./projects/interactive-art/mazesend.html" class="tree-link">mazesend</a></span>
+<span class="tree-line"><span class="tree-indent">        ├── </span><a href="./projects/interactive-art/viewofaburningcity.html" class="tree-link">viewofaburningcity</a></span>
+<span class="tree-line"><span class="tree-indent">        ├── </span><a href="./projects/interactive-art/waterlillies.html" class="tree-link">waterlillies</a></span>
+<span class="tree-line"><span class="tree-indent">        └── </span><a href="./projects/interactive-art/wordprocessor.html" class="tree-link">wordprocessor</a></span>
+
+        </div>
+        <div class="footer">
+            <p>Auto-generated from repository structure</p>
+            <p>Last updated: 2026-01-13</p>
+        </div>
+    </div>
+    <script>
+        const cursor = document.getElementById('cursor');
+        document.addEventListener('mousemove', e => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+        document.querySelectorAll('.tree-link').forEach(link => {
+            link.addEventListener('mouseenter', () => cursor.textContent = '▓');
+            link.addEventListener('mouseleave', () => cursor.textContent = '█');
+        });
+    </script>
+</body>
+</html>
