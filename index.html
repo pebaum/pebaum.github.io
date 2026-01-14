@@ -123,10 +123,13 @@
 <span class="tree-line"><span class="tree-indent">    │   │   └── </span><a href="./projects/drift/Drift v4/index.html" class="tree-link">index</a></span>
 <span class="tree-line"><span class="tree-indent">    │   ├── </span><span class="tree-folder">Drift v5/</span></span>
 <span class="tree-line"><span class="tree-indent">    │   │   └── </span><a href="./projects/drift/Drift v5/index.html" class="tree-link">index</a></span>
+<span class="tree-line"><span class="tree-indent">    │   ├── </span><span class="tree-folder">Drift v6/</span></span>
+<span class="tree-line"><span class="tree-indent">    │   │   ├── </span><a href="./projects/drift/Drift v6/emergence.html" class="tree-link">emergence</a></span>
+<span class="tree-line"><span class="tree-indent">    │   │   └── </span><a href="./projects/drift/Drift v6/index.html" class="tree-link">index</a></span>
+<span class="tree-line"><span class="tree-indent">    │   ├── </span><span class="tree-folder">Drift v7/</span></span>
+<span class="tree-line"><span class="tree-indent">    │   │   └── </span><a href="./projects/drift/Drift v7/emergence.html" class="tree-link">emergence</a></span>
 <span class="tree-line"><span class="tree-indent">    │   ├── </span><a href="./projects/drift/emergence.html" class="tree-link">emergence</a></span>
-<span class="tree-line"><span class="tree-indent">    │   └── </span><a href="./projects/drift/index.html" class="tree-link">index</a></span>
-<span class="tree-line"><span class="tree-indent">    ├── </span><span class="tree-folder">emergence/</span></span>
-<span class="tree-line"><span class="tree-indent">    │   └── </span><a href="./projects/emergence/emergence.html" class="tree-link">emergence</a></span>
+<span class="tree-line"><span class="tree-indent">    │   └── </span><a href="./projects/drift/emergence-README.html" class="tree-link">emergence-README</a></span>
 <span class="tree-line"><span class="tree-indent">    ├── </span><span class="tree-folder">forward-playground/</span></span>
 <span class="tree-line"><span class="tree-indent">    │   └── </span><a href="./projects/forward-playground/play.html" class="tree-link">play</a></span>
 <span class="tree-line"><span class="tree-indent">    └── </span><span class="tree-folder">interactive-art/</span></span>
@@ -154,6 +157,24 @@
             link.addEventListener('mouseenter', () => cursor.textContent = '▓');
             link.addEventListener('mouseleave', () => cursor.textContent = '█');
         });
+    </script>
+    <script src="./projects/drift/emergence.js"></script>
+    <script>
+        // Auto-start Emergence ambient audio on first user interaction
+        let emergenceStarted = false;
+        function startEmergence() {
+            if (emergenceStarted) return;
+            emergenceStarted = true;
+            if (typeof init === 'function') {
+                init();
+            }
+            if (typeof start === 'function') {
+                start();
+            }
+        }
+        // Start on first click/touch anywhere on the page
+        document.addEventListener('click', startEmergence, { once: true });
+        document.addEventListener('touchstart', startEmergence, { once: true });
     </script>
 </body>
 </html>
