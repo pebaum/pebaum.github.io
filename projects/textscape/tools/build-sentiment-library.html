@@ -290,6 +290,9 @@
         </div>
     </div>
 
+    <!-- Load configuration (gitignored) -->
+    <script src="config.js"></script>
+
     <script>
         let library = {};
         let isBuilding = false;
@@ -409,7 +412,7 @@
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'Authorization': 'Bearer YOUR_HUGGINGFACE_TOKEN_HERE'
+                            'Authorization': `Bearer ${CONFIG.HUGGINGFACE_TOKEN}`
                         },
                         body: JSON.stringify(payload)
                     });

@@ -13,6 +13,7 @@ package-lock.json
 .mcp.json
 .temp_notion_explorer.js
 .claude/
+projects/textscape/tools/config.js
 
 # Server logs
 *.out
