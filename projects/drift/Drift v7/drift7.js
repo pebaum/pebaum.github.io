@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// EMERGENCE v7 — Generative Ambient Installation
+// DRIFT v7 — Generative Ambient Installation
 //
 // Overlapping loops create continuous, evolving harmonies.
 // Like Eno's Music for Airports - always something playing.
