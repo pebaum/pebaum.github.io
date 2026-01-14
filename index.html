@@ -94,9 +94,30 @@
             background: #FFF;
             color: #000;
         }
+
+        #canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.15;
+            pointer-events: none;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+        }
+
+        #cursor {
+            z-index: 10000;
+        }
     </style>
 </head>
 <body>
+    <canvas id="canvas"></canvas>
     <div id="cursor">█</div>
     <div class="container">
         <h1>PETER BAUMGARTNER</h1>
