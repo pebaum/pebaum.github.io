@@ -914,7 +914,7 @@ document.getElementById('pauseBtn').addEventListener('click', () => {
         if (audioCtx && audioCtx.state === 'suspended') {
             audioCtx.resume();
         }
-        document.getElementById('pauseBtn').textContent = 'PAUSE';
+        document.getElementById('pauseBtn').textContent = 'pause';
         update();
     } else {
         paused = true;
@@ -922,7 +922,7 @@ document.getElementById('pauseBtn').addEventListener('click', () => {
         if (audioCtx && audioCtx.state === 'running') {
             audioCtx.suspend();
         }
-        document.getElementById('pauseBtn').textContent = 'RESUME';
+        document.getElementById('pauseBtn').textContent = 'resume';
     }
 });
 

@@ -97,41 +97,6 @@
             opacity: 1;
         }
 
-        .controls {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 15px;
-            pointer-events: all;
-            z-index: 100;
-            opacity: 0;
-        }
-
-        .controls.loaded {
-            animation: fadeInUp 1.2s ease-out forwards;
-        }
-
-        button {
-            background: transparent;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: rgba(255, 255, 255, 0.6);
-            padding: 10px 25px;
-            cursor: pointer;
-            font-family: 'Courier New', monospace;
-            font-size: 9px;
-            letter-spacing: 0.3em;
-            transition: all 0.3s;
-            text-transform: uppercase;
-        }
-
-        button:hover {
-            background: rgba(255, 255, 255, 0.05);
-            border-color: rgba(255, 255, 255, 0.6);
-            color: rgba(255, 255, 255, 0.9);
-        }
-
         .volume-control {
             position: fixed;
             bottom: 30px;
@@ -209,23 +174,19 @@
         <div class="top">
             <div class="info-block" id="infoLeft">
                 <strong>Peter Baumgartner</strong><br>
-                37 · Mission Viejo<br>
-                <a href="about/index.html">PM @ Microsoft</a><br>
-                <a href="https://open.spotify.com/artist/YOUR_SPOTIFY_ID" target="_blank">musician</a> · <a href="#" id="builderLink">builder</a><br>
+                37 / M / Mission Viejo<br>
+                <a href="https://www.linkedin.com/in/peter-baumgartner-b0094a49/" target="_blank">PM @ Microsoft</a><br>
+                <a href="https://open.spotify.com/artist/YOUR_SPOTIFY_ID" target="_blank">music</a> · <a href="#" id="builderLink">projects</a><br>
                 <a href="mailto:p.l.baumgartner@gmail.com">contact</a>
             </div>
             <div class="info-block" id="infoRight" style="text-align: right;">
                 <strong id="elapsed">00:00</strong><br>
                 <span id="key">—</span> <span id="mode">—</span><br>
                 <strong id="active-voices">0</strong> ACTIVE<br>
-                <span id="voice-count">0</span> VOICES
+                <span id="voice-count">0</span> VOICES<br>
+                <a href="#" id="pauseBtn" style="pointer-events: all;">pause</a> · <a href="#" id="restartBtn" style="pointer-events: all;">restart</a>
             </div>
         </div>
-    </div>
-
-    <div class="controls" id="controls">
-        <button id="pauseBtn">PAUSE</button>
-        <button id="restartBtn">RESTART</button>
     </div>
 
     <div class="volume-control" id="volumeControl">
@@ -243,11 +204,21 @@
             <div style="margin: 5px 0;"><a href="projects/drift/Drift v7/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Drift v7 - Generative Ambient</a></div>
             <div style="margin: 5px 0;"><a href="projects/drift/Drift v6/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Drift v6</a></div>
             <div style="margin: 5px 0;"><a href="projects/drift/Drift v5/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Drift v5</a></div>
+            <div style="margin: 5px 0;"><a href="projects/drift/Drift v4/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Drift v4</a></div>
+            <div style="margin: 5px 0;"><a href="projects/drift/Drift v3/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Drift v3</a></div>
+            <div style="margin: 5px 0;"><a href="projects/drift/Drift v2/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Drift v2</a></div>
+            <div style="margin: 5px 0;"><a href="projects/nova-grid/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Nova Grid - Cellular Automata Sequencer</a></div>
+            <div style="margin: 5px 0;"><a href="projects/granular-ambient/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Granular Ambient</a></div>
+            <div style="margin: 5px 0;"><a href="projects/textscape/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Textscape</a></div>
 
             <h3 style="margin-top: 30px; margin-bottom: 15px; opacity: 0.5; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;">Interactive Art</h3>
             <div style="margin: 5px 0;"><a href="projects/interactive-art/dungeongame.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Dungeon Game</a></div>
             <div style="margin: 5px 0;"><a href="projects/interactive-art/mazesend.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Maze Send</a></div>
             <div style="margin: 5px 0;"><a href="projects/interactive-art/waterlillies.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Water Lillies</a></div>
+            <div style="margin: 5px 0;"><a href="projects/interactive-art/viewofaburningcity.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">View of a Burning City</a></div>
+            <div style="margin: 5px 0;"><a href="projects/interactive-art/wordprocessor.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Word Processor</a></div>
+            <div style="margin: 5px 0;"><a href="projects/interactive-art/colorexplore.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Color Explore</a></div>
+            <div style="margin: 5px 0;"><a href="projects/interactive-art/blocksnow.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Block Snow</a></div>
 
             <h3 style="margin-top: 30px; margin-bottom: 15px; opacity: 0.5; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;">Code</h3>
             <div style="margin: 5px 0;"><a href="projects/benji-site/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Benji Site</a></div>
@@ -272,6 +243,14 @@
             document.getElementById('projectsModal').style.display = 'block';
         });
 
+        // Prevent default behavior for pause and restart links
+        document.getElementById('pauseBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+        });
+        document.getElementById('restartBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+        });
+
         // Accept any interaction to start (required for browser autoplay policy)
         const overlay = document.getElementById('overlay');
         const startBtn = document.getElementById('startBtn');
@@ -293,8 +272,7 @@
             const elements = [
                 { id: 'infoLeft', delay: 800 },
                 { id: 'infoRight', delay: 1200 },
-                { id: 'controls', delay: 1600 },
-                { id: 'volumeControl', delay: 1900 }
+                { id: 'volumeControl', delay: 1600 }
             ];
 
             // Randomize delays slightly
