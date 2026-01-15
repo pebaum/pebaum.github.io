@@ -1,110 +1,85 @@
-# Firelink Shrine - Roguelike Portfolio
+# Peter Baumgartner - Portfolio
 
-An immersive, roguelike-style interactive portfolio experience inspired by Dark Souls' Firelink Shrine. Navigate a mysterious shrine, interact with NPCs, and discover hidden secrets.
+A minimalist interactive portfolio featuring real-time generative ambient music and oscilloscope visualization.
+
+## Overview
+
+This is a personal portfolio showcasing creative coding projects, generative music systems, and interactive art pieces. The site features a live generative ambient music system (Drift v7) that creates evolving soundscapes while visitors browse.
 
 ## Features
 
-### Core Gameplay
-- **Top-down roguelike exploration** with smooth tile-based movement
-- **Interactive NPCs** representing different portfolio categories
-- **Secret key mechanic** with a hidden room to discover
-- **Atmospheric audio** with background music and subtle sound effects
-- **CRT post-processing effects** for authentic retro aesthetics
+### Core Experience
+- **Generative Ambient Music** - Drift v7 system generates real-time ambient soundscapes
+- **Oscilloscope Visualization** - Animated waveform display synchronized with audio
+- **Minimalist Design** - Clean monospace typography with subtle animations
+- **Horizontal Navigation** - Projects menu expands horizontally for easy browsing
 
-### NPCs & Categories
-- **Fire Keeper (♀)** - About Me & Contact (by the central bonfire)
-- **Bard (♪)** - Music Projects (Drift v1-v7 generative ambient music)
-- **Blacksmith (⚒)** - Miscellaneous Coding Projects
-- **Painter (✎)** - Interactive Art Pieces
-- **Knight (♞)** - Work & Professional Portfolio
-- **Librarian (📚)** - Writing & Documentation
-- **Archivist (⚱)** - Hidden Archives (secret room)
+### Interactive Elements
+- Real-time audio parameter display (key, mode, mood, active voices)
+- Volume control with visual feedback
+- Pause/restart controls for the generative music
+- Smooth fade-in animations on page load
 
-### Visual Effects
-- Scanline overlay with subtle animation
-- Bloom/glow on bright elements (NPCs, bonfire, key)
-- Vignette and rounded corners (CRT monitor effect)
-- Particle systems (bonfire embers, ambient dust)
-- Smooth camera following player
+## Projects
 
-### Controls
-- **WASD / Arrow Keys** - Move player
-- **E** - Interact with NPCs / Use key on doors
-- **↑↓ / WS** - Navigate dialogue menus
-- **Enter** - Select menu item
-- **Escape** - Close dialogue
-- **M** - Mute/unmute audio
-- **+/-** - Adjust volume
+### Music
+- **4-Track Tape Recorder** - Multi-track recording with LA-2A compression and master EQ
+- **PS4 Synth** - PlayStation 4 controller synthesizer
+- **Drift Series (v1-v7)** - Evolution of generative ambient music systems
+- **Nova Grid** - Cellular automata sequencer
+- **Granular Ambient** - Granular synthesis experiments
+- **Textscape** - Text-driven soundscape generator
 
-## Project Structure
+### Interactive Art
+- **Dungeon Game** - ASCII roguelike exploration
+- **Maze Send** - Procedural maze generator
+- **Water Lilies** - Interactive impressionist visualization
+- **View of a Burning City** - Dynamic urban landscape
+- **Word Processor** - Experimental text interface
+- **Color Explore** - Color theory playground
+- **Block Snow** - Particle simulation
 
-```
-pebaum.github.io/
-├── index.html                  # Main roguelike game entry point
-├── Stone.mp3                   # Background music
-├── about/                      # About & contact info
-├── assets/
-│   ├── fonts/
-│   │   └── Alexandria.ttf     # Monospace font
-│   └── js/
-│       ├── roguelike-engine.js  # Core game engine
-│       ├── level-data.js        # Firelink Shrine map & NPC data
-│       └── crt-effects.js       # Post-processing effects
-├── projects/
-│   ├── music/                  # Bard NPC projects
-│   │   └── drift/             # Drift v1-v7
-│   ├── art/                    # Painter NPC projects
-│   │   └── interactive-art/   # Dungeon game, mazes, etc.
-│   ├── miscellaneous/          # Blacksmith NPC projects
-│   │   ├── benji-site/
-│   │   ├── the-duel/
-│   │   └── forward-playground/
-│   ├── work/                   # Knight NPC (resume/portfolio)
-│   └── writing/                # Librarian NPC (future content)
-└── archive/                    # Archived projects & old homepage
-```
+### Code
+- **D&D 5e DM Screen** - Intelligent dungeon master assistant with 5etools integration
+- **Benji Site** - Personal website project
+- **The Duel** - Turn-based combat system
+- **Forward Playground** - Code experimentation space
 
 ## Technical Details
 
-### Game Engine Architecture
-- **Vanilla JavaScript** - No frameworks, pure ES6
-- **Canvas 2D API** - Tile-based rendering
-- **Class-based architecture** with modular systems:
-  - `Game` - Main game loop and state management
-  - `Player` - Movement, collision, inventory
-  - `World` - Tile map rendering and world state
-  - `NPC` - Character positioning and idle animations
-  - `DialogueSystem` - Menu navigation and typewriter text
-  - `AudioManager` - Background music + Web Audio API SFX
-  - `ParticleSystem` - Environmental particle effects
-  - `CRTEffects` - Post-processing shader effects
-  - `InputManager` - Keyboard input handling
+### Architecture
+- **Vanilla JavaScript** - No frameworks, pure ES6+
+- **Web Audio API** - Real-time audio synthesis and processing
+- **Canvas 2D** - Oscilloscope visualization
+- **CSS Grid/Flexbox** - Responsive layout system
+
+### Audio System (Drift v7)
+- Multiple synthesizer voices with dynamic allocation
+- Chord progression engine with musical theory
+- Real-time parameter modulation
+- Smooth voice management and polyphony control
 
 ### Performance
-- 60 FPS target with `requestAnimationFrame`
-- Efficient particle pooling
-- Optimized render loop
-- Pixel-perfect rendering (no antialiasing)
+- 60 FPS oscilloscope rendering
+- Efficient voice pooling for audio
+- Optimized animation loops
+- Responsive design for all screen sizes
 
-### Browser Compatibility
-- Modern browsers with HTML5 Canvas support
-- Web Audio API for sound
-- ES6 JavaScript features
+## Browser Compatibility
+- Modern browsers with Web Audio API support
+- ES6+ JavaScript features
+- HTML5 Canvas
 
-## Secret Room
-A bronze key (◊) is hidden somewhere in the shrine. Find it to unlock a secret door and discover the Archivist, who guards forgotten treasures from the past.
+## Development
 
-**Hint:** Check small alcoves and hidden corners...
+Built with iterative refinement over multiple sessions, featuring custom audio synthesis engines, visual effects, and interactive experiences.
 
-## Development Timeline
-Built in a single session using Claude Code (January 2026) with complete file reorganization, game engine implementation, and visual effects system.
+## Contact
 
-## Credits
-- **Design & Code:** Generated with Claude Code
-- **Music:** Stone.mp3 ambient soundtrack
-- **Font:** Alexandria.ttf
-- **Inspiration:** Dark Souls' Firelink Shrine
+- **Email:** p.l.baumgartner@gmail.com
+- **LinkedIn:** [Peter Baumgartner](https://www.linkedin.com/in/peter-baumgartner-b0094a49/)
+- **Location:** Mission Viejo, CA
 
 ---
 
-*"The bonfire burns eternal in this digital shrine..."*
+*Live generative ambient music creates a unique soundscape for every visit*
