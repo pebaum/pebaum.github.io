@@ -44,8 +44,7 @@ class Recorder {
             this.tracks.push(track);
         }
 
-        // Initialize visualizer
-        this.visualizer.initWaveforms();
+        // Initialize visualizer (only VU meters, no waveforms)
         this.visualizer.initVUMeters();
 
         // Request microphone access
@@ -62,18 +61,18 @@ class Recorder {
         this.reverbSendBus = this.ctx.createGain();
         this.reverbSendBus.gain.value = 1.0;
 
-        // Master reverb - massive wide stereo cistern-style reverb
+        // Master reverb - MASSIVE Deep Listening cistern-style reverb (Pauline Oliveros inspired)
         this.masterReverb = this.ctx.createConvolver();
-        this.masterReverbSize = 5.0; // 5 second decay for massive reverb
-        this.masterReverb.buffer = this.generateReverbImpulse(this.masterReverbSize, 5.0);
+        this.masterReverbSize = 15.0; // 15 second decay default (Deep Listening style)
+        this.masterReverb.buffer = this.generateReverbImpulse(this.masterReverbSize, this.masterReverbSize);
 
         // Reverb wet/dry mix
         this.reverbMix = this.ctx.createGain();
-        this.reverbMix.gain.value = 0.3; // Default 30% reverb mix
+        this.reverbMix.gain.value = 0.15; // Default 15% reverb mix (lower for massive space)
 
         // Reverb dry signal
         this.reverbDry = this.ctx.createGain();
-        this.reverbDry.gain.value = 0.7; // Default 70% dry
+        this.reverbDry.gain.value = 0.85; // Default 85% dry
 
         // Connect reverb: reverbSendBus → reverb → reverbMix
         this.reverbSendBus.connect(this.masterReverb);
@@ -103,22 +102,63 @@ class Recorder {
         this.masterTapeCompression.connect(this.masterGain);
         this.masterGain.connect(this.masterAnalyser);
         this.masterAnalyser.connect(this.ctx.destination);
+
+        // Impulse cache for performance
+        this.reverbCache = new Map();
     }
 
-    // Generate massive reverb impulse for deep listening cistern effect
-    generateReverbImpulse(decay = 5.0, length = 5.0) {
+    // Generate MASSIVE reverb impulse for Deep Listening cistern effect (Pauline Oliveros)
+    // Up to 45-second decay with early reflections and extreme stereo width
+    generateReverbImpulse(decay, length) {
         const sampleRate = this.ctx.sampleRate;
         const lengthSamples = sampleRate * length;
         const impulse = this.ctx.createBuffer(2, lengthSamples, sampleRate);
 
+        // Early reflections pattern (cistern geometry simulation)
+        const earlyReflections = [];
+        const numEarlyReflections = 12;
+        for (let i = 0; i < numEarlyReflections; i++) {
+            earlyReflections.push({
+                time: 0.02 + (i * 0.035) + (Math.random() * 0.015), // 20-500ms
+                amplitude: 0.6 * Math.exp(-i * 0.3), // Exponential decay
+                pan: (Math.random() * 2 - 1) * 0.8 // Random stereo position
+            });
+        }
+
         for (let channel = 0; channel < 2; channel++) {
             const data = impulse.getChannelData(channel);
+
+            // Extreme stereo width (Deep Listening cistern characteristic)
+            const stereoShift = (channel === 0 ? 0.90 : 1.10);
+
             for (let i = 0; i < lengthSamples; i++) {
-                // Exponential decay envelope for natural reverb tail
+                const time = i / sampleRate;
+                let sample = 0;
+
+                // Early reflections (0-500ms)
+                if (time < 0.5) {
+                    earlyReflections.forEach(reflection => {
+                        const timeDiff = Math.abs(time - reflection.time);
+                        if (timeDiff < 0.002) { // 2ms window
+                            const reflectionGain = reflection.amplitude * (1 - timeDiff / 0.002);
+                            const panGain = channel === 0 ?
+                                (1 - reflection.pan) / 2 :
+                                (1 + reflection.pan) / 2;
+                            sample += (Math.random() * 2 - 1) * reflectionGain * panGain * 0.5;
+                        }
+                    });
+                }
+
+                // Dense diffuse field (exponential decay tail)
                 const envelope = Math.exp(-i / (sampleRate * decay));
-                // Random noise with stereo width
-                const stereoShift = (channel === 0 ? 0.97 : 1.03);
-                data[i] = (Math.random() * 2 - 1) * envelope * stereoShift;
+                const diffuse = (Math.random() * 2 - 1) * envelope * stereoShift;
+
+                // Subtle pitch modulation for natural character
+                const modulation = 1 + Math.sin(i * 0.0001) * 0.001;
+
+                sample += diffuse * modulation;
+
+                data[i] = sample * 0.5; // Overall gain reduction for headroom
             }
         }
 
@@ -233,31 +273,9 @@ class Recorder {
         this.updateStatus('ALL TRACKS CLEARED');
     }
 
-    // Update waveforms
-    updateWaveforms() {
-        this.tracks.forEach((track, i) => {
-            if (track.audioBuffer) {
-                const currentTime = track.getCurrentTime();
-                this.visualizer.drawWaveform(i, track.audioBuffer, currentTime, track.isPlaying);
-
-                // Draw loop region if in loop mode
-                if (track.mode === 'loop') {
-                    this.visualizer.drawLoopRegion(i, track.audioBuffer, track.loopLength);
-                }
-            }
-        });
-    }
-
-    // Start animation loop for waveforms
-    startWaveformAnimation() {
-        const animate = () => {
-            if (this.isPlaying) {
-                this.updateWaveforms();
-            }
-            this.waveformAnimationId = requestAnimationFrame(animate);
-        };
-        animate();
-    }
+    // Waveforms removed for performance and space optimization
+    // updateWaveforms() - REMOVED
+    // startWaveformAnimation() - REMOVED
 
     // Master controls
     setMasterVolume(value) {
@@ -283,11 +301,29 @@ class Recorder {
     }
 
     setMasterReverbSize(amount) {
-        // amount is 0-1, controls reverb decay time (1-10 seconds)
-        const decayTime = 1 + (amount * 9); // 1s to 10s
+        // amount is 0-1, controls reverb decay time (1-45 seconds) - MASSIVE Deep Listening range
+        const decayTime = 1 + (amount * 44); // 1s to 45s
         this.masterReverbSize = decayTime;
-        // Regenerate impulse response with new decay time
-        this.masterReverb.buffer = this.generateReverbImpulse(decayTime, decayTime);
+
+        // Check cache first for performance
+        const cacheKey = decayTime.toFixed(1);
+        if (this.reverbCache.has(cacheKey)) {
+            this.masterReverb.buffer = this.reverbCache.get(cacheKey);
+            return;
+        }
+
+        // Generate new impulse response asynchronously to avoid blocking
+        setTimeout(() => {
+            const newBuffer = this.generateReverbImpulse(decayTime, decayTime);
+            this.masterReverb.buffer = newBuffer;
+
+            // Cache the buffer (limit cache size to 5 most recent)
+            this.reverbCache.set(cacheKey, newBuffer);
+            if (this.reverbCache.size > 5) {
+                const firstKey = this.reverbCache.keys().next().value;
+                this.reverbCache.delete(firstKey);
+            }
+        }, 0);
     }
 
     // Tape reel animation

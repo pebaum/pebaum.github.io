@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupStartButton();
 });
 
-// Setup rotary knobs with visual indicators
+// Setup rotary knobs with visual indicators and value labels
 function setupRotaryKnobs() {
     const rangeInputs = document.querySelectorAll('input[type="range"]');
 
@@ -26,6 +26,10 @@ function setupRotaryKnobs() {
         const indicator = document.createElement('div');
         indicator.className = 'knob-indicator';
 
+        // Create value display
+        const valueDisplay = document.createElement('div');
+        valueDisplay.className = 'knob-value';
+
         // Insert wrapper before input
         input.parentNode.insertBefore(wrapper, input);
 
@@ -33,8 +37,18 @@ function setupRotaryKnobs() {
         wrapper.appendChild(input);
         wrapper.appendChild(visual);
         wrapper.appendChild(indicator);
+        wrapper.appendChild(valueDisplay);
 
-        // Function to update knob rotation
+        // Function to format value for display
+        const formatValue = (val) => {
+            const min = parseFloat(input.min) || 0;
+            const max = parseFloat(input.max) || 100;
+            // Normalize to 0-100 range for display
+            const normalized = Math.round(((val - min) / (max - min)) * 100);
+            return normalized.toString();
+        };
+
+        // Function to update knob rotation and value display
         const updateKnob = () => {
             const min = parseFloat(input.min) || 0;
             const max = parseFloat(input.max) || 100;
@@ -47,13 +61,56 @@ function setupRotaryKnobs() {
             const angle = -135 + (percent * 270);
 
             indicator.style.transform = `translateX(-50%) rotate(${angle}deg)`;
+            valueDisplay.textContent = formatValue(value);
         };
 
-        // Set initial rotation
+        // Click to edit value
+        valueDisplay.addEventListener('click', () => {
+            const currentValue = formatValue(parseFloat(input.value));
+            const inputEl = document.createElement('input');
+            inputEl.type = 'text';
+            inputEl.className = 'knob-value-input';
+            inputEl.value = currentValue;
+
+            valueDisplay.replaceWith(inputEl);
+            inputEl.select();
+            inputEl.focus();
+
+            const finishEdit = () => {
+                const newValue = parseInt(inputEl.value) || 0;
+                const clampedValue = Math.max(0, Math.min(100, newValue));
+
+                // Convert back to input's range
+                const min = parseFloat(input.min) || 0;
+                const max = parseFloat(input.max) || 100;
+                const actualValue = min + (clampedValue / 100) * (max - min);
+
+                input.value = actualValue;
+                input.dispatchEvent(new Event('input'));
+
+                inputEl.replaceWith(valueDisplay);
+                updateKnob();
+            };
+
+            inputEl.addEventListener('blur', finishEdit);
+            inputEl.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    finishEdit();
+                } else if (e.key === 'Escape') {
+                    inputEl.replaceWith(valueDisplay);
+                }
+            });
+        });
+
+        // Set initial rotation and value
         updateKnob();
 
-        // Update on input
-        input.addEventListener('input', updateKnob);
+        // Update on input (throttled for performance)
+        let inputTimeout;
+        input.addEventListener('input', () => {
+            clearTimeout(inputTimeout);
+            inputTimeout = setTimeout(updateKnob, 10);
+        });
     });
 }
 
@@ -75,9 +132,6 @@ function setupStartButton() {
         setupTransportControls();
         setupTrackControls();
         setupMasterControls();
-
-        // Start waveform animation loop
-        recorder.startWaveformAnimation();
     });
 }
 
@@ -112,7 +166,6 @@ function setupTrackControls() {
 function setupTrackButtons(trackNumber) {
     // Mode toggle
     const modeBtn = document.querySelector(`.mode-btn[data-track="${trackNumber}"]`);
-    const loopControls = document.querySelector(`.loop-controls[data-track="${trackNumber}"]`);
 
     modeBtn.addEventListener('click', () => {
         const track = recorder.getTrack(trackNumber);
@@ -122,15 +175,10 @@ function setupTrackButtons(trackNumber) {
         if (newMode === 'loop') {
             modeBtn.textContent = 'LOOP';
             modeBtn.classList.add('active');
-            loopControls.style.display = 'flex';
         } else {
             modeBtn.textContent = 'NORMAL';
             modeBtn.classList.remove('active');
-            loopControls.style.display = 'none';
         }
-
-        // Redraw waveform
-        recorder.updateWaveforms();
     });
 
     // Record button
@@ -142,11 +190,6 @@ function setupTrackButtons(trackNumber) {
             track.stopRecording();
             recBtn.classList.remove('recording');
             recBtn.textContent = '● REC';
-
-            // Wait a bit for the recording to process, then update waveform
-            setTimeout(() => {
-                recorder.visualizer.drawWaveform(trackNumber, track.getAudioBuffer());
-            }, 100);
         } else {
             await recorder.recordTrack(trackNumber);
             recBtn.classList.add('recording');
@@ -175,7 +218,6 @@ function setupTrackButtons(trackNumber) {
     clearBtn.addEventListener('click', () => {
         const track = recorder.getTrack(trackNumber);
         track.clear();
-        recorder.visualizer.clearWaveform(trackNumber);
     });
 }
 
@@ -198,24 +240,12 @@ function setupTrackSliders(trackNumber) {
 
     // Speed
     const speedSlider = document.querySelector(`.speed[data-track="${trackNumber}"]`);
-    const speedValue = document.querySelector(`.speed-value[data-track="${trackNumber}"]`);
     speedSlider.addEventListener('input', (e) => {
         const value = e.target.value / 100;
         track.setSpeed(value);
-        speedValue.textContent = `${e.target.value}%`;
     });
 
-    // Loop length
-    const loopLengthSlider = document.querySelector(`.loop-length[data-track="${trackNumber}"]`);
-    const loopLengthValue = document.querySelector(`.loop-length-value[data-track="${trackNumber}"]`);
-    if (loopLengthSlider) {
-        loopLengthSlider.addEventListener('input', (e) => {
-            const value = parseFloat(e.target.value);
-            track.setLoopLength(value);
-            loopLengthValue.textContent = `${value.toFixed(1)}s`;
-            recorder.updateWaveforms();
-        });
-    }
+    // Loop length - removed (auto-set to 100% of recording)
 
     // EQ Low
     const eqLowSlider = document.querySelector(`.eq-low[data-track="${trackNumber}"]`);

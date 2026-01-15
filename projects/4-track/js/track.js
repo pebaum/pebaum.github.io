@@ -132,6 +132,8 @@ class Track {
 
         try {
             this.audioBuffer = await this.ctx.decodeAudioData(arrayBuffer);
+            // Auto-set loop length to 100% of recording
+            this.loopLength = this.audioBuffer.duration;
         } catch (error) {
             console.error('Error decoding audio:', error);
         }
