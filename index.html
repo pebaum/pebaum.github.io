@@ -180,20 +180,17 @@
         #projectsList {
             display: none;
             position: absolute;
-            top: -2px;
+            top: 0;
             left: 100%;
-            margin-left: 20px;
-            font-size: 9px;
-            line-height: 2.2;
-            letter-spacing: 0.05em;
+            margin-left: 40px;
+            font-size: 10px;
+            line-height: 1.8;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            text-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
             opacity: 0;
-            background: rgba(0, 0, 0, 0.95);
-            padding: 10px 15px;
-            border-radius: 4px;
             z-index: 10;
-            min-width: 250px;
-            max-height: 400px;
-            overflow-y: auto;
+            min-width: 350px;
             white-space: nowrap;
         }
 
@@ -209,6 +206,9 @@
             transition: opacity 0.3s;
             pointer-events: all;
             display: block;
+            text-transform: none;
+            font-size: 9px;
+            letter-spacing: 0.05em;
         }
 
         #projectsList a:hover {
@@ -216,16 +216,14 @@
         }
 
         #projectsList .category {
-            opacity: 0.3;
-            font-size: 8px;
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-            margin-top: 10px;
-            margin-bottom: 3px;
+            opacity: 1;
+            font-weight: normal;
+            margin-top: 15px;
+            margin-bottom: 0;
         }
 
         #projectsList .category:first-child {
-            margin-top: 5px;
+            margin-top: 0;
         }
 
         /* Custom scrollbar for projects list */
