@@ -93,7 +93,7 @@ class TextInterface {
                 back: true,
                 options: [
                     { label: 'Benji Site', url: 'projects/miscellaneous/benji-site/index.html' },
-                    { label: 'Blade Honor', url: 'projects/miscellaneous/blade-honor/index.html' },
+                    { label: 'The Duel', url: 'projects/the-duel/index.html' },
                     { label: 'Forward Playground', url: 'projects/miscellaneous/forward-playground/index.html' }
                 ]
             },

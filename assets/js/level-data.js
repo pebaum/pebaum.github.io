@@ -102,7 +102,7 @@ const FIRELINK_SHRINE = {
             description: 'The Blacksmith crafts various projects in the fires of creativity.',
             items: [
                 { name: 'Benji Site', description: 'A personal project forged with care', url: 'projects/miscellaneous/benji-site/index.html' },
-                { name: 'Blade Honor', description: 'Honorable blade techniques', url: 'projects/miscellaneous/blade-honor/index.html' },
+                { name: 'The Duel', description: 'A tactical card-based combat game', url: 'projects/the-duel/index.html' },
                 { name: 'Forward Playground', description: 'Experimental testing grounds', url: 'projects/miscellaneous/forward-playground/index.html' }
             ]
         },

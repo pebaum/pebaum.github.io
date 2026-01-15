@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4-TRACK RECORDER</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Start Overlay -->
+    <div class="overlay" id="overlay">
+        <div class="overlay-content">
+            <h1>4-TRACK RECORDER</h1>
+            <p>A VIRTUAL TAPE RECORDER WITH INDEPENDENT LOOP MODES</p>
+            <button id="startBtn" class="btn-large">START</button>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container" id="mainContainer" style="display: none;">
+        <!-- Header with Transport Controls -->
+        <header class="header">
+            <div class="header-left">
+                <h1>4-TRACK RECORDER</h1>
+            </div>
+            <div class="transport">
+                <button id="playBtn" class="transport-btn">PLAY</button>
+                <button id="stopBtn" class="transport-btn">STOP</button>
+                <button id="clearAllBtn" class="transport-btn">CLEAR ALL</button>
+            </div>
+            <div class="header-right">
+                <span class="status" id="status">READY</span>
+            </div>
+        </header>
+
+        <!-- Tracks Grid -->
+        <main class="tracks-grid">
+            <!-- Track 1 -->
+            <section class="track">
+                <div class="track-header">
+                    <h2>TRACK 1</h2>
+                    <div class="mode-toggle">
+                        <button class="mode-btn" data-track="0">NORMAL</button>
+                    </div>
+                </div>
+                <canvas class="waveform" id="waveform0" width="800" height="120"></canvas>
+                <div class="track-controls">
+                    <div class="control-row">
+                        <button class="rec-btn" data-track="0">● REC</button>
+                        <button class="mute-btn" data-track="0">MUTE</button>
+                        <button class="solo-btn" data-track="0">SOLO</button>
+                        <button class="clear-btn" data-track="0">CLEAR</button>
+                    </div>
+                    <div class="control-row loop-controls" data-track="0" style="display: none;">
+                        <label>LOOP LENGTH
+                            <input type="range" class="loop-length" data-track="0" min="1" max="32" value="4" step="0.5">
+                            <span class="loop-length-value" data-track="0">4.0s</span>
+                        </label>
+                    </div>
+                    <div class="control-row">
+                        <label>VOL
+                            <input type="range" class="volume" data-track="0" min="0" max="100" value="80">
+                        </label>
+                        <label>PAN
+                            <input type="range" class="pan" data-track="0" min="-100" max="100" value="0">
+                        </label>
+                        <label>SPEED
+                            <input type="range" class="speed" data-track="0" min="25" max="200" value="100">
+                            <span class="speed-value" data-track="0">100%</span>
+                        </label>
+                    </div>
+                    <div class="control-row eq-row">
+                        <label>LOW
+                            <input type="range" class="eq-low" data-track="0" min="-12" max="12" value="0">
+                        </label>
+                        <label>MID
+                            <input type="range" class="eq-mid" data-track="0" min="-12" max="12" value="0">
+                        </label>
+                        <label>HIGH
+                            <input type="range" class="eq-high" data-track="0" min="-12" max="12" value="0">
+                        </label>
+                    </div>
+                    <div class="control-row tape-row">
+                        <label>COMPRESSION
+                            <input type="range" class="tape-comp" data-track="0" min="0" max="100" value="30">
+                        </label>
+                        <label>SATURATION
+                            <input type="range" class="tape-sat" data-track="0" min="0" max="100" value="20">
+                        </label>
+                        <label>AGE
+                            <input type="range" class="tape-age" data-track="0" min="0" max="100" value="40">
+                        </label>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Track 2 -->
+            <section class="track">
+                <div class="track-header">
+                    <h2>TRACK 2</h2>
+                    <div class="mode-toggle">
+                        <button class="mode-btn" data-track="1">NORMAL</button>
+                    </div>
+                </div>
+                <canvas class="waveform" id="waveform1" width="800" height="120"></canvas>
+                <div class="track-controls">
+                    <div class="control-row">
+                        <button class="rec-btn" data-track="1">● REC</button>
+                        <button class="mute-btn" data-track="1">MUTE</button>
+                        <button class="solo-btn" data-track="1">SOLO</button>
+                        <button class="clear-btn" data-track="1">CLEAR</button>
+                    </div>
+                    <div class="control-row loop-controls" data-track="1" style="display: none;">
+                        <label>LOOP LENGTH
+                            <input type="range" class="loop-length" data-track="1" min="1" max="32" value="4" step="0.5">
+                            <span class="loop-length-value" data-track="1">4.0s</span>
+                        </label>
+                    </div>
+                    <div class="control-row">
+                        <label>VOL
+                            <input type="range" class="volume" data-track="1" min="0" max="100" value="80">
+                        </label>
+                        <label>PAN
+                            <input type="range" class="pan" data-track="1" min="-100" max="100" value="0">
+                        </label>
+                        <label>SPEED
+                            <input type="range" class="speed" data-track="1" min="25" max="200" value="100">
+                            <span class="speed-value" data-track="1">100%</span>
+                        </label>
+                    </div>
+                    <div class="control-row eq-row">
+                        <label>LOW
+                            <input type="range" class="eq-low" data-track="1" min="-12" max="12" value="0">
+                        </label>
+                        <label>MID
+                            <input type="range" class="eq-mid" data-track="1" min="-12" max="12" value="0">
+                        </label>
+                        <label>HIGH
+                            <input type="range" class="eq-high" data-track="1" min="-12" max="12" value="0">
+                        </label>
+                    </div>
+                    <div class="control-row tape-row">
+                        <label>COMPRESSION
+                            <input type="range" class="tape-comp" data-track="1" min="0" max="100" value="30">
+                        </label>
+                        <label>SATURATION
+                            <input type="range" class="tape-sat" data-track="1" min="0" max="100" value="20">
+                        </label>
+                        <label>AGE
+                            <input type="range" class="tape-age" data-track="1" min="0" max="100" value="40">
+                        </label>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Track 3 -->
+            <section class="track">
+                <div class="track-header">
+                    <h2>TRACK 3</h2>
+                    <div class="mode-toggle">
+                        <button class="mode-btn" data-track="2">NORMAL</button>
+                    </div>
+                </div>
+                <canvas class="waveform" id="waveform2" width="800" height="120"></canvas>
+                <div class="track-controls">
+                    <div class="control-row">
+                        <button class="rec-btn" data-track="2">● REC</button>
+                        <button class="mute-btn" data-track="2">MUTE</button>
+                        <button class="solo-btn" data-track="2">SOLO</button>
+                        <button class="clear-btn" data-track="2">CLEAR</button>
+                    </div>
+                    <div class="control-row loop-controls" data-track="2" style="display: none;">
+                        <label>LOOP LENGTH
+                            <input type="range" class="loop-length" data-track="2" min="1" max="32" value="4" step="0.5">
+                            <span class="loop-length-value" data-track="2">4.0s</span>
+                        </label>
+                    </div>
+                    <div class="control-row">
+                        <label>VOL
+                            <input type="range" class="volume" data-track="2" min="0" max="100" value="80">
+                        </label>
+                        <label>PAN
+                            <input type="range" class="pan" data-track="2" min="-100" max="100" value="0">
+                        </label>
+                        <label>SPEED
+                            <input type="range" class="speed" data-track="2" min="25" max="200" value="100">
+                            <span class="speed-value" data-track="2">100%</span>
+                        </label>
+                    </div>
+                    <div class="control-row eq-row">
+                        <label>LOW
+                            <input type="range" class="eq-low" data-track="2" min="-12" max="12" value="0">
+                        </label>
+                        <label>MID
+                            <input type="range" class="eq-mid" data-track="2" min="-12" max="12" value="0">
+                        </label>
+                        <label>HIGH
+                            <input type="range" class="eq-high" data-track="2" min="-12" max="12" value="0">
+                        </label>
+                    </div>
+                    <div class="control-row tape-row">
+                        <label>COMPRESSION
+                            <input type="range" class="tape-comp" data-track="2" min="0" max="100" value="30">
+                        </label>
+                        <label>SATURATION
+                            <input type="range" class="tape-sat" data-track="2" min="0" max="100" value="20">
+                        </label>
+                        <label>AGE
+                            <input type="range" class="tape-age" data-track="2" min="0" max="100" value="40">
+                        </label>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Track 4 -->
+            <section class="track">
+                <div class="track-header">
+                    <h2>TRACK 4</h2>
+                    <div class="mode-toggle">
+                        <button class="mode-btn" data-track="3">NORMAL</button>
+                    </div>
+                </div>
+                <canvas class="waveform" id="waveform3" width="800" height="120"></canvas>
+                <div class="track-controls">
+                    <div class="control-row">
+                        <button class="rec-btn" data-track="3">● REC</button>
+                        <button class="mute-btn" data-track="3">MUTE</button>
+                        <button class="solo-btn" data-track="3">SOLO</button>
+                        <button class="clear-btn" data-track="3">CLEAR</button>
+                    </div>
+                    <div class="control-row loop-controls" data-track="3" style="display: none;">
+                        <label>LOOP LENGTH
+                            <input type="range" class="loop-length" data-track="3" min="1" max="32" value="4" step="0.5">
+                            <span class="loop-length-value" data-track="3">4.0s</span>
+                        </label>
+                    </div>
+                    <div class="control-row">
+                        <label>VOL
+                            <input type="range" class="volume" data-track="3" min="0" max="100" value="80">
+                        </label>
+                        <label>PAN
+                            <input type="range" class="pan" data-track="3" min="-100" max="100" value="0">
+                        </label>
+                        <label>SPEED
+                            <input type="range" class="speed" data-track="3" min="25" max="200" value="100">
+                            <span class="speed-value" data-track="3">100%</span>
+                        </label>
+                    </div>
+                    <div class="control-row eq-row">
+                        <label>LOW
+                            <input type="range" class="eq-low" data-track="3" min="-12" max="12" value="0">
+                        </label>
+                        <label>MID
+                            <input type="range" class="eq-mid" data-track="3" min="-12" max="12" value="0">
+                        </label>
+                        <label>HIGH
+                            <input type="range" class="eq-high" data-track="3" min="-12" max="12" value="0">
+                        </label>
+                    </div>
+                    <div class="control-row tape-row">
+                        <label>COMPRESSION
+                            <input type="range" class="tape-comp" data-track="3" min="0" max="100" value="30">
+                        </label>
+                        <label>SATURATION
+                            <input type="range" class="tape-sat" data-track="3" min="0" max="100" value="20">
+                        </label>
+                        <label>AGE
+                            <input type="range" class="tape-age" data-track="3" min="0" max="100" value="40">
+                        </label>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Master Section -->
+        <footer class="master-section">
+            <div class="master-left">
+                <h3>MASTER</h3>
+                <div class="master-controls">
+                    <label>VOLUME
+                        <input type="range" id="masterVolume" min="0" max="100" value="80">
+                    </label>
+                    <label>COMPRESSION
+                        <input type="range" id="masterComp" min="0" max="100" value="40">
+                    </label>
+                    <label>SATURATION
+                        <input type="range" id="masterSat" min="0" max="100" value="30">
+                    </label>
+                    <label>AGE
+                        <input type="range" id="masterAge" min="0" max="100" value="50">
+                    </label>
+                </div>
+            </div>
+            <div class="master-right">
+                <div class="vu-meters">
+                    <div class="vu-meter">
+                        <div class="vu-label">L</div>
+                        <canvas id="vuLeft" width="200" height="20"></canvas>
+                    </div>
+                    <div class="vu-meter">
+                        <div class="vu-label">R</div>
+                        <canvas id="vuRight" width="200" height="20"></canvas>
+                    </div>
+                </div>
+                <div class="tape-animation">
+                    <div class="reel reel-left"></div>
+                    <div class="reel reel-right"></div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/tape-effects.js"></script>
+    <script src="js/track.js"></script>
+    <script src="js/visualizer.js"></script>
+    <script src="js/recorder.js"></script>
+    <script src="js/ui.js"></script>
+</body>
+</html>

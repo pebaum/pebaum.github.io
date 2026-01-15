@@ -57,7 +57,7 @@ pebaum.github.io/
 │   │   └── interactive-art/   # Dungeon game, mazes, etc.
 │   ├── miscellaneous/          # Blacksmith NPC projects
 │   │   ├── benji-site/
-│   │   ├── blade-honor/
+│   │   ├── the-duel/
 │   │   └── forward-playground/
 │   ├── work/                   # Knight NPC (resume/portfolio)
 │   └── writing/                # Librarian NPC (future content)
