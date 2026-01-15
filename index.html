@@ -180,9 +180,9 @@
         #projectsList {
             display: none;
             position: absolute;
-            top: 0;
+            top: -2px;
             left: 100%;
-            margin-left: 30px;
+            margin-left: 20px;
             font-size: 9px;
             line-height: 2.2;
             letter-spacing: 0.05em;
@@ -194,6 +194,7 @@
             min-width: 250px;
             max-height: 400px;
             overflow-y: auto;
+            white-space: nowrap;
         }
 
         #projectsList.visible {
@@ -256,7 +257,7 @@
                 <strong>Peter Baumgartner</strong><br>
                 37 / M / Mission Viejo<br>
                 <a href="https://www.linkedin.com/in/peter-baumgartner-b0094a49/" target="_blank">PM @ Microsoft</a><br>
-                <a href="https://open.spotify.com/artist/YOUR_SPOTIFY_ID" target="_blank">music</a> · <a href="#" id="builderLink">projects</a><br>
+                <a href="https://open.spotify.com/artist/YOUR_SPOTIFY_ID" target="_blank">music</a> · <span style="position: relative; display: inline-block;"><a href="#" id="builderLink">projects</a>
                 <div id="projectsList">
                     <div class="category">Music</div>
                     <a href="projects/4-track/index.html">4-Track Tape Recorder</a>
@@ -283,7 +284,7 @@
                     <a href="projects/benji-site/index.html">Benji Site</a>
                     <a href="projects/the-duel/index.html">The Duel</a>
                     <a href="projects/forward-playground/play.html">Forward Playground</a>
-                </div>
+                </div></span><br>
                 <a href="mailto:p.l.baumgartner@gmail.com">contact</a>
             </div>
             <div class="info-block" id="infoRight" style="text-align: right;">
