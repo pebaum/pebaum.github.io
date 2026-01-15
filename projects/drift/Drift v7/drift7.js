@@ -979,11 +979,11 @@ document.addEventListener('keydown', (e) => {
 
 // Keep audio running in background
 document.addEventListener('visibilitychange', () => {
-    if (running && audioCtx) {
+    if (running && audioCtx && !paused) {
         if (!document.hidden && audioCtx.state === 'suspended') {
             audioCtx.resume();
         }
-        if (document.hidden && !paused && audioCtx.state === 'suspended') {
+        if (document.hidden && audioCtx.state === 'suspended') {
             audioCtx.resume();
         }
     }

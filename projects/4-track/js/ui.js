@@ -111,6 +111,54 @@ function setupRotaryKnobs() {
             clearTimeout(inputTimeout);
             inputTimeout = setTimeout(updateKnob, 10);
         });
+
+        // Vertical drag behavior (DAW standard)
+        let isDragging = false;
+        let startY = 0;
+        let startValue = 0;
+
+        const onMouseDown = (e) => {
+            if (e.target === input || e.target.closest('.knob-container')) {
+                isDragging = true;
+                startY = e.clientY;
+                startValue = parseFloat(input.value);
+                e.preventDefault();
+                document.body.style.cursor = 'ns-resize';
+            }
+        };
+
+        const onMouseMove = (e) => {
+            if (!isDragging) return;
+
+            const deltaY = startY - e.clientY; // Inverted: up = positive
+            const min = parseFloat(input.min) || 0;
+            const max = parseFloat(input.max) || 100;
+            const range = max - min;
+
+            // Sensitivity: 100px of movement = full range
+            // Shift key for fine control (10x slower)
+            const sensitivity = e.shiftKey ? 0.1 : 1.0;
+            const pixelsPerRange = 150 / sensitivity;
+            const delta = (deltaY / pixelsPerRange) * range;
+
+            let newValue = startValue + delta;
+            newValue = Math.max(min, Math.min(max, newValue));
+
+            input.value = newValue;
+            input.dispatchEvent(new Event('input'));
+            e.preventDefault();
+        };
+
+        const onMouseUp = () => {
+            if (isDragging) {
+                isDragging = false;
+                document.body.style.cursor = '';
+            }
+        };
+
+        wrapper.addEventListener('mousedown', onMouseDown);
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
     });
 }
 

@@ -165,6 +165,46 @@
             pointer-events: none;
         }
 
+        #projectsList {
+            display: none;
+            margin-top: 5px;
+            font-size: 9px;
+            line-height: 2.2;
+            letter-spacing: 0.05em;
+            opacity: 0;
+        }
+
+        #projectsList.visible {
+            display: block;
+            animation: fadeInUp 0.8s ease-out forwards;
+        }
+
+        #projectsList a {
+            color: #fff;
+            text-decoration: none;
+            opacity: 0.5;
+            transition: opacity 0.3s;
+            pointer-events: all;
+            display: block;
+        }
+
+        #projectsList a:hover {
+            opacity: 1;
+        }
+
+        #projectsList .category {
+            opacity: 0.3;
+            font-size: 8px;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            margin-top: 10px;
+            margin-bottom: 3px;
+        }
+
+        #projectsList .category:first-child {
+            margin-top: 5px;
+        }
+
     </style>
 </head>
 <body>
@@ -177,6 +217,33 @@
                 37 / M / Mission Viejo<br>
                 <a href="https://www.linkedin.com/in/peter-baumgartner-b0094a49/" target="_blank">PM @ Microsoft</a><br>
                 <a href="https://open.spotify.com/artist/YOUR_SPOTIFY_ID" target="_blank">music</a> · <a href="#" id="builderLink">projects</a><br>
+                <div id="projectsList">
+                    <div class="category">Music</div>
+                    <a href="projects/4-track/index.html">4-Track Tape Recorder</a>
+                    <a href="projects/ps4-synth/index.html">PS4 Synth</a>
+                    <a href="projects/drift/Drift v7/index.html">Drift v7 - Generative Ambient</a>
+                    <a href="projects/drift/Drift v6/index.html">Drift v6</a>
+                    <a href="projects/drift/Drift v5/index.html">Drift v5</a>
+                    <a href="projects/drift/Drift v4/index.html">Drift v4</a>
+                    <a href="projects/drift/Drift v3/index.html">Drift v3</a>
+                    <a href="projects/drift/Drift v2/index.html">Drift v2</a>
+                    <a href="projects/nova-grid/index.html">Nova Grid - Cellular Automata Sequencer</a>
+                    <a href="projects/granular-ambient/index.html">Granular Ambient</a>
+                    <a href="projects/textscape/index.html">Textscape</a>
+                    <div class="category">Interactive Art</div>
+                    <a href="projects/interactive-art/dungeongame.html">Dungeon Game</a>
+                    <a href="projects/interactive-art/mazesend.html">Maze Send</a>
+                    <a href="projects/interactive-art/waterlillies.html">Water Lillies</a>
+                    <a href="projects/interactive-art/viewofaburningcity.html">View of a Burning City</a>
+                    <a href="projects/interactive-art/wordprocessor.html">Word Processor</a>
+                    <a href="projects/interactive-art/colorexplore.html">Color Explore</a>
+                    <a href="projects/interactive-art/blocksnow.html">Block Snow</a>
+                    <div class="category">Code</div>
+                    <a href="projects/dnd-dm-screen/index.html">D&D 5e DM Screen</a>
+                    <a href="projects/benji-site/index.html">Benji Site</a>
+                    <a href="projects/the-duel/index.html">The Duel</a>
+                    <a href="projects/forward-playground/play.html">Forward Playground</a>
+                </div>
                 <a href="mailto:p.l.baumgartner@gmail.com">contact</a>
             </div>
             <div class="info-block" id="infoRight" style="text-align: right;">
@@ -195,53 +262,6 @@
         <input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="100">
     </div>
 
-    <!-- Projects modal -->
-    <div id="projectsModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); z-index: 2000; font-family: 'Courier New', monospace; align-items: center; justify-content: center;">
-        <div style="background: rgba(0,0,0,0.9); border: 1px solid rgba(255,255,255,0.1); padding: 50px; max-width: 900px; max-height: 80vh; overflow-y: auto; position: relative; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
-            <a href="#" id="closeModal" style="position: absolute; top: 25px; right: 25px; color: rgba(255,255,255,0.5); text-decoration: none; font-size: 9px; letter-spacing: 0.3em; text-transform: uppercase; transition: opacity 0.3s;">CLOSE</a>
-
-            <h2 style="margin-bottom: 40px; letter-spacing: 0.3em; opacity: 0.9; font-size: 14px; text-transform: uppercase;">Projects</h2>
-
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 50px; font-size: 11px; line-height: 2.2; letter-spacing: 0.05em;">
-                <!-- Music Column -->
-                <div>
-                    <h3 style="margin-bottom: 20px; opacity: 0.5; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;">Music</h3>
-                    <div style="margin: 5px 0;"><a href="projects/4-track/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">4-Track Tape Recorder</a></div>
-                    <div style="margin: 5px 0;"><a href="projects/ps4-synth/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">PS4 Synth</a></div>
-                    <div style="margin: 5px 0;"><a href="projects/drift/Drift v7/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Drift v7 - Generative Ambient</a></div>
-                    <div style="margin: 5px 0;"><a href="projects/drift/Drift v6/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Drift v6</a></div>
-                    <div style="margin: 5px 0;"><a href="projects/drift/Drift v5/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Drift v5</a></div>
-                    <div style="margin: 5px 0;"><a href="projects/drift/Drift v4/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Drift v4</a></div>
-                    <div style="margin: 5px 0;"><a href="projects/drift/Drift v3/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Drift v3</a></div>
-                    <div style="margin: 5px 0;"><a href="projects/drift/Drift v2/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Drift v2</a></div>
-                    <div style="margin: 5px 0;"><a href="projects/nova-grid/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Nova Grid - Cellular Automata Sequencer</a></div>
-                    <div style="margin: 5px 0;"><a href="projects/granular-ambient/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Granular Ambient</a></div>
-                    <div style="margin: 5px 0;"><a href="projects/textscape/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Textscape</a></div>
-                </div>
-
-                <!-- Interactive Art Column -->
-                <div>
-                    <h3 style="margin-bottom: 20px; opacity: 0.5; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;">Interactive Art</h3>
-                    <div style="margin: 5px 0;"><a href="projects/interactive-art/dungeongame.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Dungeon Game</a></div>
-                    <div style="margin: 5px 0;"><a href="projects/interactive-art/mazesend.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Maze Send</a></div>
-                    <div style="margin: 5px 0;"><a href="projects/interactive-art/waterlillies.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Water Lillies</a></div>
-                    <div style="margin: 5px 0;"><a href="projects/interactive-art/viewofaburningcity.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">View of a Burning City</a></div>
-                    <div style="margin: 5px 0;"><a href="projects/interactive-art/wordprocessor.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Word Processor</a></div>
-                    <div style="margin: 5px 0;"><a href="projects/interactive-art/colorexplore.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Color Explore</a></div>
-                    <div style="margin: 5px 0;"><a href="projects/interactive-art/blocksnow.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Block Snow</a></div>
-                </div>
-
-                <!-- Code Column -->
-                <div>
-                    <h3 style="margin-bottom: 20px; opacity: 0.5; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;">Code</h3>
-                    <div style="margin: 5px 0;"><a href="projects/dnd-dm-screen/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">D&D 5e DM Screen</a></div>
-                    <div style="margin: 5px 0;"><a href="projects/benji-site/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Benji Site</a></div>
-                    <div style="margin: 5px 0;"><a href="projects/the-duel/index.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">The Duel</a></div>
-                    <div style="margin: 5px 0;"><a href="projects/forward-playground/play.html" style="color: #fff; opacity: 0.5; text-decoration: none; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">Forward Playground</a></div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Click-to-start overlay (required for browser autoplay policy) -->
     <div class="overlay" id="overlay" style="cursor: pointer;">
@@ -253,32 +273,23 @@
 
     <script src="projects/drift/Drift v7/drift7.js"></script>
     <script>
-        // Handle builder link
+        // Handle projects link toggle
         document.getElementById('builderLink').addEventListener('click', (e) => {
             e.preventDefault();
-            document.getElementById('projectsModal').style.display = 'flex';
-        });
+            const projectsList = document.getElementById('projectsList');
 
-        // Handle close modal link
-        document.getElementById('closeModal').addEventListener('click', (e) => {
-            e.preventDefault();
-            document.getElementById('projectsModal').style.display = 'none';
-        });
-
-        // Close modal with Escape key
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                const modal = document.getElementById('projectsModal');
-                if (modal.style.display === 'flex') {
-                    modal.style.display = 'none';
-                }
-            }
-        });
-
-        // Close modal when clicking backdrop
-        document.getElementById('projectsModal').addEventListener('click', (e) => {
-            if (e.target.id === 'projectsModal') {
-                e.target.style.display = 'none';
+            if (projectsList.classList.contains('visible')) {
+                // Fade out and hide
+                projectsList.classList.remove('visible');
+                setTimeout(() => {
+                    projectsList.style.display = 'none';
+                }, 800);
+            } else {
+                // Show and fade in
+                projectsList.style.display = 'block';
+                setTimeout(() => {
+                    projectsList.classList.add('visible');
+                }, 10);
             }
         });
 
