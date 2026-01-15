@@ -209,6 +209,13 @@ function setupTrackSliders(trackNumber) {
         const value = e.target.value / 100;
         track.setTapeAge(value);
     });
+
+    // Reverb Send
+    const reverbSendSlider = document.querySelector(`.reverb-send[data-track="${trackNumber}"]`);
+    reverbSendSlider.addEventListener('input', (e) => {
+        const value = e.target.value / 100;
+        track.setReverbSend(value);
+    });
 }
 
 function setupMasterControls() {
@@ -217,6 +224,20 @@ function setupMasterControls() {
     masterVolume.addEventListener('input', (e) => {
         const value = e.target.value / 100;
         recorder.setMasterVolume(value);
+    });
+
+    // Master reverb
+    const masterReverb = document.getElementById('masterReverb');
+    masterReverb.addEventListener('input', (e) => {
+        const value = e.target.value / 100;
+        recorder.setMasterReverb(value);
+    });
+
+    // Master reverb size
+    const masterReverbSize = document.getElementById('masterReverbSize');
+    masterReverbSize.addEventListener('input', (e) => {
+        const value = e.target.value / 100;
+        recorder.setMasterReverbSize(value);
     });
 
     // Master compression

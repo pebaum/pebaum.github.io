@@ -38,9 +38,9 @@ class Recorder {
         // Create master bus
         this.createMasterBus();
 
-        // Create 4 tracks
+        // Create 4 tracks (with reverb send bus)
         for (let i = 0; i < 4; i++) {
-            const track = new Track(this.ctx, i, this.masterTapeAge);
+            const track = new Track(this.ctx, i, this.masterTapeAge, this.reverbSendBus);
             this.tracks.push(track);
         }
 
@@ -58,6 +58,28 @@ class Recorder {
     }
 
     createMasterBus() {
+        // Create reverb send bus (all tracks send to this)
+        this.reverbSendBus = this.ctx.createGain();
+        this.reverbSendBus.gain.value = 1.0;
+
+        // Master reverb - massive wide stereo cistern-style reverb
+        this.masterReverb = this.ctx.createConvolver();
+        this.masterReverbSize = 5.0; // 5 second decay for massive reverb
+        this.masterReverb.buffer = this.generateReverbImpulse(this.masterReverbSize, 5.0);
+
+        // Reverb wet/dry mix
+        this.reverbMix = this.ctx.createGain();
+        this.reverbMix.gain.value = 0.3; // Default 30% reverb mix
+
+        // Reverb dry signal
+        this.reverbDry = this.ctx.createGain();
+        this.reverbDry.gain.value = 0.7; // Default 70% dry
+
+        // Connect reverb: reverbSendBus → reverb → reverbMix
+        this.reverbSendBus.connect(this.masterReverb);
+        this.masterReverb.connect(this.reverbMix);
+        this.reverbSendBus.connect(this.reverbDry);
+
         // Master gain
         this.masterGain = this.ctx.createGain();
         this.masterGain.gain.value = 0.8;
@@ -73,12 +95,34 @@ class Recorder {
         this.masterTapeCompression = this.tapeEffects.createCompression(0);
         this.masterTapeAge = this.tapeEffects.createAgeFilter(0);
 
-        // Connect master chain: tracks → age → saturation → compression → gain → analyser → output
+        // Connect master chain: tracks → age + (reverb wet + dry) → saturation → compression → gain → analyser → output
         this.masterTapeAge.connect(this.masterTapeSaturation);
+        this.reverbMix.connect(this.masterTapeSaturation);
+        this.reverbDry.connect(this.masterTapeSaturation);
         this.masterTapeSaturation.connect(this.masterTapeCompression);
         this.masterTapeCompression.connect(this.masterGain);
         this.masterGain.connect(this.masterAnalyser);
         this.masterAnalyser.connect(this.ctx.destination);
+    }
+
+    // Generate massive reverb impulse for deep listening cistern effect
+    generateReverbImpulse(decay = 5.0, length = 5.0) {
+        const sampleRate = this.ctx.sampleRate;
+        const lengthSamples = sampleRate * length;
+        const impulse = this.ctx.createBuffer(2, lengthSamples, sampleRate);
+
+        for (let channel = 0; channel < 2; channel++) {
+            const data = impulse.getChannelData(channel);
+            for (let i = 0; i < lengthSamples; i++) {
+                // Exponential decay envelope for natural reverb tail
+                const envelope = Math.exp(-i / (sampleRate * decay));
+                // Random noise with stereo width
+                const stereoShift = (channel === 0 ? 0.97 : 1.03);
+                data[i] = (Math.random() * 2 - 1) * envelope * stereoShift;
+            }
+        }
+
+        return impulse;
     }
 
     async setupMicrophone() {
@@ -230,6 +274,20 @@ class Recorder {
 
     setMasterAge(amount) {
         this.tapeEffects.updateAgeFilter(this.masterTapeAge, amount);
+    }
+
+    setMasterReverb(amount) {
+        // amount is 0-1, controls wet/dry mix
+        this.reverbMix.gain.value = amount;
+        this.reverbDry.gain.value = 1 - amount;
+    }
+
+    setMasterReverbSize(amount) {
+        // amount is 0-1, controls reverb decay time (1-10 seconds)
+        const decayTime = 1 + (amount * 9); // 1s to 10s
+        this.masterReverbSize = decayTime;
+        // Regenerate impulse response with new decay time
+        this.masterReverb.buffer = this.generateReverbImpulse(decayTime, decayTime);
     }
 
     // Tape reel animation

@@ -2,10 +2,11 @@
 // Handles individual track recording, playback, and loop modes
 
 class Track {
-    constructor(audioContext, trackNumber, masterDestination) {
+    constructor(audioContext, trackNumber, masterDestination, reverbSend) {
         this.ctx = audioContext;
         this.trackNumber = trackNumber;
         this.masterDestination = masterDestination;
+        this.reverbSend = reverbSend;
 
         // Recording state
         this.isRecording = false;
@@ -77,13 +78,21 @@ class Track {
         this.wowFlutterLFO.connect(this.wowFlutterGain);
         this.wowFlutterLFO.start();
 
-        // Connect effects chain: EQ → saturation → compression → age filter → pan → gain → master
+        // Reverb send gain
+        this.reverbSendGain = this.ctx.createGain();
+        this.reverbSendGain.gain.value = 0; // Start with no reverb send
+
+        // Connect effects chain: EQ → saturation → compression → age filter → pan → gain → master + reverb send
         this.eqHigh.connect(this.tapeSaturation);
         this.tapeSaturation.connect(this.tapeCompression);
         this.tapeCompression.connect(this.tapeAgeFilter);
         this.tapeAgeFilter.connect(this.panNode);
         this.panNode.connect(this.gainNode);
         this.gainNode.connect(this.masterDestination);
+
+        // Reverb send (parallel path from gain node)
+        this.gainNode.connect(this.reverbSendGain);
+        this.reverbSendGain.connect(this.reverbSend);
     }
 
     async startRecording(stream) {
@@ -224,6 +233,11 @@ class Track {
 
     setTapeAge(amount) {
         this.tapeEffects.updateAgeFilter(this.tapeAgeFilter, amount);
+    }
+
+    setReverbSend(amount) {
+        // amount is 0-1
+        this.reverbSendGain.gain.value = amount;
     }
 
     setWowFlutter(amount) {

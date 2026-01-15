@@ -43,7 +43,7 @@
                         <button class="mode-btn" data-track="0">NORMAL</button>
                     </div>
                 </div>
-                <canvas class="waveform" id="waveform0" width="800" height="120"></canvas>
+                <canvas class="waveform" id="waveform0" width="400" height="50"></canvas>
                 <div class="track-controls">
                     <div class="control-row">
                         <button class="rec-btn" data-track="0">● REC</button>
@@ -90,6 +90,9 @@
                         <label>AGE
                             <input type="range" class="tape-age" data-track="0" min="0" max="100" value="0">
                         </label>
+                        <label>REVERB SEND
+                            <input type="range" class="reverb-send" data-track="0" min="0" max="100" value="0">
+                        </label>
                     </div>
                 </div>
             </section>
@@ -102,7 +105,7 @@
                         <button class="mode-btn" data-track="1">NORMAL</button>
                     </div>
                 </div>
-                <canvas class="waveform" id="waveform1" width="800" height="120"></canvas>
+                <canvas class="waveform" id="waveform1" width="400" height="50"></canvas>
                 <div class="track-controls">
                     <div class="control-row">
                         <button class="rec-btn" data-track="1">● REC</button>
@@ -149,6 +152,9 @@
                         <label>AGE
                             <input type="range" class="tape-age" data-track="1" min="0" max="100" value="0">
                         </label>
+                        <label>REVERB SEND
+                            <input type="range" class="reverb-send" data-track="1" min="0" max="100" value="0">
+                        </label>
                     </div>
                 </div>
             </section>
@@ -161,7 +167,7 @@
                         <button class="mode-btn" data-track="2">NORMAL</button>
                     </div>
                 </div>
-                <canvas class="waveform" id="waveform2" width="800" height="120"></canvas>
+                <canvas class="waveform" id="waveform2" width="400" height="50"></canvas>
                 <div class="track-controls">
                     <div class="control-row">
                         <button class="rec-btn" data-track="2">● REC</button>
@@ -208,6 +214,9 @@
                         <label>AGE
                             <input type="range" class="tape-age" data-track="2" min="0" max="100" value="0">
                         </label>
+                        <label>REVERB SEND
+                            <input type="range" class="reverb-send" data-track="2" min="0" max="100" value="0">
+                        </label>
                     </div>
                 </div>
             </section>
@@ -220,7 +229,7 @@
                         <button class="mode-btn" data-track="3">NORMAL</button>
                     </div>
                 </div>
-                <canvas class="waveform" id="waveform3" width="800" height="120"></canvas>
+                <canvas class="waveform" id="waveform3" width="400" height="50"></canvas>
                 <div class="track-controls">
                     <div class="control-row">
                         <button class="rec-btn" data-track="3">● REC</button>
@@ -267,6 +276,54 @@
                         <label>AGE
                             <input type="range" class="tape-age" data-track="3" min="0" max="100" value="0">
                         </label>
+                        <label>REVERB SEND
+                            <input type="range" class="reverb-send" data-track="3" min="0" max="100" value="0">
+                        </label>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Master Channel -->
+            <section class="track master-track">
+                <div class="track-header">
+                    <h2>MASTER</h2>
+                </div>
+                <div class="track-controls">
+                    <div class="control-row">
+                        <label>VOLUME
+                            <input type="range" id="masterVolume" min="0" max="100" value="80">
+                        </label>
+                    </div>
+                    <div class="control-row">
+                        <label>REVERB
+                            <input type="range" id="masterReverb" min="0" max="100" value="30">
+                        </label>
+                        <label>REVERB SIZE
+                            <input type="range" id="masterReverbSize" min="0" max="100" value="70">
+                        </label>
+                    </div>
+                    <div class="control-row tape-row">
+                        <label>COMPRESSION
+                            <input type="range" id="masterComp" min="0" max="100" value="0">
+                        </label>
+                        <label>SATURATION
+                            <input type="range" id="masterSat" min="0" max="100" value="0">
+                        </label>
+                        <label>AGE
+                            <input type="range" id="masterAge" min="0" max="100" value="0">
+                        </label>
+                    </div>
+                    <div class="master-right">
+                        <div class="vu-meters">
+                            <div class="vu-meter">
+                                <div class="vu-label">L</div>
+                                <canvas id="vuLeft" width="100" height="15"></canvas>
+                            </div>
+                            <div class="vu-meter">
+                                <div class="vu-label">R</div>
+                                <canvas id="vuRight" width="100" height="15"></canvas>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
