@@ -206,6 +206,20 @@ function setupTransportControls() {
     const audioSourceSelect = document.getElementById('audioSourceSelect');
     audioSourceSelect.addEventListener('change', async (e) => {
         await recorder.setAudioSource(e.target.value);
+        updateRecButtonStates();
+    });
+
+    // Initialize REC button states
+    updateRecButtonStates();
+}
+
+// Update REC button states based on audio source
+function updateRecButtonStates() {
+    const hasAudioSource = recorder.audioSourceType !== 'none';
+    const recButtons = document.querySelectorAll('.rec-btn');
+
+    recButtons.forEach(btn => {
+        btn.disabled = !hasAudioSource;
     });
 }
 
@@ -327,11 +341,18 @@ function setupTrackSliders(trackNumber) {
         track.setEQHigh(value);
     });
 
-    // Tape Compression
-    const tapeCompSlider = document.querySelector(`.tape-comp[data-track="${trackNumber}"]`);
-    tapeCompSlider.addEventListener('input', (e) => {
+    // LA-2A Peak Reduction
+    const la2aReductionSlider = document.querySelector(`.la2a-reduction[data-track="${trackNumber}"]`);
+    la2aReductionSlider.addEventListener('input', (e) => {
         const value = e.target.value / 100;
-        track.setTapeCompression(value);
+        track.setLA2APeakReduction(value);
+    });
+
+    // LA-2A Gain
+    const la2aGainSlider = document.querySelector(`.la2a-gain[data-track="${trackNumber}"]`);
+    la2aGainSlider.addEventListener('input', (e) => {
+        const value = e.target.value / 100;
+        track.setLA2AGain(value);
     });
 
     // Reverb Send
@@ -371,11 +392,18 @@ function setupMasterControls() {
         recorder.setMasterEQHigh(value);
     });
 
-    // Master compression
-    const masterComp = document.getElementById('masterComp');
-    masterComp.addEventListener('input', (e) => {
+    // Master LA-2A Peak Reduction
+    const masterLA2AReduction = document.getElementById('masterLA2AReduction');
+    masterLA2AReduction.addEventListener('input', (e) => {
         const value = e.target.value / 100;
-        recorder.setMasterCompression(value);
+        recorder.setMasterLA2APeakReduction(value);
+    });
+
+    // Master LA-2A Gain
+    const masterLA2AGain = document.getElementById('masterLA2AGain');
+    masterLA2AGain.addEventListener('input', (e) => {
+        const value = e.target.value / 100;
+        recorder.setMasterLA2AGain(value);
     });
 
     // Master reverb

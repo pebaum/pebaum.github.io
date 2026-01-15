@@ -85,8 +85,9 @@ class Track {
         this.la2aLimiter.attack.value = 0.001; // 1ms attack (fast)
         this.la2aLimiter.release.value = 0.050; // 50ms release (fast)
 
-        // Tape compression (kept for tape warmth effect, adjustable)
-        this.tapeCompression = this.tapeEffects.createCompression(0);
+        // LA-2A makeup gain (after compressor, before pan)
+        this.la2aMakeupGain = this.ctx.createGain();
+        this.la2aMakeupGain.gain.value = 1.0; // Unity gain by default (0dB)
 
         // Wow/flutter (detune oscillator)
         this.wowFlutterLFO = this.ctx.createOscillator();
@@ -101,11 +102,11 @@ class Track {
         this.reverbSendGain = this.ctx.createGain();
         this.reverbSendGain.gain.value = 0; // Start with no reverb send
 
-        // Signal chain: Trim → EQ → LA-2A Comp → Tape Comp → Pan → Volume → LA-2A Limiter → Master + Reverb Send
+        // Signal chain: Trim → EQ → LA-2A Comp → LA-2A Makeup Gain → Pan → Volume → LA-2A Limiter → Master + Reverb Send
         // (Trim → EQ already connected in createAudioNodes)
         this.eqHigh.connect(this.la2aCompressor);
-        this.la2aCompressor.connect(this.tapeCompression);
-        this.tapeCompression.connect(this.panNode);
+        this.la2aCompressor.connect(this.la2aMakeupGain);
+        this.la2aMakeupGain.connect(this.panNode);
         this.panNode.connect(this.gainNode);
         this.gainNode.connect(this.la2aLimiter);
         this.la2aLimiter.connect(this.masterDestination);
@@ -267,8 +268,24 @@ class Track {
         this.eqHigh.gain.value = value;
     }
 
-    setTapeCompression(amount) {
-        this.tapeEffects.updateCompression(this.tapeCompression, amount);
+    setLA2APeakReduction(amount) {
+        // amount is 0-1, controls LA-2A compressor threshold
+        // 0 = no compression (-10dB threshold)
+        // 1 = max compression (-40dB threshold)
+        const threshold = -10 - (amount * 30); // -10dB to -40dB
+        this.la2aCompressor.threshold.value = threshold;
+
+        // Also adjust ratio for program-dependent feel (3:1 to 8:1)
+        const ratio = 3 + (amount * 5);
+        this.la2aCompressor.ratio.value = ratio;
+    }
+
+    setLA2AGain(amount) {
+        // amount is 0-1, controls makeup gain
+        // 0 = 0dB (unity), 1 = +20dB
+        const gainDb = amount * 20;
+        const gainLinear = Math.pow(10, gainDb / 20);
+        this.la2aMakeupGain.gain.value = gainLinear;
     }
 
     setReverbSend(amount) {

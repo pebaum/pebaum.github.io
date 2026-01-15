@@ -111,9 +111,9 @@ class Recorder {
         this.masterLA2A.attack.value = 0.010; // 10ms attack (tube-style)
         this.masterLA2A.release.value = 0.100; // 100ms release (program-dependent feel)
 
-        // Master tape compression (kept for warmth, adjustable)
-        this.tapeEffects = new TapeEffects(this.ctx);
-        this.masterTapeCompression = this.tapeEffects.createCompression(0);
+        // Master LA-2A makeup gain
+        this.masterLA2AMakeupGain = this.ctx.createGain();
+        this.masterLA2AMakeupGain.gain.value = 1.0; // Unity gain by default (0dB)
 
         // Master gain
         this.masterGain = this.ctx.createGain();
@@ -124,14 +124,14 @@ class Recorder {
         this.masterAnalyser.fftSize = 2048;
         this.masterAnalyser.smoothingTimeConstant = 0.8;
 
-        // Connect master chain: tracks → EQ → LA-2A → Tape Comp + (reverb wet + dry) → gain → analyser → output
+        // Connect master chain: tracks → EQ → LA-2A → LA-2A Makeup Gain → gain + (reverb wet + dry) → analyser → output
         this.masterEQLow.connect(this.masterEQMid);
         this.masterEQMid.connect(this.masterEQHigh);
         this.masterEQHigh.connect(this.masterLA2A);
-        this.masterLA2A.connect(this.masterTapeCompression);
-        this.reverbMix.connect(this.masterTapeCompression);
-        this.reverbDry.connect(this.masterTapeCompression);
-        this.masterTapeCompression.connect(this.masterGain);
+        this.masterLA2A.connect(this.masterLA2AMakeupGain);
+        this.masterLA2AMakeupGain.connect(this.masterGain);
+        this.reverbMix.connect(this.masterGain);
+        this.reverbDry.connect(this.masterGain);
         this.masterGain.connect(this.masterAnalyser);
         this.masterAnalyser.connect(this.ctx.destination);
 
@@ -399,8 +399,24 @@ class Recorder {
         this.masterEQHigh.gain.value = value;
     }
 
-    setMasterCompression(amount) {
-        this.tapeEffects.updateCompression(this.masterTapeCompression, amount);
+    setMasterLA2APeakReduction(amount) {
+        // amount is 0-1, controls master LA-2A compressor threshold
+        // 0 = no compression (-10dB threshold)
+        // 1 = max compression (-40dB threshold)
+        const threshold = -10 - (amount * 30); // -10dB to -40dB
+        this.masterLA2A.threshold.value = threshold;
+
+        // Also adjust ratio for program-dependent feel (3:1 to 8:1)
+        const ratio = 3 + (amount * 5);
+        this.masterLA2A.ratio.value = ratio;
+    }
+
+    setMasterLA2AGain(amount) {
+        // amount is 0-1, controls master makeup gain
+        // 0 = 0dB (unity), 1 = +20dB
+        const gainDb = amount * 20;
+        const gainLinear = Math.pow(10, gainDb / 20);
+        this.masterLA2AMakeupGain.gain.value = gainLinear;
     }
 
     setMasterReverb(amount) {
