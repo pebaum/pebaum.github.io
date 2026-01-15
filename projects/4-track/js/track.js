@@ -19,7 +19,7 @@ class Track {
         this.isPlaying = false;
         this.isMuted = false;
         this.isSolo = false;
-        this.mode = 'normal'; // 'normal' or 'loop'
+        this.mode = 'loop'; // 'normal' or 'loop'
         this.loopLength = 4.0; // seconds
         this.playbackRate = 1.0;
         this.startTime = 0;
