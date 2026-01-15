@@ -152,33 +152,38 @@ button:disabled {
 /* Tracks Grid */
 .tracks-grid {
     display: grid;
-    grid-template-columns: 1fr;
-    gap: 20px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
     margin-bottom: 30px;
 }
 
 .track {
     border: 1px solid var(--border);
-    padding: 20px;
+    padding: 15px;
     background: var(--black);
+    display: flex;
+    flex-direction: column;
+    min-height: 700px;
 }
 
 .track-header {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
+    gap: 8px;
     align-items: center;
-    margin-bottom: 15px;
+    margin-bottom: 12px;
 }
 
 .track-header h2 {
-    font-size: 10px;
+    font-size: 9px;
     letter-spacing: 0.2em;
     font-weight: normal;
 }
 
 .mode-btn {
-    padding: 6px 15px;
-    font-size: 8px;
+    padding: 5px 12px;
+    font-size: 7px;
+    width: 100%;
 }
 
 .mode-btn.active {
@@ -189,10 +194,10 @@ button:disabled {
 /* Waveform Canvas */
 .waveform {
     width: 100%;
-    height: 120px;
+    height: 80px;
     background: var(--black);
     border: 1px solid var(--border);
-    margin-bottom: 15px;
+    margin-bottom: 12px;
     display: block;
 }
 
@@ -200,23 +205,32 @@ button:disabled {
 .track-controls {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
+    flex: 1;
 }
 
 .control-row {
     display: flex;
-    gap: 10px;
-    align-items: center;
-    flex-wrap: wrap;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
 }
 
 .control-row label {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 8px;
-    font-size: 8px;
+    gap: 5px;
+    font-size: 7px;
     opacity: 0.6;
     letter-spacing: 0.15em;
+    width: 100%;
+}
+
+.control-row button {
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 7px;
 }
 
 .rec-btn {
@@ -250,7 +264,7 @@ button:disabled {
 input[type="range"] {
     -webkit-appearance: none;
     appearance: none;
-    width: 80px;
+    width: 100%;
     height: 2px;
     background: var(--border);
     outline: none;
@@ -260,8 +274,8 @@ input[type="range"] {
 input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 10px;
-    height: 10px;
+    width: 12px;
+    height: 12px;
     background: rgba(255, 255, 255, 0.6);
     border-radius: 50%;
     cursor: pointer;
@@ -273,8 +287,8 @@ input[type="range"]::-webkit-slider-thumb:hover {
 }
 
 input[type="range"]::-moz-range-thumb {
-    width: 10px;
-    height: 10px;
+    width: 12px;
+    height: 12px;
     background: rgba(255, 255, 255, 0.6);
     border-radius: 50%;
     border: none;
@@ -288,15 +302,13 @@ input[type="range"]::-moz-range-thumb:hover {
 
 .eq-row label,
 .tape-row label {
-    flex: 1;
-    min-width: 120px;
+    width: 100%;
 }
 
 .speed-value,
 .loop-length-value {
-    font-size: 8px;
+    font-size: 7px;
     opacity: 0.8;
-    min-width: 35px;
 }
 
 /* Master Section */
@@ -410,9 +422,19 @@ input[type="range"]::-moz-range-thumb:hover {
 }
 
 /* Responsive */
-@media (max-width: 1200px) {
+@media (max-width: 1400px) {
+    .tracks-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 900px) {
     .tracks-grid {
         grid-template-columns: 1fr;
+    }
+
+    .track {
+        min-height: auto;
     }
 
     .master-section {
@@ -433,11 +455,6 @@ input[type="range"]::-moz-range-thumb:hover {
 
     .transport {
         flex-wrap: wrap;
-    }
-
-    .control-row {
-        flex-direction: column;
-        align-items: flex-start;
     }
 
     .master-controls {
