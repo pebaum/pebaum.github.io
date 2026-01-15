@@ -42,9 +42,9 @@ class Recorder {
         // Create master bus
         this.createMasterBus();
 
-        // Create 4 tracks (with reverb send bus)
+        // Create 4 tracks (with master EQ input and reverb send bus)
         for (let i = 0; i < 4; i++) {
-            const track = new Track(this.ctx, i, this.masterTapeAge, this.reverbSendBus);
+            const track = new Track(this.ctx, i, this.masterEQLow, this.reverbSendBus);
             this.tracks.push(track);
         }
 
@@ -82,6 +82,39 @@ class Recorder {
         this.masterReverb.connect(this.reverbMix);
         this.reverbSendBus.connect(this.reverbDry);
 
+        // Master 3-band EQ
+        this.masterEQLow = this.ctx.createBiquadFilter();
+        this.masterEQLow.type = 'lowshelf';
+        this.masterEQLow.frequency.value = 200;
+        this.masterEQLow.gain.value = 0;
+
+        this.masterEQMid = this.ctx.createBiquadFilter();
+        this.masterEQMid.type = 'peaking';
+        this.masterEQMid.frequency.value = 1000;
+        this.masterEQMid.Q.value = 0.7;
+        this.masterEQMid.gain.value = 0;
+
+        this.masterEQHigh = this.ctx.createBiquadFilter();
+        this.masterEQHigh.type = 'highshelf';
+        this.masterEQHigh.frequency.value = 3000;
+        this.masterEQHigh.gain.value = 0;
+
+        // Connect EQ chain
+        this.masterEQLow.connect(this.masterEQMid);
+        this.masterEQMid.connect(this.masterEQHigh);
+
+        // Master LA-2A style compressor
+        this.masterLA2A = this.ctx.createDynamicsCompressor();
+        this.masterLA2A.threshold.value = -24; // dB
+        this.masterLA2A.knee.value = 12; // Soft knee for smooth compression
+        this.masterLA2A.ratio.value = 4; // 4:1 ratio
+        this.masterLA2A.attack.value = 0.010; // 10ms attack (tube-style)
+        this.masterLA2A.release.value = 0.100; // 100ms release (program-dependent feel)
+
+        // Master tape compression (kept for warmth, adjustable)
+        this.tapeEffects = new TapeEffects(this.ctx);
+        this.masterTapeCompression = this.tapeEffects.createCompression(0);
+
         // Master gain
         this.masterGain = this.ctx.createGain();
         this.masterGain.gain.value = 0.8;
@@ -91,17 +124,13 @@ class Recorder {
         this.masterAnalyser.fftSize = 2048;
         this.masterAnalyser.smoothingTimeConstant = 0.8;
 
-        // Create master tape effects
-        this.tapeEffects = new TapeEffects(this.ctx);
-        this.masterTapeSaturation = this.tapeEffects.createSaturation(0);
-        this.masterTapeCompression = this.tapeEffects.createCompression(0);
-        this.masterTapeAge = this.tapeEffects.createAgeFilter(0);
-
-        // Connect master chain: tracks → age + (reverb wet + dry) → saturation → compression → gain → analyser → output
-        this.masterTapeAge.connect(this.masterTapeSaturation);
-        this.reverbMix.connect(this.masterTapeSaturation);
-        this.reverbDry.connect(this.masterTapeSaturation);
-        this.masterTapeSaturation.connect(this.masterTapeCompression);
+        // Connect master chain: tracks → EQ → LA-2A → Tape Comp + (reverb wet + dry) → gain → analyser → output
+        this.masterEQLow.connect(this.masterEQMid);
+        this.masterEQMid.connect(this.masterEQHigh);
+        this.masterEQHigh.connect(this.masterLA2A);
+        this.masterLA2A.connect(this.masterTapeCompression);
+        this.reverbMix.connect(this.masterTapeCompression);
+        this.reverbDry.connect(this.masterTapeCompression);
         this.masterTapeCompression.connect(this.masterGain);
         this.masterGain.connect(this.masterAnalyser);
         this.masterAnalyser.connect(this.ctx.destination);
@@ -358,16 +387,20 @@ class Recorder {
         this.masterGain.gain.value = value;
     }
 
+    setMasterEQLow(value) {
+        this.masterEQLow.gain.value = value;
+    }
+
+    setMasterEQMid(value) {
+        this.masterEQMid.gain.value = value;
+    }
+
+    setMasterEQHigh(value) {
+        this.masterEQHigh.gain.value = value;
+    }
+
     setMasterCompression(amount) {
         this.tapeEffects.updateCompression(this.masterTapeCompression, amount);
-    }
-
-    setMasterSaturation(amount) {
-        this.tapeEffects.updateSaturation(this.masterTapeSaturation, amount);
-    }
-
-    setMasterAge(amount) {
-        this.tapeEffects.updateAgeFilter(this.masterTapeAge, amount);
     }
 
     setMasterReverb(amount) {

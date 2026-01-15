@@ -33,6 +33,10 @@ class Track {
     }
 
     createAudioNodes() {
+        // Trim gain (first in chain, default 50% = 0.5)
+        this.trimGain = this.ctx.createGain();
+        this.trimGain.gain.value = 0.5;
+
         // Main gain
         this.gainNode = this.ctx.createGain();
         this.gainNode.gain.value = 0.8;
@@ -58,16 +62,31 @@ class Track {
         this.eqHigh.frequency.value = 3000;
         this.eqHigh.gain.value = 0;
 
-        // Connect EQ chain
+        // Connect: trim → EQ chain
+        this.trimGain.connect(this.eqLow);
         this.eqLow.connect(this.eqMid);
         this.eqMid.connect(this.eqHigh);
     }
 
     setupTapeEffects() {
-        // Create tape effect chain
-        this.tapeSaturation = this.tapeEffects.createSaturation(0);
+        // LA-2A style compressor (smooth, musical, program-dependent)
+        this.la2aCompressor = this.ctx.createDynamicsCompressor();
+        this.la2aCompressor.threshold.value = -24; // dB
+        this.la2aCompressor.knee.value = 12; // Soft knee for smooth compression
+        this.la2aCompressor.ratio.value = 4; // 4:1 ratio
+        this.la2aCompressor.attack.value = 0.010; // 10ms attack (tube-style)
+        this.la2aCompressor.release.value = 0.100; // 100ms release (program-dependent feel)
+
+        // LA-2A style limiter (brick-wall at end of chain)
+        this.la2aLimiter = this.ctx.createDynamicsCompressor();
+        this.la2aLimiter.threshold.value = -3; // dB
+        this.la2aLimiter.knee.value = 0; // Hard knee for limiting
+        this.la2aLimiter.ratio.value = 20; // 20:1 ratio (brick-wall)
+        this.la2aLimiter.attack.value = 0.001; // 1ms attack (fast)
+        this.la2aLimiter.release.value = 0.050; // 50ms release (fast)
+
+        // Tape compression (kept for tape warmth effect, adjustable)
         this.tapeCompression = this.tapeEffects.createCompression(0);
-        this.tapeAgeFilter = this.tapeEffects.createAgeFilter(0);
 
         // Wow/flutter (detune oscillator)
         this.wowFlutterLFO = this.ctx.createOscillator();
@@ -82,16 +101,17 @@ class Track {
         this.reverbSendGain = this.ctx.createGain();
         this.reverbSendGain.gain.value = 0; // Start with no reverb send
 
-        // Connect effects chain: EQ → saturation → compression → age filter → pan → gain → master + reverb send
-        this.eqHigh.connect(this.tapeSaturation);
-        this.tapeSaturation.connect(this.tapeCompression);
-        this.tapeCompression.connect(this.tapeAgeFilter);
-        this.tapeAgeFilter.connect(this.panNode);
+        // Signal chain: Trim → EQ → LA-2A Comp → Tape Comp → Pan → Volume → LA-2A Limiter → Master + Reverb Send
+        // (Trim → EQ already connected in createAudioNodes)
+        this.eqHigh.connect(this.la2aCompressor);
+        this.la2aCompressor.connect(this.tapeCompression);
+        this.tapeCompression.connect(this.panNode);
         this.panNode.connect(this.gainNode);
-        this.gainNode.connect(this.masterDestination);
+        this.gainNode.connect(this.la2aLimiter);
+        this.la2aLimiter.connect(this.masterDestination);
 
-        // Reverb send (parallel path from gain node)
-        this.gainNode.connect(this.reverbSendGain);
+        // Reverb send (parallel path from limiter output)
+        this.la2aLimiter.connect(this.reverbSendGain);
         this.reverbSendGain.connect(this.reverbSend);
     }
 
@@ -134,6 +154,9 @@ class Track {
             this.audioBuffer = await this.ctx.decodeAudioData(arrayBuffer);
             // Auto-set loop length to 100% of recording
             this.loopLength = this.audioBuffer.duration;
+
+            // Update audio loaded indicator
+            this.updateAudioIndicator(true);
         } catch (error) {
             console.error('Error decoding audio:', error);
         }
@@ -153,8 +176,8 @@ class Track {
             this.wowFlutterGain.connect(this.source.detune);
         }
 
-        // Connect to effects chain
-        this.source.connect(this.eqLow);
+        // Connect to effects chain (starts at trim gain)
+        this.source.connect(this.trimGain);
 
         if (this.mode === 'loop') {
             // Loop mode: set loop points based on loopLength
@@ -195,9 +218,28 @@ class Track {
         this.stop();
         this.audioBuffer = null;
         this.recordedChunks = [];
+
+        // Update audio loaded indicator
+        this.updateAudioIndicator(false);
+    }
+
+    updateAudioIndicator(isLoaded) {
+        const indicator = document.querySelector(`.audio-indicator[data-track="${this.trackNumber}"]`);
+        if (indicator) {
+            if (isLoaded) {
+                indicator.classList.add('loaded');
+            } else {
+                indicator.classList.remove('loaded');
+            }
+        }
     }
 
     // Control methods
+    setTrimGain(value) {
+        // value is 0-1, where 0.5 = 50% = original level
+        this.trimGain.gain.value = value;
+    }
+
     setVolume(value) {
         this.gainNode.gain.value = value;
     }
@@ -227,14 +269,6 @@ class Track {
 
     setTapeCompression(amount) {
         this.tapeEffects.updateCompression(this.tapeCompression, amount);
-    }
-
-    setTapeSaturation(amount) {
-        this.tapeEffects.updateSaturation(this.tapeSaturation, amount);
-    }
-
-    setTapeAge(amount) {
-        this.tapeEffects.updateAgeFilter(this.tapeAgeFilter, amount);
     }
 
     setReverbSend(amount) {

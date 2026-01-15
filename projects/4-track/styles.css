@@ -234,6 +234,20 @@ button:disabled {
     color: var(--black);
 }
 
+/* Audio Loaded Indicator */
+.audio-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--white);
+    opacity: 0.2;
+    transition: opacity 0.3s;
+}
+
+.audio-indicator.loaded {
+    opacity: 1;
+}
+
 /* Track Controls */
 .track-controls {
     display: flex;

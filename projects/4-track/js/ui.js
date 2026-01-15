@@ -278,6 +278,13 @@ function setupTrackButtons(trackNumber) {
 function setupTrackSliders(trackNumber) {
     const track = recorder.getTrack(trackNumber);
 
+    // Trim gain
+    const trimSlider = document.querySelector(`.trim[data-track="${trackNumber}"]`);
+    trimSlider.addEventListener('input', (e) => {
+        const value = e.target.value / 100;
+        track.setTrimGain(value);
+    });
+
     // Volume
     const volumeSlider = document.querySelector(`.volume[data-track="${trackNumber}"]`);
     volumeSlider.addEventListener('input', (e) => {
@@ -298,8 +305,6 @@ function setupTrackSliders(trackNumber) {
         const value = e.target.value / 100;
         track.setSpeed(value);
     });
-
-    // Loop length - removed (auto-set to 100% of recording)
 
     // EQ Low
     const eqLowSlider = document.querySelector(`.eq-low[data-track="${trackNumber}"]`);
@@ -329,20 +334,6 @@ function setupTrackSliders(trackNumber) {
         track.setTapeCompression(value);
     });
 
-    // Tape Saturation
-    const tapeSatSlider = document.querySelector(`.tape-sat[data-track="${trackNumber}"]`);
-    tapeSatSlider.addEventListener('input', (e) => {
-        const value = e.target.value / 100;
-        track.setTapeSaturation(value);
-    });
-
-    // Tape Age
-    const tapeAgeSlider = document.querySelector(`.tape-age[data-track="${trackNumber}"]`);
-    tapeAgeSlider.addEventListener('input', (e) => {
-        const value = e.target.value / 100;
-        track.setTapeAge(value);
-    });
-
     // Reverb Send
     const reverbSendSlider = document.querySelector(`.reverb-send[data-track="${trackNumber}"]`);
     reverbSendSlider.addEventListener('input', (e) => {
@@ -359,6 +350,34 @@ function setupMasterControls() {
         recorder.setMasterVolume(value);
     });
 
+    // Master EQ Low
+    const masterEQLow = document.getElementById('masterEQLow');
+    masterEQLow.addEventListener('input', (e) => {
+        const value = parseFloat(e.target.value);
+        recorder.setMasterEQLow(value);
+    });
+
+    // Master EQ Mid
+    const masterEQMid = document.getElementById('masterEQMid');
+    masterEQMid.addEventListener('input', (e) => {
+        const value = parseFloat(e.target.value);
+        recorder.setMasterEQMid(value);
+    });
+
+    // Master EQ High
+    const masterEQHigh = document.getElementById('masterEQHigh');
+    masterEQHigh.addEventListener('input', (e) => {
+        const value = parseFloat(e.target.value);
+        recorder.setMasterEQHigh(value);
+    });
+
+    // Master compression
+    const masterComp = document.getElementById('masterComp');
+    masterComp.addEventListener('input', (e) => {
+        const value = e.target.value / 100;
+        recorder.setMasterCompression(value);
+    });
+
     // Master reverb
     const masterReverb = document.getElementById('masterReverb');
     masterReverb.addEventListener('input', (e) => {
@@ -371,26 +390,5 @@ function setupMasterControls() {
     masterReverbSize.addEventListener('input', (e) => {
         const value = e.target.value / 100;
         recorder.setMasterReverbSize(value);
-    });
-
-    // Master compression
-    const masterComp = document.getElementById('masterComp');
-    masterComp.addEventListener('input', (e) => {
-        const value = e.target.value / 100;
-        recorder.setMasterCompression(value);
-    });
-
-    // Master saturation
-    const masterSat = document.getElementById('masterSat');
-    masterSat.addEventListener('input', (e) => {
-        const value = e.target.value / 100;
-        recorder.setMasterSaturation(value);
-    });
-
-    // Master age
-    const masterAge = document.getElementById('masterAge');
-    masterAge.addEventListener('input', (e) => {
-        const value = e.target.value / 100;
-        recorder.setMasterAge(value);
     });
 }
