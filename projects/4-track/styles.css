@@ -273,6 +273,7 @@ button:disabled {
     margin: 0 auto;
 }
 
+/* Hide the actual range input but keep it functional */
 input[type="range"] {
     -webkit-appearance: none;
     appearance: none;
@@ -281,53 +282,55 @@ input[type="range"] {
     background: transparent;
     outline: none;
     cursor: pointer;
-    position: relative;
-    border-radius: 50%;
-    border: 2px solid var(--border);
+    position: absolute;
+    opacity: 0;
+    z-index: 2;
 }
 
-input[type="range"]:hover {
+/* Visual knob that sits behind the input */
+.knob-visual {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.05), transparent);
+    pointer-events: none;
+    z-index: 1;
+    transition: border-color 0.2s;
+}
+
+input[type="range"]:hover + .knob-visual {
     border-color: var(--border-hover);
 }
 
-input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
+/* Rotating indicator */
+.knob-indicator {
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    width: 2px;
+    height: 18px;
+    background: rgba(255, 255, 255, 0.9);
+    transform-origin: bottom center;
+    transform: translateX(-50%) rotate(0deg);
+    transition: transform 0.05s ease-out;
+    border-radius: 1px;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Center dot */
+.knob-visual::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
     width: 4px;
-    height: 20px;
-    background: rgba(255, 255, 255, 0.8);
-    cursor: pointer;
-    border-radius: 2px;
-    position: relative;
-    transform-origin: center;
-}
-
-input[type="range"]::-webkit-slider-thumb:hover {
-    background: rgba(255, 255, 255, 1);
-}
-
-input[type="range"]::-moz-range-thumb {
-    width: 4px;
-    height: 20px;
-    background: rgba(255, 255, 255, 0.8);
-    border-radius: 2px;
-    border: none;
-    cursor: pointer;
-}
-
-input[type="range"]::-moz-range-thumb:hover {
-    background: rgba(255, 255, 255, 1);
-}
-
-/* Knob Track (hide it) */
-input[type="range"]::-webkit-slider-runnable-track {
-    background: transparent;
-    height: 50px;
-}
-
-input[type="range"]::-moz-range-track {
-    background: transparent;
-    height: 50px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
 }
 
 .eq-row label,

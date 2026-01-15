@@ -5,8 +5,57 @@ let recorder = null;
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
+    setupRotaryKnobs();
     setupStartButton();
 });
+
+// Setup rotary knobs with visual indicators
+function setupRotaryKnobs() {
+    const rangeInputs = document.querySelectorAll('input[type="range"]');
+
+    rangeInputs.forEach(input => {
+        // Create wrapper
+        const wrapper = document.createElement('div');
+        wrapper.className = 'knob-container';
+
+        // Create visual knob
+        const visual = document.createElement('div');
+        visual.className = 'knob-visual';
+
+        // Create indicator
+        const indicator = document.createElement('div');
+        indicator.className = 'knob-indicator';
+
+        // Insert wrapper before input
+        input.parentNode.insertBefore(wrapper, input);
+
+        // Move input into wrapper and add visual elements
+        wrapper.appendChild(input);
+        wrapper.appendChild(visual);
+        wrapper.appendChild(indicator);
+
+        // Function to update knob rotation
+        const updateKnob = () => {
+            const min = parseFloat(input.min) || 0;
+            const max = parseFloat(input.max) || 100;
+            const value = parseFloat(input.value);
+
+            // Calculate percentage (0-1)
+            const percent = (value - min) / (max - min);
+
+            // Convert to rotation angle (-135deg to +135deg, 270 degree range)
+            const angle = -135 + (percent * 270);
+
+            indicator.style.transform = `translateX(-50%) rotate(${angle}deg)`;
+        };
+
+        // Set initial rotation
+        updateKnob();
+
+        // Update on input
+        input.addEventListener('input', updateKnob);
+    });
+}
 
 function setupStartButton() {
     const startBtn = document.getElementById('startBtn');

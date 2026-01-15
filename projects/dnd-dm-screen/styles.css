@@ -8,7 +8,7 @@ body {
     background: #000;
     color: #fff;
     font-family: 'Courier New', monospace;
-    font-size: 10px;
+    font-size: 14px;
     line-height: 1.8;
     overflow-x: hidden;
     min-height: 100vh;
@@ -37,7 +37,7 @@ h1 {
 }
 
 .subtitle {
-    font-size: 10px;
+    font-size: 12px;
     letter-spacing: 0.15em;
     text-transform: uppercase;
     opacity: 0.5;
@@ -48,6 +48,8 @@ h1 {
     margin-bottom: 30px;
     opacity: 0;
     animation: fadeInUp 1.2s ease-out 0.5s forwards;
+    position: relative;
+    z-index: 100;
 }
 
 .search-container {
@@ -63,7 +65,7 @@ h1 {
     border: 2px solid #fff;
     padding: 15px 20px;
     font-family: 'Courier New', monospace;
-    font-size: 10px;
+    font-size: 13px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     outline: none;
@@ -81,7 +83,7 @@ h1 {
 
 .search-hint {
     text-align: center;
-    font-size: 8px;
+    font-size: 10px;
     letter-spacing: 0.1em;
     opacity: 0.3;
     margin-top: 10px;
@@ -115,7 +117,7 @@ h1 {
 }
 
 .category-title {
-    font-size: 9px;
+    font-size: 11px;
     letter-spacing: 0.15em;
     text-transform: uppercase;
     opacity: 0.5;
@@ -141,14 +143,14 @@ h1 {
 }
 
 .result-name {
-    font-size: 10px;
+    font-size: 12px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     margin-bottom: 5px;
 }
 
 .result-meta {
-    font-size: 8px;
+    font-size: 10px;
     opacity: 0.5;
     letter-spacing: 0.05em;
 }
@@ -195,7 +197,7 @@ h1 {
 }
 
 .panel-header h2 {
-    font-size: 10px;
+    font-size: 12px;
     font-weight: normal;
     letter-spacing: 0.15em;
     text-transform: uppercase;
@@ -265,7 +267,7 @@ h1 {
 }
 
 .combatant-name {
-    font-size: 10px;
+    font-size: 12px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
 }
@@ -300,7 +302,7 @@ h1 {
 }
 
 .hp-value {
-    font-size: 10px;
+    font-size: 12px;
     min-width: 60px;
     text-align: center;
 }
@@ -412,7 +414,7 @@ h1 {
     padding: 8px 10px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     margin-bottom: 5px;
-    font-size: 9px;
+    font-size: 11px;
     letter-spacing: 0.05em;
 }
 
@@ -445,7 +447,7 @@ h1 {
     padding: 10px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     margin-bottom: 5px;
-    font-size: 9px;
+    font-size: 11px;
     letter-spacing: 0.1em;
 }
 
@@ -469,7 +471,7 @@ h1 {
 
 .rule-item {
     margin-bottom: 12px;
-    font-size: 9px;
+    font-size: 11px;
     letter-spacing: 0.05em;
 }
 
@@ -496,7 +498,7 @@ h1 {
     border: 1px solid rgba(255, 255, 255, 0.1);
     padding: 15px;
     font-family: 'Courier New', monospace;
-    font-size: 9px;
+    font-size: 12px;
     line-height: 1.8;
     letter-spacing: 0.05em;
     resize: vertical;
@@ -507,20 +509,125 @@ h1 {
     border-color: rgba(255, 255, 255, 0.3);
 }
 
+/* Session Maker Panel */
+.session-maker-panel {
+    grid-column: span 2;
+}
+
+.party-input {
+    margin-bottom: 20px;
+}
+
+.input-label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    opacity: 0.5;
+    margin-bottom: 8px;
+}
+
+.party-input input {
+    width: 100%;
+    background: #000;
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 12px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+}
+
+.party-input input:focus {
+    outline: none;
+    border-color: #fff;
+}
+
+.session-output {
+    min-height: 200px;
+}
+
+.session-node {
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.node-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.node-title {
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.node-type {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    opacity: 0.5;
+}
+
+.node-content {
+    font-size: 11px;
+    line-height: 1.8;
+    letter-spacing: 0.05em;
+}
+
+.node-stat {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.node-stat:last-child {
+    border-bottom: none;
+}
+
+.stat-label-sm {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    opacity: 0.5;
+}
+
+.stat-value-sm {
+    font-size: 11px;
+    opacity: 0.8;
+}
+
+.party-info {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 12px;
+    margin-bottom: 20px;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+}
+
 /* Conditions Panel */
 .conditions-panel {
-    grid-column: span 2;
+    grid-column: span 1;
 }
 
 .conditions-list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 10px;
+    grid-template-columns: 1fr;
+    gap: 8px;
 }
 
 .condition-card {
     border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 12px;
+    padding: 10px;
     cursor: pointer;
     transition: all 0.2s ease;
 }
@@ -531,7 +638,7 @@ h1 {
 }
 
 .condition-name {
-    font-size: 10px;
+    font-size: 12px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     margin-bottom: 8px;
@@ -539,7 +646,7 @@ h1 {
 }
 
 .condition-preview {
-    font-size: 8px;
+    font-size: 10px;
     line-height: 1.6;
     opacity: 0.5;
     letter-spacing: 0.05em;

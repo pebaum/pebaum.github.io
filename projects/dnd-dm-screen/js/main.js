@@ -9,6 +9,7 @@ import initiativeTracker from './initiative-tracker.js';
 import diceRoller from './dice-roller.js';
 import notepad from './notepad.js';
 import referenceViewer from './reference-viewer.js';
+import sessionMaker from './session-maker.js';
 
 class DMScreen {
     constructor() {
@@ -31,6 +32,7 @@ class DMScreen {
             diceRoller.init();
             notepad.init();
             referenceViewer.init();
+            sessionMaker.init();
 
             // Connect search engine to other modules
             searchEngine.setOnMonsterSelect((monster) => {
@@ -57,6 +59,7 @@ class DMScreen {
             window.dataLoader = dataLoader;
             window.initiativeTracker = initiativeTracker;
             window.diceRoller = diceRoller;
+            window.sessionMaker = sessionMaker;
 
         } catch (error) {
             console.error('Failed to initialize DM Screen:', error);

@@ -107,6 +107,23 @@
                     <div id="conditionsList" class="conditions-list"></div>
                 </div>
             </section>
+
+            <!-- Session Maker -->
+            <section class="panel session-maker-panel">
+                <div class="panel-header">
+                    <h2>SESSION MAKER</h2>
+                    <button class="btn-small" id="generateSession">GENERATE</button>
+                </div>
+                <div class="panel-content">
+                    <div class="party-input">
+                        <label class="input-label">PARTY LEVELS (COMMA SEPARATED)</label>
+                        <input type="text" id="partyLevels" placeholder="e.g., 3,4,3,5" autocomplete="off">
+                    </div>
+                    <div id="sessionOutput" class="session-output">
+                        <div class="empty-state">ENTER PARTY LEVELS AND CLICK GENERATE</div>
+                    </div>
+                </div>
+            </section>
         </div>
 
         <!-- Detail Modal -->
@@ -125,6 +142,7 @@
     <script type="module" src="js/dice-roller.js"></script>
     <script type="module" src="js/notepad.js"></script>
     <script type="module" src="js/reference-viewer.js"></script>
+    <script type="module" src="js/session-maker.js"></script>
     <script type="module" src="js/main.js"></script>
 </body>
 </html>
