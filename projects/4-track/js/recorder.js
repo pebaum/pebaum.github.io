@@ -69,9 +69,9 @@ class Recorder {
 
         // Create master tape effects
         this.tapeEffects = new TapeEffects(this.ctx);
-        this.masterTapeSaturation = this.tapeEffects.createSaturation(0.3);
-        this.masterTapeCompression = this.tapeEffects.createCompression(0.4);
-        this.masterTapeAge = this.tapeEffects.createAgeFilter(0.5);
+        this.masterTapeSaturation = this.tapeEffects.createSaturation(0);
+        this.masterTapeCompression = this.tapeEffects.createCompression(0);
+        this.masterTapeAge = this.tapeEffects.createAgeFilter(0);
 
         // Connect master chain: tracks → age → saturation → compression → gain → analyser → output
         this.masterTapeAge.connect(this.masterTapeSaturation);

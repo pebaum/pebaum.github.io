@@ -64,9 +64,9 @@ class Track {
 
     setupTapeEffects() {
         // Create tape effect chain
-        this.tapeSaturation = this.tapeEffects.createSaturation(0.2);
-        this.tapeCompression = this.tapeEffects.createCompression(0.3);
-        this.tapeAgeFilter = this.tapeEffects.createAgeFilter(0.4);
+        this.tapeSaturation = this.tapeEffects.createSaturation(0);
+        this.tapeCompression = this.tapeEffects.createCompression(0);
+        this.tapeAgeFilter = this.tapeEffects.createAgeFilter(0);
 
         // Wow/flutter (detune oscillator)
         this.wowFlutterLFO = this.ctx.createOscillator();
