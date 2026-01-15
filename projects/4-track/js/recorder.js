@@ -8,6 +8,10 @@ class Recorder {
         this.microphone = null;
         this.micStream = null;
 
+        // Audio source management
+        this.audioSourceType = 'none';  // 'none', 'microphone', 'tab'
+        this.activeStream = null;       // Keep reference for cleanup
+
         // Master bus
         this.masterGain = null;
         this.masterAnalyser = null;
@@ -47,8 +51,7 @@ class Recorder {
         // Initialize visualizer (only VU meters, no waveforms)
         this.visualizer.initVUMeters();
 
-        // Request microphone access
-        await this.setupMicrophone();
+        // Audio source will be set by user selection (no automatic mic request)
 
         // Start VU meter animation
         this.visualizer.startVUAnimation(this.masterAnalyser);
@@ -175,10 +178,83 @@ class Recorder {
                 }
             });
             this.microphone = this.ctx.createMediaStreamSource(this.micStream);
+            this.updateStatus('MICROPHONE CONNECTED');
             console.log('Microphone connected');
         } catch (error) {
             console.error('Error accessing microphone:', error);
             alert('Could not access microphone. Recording will not be available.');
+            this.audioSourceType = 'none';
+        }
+    }
+
+    async setupSystemAudio() {
+        try {
+            // Request display capture with audio
+            const stream = await navigator.mediaDevices.getDisplayMedia({
+                video: {
+                    width: { ideal: 1 },
+                    height: { ideal: 1 }
+                },
+                audio: {
+                    echoCancellation: false,
+                    noiseSuppression: false,
+                    autoGainControl: false
+                }
+            });
+
+            // Extract audio tracks
+            const audioTracks = stream.getAudioTracks();
+
+            if (audioTracks.length === 0) {
+                throw new Error('No audio track available. Make sure to share tab audio.');
+            }
+
+            // Create audio-only stream
+            this.micStream = new MediaStream(audioTracks);
+            this.activeStream = stream; // Keep reference to stop later
+
+            // Create Web Audio source
+            this.microphone = this.ctx.createMediaStreamSource(this.micStream);
+
+            // Handle stream end (user stops sharing)
+            stream.getVideoTracks()[0].addEventListener('ended', () => {
+                this.setAudioSource('none');
+            });
+
+            this.updateStatus('TAB AUDIO CONNECTED');
+            console.log('Tab audio connected');
+        } catch (error) {
+            console.error('Error capturing tab audio:', error);
+            alert('Could not capture tab audio. Make sure to select "Share tab audio" in the permission dialog.');
+            this.audioSourceType = 'none';
+        }
+    }
+
+    async setAudioSource(sourceType) {
+        // Clean up existing stream
+        if (this.activeStream) {
+            this.activeStream.getTracks().forEach(track => track.stop());
+            this.activeStream = null;
+        }
+        if (this.micStream) {
+            this.micStream.getTracks().forEach(track => track.stop());
+            this.micStream = null;
+        }
+        this.microphone = null;
+
+        this.audioSourceType = sourceType;
+
+        switch(sourceType) {
+            case 'microphone':
+                await this.setupMicrophone();
+                break;
+            case 'tab':
+                await this.setupSystemAudio();
+                break;
+            case 'none':
+            default:
+                this.updateStatus('NO INPUT SELECTED');
+                break;
         }
     }
 
@@ -221,7 +297,7 @@ class Recorder {
     // Record on a specific track
     async recordTrack(trackNumber) {
         if (!this.micStream) {
-            alert('Microphone not available');
+            alert('No audio input selected. Please select an input source first.');
             return;
         }
 

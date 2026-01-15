@@ -201,6 +201,12 @@ function setupTransportControls() {
             recorder.clearAll();
         }
     });
+
+    // Audio source selector
+    const audioSourceSelect = document.getElementById('audioSourceSelect');
+    audioSourceSelect.addEventListener('change', async (e) => {
+        await recorder.setAudioSource(e.target.value);
+    });
 }
 
 function setupTrackControls() {
