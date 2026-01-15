@@ -139,9 +139,10 @@ class SearchEngine {
      * Create HTML for monster result item
      */
     createMonsterResultItem(monster) {
+        const sourceBook = monster.source ? `<span class="source-badge">[${monster.source}]</span>` : '';
         return `
             <div class="result-item" data-type="monster" data-name="${monster.name}">
-                <div class="result-name">${monster.name}</div>
+                <div class="result-name">${monster.name} ${sourceBook}</div>
                 <div class="result-meta">
                     ${monster.size} ${monster.type} | CR ${monster.cr} | AC ${monster.ac} | HP ${monster.hp}
                 </div>
@@ -154,9 +155,10 @@ class SearchEngine {
      */
     createSpellResultItem(spell) {
         const levelText = spell.level === 0 ? 'Cantrip' : `Level ${spell.level}`;
+        const sourceBook = spell.source ? `<span class="source-badge">[${spell.source}]</span>` : '';
         return `
             <div class="result-item" data-type="spell" data-name="${spell.name}">
-                <div class="result-name">${spell.name}</div>
+                <div class="result-name">${spell.name} ${sourceBook}</div>
                 <div class="result-meta">
                     ${levelText} ${spell.school} | ${spell.castingTime} | ${spell.range}
                 </div>

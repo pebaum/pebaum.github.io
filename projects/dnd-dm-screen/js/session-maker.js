@@ -1,14 +1,19 @@
 /**
  * Session Maker Module
- * Generates abstract session structures based on party levels
+ * Generates intelligent session structures based on party levels
+ * Pulls from the full 5etools database for real monster suggestions
  * Uses NODES concept and 5-room dungeon structure
  */
+
+import dataLoader from './data-loader.js';
 
 class SessionMaker {
     constructor() {
         this.partyLevelsInput = null;
         this.generateBtn = null;
         this.sessionOutput = null;
+        this.monstersData = [];
+        this.spellsData = [];
     }
 
     /**
@@ -24,6 +29,11 @@ class SessionMaker {
             return;
         }
 
+        // Load monster and spell data
+        const allData = dataLoader.getAllData();
+        this.monstersData = allData.monsters || [];
+        this.spellsData = allData.spells || [];
+
         // Bind events
         this.generateBtn.addEventListener('click', () => this.generateSession());
         this.partyLevelsInput.addEventListener('keypress', (e) => {
@@ -32,7 +42,7 @@ class SessionMaker {
             }
         });
 
-        console.log('✓ Session maker initialized');
+        console.log(`✓ Session maker initialized with ${this.monstersData.length} monsters`);
     }
 
     /**
@@ -63,6 +73,65 @@ class SessionMaker {
             hard: baseDC + 3,
             deadly: baseDC + 5
         };
+    }
+
+    /**
+     * Convert CR string to number for comparison
+     */
+    crToNumber(cr) {
+        if (typeof cr === 'number') return cr;
+        if (!cr) return 0;
+
+        // Handle fractions like "1/2", "1/4", "1/8"
+        if (cr.includes('/')) {
+            const parts = cr.split('/');
+            return parseInt(parts[0]) / parseInt(parts[1]);
+        }
+        return parseFloat(cr) || 0;
+    }
+
+    /**
+     * Find monsters within a CR range
+     */
+    findMonstersByCR(minCR, maxCR, count = 5) {
+        const filtered = this.monstersData.filter(m => {
+            const cr = this.crToNumber(m.cr);
+            return cr >= minCR && cr <= maxCR;
+        });
+
+        // Shuffle and take random selection
+        const shuffled = filtered.sort(() => 0.5 - Math.random());
+        return shuffled.slice(0, count);
+    }
+
+    /**
+     * Get monster suggestions for an encounter
+     */
+    getMonsterSuggestions(avgLevel, difficulty = 'medium', count = 3) {
+        let targetCR;
+
+        switch(difficulty) {
+            case 'easy':
+                targetCR = Math.max(0, avgLevel - 3);
+                break;
+            case 'medium':
+                targetCR = avgLevel;
+                break;
+            case 'hard':
+                targetCR = avgLevel + 2;
+                break;
+            case 'deadly':
+                targetCR = avgLevel + 4;
+                break;
+            default:
+                targetCR = avgLevel;
+        }
+
+        // Find monsters within +/- 2 CR of target
+        const minCR = Math.max(0, targetCR - 2);
+        const maxCR = targetCR + 2;
+
+        return this.findMonstersByCR(minCR, maxCR, count);
     }
 
     /**
@@ -122,6 +191,12 @@ class SessionMaker {
         const damage = this.getDamage(avgLevel);
         const enemyStats = this.getEnemyStats(avgLevel);
 
+        // Get real monster suggestions for each encounter
+        const easyMonsters = this.getMonsterSuggestions(avgLevel, 'easy', 3);
+        const mediumMonsters = this.getMonsterSuggestions(avgLevel, 'medium', 3);
+        const hardMonsters = this.getMonsterSuggestions(avgLevel, 'hard', 3);
+        const bossMonsters = this.getMonsterSuggestions(avgLevel, 'deadly', 2);
+
         // 5 Room Dungeon: Entrance/Guardian, Puzzle/Roleplay, Trick/Setback, Climax/Boss, Reward/Twist
         return [
             {
@@ -130,6 +205,7 @@ class SessionMaker {
                 description: 'Initial encounter that sets tone and warns of dangers ahead',
                 enemies: `${partySize} Standard enemies OR ${partySize * 2} Minions`,
                 stats: enemyStats.standard,
+                monsterSuggestions: mediumMonsters,
                 mechanics: [
                     `Perception DC ${dcs.medium} to notice environmental hazards`,
                     `Investigation DC ${dcs.easy} to find alternate route`,
@@ -158,7 +234,8 @@ class SessionMaker {
                     `Environmental hazard requiring multiple saves`,
                     `Resource drain (spell slots, HP, time pressure)`
                 ],
-                stats: enemyStats.minion
+                stats: enemyStats.minion,
+                monsterSuggestions: easyMonsters
             },
             {
                 name: 'CLIMAX & BOSS FIGHT',
@@ -167,6 +244,8 @@ class SessionMaker {
                 enemies: '1 Boss + ' + Math.floor(partySize / 2) + ' Standard enemies OR 1 Elite Boss',
                 bossStats: enemyStats.boss,
                 minionStats: enemyStats.standard,
+                monsterSuggestions: bossMonsters,
+                minionSuggestions: mediumMonsters.slice(0, 2),
                 mechanics: [
                     `Boss has legendary actions: ${Math.floor(avgLevel / 4) + 2} per round`,
                     `Lair action on initiative 20: ${damage.moderate} area effect`,
@@ -258,6 +337,66 @@ class SessionMaker {
                     <div class="stat-value-sm">${node.enemies}</div>
                 </div>
             `;
+        }
+
+        // Render monster suggestions with hoverable tooltips
+        if (node.monsterSuggestions && node.monsterSuggestions.length > 0) {
+            html += `
+                <div class="node-stat" style="grid-template-columns: 1fr; padding-top: 10px;">
+                    <div class="stat-label-sm">SUGGESTED MONSTERS:</div>
+                </div>
+            `;
+            node.monsterSuggestions.forEach(monster => {
+                html += `
+                    <div style="padding: 4px 0; font-size: 10px;">
+                        • <span class="monster-link" data-monster='${JSON.stringify(monster).replace(/'/g, '&#39;')}'>
+                            ${monster.name}
+                            <span class="source-badge">[${monster.source || 'MM'}]</span>
+                            <div class="tooltip">
+                                <div class="tooltip-header">${monster.name}</div>
+                                <div class="tooltip-stats">
+                                    ${monster.size || 'Medium'} ${monster.type || 'creature'}<br>
+                                    <strong>AC:</strong> ${monster.ac} | <strong>HP:</strong> ${monster.hp}<br>
+                                    <strong>Speed:</strong> ${monster.speed || '30 ft.'}<br>
+                                    <strong>CR:</strong> ${monster.cr}
+                                </div>
+                                ${monster.traits && monster.traits.length > 0 ?
+                                    `<div class="tooltip-abilities">
+                                        ${monster.traits[0].name}: ${monster.traits[0].entries[0] ? monster.traits[0].entries[0].substring(0, 100) + '...' : ''}
+                                    </div>` : ''}
+                            </div>
+                        </span>
+                    </div>
+                `;
+            });
+        }
+
+        // Render boss suggestions
+        if (node.minionSuggestions && node.minionSuggestions.length > 0) {
+            html += `
+                <div class="node-stat" style="grid-template-columns: 1fr; padding-top: 10px;">
+                    <div class="stat-label-sm">MINION OPTIONS:</div>
+                </div>
+            `;
+            node.minionSuggestions.forEach(monster => {
+                html += `
+                    <div style="padding: 4px 0; font-size: 10px;">
+                        • <span class="monster-link" data-monster='${JSON.stringify(monster).replace(/'/g, '&#39;')}'>
+                            ${monster.name}
+                            <span class="source-badge">[${monster.source || 'MM'}]</span>
+                            <div class="tooltip">
+                                <div class="tooltip-header">${monster.name}</div>
+                                <div class="tooltip-stats">
+                                    ${monster.size || 'Medium'} ${monster.type || 'creature'}<br>
+                                    <strong>AC:</strong> ${monster.ac} | <strong>HP:</strong> ${monster.hp}<br>
+                                    <strong>Speed:</strong> ${monster.speed || '30 ft.'}<br>
+                                    <strong>CR:</strong> ${monster.cr}
+                                </div>
+                            </div>
+                        </span>
+                    </div>
+                `;
+            });
         }
 
         if (node.stats) {

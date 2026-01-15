@@ -652,6 +652,86 @@ h1 {
     letter-spacing: 0.05em;
 }
 
+/* Hover Tooltips */
+.monster-link {
+    color: #fff;
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    cursor: pointer;
+    position: relative;
+    display: inline-block;
+}
+
+.monster-link:hover {
+    text-decoration-style: solid;
+}
+
+.tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #000;
+    border: 2px solid #fff;
+    padding: 12px;
+    min-width: 250px;
+    max-width: 350px;
+    z-index: 1000;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+    margin-bottom: 8px;
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    line-height: 1.6;
+}
+
+.monster-link:hover .tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
+.tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #fff;
+}
+
+.tooltip-header {
+    font-size: 11px;
+    font-weight: bold;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.tooltip-stats {
+    margin-bottom: 6px;
+}
+
+.tooltip-abilities {
+    margin-top: 8px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 9px;
+    opacity: 0.8;
+}
+
+.source-badge {
+    display: inline-block;
+    font-size: 9px;
+    letter-spacing: 0.05em;
+    opacity: 0.5;
+    margin-left: 4px;
+}
+
 /* Buttons */
 .btn {
     background: #000;
