@@ -23,6 +23,15 @@
                 <input type="range" id="tempo-control" min="60" max="200" value="120">
             </div>
         </div>
+        <div class="input-source-control">
+            <label>INPUT
+                <select id="audioSourceSelect" class="audio-source-select">
+                    <option value="none">NO INPUT</option>
+                    <option value="microphone">MICROPHONE</option>
+                    <option value="tab">TAB AUDIO</option>
+                </select>
+            </label>
+        </div>
         <div class="file-controls">
             <input type="file" id="file-input" accept="audio/*" multiple style="display: none;">
             <button id="load-files" class="transport-btn">LOAD FILES</button>
@@ -106,7 +115,7 @@
                 <div class="control-group">
                     <label>SPEED</label>
                     <div class="knob-container">
-                        <input type="range" class="speed" data-track="0" min="25" max="200" value="50">
+                        <input type="range" class="speed" data-track="0" min="25" max="200" value="100">
                     </div>
                 </div>
             </div>
@@ -201,7 +210,7 @@
                 <div class="control-group">
                     <label>SPEED</label>
                     <div class="knob-container">
-                        <input type="range" class="speed" data-track="1" min="25" max="200" value="50">
+                        <input type="range" class="speed" data-track="1" min="25" max="200" value="100">
                     </div>
                 </div>
             </div>
@@ -296,7 +305,7 @@
                 <div class="control-group">
                     <label>SPEED</label>
                     <div class="knob-container">
-                        <input type="range" class="speed" data-track="2" min="25" max="200" value="50">
+                        <input type="range" class="speed" data-track="2" min="25" max="200" value="100">
                     </div>
                 </div>
             </div>
@@ -391,7 +400,7 @@
                 <div class="control-group">
                     <label>SPEED</label>
                     <div class="knob-container">
-                        <input type="range" class="speed" data-track="3" min="25" max="200" value="50">
+                        <input type="range" class="speed" data-track="3" min="25" max="200" value="100">
                     </div>
                 </div>
             </div>

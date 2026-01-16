@@ -483,6 +483,175 @@ class Recorder {
     getTrack(trackNumber) {
         return this.tracks[trackNumber];
     }
+
+    // Aliases for UI compatibility
+    playAll() {
+        return this.play();
+    }
+
+    stopAll() {
+        return this.stop();
+    }
+
+    setMasterReverbAmount(amount) {
+        return this.setMasterReverb(amount);
+    }
+
+    // Load audio file to specific track
+    async loadFileToTrack(trackNumber, file) {
+        if (trackNumber < 0 || trackNumber >= this.tracks.length) {
+            console.error('Invalid track number');
+            return;
+        }
+
+        const track = this.tracks[trackNumber];
+
+        try {
+            // Read file as array buffer
+            const arrayBuffer = await file.arrayBuffer();
+
+            // Decode audio data
+            const audioBuffer = await this.ctx.decodeAudioData(arrayBuffer);
+
+            // Set the buffer on the track
+            track.audioBuffer = audioBuffer;
+            track.hasAudio = true;
+
+            // Update UI to show loaded state
+            const recordBtn = document.querySelector(`.track:nth-child(${trackNumber + 1}) .record-btn`);
+            if (recordBtn) {
+                recordBtn.classList.add('has-audio');
+            }
+
+            this.updateStatus(`LOADED AUDIO TO TRACK ${trackNumber + 1}`);
+            console.log(`Loaded file to track ${trackNumber + 1}`);
+        } catch (error) {
+            console.error('Error loading file:', error);
+            alert(`Could not load audio file: ${error.message}`);
+        }
+    }
+
+    // Export current mix as WAV file
+    async exportMix() {
+        try {
+            // Stop playback first
+            this.stop();
+
+            // Find the longest track duration
+            let maxDuration = 0;
+            this.tracks.forEach(track => {
+                if (track.audioBuffer) {
+                    maxDuration = Math.max(maxDuration, track.audioBuffer.duration);
+                }
+            });
+
+            if (maxDuration === 0) {
+                alert('No audio to export. Please record or load some audio first.');
+                return;
+            }
+
+            // Create offline context for rendering
+            const sampleRate = 44100;
+            const offlineCtx = new OfflineAudioContext(2, maxDuration * sampleRate, sampleRate);
+
+            // Recreate master bus in offline context
+            const offlineMasterGain = offlineCtx.createGain();
+            offlineMasterGain.gain.value = this.masterGain.gain.value;
+
+            const offlineLimiter = offlineCtx.createDynamicsCompressor();
+            offlineLimiter.threshold.value = this.masterLimiter.threshold.value;
+            offlineLimiter.knee.value = this.masterLimiter.knee.value;
+            offlineLimiter.ratio.value = this.masterLimiter.ratio.value;
+            offlineLimiter.attack.value = this.masterLimiter.attack.value;
+            offlineLimiter.release.value = this.masterLimiter.release.value;
+
+            offlineMasterGain.connect(offlineLimiter);
+            offlineLimiter.connect(offlineCtx.destination);
+
+            // Render each track
+            this.tracks.forEach((track, index) => {
+                if (track.audioBuffer && !track.isMuted) {
+                    const source = offlineCtx.createBufferSource();
+                    source.buffer = track.audioBuffer;
+
+                    const trackGain = offlineCtx.createGain();
+                    trackGain.gain.value = track.channelFader.gain.value;
+
+                    source.connect(trackGain);
+                    trackGain.connect(offlineMasterGain);
+                    source.start(0);
+                }
+            });
+
+            this.updateStatus('RENDERING MIX...');
+
+            // Render the mix
+            const renderedBuffer = await offlineCtx.startRendering();
+
+            // Convert to WAV
+            const wav = this.bufferToWav(renderedBuffer);
+
+            // Create download link
+            const blob = new Blob([wav], { type: 'audio/wav' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `mix_${new Date().toISOString().slice(0, 19).replace(/[:-]/g, '')}.wav`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+            URL.revokeObjectURL(url);
+
+            this.updateStatus('MIX EXPORTED');
+        } catch (error) {
+            console.error('Error exporting mix:', error);
+            alert('Error exporting mix. Please try again.');
+            this.updateStatus('EXPORT FAILED');
+        }
+    }
+
+    // Convert AudioBuffer to WAV format
+    bufferToWav(buffer) {
+        const length = buffer.length * buffer.numberOfChannels * 2;
+        const arrayBuffer = new ArrayBuffer(44 + length);
+        const view = new DataView(arrayBuffer);
+
+        // WAV header
+        const writeString = (offset, string) => {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        };
+
+        writeString(0, 'RIFF');
+        view.setUint32(4, 36 + length, true);
+        writeString(8, 'WAVE');
+        writeString(12, 'fmt ');
+        view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true);
+        view.setUint16(22, buffer.numberOfChannels, true);
+        view.setUint32(24, buffer.sampleRate, true);
+        view.setUint32(28, buffer.sampleRate * buffer.numberOfChannels * 2, true);
+        view.setUint16(32, buffer.numberOfChannels * 2, true);
+        view.setUint16(34, 16, true);
+        writeString(36, 'data');
+        view.setUint32(40, length, true);
+
+        // Interleave channels and convert to 16-bit PCM
+        let offset = 44;
+        for (let i = 0; i < buffer.length; i++) {
+            for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
+                const sample = buffer.getChannelData(channel)[i];
+                const clampedSample = Math.max(-1, Math.min(1, sample));
+                view.setInt16(offset, clampedSample * 0x7FFF, true);
+                offset += 2;
+            }
+        }
+
+        return arrayBuffer;
+    }
 }
 
 // Export for use in other modules
