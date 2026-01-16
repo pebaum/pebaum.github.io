@@ -37,15 +37,11 @@ class Track {
         this.trimGain = this.ctx.createGain();
         this.trimGain.gain.value = 0.5;
 
-        // Main gain
-        this.gainNode = this.ctx.createGain();
-        this.gainNode.gain.value = 0.8;
+        // Gain boost (pre-compressor)
+        this.gainBoost = this.ctx.createGain();
+        this.gainBoost.gain.value = 1.0; // Unity gain by default
 
-        // Pan
-        this.panNode = this.ctx.createStereoPanner();
-        this.panNode.pan.value = 0;
-
-        // 3-band EQ
+        // 3-band EQ (will be connected AFTER compressor)
         this.eqLow = this.ctx.createBiquadFilter();
         this.eqLow.type = 'lowshelf';
         this.eqLow.frequency.value = 200;
@@ -62,10 +58,12 @@ class Track {
         this.eqHigh.frequency.value = 3000;
         this.eqHigh.gain.value = 0;
 
-        // Connect: trim → EQ chain
-        this.trimGain.connect(this.eqLow);
-        this.eqLow.connect(this.eqMid);
-        this.eqMid.connect(this.eqHigh);
+        // Channel fader (final gain stage)
+        this.channelFader = this.ctx.createGain();
+        this.channelFader.gain.value = 0.8; // Default fader position
+
+        // Note: Pan removed per requirements
+        // Signal chain will be connected in setupTapeEffects()
     }
 
     setupTapeEffects() {
@@ -77,19 +75,11 @@ class Track {
         this.la2aCompressor.attack.value = 0.010; // 10ms attack (tube-style)
         this.la2aCompressor.release.value = 0.100; // 100ms release (program-dependent feel)
 
-        // LA-2A style limiter (brick-wall at end of chain)
-        this.la2aLimiter = this.ctx.createDynamicsCompressor();
-        this.la2aLimiter.threshold.value = -3; // dB
-        this.la2aLimiter.knee.value = 0; // Hard knee for limiting
-        this.la2aLimiter.ratio.value = 20; // 20:1 ratio (brick-wall)
-        this.la2aLimiter.attack.value = 0.001; // 1ms attack (fast)
-        this.la2aLimiter.release.value = 0.050; // 50ms release (fast)
-
-        // LA-2A makeup gain (after compressor, before pan)
+        // LA-2A makeup gain (after compressor for gain reduction compensation)
         this.la2aMakeupGain = this.ctx.createGain();
         this.la2aMakeupGain.gain.value = 1.0; // Unity gain by default (0dB)
 
-        // Wow/flutter (detune oscillator)
+        // Wow/flutter (detune oscillator) - for tape speed variations
         this.wowFlutterLFO = this.ctx.createOscillator();
         this.wowFlutterGain = this.ctx.createGain();
         this.wowFlutterLFO.frequency.value = 0.3 + (Math.random() * 0.2);
@@ -98,21 +88,26 @@ class Track {
         this.wowFlutterLFO.connect(this.wowFlutterGain);
         this.wowFlutterLFO.start();
 
-        // Reverb send gain
+        // Reverb send gain (post-EQ, pre-fader)
         this.reverbSendGain = this.ctx.createGain();
         this.reverbSendGain.gain.value = 0; // Start with no reverb send
 
-        // Signal chain: Trim → EQ → LA-2A Comp → LA-2A Makeup Gain → Pan → Volume → LA-2A Limiter → Master + Reverb Send
-        // (Trim → EQ already connected in createAudioNodes)
-        this.eqHigh.connect(this.la2aCompressor);
-        this.la2aCompressor.connect(this.la2aMakeupGain);
-        this.la2aMakeupGain.connect(this.panNode);
-        this.panNode.connect(this.gainNode);
-        this.gainNode.connect(this.la2aLimiter);
-        this.la2aLimiter.connect(this.masterDestination);
+        // NEW SIGNAL CHAIN:
+        // 1. Trim → 2. Gain Boost → 3. Compressor → 4. Makeup Gain →
+        // 5. EQ (Low→Mid→High) → 6. Reverb Send (parallel) → 7. Channel Fader → Master
 
-        // Reverb send (parallel path from limiter output)
-        this.la2aLimiter.connect(this.reverbSendGain);
+        // Connect main signal path
+        this.trimGain.connect(this.gainBoost);
+        this.gainBoost.connect(this.la2aCompressor);
+        this.la2aCompressor.connect(this.la2aMakeupGain);
+        this.la2aMakeupGain.connect(this.eqLow);
+        this.eqLow.connect(this.eqMid);
+        this.eqMid.connect(this.eqHigh);
+        this.eqHigh.connect(this.channelFader);
+        this.channelFader.connect(this.masterDestination);
+
+        // Reverb send (parallel path from post-EQ, pre-fader)
+        this.eqHigh.connect(this.reverbSendGain);
         this.reverbSendGain.connect(this.reverbSend);
     }
 
@@ -241,12 +236,14 @@ class Track {
         this.trimGain.gain.value = value;
     }
 
-    setVolume(value) {
-        this.gainNode.gain.value = value;
+    setFader(value) {
+        // Channel fader control (0-1)
+        this.channelFader.gain.value = value;
     }
 
-    setPan(value) {
-        this.panNode.pan.value = value;
+    setGainBoost(value) {
+        // Gain boost control (0-1 maps to 0-2x gain)
+        this.gainBoost.gain.value = value * 2;
     }
 
     setSpeed(value) {
@@ -300,7 +297,7 @@ class Track {
 
     setMute(muted) {
         this.isMuted = muted;
-        this.gainNode.gain.value = muted ? 0 : 0.8;
+        this.channelFader.gain.value = muted ? 0 : 0.8;
     }
 
     setSolo(solo) {

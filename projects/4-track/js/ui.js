@@ -1,54 +1,159 @@
-// UI Controller
+// UI Controller for Vertical Console Mixer
 // Handles all user interactions and wires up the interface
 
 let recorder = null;
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
-    setupRotaryKnobs();
+    setupDoubleClickInput();
+    setupKnobVisuals();
     setupStartButton();
 });
 
-// Setup rotary knobs with visual indicators and value labels
-function setupRotaryKnobs() {
-    const rangeInputs = document.querySelectorAll('input[type="range"]');
+// Setup double-click text input for all controls
+function setupDoubleClickInput() {
+    // For all knobs
+    document.querySelectorAll('.knob-container input[type="range"]').forEach(input => {
+        const container = input.parentElement;
 
-    rangeInputs.forEach(input => {
-        // Create wrapper
-        const wrapper = document.createElement('div');
-        wrapper.className = 'knob-container';
-
-        // Create visual knob
-        const visual = document.createElement('div');
-        visual.className = 'knob-visual';
-
-        // Create indicator
-        const indicator = document.createElement('div');
-        indicator.className = 'knob-indicator';
-
-        // Create value display
+        // Create value display element
         const valueDisplay = document.createElement('div');
-        valueDisplay.className = 'knob-value';
+        valueDisplay.className = 'knob-value-display';
+        valueDisplay.style.position = 'absolute';
+        valueDisplay.style.bottom = '-20px';
+        valueDisplay.style.left = '50%';
+        valueDisplay.style.transform = 'translateX(-50%)';
+        valueDisplay.style.fontSize = '9px';
+        valueDisplay.style.color = '#888';
+        valueDisplay.style.cursor = 'pointer';
+        container.appendChild(valueDisplay);
 
-        // Insert wrapper before input
-        input.parentNode.insertBefore(wrapper, input);
-
-        // Move input into wrapper and add visual elements
-        wrapper.appendChild(input);
-        wrapper.appendChild(visual);
-        wrapper.appendChild(indicator);
-        wrapper.appendChild(valueDisplay);
-
-        // Function to format value for display
-        const formatValue = (val) => {
+        // Update value display
+        const updateDisplay = () => {
             const min = parseFloat(input.min) || 0;
             const max = parseFloat(input.max) || 100;
-            // Normalize to 0-100 range for display
-            const normalized = Math.round(((val - min) / (max - min)) * 100);
-            return normalized.toString();
+            const value = parseFloat(input.value);
+
+            // For EQ controls, show actual dB value
+            if (input.classList.contains('eq-low') || input.classList.contains('eq-mid') ||
+                input.classList.contains('eq-high') || input.classList.contains('master-eq-low') ||
+                input.classList.contains('master-eq-mid') || input.classList.contains('master-eq-high')) {
+                valueDisplay.textContent = value > 0 ? `+${value}` : value;
+            } else {
+                // Normalize to 0-100 for other controls
+                const normalized = Math.round(((value - min) / (max - min)) * 100);
+                valueDisplay.textContent = normalized;
+            }
         };
 
-        // Function to update knob rotation and value display
+        // Initial display
+        updateDisplay();
+        input.addEventListener('input', updateDisplay);
+
+        // Double-click to edit
+        container.addEventListener('dblclick', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const inputEl = document.createElement('input');
+            inputEl.type = 'text';
+            inputEl.className = 'value-input';
+            inputEl.value = valueDisplay.textContent;
+
+            container.appendChild(inputEl);
+            inputEl.select();
+            inputEl.focus();
+
+            const finishEdit = () => {
+                const newValue = parseFloat(inputEl.value) || 0;
+                const min = parseFloat(input.min) || 0;
+                const max = parseFloat(input.max) || 100;
+
+                // For EQ controls, use direct value
+                if (input.classList.contains('eq-low') || input.classList.contains('eq-mid') ||
+                    input.classList.contains('eq-high') || input.classList.contains('master-eq-low') ||
+                    input.classList.contains('master-eq-mid') || input.classList.contains('master-eq-high')) {
+                    input.value = Math.max(min, Math.min(max, newValue));
+                } else {
+                    // Convert 0-100 to actual range
+                    const actualValue = min + (Math.max(0, Math.min(100, newValue)) / 100) * (max - min);
+                    input.value = actualValue;
+                }
+
+                input.dispatchEvent(new Event('input'));
+                inputEl.remove();
+                updateDisplay();
+            };
+
+            inputEl.addEventListener('blur', finishEdit);
+            inputEl.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    finishEdit();
+                } else if (e.key === 'Escape') {
+                    inputEl.remove();
+                }
+            });
+        });
+    });
+
+    // For vertical faders
+    document.querySelectorAll('.vertical-fader').forEach(fader => {
+        const container = fader.parentElement;
+        const valueDisplay = container.querySelector('.fader-value');
+
+        // Update fader value display
+        const updateFaderDisplay = () => {
+            const value = Math.round((parseFloat(fader.value) / 100) * 100);
+            valueDisplay.textContent = value;
+        };
+
+        fader.addEventListener('input', updateFaderDisplay);
+
+        // Double-click to edit fader value
+        valueDisplay.addEventListener('dblclick', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const inputEl = document.createElement('input');
+            inputEl.type = 'text';
+            inputEl.className = 'value-input';
+            inputEl.value = valueDisplay.textContent;
+            inputEl.style.position = 'static';
+            inputEl.style.transform = 'none';
+
+            valueDisplay.style.display = 'none';
+            container.appendChild(inputEl);
+            inputEl.select();
+            inputEl.focus();
+
+            const finishEdit = () => {
+                const newValue = parseInt(inputEl.value) || 0;
+                fader.value = Math.max(0, Math.min(100, newValue));
+                fader.dispatchEvent(new Event('input'));
+                inputEl.remove();
+                valueDisplay.style.display = 'block';
+                updateFaderDisplay();
+            };
+
+            inputEl.addEventListener('blur', finishEdit);
+            inputEl.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    finishEdit();
+                } else if (e.key === 'Escape') {
+                    inputEl.remove();
+                    valueDisplay.style.display = 'block';
+                }
+            });
+        });
+    });
+}
+
+// Setup visual knob rotation indicators
+function setupKnobVisuals() {
+    document.querySelectorAll('.knob-container input[type="range"]').forEach(input => {
+        const container = input.parentElement;
+
+        // Update knob rotation
         const updateKnob = () => {
             const min = parseFloat(input.min) || 0;
             const max = parseFloat(input.max) || 100;
@@ -60,215 +165,158 @@ function setupRotaryKnobs() {
             // Convert to rotation angle (-135deg to +135deg, 270 degree range)
             const angle = -135 + (percent * 270);
 
-            indicator.style.transform = `translateX(-50%) rotate(${angle}deg)`;
-            valueDisplay.textContent = formatValue(value);
+            // Update the ::after pseudo-element rotation using CSS variable
+            container.style.setProperty('--knob-rotation', `${angle}deg`);
         };
 
-        // Click to edit value
-        valueDisplay.addEventListener('click', () => {
-            const currentValue = formatValue(parseFloat(input.value));
-            const inputEl = document.createElement('input');
-            inputEl.type = 'text';
-            inputEl.className = 'knob-value-input';
-            inputEl.value = currentValue;
-
-            valueDisplay.replaceWith(inputEl);
-            inputEl.select();
-            inputEl.focus();
-
-            const finishEdit = () => {
-                const newValue = parseInt(inputEl.value) || 0;
-                const clampedValue = Math.max(0, Math.min(100, newValue));
-
-                // Convert back to input's range
-                const min = parseFloat(input.min) || 0;
-                const max = parseFloat(input.max) || 100;
-                const actualValue = min + (clampedValue / 100) * (max - min);
-
-                input.value = actualValue;
-                input.dispatchEvent(new Event('input'));
-
-                inputEl.replaceWith(valueDisplay);
-                updateKnob();
-            };
-
-            inputEl.addEventListener('blur', finishEdit);
-            inputEl.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    finishEdit();
-                } else if (e.key === 'Escape') {
-                    inputEl.replaceWith(valueDisplay);
-                }
-            });
-        });
-
-        // Set initial rotation and value
+        // Initial update and listen for changes
         updateKnob();
-
-        // Update on input (throttled for performance)
-        let inputTimeout;
-        input.addEventListener('input', () => {
-            clearTimeout(inputTimeout);
-            inputTimeout = setTimeout(updateKnob, 10);
-        });
-
-        // Vertical drag behavior (DAW standard)
-        let isDragging = false;
-        let startY = 0;
-        let startValue = 0;
-
-        const onMouseDown = (e) => {
-            if (e.target === input || e.target.closest('.knob-container')) {
-                isDragging = true;
-                startY = e.clientY;
-                startValue = parseFloat(input.value);
-                e.preventDefault();
-                document.body.style.cursor = 'ns-resize';
-            }
-        };
-
-        const onMouseMove = (e) => {
-            if (!isDragging) return;
-
-            const deltaY = startY - e.clientY; // Inverted: up = positive
-            const min = parseFloat(input.min) || 0;
-            const max = parseFloat(input.max) || 100;
-            const range = max - min;
-
-            // Sensitivity: 100px of movement = full range
-            // Shift key for fine control (10x slower)
-            const sensitivity = e.shiftKey ? 0.1 : 1.0;
-            const pixelsPerRange = 150 / sensitivity;
-            const delta = (deltaY / pixelsPerRange) * range;
-
-            let newValue = startValue + delta;
-            newValue = Math.max(min, Math.min(max, newValue));
-
-            input.value = newValue;
-            input.dispatchEvent(new Event('input'));
-            e.preventDefault();
-        };
-
-        const onMouseUp = () => {
-            if (isDragging) {
-                isDragging = false;
-                document.body.style.cursor = '';
-            }
-        };
-
-        wrapper.addEventListener('mousedown', onMouseDown);
-        document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('mouseup', onMouseUp);
+        input.addEventListener('input', updateKnob);
     });
 }
 
+// Update knob rotation CSS
+const style = document.createElement('style');
+style.textContent = `
+    .knob-container::after {
+        transform: translateX(-50%) rotate(var(--knob-rotation, 0deg));
+    }
+`;
+document.head.appendChild(style);
+
+// Setup start button to initialize audio context
 function setupStartButton() {
-    const startBtn = document.getElementById('startBtn');
-    const overlay = document.getElementById('overlay');
-    const mainContainer = document.getElementById('mainContainer');
+    // Check if we need to create a start button
+    if (!document.getElementById('start-audio')) {
+        const startBtn = document.createElement('button');
+        startBtn.id = 'start-audio';
+        startBtn.textContent = 'START MIXER';
+        startBtn.style.position = 'fixed';
+        startBtn.style.top = '50%';
+        startBtn.style.left = '50%';
+        startBtn.style.transform = 'translate(-50%, -50%)';
+        startBtn.style.fontSize = '24px';
+        startBtn.style.padding = '20px 40px';
+        startBtn.style.background = '#e50914';
+        startBtn.style.color = 'white';
+        startBtn.style.border = 'none';
+        startBtn.style.cursor = 'pointer';
+        startBtn.style.zIndex = '1000';
+        document.body.appendChild(startBtn);
 
-    startBtn.addEventListener('click', async () => {
-        // Initialize recorder
-        recorder = new Recorder();
-        await recorder.init();
-
-        // Hide overlay, show main container
-        overlay.style.display = 'none';
-        mainContainer.style.display = 'block';
-
-        // Setup all UI controls
-        setupTransportControls();
-        setupTrackControls();
-        setupMasterControls();
-    });
+        startBtn.addEventListener('click', async () => {
+            startBtn.remove();
+            await initializeRecorder();
+        });
+    }
 }
 
+// Initialize the recorder and setup controls
+async function initializeRecorder() {
+    recorder = new Recorder();
+    await recorder.init();
+
+    setupTransportControls();
+    setupTrackControls();
+    setupMasterControls();
+
+    // Setup visualizer
+    const visualizer = new Visualizer(recorder.masterAnalyser, recorder.ctx);
+    visualizer.start();
+}
+
+// Setup transport bar controls
 function setupTransportControls() {
-    const playBtn = document.getElementById('playBtn');
-    const stopBtn = document.getElementById('stopBtn');
-    const clearAllBtn = document.getElementById('clearAllBtn');
-
-    playBtn.addEventListener('click', () => {
-        recorder.play();
+    // Play All button
+    const playAllBtn = document.getElementById('play-all');
+    playAllBtn?.addEventListener('click', () => {
+        recorder.playAll();
+        playAllBtn.textContent = '❚❚ PAUSE';
     });
 
-    stopBtn.addEventListener('click', () => {
-        recorder.stop();
+    // Stop All button
+    const stopAllBtn = document.getElementById('stop-all');
+    stopAllBtn?.addEventListener('click', () => {
+        recorder.stopAll();
+        document.getElementById('play-all').textContent = '▶ PLAY';
     });
 
-    clearAllBtn.addEventListener('click', () => {
+    // Clear All button
+    const clearAllBtn = document.getElementById('clear-all');
+    clearAllBtn?.addEventListener('click', () => {
         if (confirm('Clear all tracks? This cannot be undone.')) {
             recorder.clearAll();
         }
     });
 
-    // Audio source selector
-    const audioSourceSelect = document.getElementById('audioSourceSelect');
-    audioSourceSelect.addEventListener('change', async (e) => {
-        await recorder.setAudioSource(e.target.value);
-        updateRecButtonStates();
+    // Export Mix button
+    const exportBtn = document.getElementById('export-mix');
+    exportBtn?.addEventListener('click', () => {
+        recorder.exportMix();
     });
 
-    // Initialize REC button states
-    updateRecButtonStates();
-}
+    // Load Files button
+    const loadFilesBtn = document.getElementById('load-files');
+    const fileInput = document.getElementById('file-input');
 
-// Update REC button states based on audio source
-function updateRecButtonStates() {
-    const hasAudioSource = recorder.audioSourceType !== 'none';
-    const recButtons = document.querySelectorAll('.rec-btn');
+    loadFilesBtn?.addEventListener('click', () => {
+        fileInput?.click();
+    });
 
-    recButtons.forEach(btn => {
-        btn.disabled = !hasAudioSource;
+    fileInput?.addEventListener('change', async (e) => {
+        const files = Array.from(e.target.files);
+        for (let i = 0; i < Math.min(files.length, 4); i++) {
+            await recorder.loadFileToTrack(i, files[i]);
+            updateTrackIndicator(i, true);
+        }
     });
 }
 
+// Setup controls for all tracks
 function setupTrackControls() {
-    // Setup controls for each track (0-3)
     for (let i = 0; i < 4; i++) {
         setupTrackButtons(i);
-        setupTrackSliders(i);
+        setupTrackKnobs(i);
+        setupTrackFader(i);
     }
 }
 
+// Setup track buttons
 function setupTrackButtons(trackNumber) {
-    // Mode toggle
-    const modeBtn = document.querySelector(`.mode-btn[data-track="${trackNumber}"]`);
+    const track = recorder.getTrack(trackNumber);
 
-    modeBtn.addEventListener('click', () => {
-        const track = recorder.getTrack(trackNumber);
+    // REC button
+    const recBtn = document.querySelector(`.rec-btn[data-track="${trackNumber}"]`);
+    recBtn?.addEventListener('click', async () => {
+        if (track.isRecording) {
+            track.stopRecording();
+            recBtn.classList.remove('active');
+            recBtn.textContent = 'REC';
+        } else {
+            await recorder.recordTrack(trackNumber);
+            recBtn.classList.add('active');
+            recBtn.textContent = 'STOP';
+        }
+    });
+
+    // Mode button (Loop/Normal)
+    const modeBtn = document.querySelector(`.mode-btn[data-track="${trackNumber}"]`);
+    modeBtn?.addEventListener('click', () => {
         const newMode = track.mode === 'normal' ? 'loop' : 'normal';
         track.setMode(newMode);
 
         if (newMode === 'loop') {
-            modeBtn.textContent = 'LOOP';
             modeBtn.classList.add('active');
+            modeBtn.textContent = 'LOOP';
         } else {
-            modeBtn.textContent = 'NORMAL';
             modeBtn.classList.remove('active');
-        }
-    });
-
-    // Record button
-    const recBtn = document.querySelector(`.rec-btn[data-track="${trackNumber}"]`);
-    recBtn.addEventListener('click', async () => {
-        const track = recorder.getTrack(trackNumber);
-
-        if (track.isRecording) {
-            track.stopRecording();
-            recBtn.classList.remove('recording');
-            recBtn.textContent = '● REC';
-        } else {
-            await recorder.recordTrack(trackNumber);
-            recBtn.classList.add('recording');
-            recBtn.textContent = '■ STOP';
+            modeBtn.textContent = 'NORMAL';
         }
     });
 
     // Mute button
     const muteBtn = document.querySelector(`.mute-btn[data-track="${trackNumber}"]`);
-    muteBtn.addEventListener('click', () => {
-        const track = recorder.getTrack(trackNumber);
+    muteBtn?.addEventListener('click', () => {
         track.isMuted = !track.isMuted;
         track.setMute(track.isMuted);
         muteBtn.classList.toggle('active', track.isMuted);
@@ -276,147 +324,187 @@ function setupTrackButtons(trackNumber) {
 
     // Solo button
     const soloBtn = document.querySelector(`.solo-btn[data-track="${trackNumber}"]`);
-    soloBtn.addEventListener('click', () => {
+    soloBtn?.addEventListener('click', () => {
         recorder.handleSolo(trackNumber);
-        soloBtn.classList.toggle('active', recorder.getTrack(trackNumber).isSolo);
+        soloBtn.classList.toggle('active', track.isSolo);
+
+        // Update other solo buttons
+        for (let i = 0; i < 4; i++) {
+            if (i !== trackNumber) {
+                const otherSoloBtn = document.querySelector(`.solo-btn[data-track="${i}"]`);
+                otherSoloBtn?.classList.toggle('active', recorder.getTrack(i).isSolo);
+            }
+        }
     });
 
     // Clear button
     const clearBtn = document.querySelector(`.clear-btn[data-track="${trackNumber}"]`);
-    clearBtn.addEventListener('click', () => {
-        const track = recorder.getTrack(trackNumber);
+    clearBtn?.addEventListener('click', () => {
         track.clear();
+        updateTrackIndicator(trackNumber, false);
     });
 }
 
-function setupTrackSliders(trackNumber) {
+// Setup track knob controls
+function setupTrackKnobs(trackNumber) {
     const track = recorder.getTrack(trackNumber);
 
-    // Trim gain
-    const trimSlider = document.querySelector(`.trim[data-track="${trackNumber}"]`);
-    trimSlider.addEventListener('input', (e) => {
+    // Trim
+    const trimKnob = document.querySelector(`.trim[data-track="${trackNumber}"]`);
+    trimKnob?.addEventListener('input', (e) => {
         const value = e.target.value / 100;
         track.setTrimGain(value);
     });
 
-    // Volume
-    const volumeSlider = document.querySelector(`.volume[data-track="${trackNumber}"]`);
-    volumeSlider.addEventListener('input', (e) => {
+    // Gain Boost
+    const gainBoostKnob = document.querySelector(`.gain-boost[data-track="${trackNumber}"]`);
+    gainBoostKnob?.addEventListener('input', (e) => {
         const value = e.target.value / 100;
-        track.setVolume(value);
+        track.setGainBoost(value);
     });
 
-    // Pan
-    const panSlider = document.querySelector(`.pan[data-track="${trackNumber}"]`);
-    panSlider.addEventListener('input', (e) => {
+    // Compressor Input (threshold)
+    const compInputKnob = document.querySelector(`.comp-input[data-track="${trackNumber}"]`);
+    compInputKnob?.addEventListener('input', (e) => {
         const value = e.target.value / 100;
-        track.setPan(value);
+        track.setLA2APeakReduction(value);
     });
 
-    // Speed
-    const speedSlider = document.querySelector(`.speed[data-track="${trackNumber}"]`);
-    speedSlider.addEventListener('input', (e) => {
+    // Compressor Reduction (makeup gain)
+    const compReductionKnob = document.querySelector(`.comp-reduction[data-track="${trackNumber}"]`);
+    compReductionKnob?.addEventListener('input', (e) => {
         const value = e.target.value / 100;
-        track.setSpeed(value);
+        track.setLA2AGain(value);
     });
 
     // EQ Low
-    const eqLowSlider = document.querySelector(`.eq-low[data-track="${trackNumber}"]`);
-    eqLowSlider.addEventListener('input', (e) => {
+    const eqLowKnob = document.querySelector(`.eq-low[data-track="${trackNumber}"]`);
+    eqLowKnob?.addEventListener('input', (e) => {
         const value = parseFloat(e.target.value);
         track.setEQLow(value);
     });
 
     // EQ Mid
-    const eqMidSlider = document.querySelector(`.eq-mid[data-track="${trackNumber}"]`);
-    eqMidSlider.addEventListener('input', (e) => {
+    const eqMidKnob = document.querySelector(`.eq-mid[data-track="${trackNumber}"]`);
+    eqMidKnob?.addEventListener('input', (e) => {
         const value = parseFloat(e.target.value);
         track.setEQMid(value);
     });
 
     // EQ High
-    const eqHighSlider = document.querySelector(`.eq-high[data-track="${trackNumber}"]`);
-    eqHighSlider.addEventListener('input', (e) => {
+    const eqHighKnob = document.querySelector(`.eq-high[data-track="${trackNumber}"]`);
+    eqHighKnob?.addEventListener('input', (e) => {
         const value = parseFloat(e.target.value);
         track.setEQHigh(value);
     });
 
-    // LA-2A Peak Reduction
-    const la2aReductionSlider = document.querySelector(`.la2a-reduction[data-track="${trackNumber}"]`);
-    la2aReductionSlider.addEventListener('input', (e) => {
-        const value = e.target.value / 100;
-        track.setLA2APeakReduction(value);
-    });
-
-    // LA-2A Gain
-    const la2aGainSlider = document.querySelector(`.la2a-gain[data-track="${trackNumber}"]`);
-    la2aGainSlider.addEventListener('input', (e) => {
-        const value = e.target.value / 100;
-        track.setLA2AGain(value);
-    });
-
     // Reverb Send
-    const reverbSendSlider = document.querySelector(`.reverb-send[data-track="${trackNumber}"]`);
-    reverbSendSlider.addEventListener('input', (e) => {
+    const reverbSendKnob = document.querySelector(`.reverb-send[data-track="${trackNumber}"]`);
+    reverbSendKnob?.addEventListener('input', (e) => {
         const value = e.target.value / 100;
         track.setReverbSend(value);
     });
+
+    // Speed
+    const speedKnob = document.querySelector(`.speed[data-track="${trackNumber}"]`);
+    speedKnob?.addEventListener('input', (e) => {
+        const value = e.target.value / 100;
+        track.setSpeed(value);
+    });
 }
 
-function setupMasterControls() {
-    // Master volume
-    const masterVolume = document.getElementById('masterVolume');
-    masterVolume.addEventListener('input', (e) => {
-        const value = e.target.value / 100;
-        recorder.setMasterVolume(value);
-    });
+// Setup track fader
+function setupTrackFader(trackNumber) {
+    const track = recorder.getTrack(trackNumber);
 
+    // Channel Fader
+    const channelFader = document.querySelector(`.channel-fader[data-track="${trackNumber}"]`);
+    const faderValue = channelFader?.parentElement?.querySelector('.fader-value');
+
+    channelFader?.addEventListener('input', (e) => {
+        const value = e.target.value / 100;
+        track.setFader(value);
+        if (faderValue) {
+            faderValue.textContent = Math.round(e.target.value);
+        }
+    });
+}
+
+// Setup master controls
+function setupMasterControls() {
     // Master EQ Low
-    const masterEQLow = document.getElementById('masterEQLow');
-    masterEQLow.addEventListener('input', (e) => {
+    const masterEQLow = document.querySelector('.master-eq-low');
+    masterEQLow?.addEventListener('input', (e) => {
         const value = parseFloat(e.target.value);
         recorder.setMasterEQLow(value);
     });
 
     // Master EQ Mid
-    const masterEQMid = document.getElementById('masterEQMid');
-    masterEQMid.addEventListener('input', (e) => {
+    const masterEQMid = document.querySelector('.master-eq-mid');
+    masterEQMid?.addEventListener('input', (e) => {
         const value = parseFloat(e.target.value);
         recorder.setMasterEQMid(value);
     });
 
     // Master EQ High
-    const masterEQHigh = document.getElementById('masterEQHigh');
-    masterEQHigh.addEventListener('input', (e) => {
+    const masterEQHigh = document.querySelector('.master-eq-high');
+    masterEQHigh?.addEventListener('input', (e) => {
         const value = parseFloat(e.target.value);
         recorder.setMasterEQHigh(value);
     });
 
-    // Master LA-2A Peak Reduction
-    const masterLA2AReduction = document.getElementById('masterLA2AReduction');
-    masterLA2AReduction.addEventListener('input', (e) => {
+    // Master Compressor Threshold
+    const masterCompThreshold = document.querySelector('.master-comp-threshold');
+    masterCompThreshold?.addEventListener('input', (e) => {
         const value = e.target.value / 100;
         recorder.setMasterLA2APeakReduction(value);
     });
 
-    // Master LA-2A Gain
-    const masterLA2AGain = document.getElementById('masterLA2AGain');
-    masterLA2AGain.addEventListener('input', (e) => {
+    // Master Compressor Makeup
+    const masterCompMakeup = document.querySelector('.master-comp-makeup');
+    masterCompMakeup?.addEventListener('input', (e) => {
         const value = e.target.value / 100;
         recorder.setMasterLA2AGain(value);
     });
 
-    // Master reverb
-    const masterReverb = document.getElementById('masterReverb');
-    masterReverb.addEventListener('input', (e) => {
+    // Master Reverb Size
+    const masterReverbSize = document.querySelector('.master-reverb-size');
+    masterReverbSize?.addEventListener('input', (e) => {
         const value = e.target.value / 100;
-        recorder.setMasterReverb(value);
+        recorder.setMasterReverbSize(value * 45); // 0-45 seconds
     });
 
-    // Master reverb size
-    const masterReverbSize = document.getElementById('masterReverbSize');
-    masterReverbSize.addEventListener('input', (e) => {
+    // Master Reverb Mix
+    const masterReverbMix = document.querySelector('.master-reverb-mix');
+    masterReverbMix?.addEventListener('input', (e) => {
         const value = e.target.value / 100;
-        recorder.setMasterReverbSize(value);
+        recorder.setMasterReverbAmount(value);
+    });
+
+    // Master Fader
+    const masterFader = document.querySelector('.master-fader');
+    const masterFaderValue = masterFader?.parentElement?.querySelector('.fader-value');
+
+    masterFader?.addEventListener('input', (e) => {
+        const value = e.target.value / 100;
+        recorder.setMasterVolume(value);
+        if (masterFaderValue) {
+            masterFaderValue.textContent = Math.round(e.target.value);
+        }
     });
 }
+
+// Update track audio indicator
+function updateTrackIndicator(trackNumber, hasAudio) {
+    const indicator = document.querySelector(`.channel-strip[data-track="${trackNumber}"] .audio-indicator`);
+    if (indicator) {
+        if (hasAudio) {
+            indicator.classList.add('active');
+        } else {
+            indicator.classList.remove('active');
+        }
+    }
+}
+
+// Export for use in other modules
+window.updateTrackIndicator = updateTrackIndicator;

@@ -115,16 +115,24 @@ class Recorder {
         this.masterLA2AMakeupGain = this.ctx.createGain();
         this.masterLA2AMakeupGain.gain.value = 1.0; // Unity gain by default (0dB)
 
-        // Master gain
+        // Master gain (master fader)
         this.masterGain = this.ctx.createGain();
         this.masterGain.gain.value = 0.8;
+
+        // Master brick-wall limiter (to prevent clipping)
+        this.masterLimiter = this.ctx.createDynamicsCompressor();
+        this.masterLimiter.threshold.value = -0.5; // dB (just below 0dB to prevent any clipping)
+        this.masterLimiter.knee.value = 0; // Hard knee for brick-wall limiting
+        this.masterLimiter.ratio.value = 20; // 20:1 ratio (effectively infinity for limiting)
+        this.masterLimiter.attack.value = 0.001; // 1ms attack (very fast to catch peaks)
+        this.masterLimiter.release.value = 0.010; // 10ms release (fast but not too fast to avoid pumping)
 
         // Master analyser for VU meters
         this.masterAnalyser = this.ctx.createAnalyser();
         this.masterAnalyser.fftSize = 2048;
         this.masterAnalyser.smoothingTimeConstant = 0.8;
 
-        // Connect master chain: tracks → EQ → LA-2A → LA-2A Makeup Gain → gain + (reverb wet + dry) → analyser → output
+        // Connect master chain: tracks → EQ → LA-2A → LA-2A Makeup Gain → gain + (reverb wet + dry) → limiter → analyser → output
         this.masterEQLow.connect(this.masterEQMid);
         this.masterEQMid.connect(this.masterEQHigh);
         this.masterEQHigh.connect(this.masterLA2A);
@@ -132,7 +140,8 @@ class Recorder {
         this.masterLA2AMakeupGain.connect(this.masterGain);
         this.reverbMix.connect(this.masterGain);
         this.reverbDry.connect(this.masterGain);
-        this.masterGain.connect(this.masterAnalyser);
+        this.masterGain.connect(this.masterLimiter);
+        this.masterLimiter.connect(this.masterAnalyser);
         this.masterAnalyser.connect(this.ctx.destination);
 
         // Impulse cache for performance
