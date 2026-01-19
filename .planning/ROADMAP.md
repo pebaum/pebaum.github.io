@@ -60,10 +60,10 @@ Plans:
   2. Migrated project folders are removed from original portfolio repo
   3. Commander-deck-builder folder is completely deleted
   4. Benji-site and archive folders remain in main portfolio repo
-**Plans**: TBD
+**Plans**: 1 plan in 1 wave
 
 Plans:
-- [ ] 03-01: [TBD - to be defined during planning]
+- [ ] 03-01-PLAN.md — Verify cloned repos, stage deletions, and commit cleanup
 
 ### Phase 4: Portfolio Integration
 **Goal**: Portfolio site links to all distributed projects and everything works
@@ -89,9 +89,9 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Repository Setup | 1/1 | ✓ Complete | 2026-01-19 |
 | 2. Content Migration | 4/4 | ✓ Complete | 2026-01-19 |
-| 3. Local Cleanup | 0/TBD | Ready to plan | - |
+| 3. Local Cleanup | 0/1 | Ready to execute | - |
 | 4. Portfolio Integration | 0/TBD | Blocked by Phase 3 | - |
 
 ---
 *Roadmap created: 2026-01-19*
-*Last updated: 2026-01-19 (Phase 2 complete)*
+*Last updated: 2026-01-19 (Phase 3 planned)*
