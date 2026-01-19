@@ -28,10 +28,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. All repositories are under the same GitHub account
   3. GitHub Pages is enabled for each repository
   4. Each project is accessible at pebaum.github.io/[project-name]/
-**Plans**: TBD
+**Plans**: 1 plan in 1 wave
 
 Plans:
-- [ ] 01-01: [TBD - to be defined during planning]
+- [ ] 01-01-PLAN.md — Create 10 GitHub repositories and enable Pages
 
 ### Phase 2: Content Migration
 **Goal**: All 10 projects exist in their own repositories with proper structure
@@ -84,7 +84,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Repository Setup | 0/TBD | Not started | - |
+| 1. Repository Setup | 0/1 | Not started | - |
 | 2. Content Migration | 0/TBD | Not started | - |
 | 3. Local Cleanup | 0/TBD | Not started | - |
 | 4. Portfolio Integration | 0/TBD | Not started | - |
