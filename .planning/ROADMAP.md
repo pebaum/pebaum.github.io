@@ -43,10 +43,13 @@ Plans:
   3. Generative-web-art repository contains all interactive-art pieces with index page
   4. All project files are preserved as-is without cleanup or modification
   5. Each repository deploys successfully to GitHub Pages
-**Plans**: TBD
+**Plans**: 4 plans in 1 wave
 
 Plans:
-- [ ] 02-01: [TBD - to be defined during planning]
+- [ ] 02-01-PLAN.md — Migrate 4 simple projects (4-track, dnd-dm-screen, granular-ambient, textscape)
+- [ ] 02-02-PLAN.md — Migrate 4 simple projects (dualshock-synth, the-duel-boardgame, forward-boardgame, gelatinous-cube-puzzle)
+- [ ] 02-03-PLAN.md — Migrate Drift with all 7 versions and version selector
+- [ ] 02-04-PLAN.md — Migrate generative-web-art collection and nova4
 
 ### Phase 3: Local Cleanup
 **Goal**: Original monorepo is cleaned up with only portfolio core remaining
@@ -85,10 +88,10 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Repository Setup | 1/1 | ✓ Complete | 2026-01-19 |
-| 2. Content Migration | 0/TBD | Not started | - |
-| 3. Local Cleanup | 0/TBD | Not started | - |
-| 4. Portfolio Integration | 0/TBD | Not started | - |
+| 2. Content Migration | 0/4 | Ready to execute | - |
+| 3. Local Cleanup | 0/TBD | Blocked by Phase 2 | - |
+| 4. Portfolio Integration | 0/TBD | Blocked by Phase 3 | - |
 
 ---
 *Roadmap created: 2026-01-19*
-*Last updated: 2026-01-19 (Phase 1 complete)*
+*Last updated: 2026-01-19 (Phase 2 planned)*
