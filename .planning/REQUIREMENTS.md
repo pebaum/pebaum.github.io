@@ -16,16 +16,16 @@ Requirements for complete migration. Each maps to roadmap phases.
 
 ### File Migration
 
-- [ ] **MIGR-01**: Move 4-track project files to new repo
-- [ ] **MIGR-02**: Move dnd-dm-screen project files to new repo
-- [ ] **MIGR-03**: Move drift (all versions) to single new repo
-- [ ] **MIGR-04**: Move generative-web-art (interactive-art) files to new repo
-- [ ] **MIGR-05**: Move granular-ambient project files to new repo
-- [ ] **MIGR-06**: Move ps4-synth project files to new repo
-- [ ] **MIGR-07**: Move textscape project files to new repo
-- [ ] **MIGR-08**: Move the-duel project files to new repo
-- [ ] **MIGR-09**: Move forward-playground project files to new repo
-- [ ] **MIGR-10**: Move nova3-clone-wip project files to new repo
+- [x] **MIGR-01**: Move 4-track project files to new repo
+- [x] **MIGR-02**: Move dnd-dm-screen project files to new repo
+- [x] **MIGR-03**: Move drift (all versions) to single new repo
+- [x] **MIGR-04**: Move generative-web-art (interactive-art) files to new repo
+- [x] **MIGR-05**: Move granular-ambient project files to new repo
+- [x] **MIGR-06**: Move ps4-synth project files to new repo
+- [x] **MIGR-07**: Move textscape project files to new repo
+- [x] **MIGR-08**: Move the-duel project files to new repo
+- [x] **MIGR-09**: Move forward-playground project files to new repo
+- [x] **MIGR-10**: Move nova3-clone-wip project files to new repo
 
 ### Local Setup
 
@@ -42,10 +42,10 @@ Requirements for complete migration. Each maps to roadmap phases.
 
 ### Special Handling
 
-- [ ] **SPEC-01**: Drift repo contains all 7 versions in organized structure
-- [ ] **SPEC-02**: Drift repo has index allowing access to all versions
-- [ ] **SPEC-03**: Interactive-art pieces combined into generative-web-art repo
-- [ ] **SPEC-04**: Generative-web-art has index listing all pieces
+- [x] **SPEC-01**: Drift repo contains all 7 versions in organized structure
+- [x] **SPEC-02**: Drift repo has index allowing access to all versions
+- [x] **SPEC-03**: Interactive-art pieces combined into generative-web-art repo
+- [x] **SPEC-04**: Generative-web-art has index listing all pieces
 
 ## v2 Requirements
 
@@ -82,16 +82,16 @@ Which phases cover which requirements. Updated during roadmap creation.
 | REPO-02 | Phase 1 | Complete |
 | REPO-03 | Phase 1 | Complete |
 | REPO-04 | Phase 1 | Complete |
-| MIGR-01 | Phase 2 | Pending |
-| MIGR-02 | Phase 2 | Pending |
-| MIGR-03 | Phase 2 | Pending |
-| MIGR-04 | Phase 2 | Pending |
-| MIGR-05 | Phase 2 | Pending |
-| MIGR-06 | Phase 2 | Pending |
-| MIGR-07 | Phase 2 | Pending |
-| MIGR-08 | Phase 2 | Pending |
-| MIGR-09 | Phase 2 | Pending |
-| MIGR-10 | Phase 2 | Pending |
+| MIGR-01 | Phase 2 | Complete |
+| MIGR-02 | Phase 2 | Complete |
+| MIGR-03 | Phase 2 | Complete |
+| MIGR-04 | Phase 2 | Complete |
+| MIGR-05 | Phase 2 | Complete |
+| MIGR-06 | Phase 2 | Complete |
+| MIGR-07 | Phase 2 | Complete |
+| MIGR-08 | Phase 2 | Complete |
+| MIGR-09 | Phase 2 | Complete |
+| MIGR-10 | Phase 2 | Complete |
 | LOCL-01 | Phase 3 | Pending |
 | LOCL-02 | Phase 3 | Pending |
 | LOCL-03 | Phase 3 | Pending |
@@ -99,10 +99,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PORT-02 | Phase 4 | Pending |
 | PORT-03 | Phase 4 | Pending |
 | PORT-04 | Phase 4 | Pending |
-| SPEC-01 | Phase 2 | Pending |
-| SPEC-02 | Phase 2 | Pending |
-| SPEC-03 | Phase 2 | Pending |
-| SPEC-04 | Phase 2 | Pending |
+| SPEC-01 | Phase 2 | Complete |
+| SPEC-02 | Phase 2 | Complete |
+| SPEC-03 | Phase 2 | Complete |
+| SPEC-04 | Phase 2 | Complete |
 
 **Coverage:**
 - v1 requirements: 24 total
@@ -111,4 +111,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-01-19*
-*Last updated: 2026-01-19 after Phase 1 completion*
+*Last updated: 2026-01-19 after Phase 2 completion*

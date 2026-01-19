@@ -13,7 +13,7 @@ This roadmap transforms a monolithic 300MB+ portfolio repository into a hub-and-
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Repository Setup** - Create GitHub repos and enable Pages
-- [ ] **Phase 2: Content Migration** - Move projects to new repos with special handling
+- [x] **Phase 2: Content Migration** - Move projects to new repos with special handling
 - [ ] **Phase 3: Local Cleanup** - Remove migrated folders from monorepo
 - [ ] **Phase 4: Portfolio Integration** - Update links and verify functionality
 
@@ -46,10 +46,10 @@ Plans:
 **Plans**: 4 plans in 1 wave
 
 Plans:
-- [ ] 02-01-PLAN.md — Migrate 4 simple projects (4-track, dnd-dm-screen, granular-ambient, textscape)
-- [ ] 02-02-PLAN.md — Migrate 4 simple projects (dualshock-synth, the-duel-boardgame, forward-boardgame, gelatinous-cube-puzzle)
-- [ ] 02-03-PLAN.md — Migrate Drift with all 7 versions and version selector
-- [ ] 02-04-PLAN.md — Migrate generative-web-art collection and nova4
+- [x] 02-01-PLAN.md — Migrate 4 simple projects (4-track, dnd-dm-screen, granular-ambient, textscape)
+- [x] 02-02-PLAN.md — Migrate 4 simple projects (dualshock-synth, the-duel-boardgame, forward-boardgame, gelatinous-cube-puzzle)
+- [x] 02-03-PLAN.md — Migrate Drift with all 7 versions and version selector
+- [x] 02-04-PLAN.md — Migrate generative-web-art collection and nova4
 
 ### Phase 3: Local Cleanup
 **Goal**: Original monorepo is cleaned up with only portfolio core remaining
@@ -88,10 +88,10 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Repository Setup | 1/1 | ✓ Complete | 2026-01-19 |
-| 2. Content Migration | 0/4 | Ready to execute | - |
-| 3. Local Cleanup | 0/TBD | Blocked by Phase 2 | - |
+| 2. Content Migration | 4/4 | ✓ Complete | 2026-01-19 |
+| 3. Local Cleanup | 0/TBD | Ready to plan | - |
 | 4. Portfolio Integration | 0/TBD | Blocked by Phase 3 | - |
 
 ---
 *Roadmap created: 2026-01-19*
-*Last updated: 2026-01-19 (Phase 2 planned)*
+*Last updated: 2026-01-19 (Phase 2 complete)*
