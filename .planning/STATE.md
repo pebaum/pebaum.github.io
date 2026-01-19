@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-01-19)
 
 **Core value:** Projects become independently maintainable and deployable while preserving all existing portfolio functionality and URLs
-**Current focus:** Phase 1 - Repository Setup
+**Current focus:** Phase 1 complete — Ready for Phase 2 (Content Migration)
 
 ## Current Position
 
@@ -50,8 +50,9 @@ Recent decisions affecting current work:
 **From 01-01 (Repository Setup):**
 - Use exact project folder names from monorepo as repository names
 - Enable GitHub Pages from master branch / root path
-- Skip README initialization (content migrated in Phase 2)
+- Initialize repositories with placeholder READMEs (deviation: required for GitHub Pages enablement)
 - All repositories are public for GitHub Pages hosting
+- Placeholder READMEs will be replaced during Phase 2 content migration
 
 ### Pending Todos
 
