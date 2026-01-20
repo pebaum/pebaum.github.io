@@ -75,10 +75,10 @@ Plans:
   3. Archive folder remains accessible in main portfolio repo
   4. All links have been manually tested and work correctly
   5. Original portfolio functionality is completely preserved
-**Plans**: TBD
+**Plans**: 1 plan in 1 wave
 
 Plans:
-- [ ] 04-01: [TBD - to be defined during planning]
+- [ ] 04-01-PLAN.md — Update portfolio links to GitHub Pages URLs and verify functionality
 
 ## Progress
 
@@ -90,8 +90,8 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Repository Setup | 1/1 | ✓ Complete | 2026-01-19 |
 | 2. Content Migration | 4/4 | ✓ Complete | 2026-01-19 |
 | 3. Local Cleanup | 1/1 | ✓ Complete | 2026-01-19 |
-| 4. Portfolio Integration | 0/TBD | Ready to plan | - |
+| 4. Portfolio Integration | 0/1 | Ready to execute | - |
 
 ---
 *Roadmap created: 2026-01-19*
-*Last updated: 2026-01-19 (Phase 3 completed)*
+*Last updated: 2026-01-19 (Phase 4 planned)*
