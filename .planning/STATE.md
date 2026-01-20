@@ -2,19 +2,19 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-01-19)
+See: .planning/PROJECT.md (updated 2026-01-20)
 
 **Core value:** Projects become independently maintainable and deployable while preserving all existing portfolio functionality and URLs
-**Current focus:** Phase 4 complete — All phases executed successfully
+**Current focus:** v1.0 complete — Ready for next milestone planning
 
 ## Current Position
 
-Phase: 4 of 4 (Portfolio Integration)
-Plan: 1 of 1 complete
-Status: Phase complete
-Last activity: 2026-01-20 — Completed 04-01-PLAN.md
+Phase: Milestone complete
+Plan: Not applicable
+Status: v1.0 shipped
+Last activity: 2026-01-20 — v1.0 milestone complete
 
-Progress: [██████████] 100% (4 of 4 phases complete)
+Progress: [██████████] v1.0 Complete
 
 ## Performance Metrics
 
@@ -42,55 +42,8 @@ Progress: [██████████] 100% (4 of 4 phases complete)
 
 ### Decisions
 
-Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting current work:
-
-- Move files as-is without cleanup (faster migration, fix issues post-migration)
-- Keep all Drift versions in one repo (preserve history, allow version comparison)
-- Combine interactive-art pieces into generative-web-art repo (related small pieces, easier to maintain)
-- Keep benji-site in main repo (part of main portfolio, not standalone project)
-
-**From 01-01 (Repository Setup):**
-- Use exact project folder names from monorepo as repository names
-- Enable GitHub Pages from master branch / root path
-- Initialize repositories with placeholder READMEs (deviation: required for GitHub Pages enablement)
-- All repositories are public for GitHub Pages hosting
-- Placeholder READMEs will be replaced during Phase 2 content migration
-
-**From 02-03 (Drift Migration):**
-- Organize all 7 Drift versions in v1-v7 subdirectories (no spaces in directory names)
-- Rename Drift v1/index-v2.html to v1/index.html for consistency
-- Create version selector as root index.html for navigation
-- Use relative links (v1/, v2/, etc.) in version selector
-- Multi-version project pattern: v[N]/ subdirectories with index.html entry points
-
-**From 02-01 (Simple Projects Migration):**
-- Push large files (up to 202MB) despite GitHub warnings (warnings are informational only)
-- Use direct cp -r file copy to preserve all files as-is
-- Small projects (< 1MB) push in ~10 seconds, large projects (50-200MB) take 2-3 minutes
-- GitHub Pages deploys automatically 1-3 minutes after push
-
-**From 02-04 (Generative Web Art & Nova4):**
-- Gallery uses responsive CSS grid with hover effects for art piece navigation
-- nova4 repository contains VST files without HTML entry point (acceptable 404 on GitHub Pages)
-- Remove placeholder READMEs during migration (replaced in Phase 3)
-- Collection repositories use gallery index.html with grid layout linking to individual pieces
-- Projects without web interfaces (VST plugins) migrate files as-is, accept GitHub Pages 404
-
-**From 03-01 (Local Cleanup):**
-- Verified all 11 repositories with git fsck (no errors found)
-- Removed 11 total project folders: 6 old abbreviated/wip-suffixed + 5 migrated working folders
-- Preserved portfolio core: benji-site and archive folders remain in monorepo
-- Combined cleanup and validation into single commit (atomic operation)
-
-**From 04-01 (Portfolio Integration):**
-- Updated 10 migrated projects to GitHub Pages URLs (20 total links including versions/pieces)
-- Preserved benji-site relative link (remains in main repository)
-- Fixed drift7.js dependency to load from GitHub Pages drift repository
-- Mapped renamed repositories (ps4-synth→dualshock-synth, the-duel→the-duel-boardgame, forward-playground→forward-boardgame)
-- Mapped Drift versions to /drift/v[2-7]/ subdirectories
-- Mapped interactive art pieces to /generative-web-art/ gallery
-- All 21 project links manually verified working with hard refresh cache bypass
+All milestone decisions have been moved to PROJECT.md Key Decisions table with outcomes.
+See PROJECT.md for complete decision history.
 
 ### Pending Todos
 
@@ -102,10 +55,12 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-20 (plan execution)
-Stopped at: Completed 04-01-PLAN.md (Portfolio Integration) - Phase 4 complete (all 1 plan executed)
+Last session: 2026-01-20 (milestone completion)
+Stopped at: v1.0 milestone complete and archived
 Resume file: None
+
+Next steps: Run `/gsd:new-milestone` to start planning next milestone
 
 ---
 *State initialized: 2026-01-19*
-*Last updated: 2026-01-20*
+*Last updated: 2026-01-20 (v1.0 milestone complete)*
