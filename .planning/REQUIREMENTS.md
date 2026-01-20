@@ -29,16 +29,16 @@ Requirements for complete migration. Each maps to roadmap phases.
 
 ### Local Setup
 
-- [ ] **LOCL-01**: Clone all new repos to C:\GitHub Repos\[project-name]\
-- [ ] **LOCL-02**: Remove project folders from original portfolio repo
-- [ ] **LOCL-03**: Delete commander-deck-builder folder completely
+- [x] **LOCL-01**: Clone all new repos to C:\GitHub Repos\[project-name]\
+- [x] **LOCL-02**: Remove project folders from original portfolio repo
+- [x] **LOCL-03**: Delete commander-deck-builder folder completely
 
 ### Portfolio Updates
 
-- [ ] **PORT-01**: Update all project links in index.html to new URLs
-- [ ] **PORT-02**: Preserve benji-site in main portfolio repo
-- [ ] **PORT-03**: Preserve archive folder in main portfolio repo
-- [ ] **PORT-04**: Test all links work after migration
+- [x] **PORT-01**: Update all project links in index.html to new URLs
+- [x] **PORT-02**: Preserve benji-site in main portfolio repo
+- [x] **PORT-03**: Preserve archive folder in main portfolio repo
+- [x] **PORT-04**: Test all links work after migration
 
 ### Special Handling
 
@@ -95,10 +95,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LOCL-01 | Phase 3 | Complete |
 | LOCL-02 | Phase 3 | Complete |
 | LOCL-03 | Phase 3 | Complete |
-| PORT-01 | Phase 4 | Pending |
-| PORT-02 | Phase 4 | Pending |
-| PORT-03 | Phase 4 | Pending |
-| PORT-04 | Phase 4 | Pending |
+| PORT-01 | Phase 4 | Complete |
+| PORT-02 | Phase 4 | Complete |
+| PORT-03 | Phase 4 | Complete |
+| PORT-04 | Phase 4 | Complete |
 | SPEC-01 | Phase 2 | Complete |
 | SPEC-02 | Phase 2 | Complete |
 | SPEC-03 | Phase 2 | Complete |
@@ -111,4 +111,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-01-19*
-*Last updated: 2026-01-19 after Phase 3 completion*
+*Last updated: 2026-01-20 after Phase 4 completion - All requirements complete*
