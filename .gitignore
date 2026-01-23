@@ -1,36 +1,34 @@
-# Large data files (exceed GitHub's 100MB limit)
-mtgdata/AllPrintingsCSVFiles.zip
-mtgdata/card data 12.6.25/cardForeignData.csv
-
-# Python virtual environment
-.venv/
-
-# Node modules
+# Node.js dependencies
 node_modules/
 package-lock.json
 
-# Sensitive configuration files (contain API tokens)
-.mcp.json
-.temp_notion_explorer.js
+# Development/IDE folders
 .claude/
-projects/textscape/tools/config.js
+.planning/
 
-# Server logs
+# Server logs and error files
 *.out
 *.err
 
-# Browser data (contains sensitive info, caches, etc.)
-lightphone-notes/browser_data/
+# OS generated files
+.DS_Store
+.DS_Store?
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
 
-# Automation folders and files
-automation/
-new automation/
-browser-task.js
-search-*.js
-gmail-helper.js
-shop-search.js
-stealth-config.js
-utils.js
-extract-data.js
-screenshot.js
-config.js
+# Editor files and folders
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.bak
+.temp/
+tmp/
