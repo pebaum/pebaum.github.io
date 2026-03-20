@@ -806,11 +806,11 @@ function updateBloomShapes() {
     if (vblankCount >= 6) { noiseFrameIdx = (noiseFrameIdx + 1) % 4; vblankCount = 0; }
 
     // Core formula
-    const idleBase = 0.14, reactivity = 1.75;
+    const idleBase = 0.13, reactivity = 1.58;
     const audioLevel = idleBase + smoothedPeak * reactivity;
-    const mixScale = 0.9 + mix * 0.7;
-    const upperParam = 0.35 + octUp * 0.75;
-    const lowerParam = 0.35 + octDown * 0.75;
+    const mixScale = 0.9 + mix * 0.63;
+    const upperParam = 0.35 + octUp * 0.68;
+    const lowerParam = 0.35 + octDown * 0.68;
 
     const decayNorm = clampa((decay - 0.1) / 59.9, 0, 1);
     const baseSigma = 0.28 + decayNorm * 0.30;
@@ -869,7 +869,7 @@ function paintSpectralBloom() {
     const vh = vizH * 0.6;
     const vy = (vizH - vh) / 2;
     const midY = vy + vh * 0.50;
-    const maxBloomH = vh * 0.52;
+    const maxBloomH = vh * 0.47;
 
     const mix = params.immersion.value;
     const warmth = params.glow.value;
@@ -964,7 +964,7 @@ function paintSpectralBloom() {
     function drawShells(bloom, dir, maxH, numShells, octAmt, innerCol, outerCol, deepCol) {
         if (octAmt < 0.02) return;
         for (let shell = numShells; shell >= 1; shell--) {
-            const expand = 1 + shell * 0.27 * octAmt;
+            const expand = 1 + shell * 0.24 * octAmt;
             let shellAlpha = (octAmt * octAmt) * 0.18 / (shell * 0.7);
             shellAlpha = Math.min(shellAlpha, 0.35);
             shellAlpha *= (1 - glowIntensity * 0.7);
