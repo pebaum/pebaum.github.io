@@ -384,7 +384,7 @@ function rgba(c, a) { return `rgba(${c[0]|0},${c[1]|0},${c[2]|0},${a})`; }
 const clamp01 = v => Math.max(0, Math.min(1, v));
 
 // ── PARAM STATE ──────────────────────────────────────────────────────────────
-// These map to Cistern knobs AND control real audio effects
+// These map to reverb knobs AND control real audio effects
 const params = {
     immersion:  { value: 0.50, min: 0, max: 1,  label: 'Mix'       },
     expanse:    { value: 48,   min: 0.1, max: 60, label: 'Decay'   },
@@ -409,7 +409,7 @@ const MAX_UNDO = 10;
 
 // ── PRESETS ──────────────────────────────────────────────────────────────────
 const presets = [
-    { name: 'Cistern',    immersion:0.50,expanse:3.0,distance:0,   ascend:0,   descend:0,   lush:0.50,glow:0.35,timbre:0.45 },
+    { name: 'Default',    immersion:0.50,expanse:3.0,distance:0,   ascend:0,   descend:0,   lush:0.50,glow:0.35,timbre:0.45 },
     { name: 'Cathedral',  immersion:0.70,expanse:12, distance:80,  ascend:0.3, descend:0,   lush:0.65,glow:0.20,timbre:0.50 },
     { name: 'Abyss',      immersion:0.55,expanse:30, distance:200, ascend:0,   descend:0.6, lush:0.40,glow:0.10,timbre:0.30 },
     { name: 'Shimmer',    immersion:0.60,expanse:8,  distance:40,  ascend:0.7, descend:0.2, lush:0.55,glow:0.45,timbre:0.60 },
@@ -667,8 +667,8 @@ function scheduleTonalityChange() {
 }
 
 // ── Apply knob params to audio ────────────────────────────────────
-// ── Apply knob params to audio (models the real Drift Cistern DSP chain) ──
-// Signal chain: voices → preDelay → reverb(decay) → shimmer(pitch shift) → warmth(saturation) → tone(tilt EQ) → dry/wet mix
+// ── Apply knob params to audio ──
+
 //
 // Immersion = MIX (equal-power dry/wet crossfade)
 // Expanse   = DIMENSION (reverb decay time 0.1-60s, rebuilds impulse)
@@ -680,13 +680,13 @@ function scheduleTonalityChange() {
 
 // (Old Web Audio effect nodes removed — DSP is now in AudioWorklet)
 
-// ── AudioWorklet-based DSP (faithful port of Drift Cistern v29) ──
-let driftWorkletNode = null;
+// ── AudioWorklet-based DSP (Glow Reverb) ──
+let reverbWorkletNode = null;
 
 function applyParamsToAudio() {
-    if (!driftWorkletNode || !audioCtx) return;
+    if (!reverbWorkletNode || !audioCtx) return;
     const now = audioCtx.currentTime;
-    const p = driftWorkletNode.parameters;
+    const p = reverbWorkletNode.parameters;
     p.get("mix").setValueAtTime(params.immersion.value, now);
     p.get("dimension").setValueAtTime(params.expanse.value, now);
     p.get("octUp").setValueAtTime(params.ascend.value, now);
@@ -711,16 +711,16 @@ async function initAudio() {
     compressor.ratio.value = 6; compressor.attack.value = 0.005; compressor.release.value = 0.3;
     const hpF = audioCtx.createBiquadFilter();
     hpF.type = "highpass"; hpF.frequency.value = 20; hpF.Q.value = 0.7;
-    // TiltEQ now handled inside the worklet
+    // Tone EQ handled inside the worklet
     // Load AudioWorklet (16-line FDN + granular pitch shifter + saturation)
     await audioCtx.audioWorklet.addModule("drift-worklet.js");
-    driftWorkletNode = new AudioWorkletNode(audioCtx, "drift-cistern", {
+    reverbWorkletNode = new AudioWorkletNode(audioCtx, "glow-reverb", {
         numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2],
     });
     // Voice bus → worklet → master → compressor → HPF → analyser → output
     voiceBus = audioCtx.createGain(); voiceBus.gain.value = 1;
-    voiceBus.connect(driftWorkletNode);
-    driftWorkletNode.connect(masterGain);
+    voiceBus.connect(reverbWorkletNode);
+    reverbWorkletNode.connect(masterGain);
     masterGain.connect(compressor);
     compressor.connect(hpF);
     hpF.connect(analyserNode);
@@ -739,7 +739,7 @@ async function initAudio() {
     applyParamsToAudio();
 }
 
-// SPECTRAL BLOOM VISUALIZATION (ported from Cistern v29 PluginEditor.cpp)
+// SPECTRAL BLOOM VISUALIZATION
 // ══════════════════════════════════════════════════════════════════════════════
 
 const BLOOM_RES = 200;

@@ -1,11 +1,11 @@
 // ============================================================================
-// DriftCisternProcessor — AudioWorklet
-// Faithful JS port of Drift Cistern v29 shimmer reverb DSP chain.
+// GlowReverbProcessor — AudioWorklet
+// Glow Reverb — shimmer reverb AudioWorklet
 //
-// Complete signal chain (matches DriftEngine.h processBlock):
+// Complete signal chain:
 //   Input → Pre-Diffusion (6-stage allpass) → Spatial Decorrelator
 //   → FDN Reverb (with shimmer injection) → Pitch Shift → Shimmer LP
-//   → Energy Limiter → store shimmer → DriftEffect (warmth) → TiltEQ (tone)
+//   → Energy Limiter → store shimmer → TubeSaturation (warmth) → TiltEQ (tone)
 //   → Stereo Width → Wet Gain (-4.5 dB) → Equal-power dry/wet mix
 //   → Output HPF (20 Hz) → Output Limiter
 //
@@ -68,7 +68,7 @@ class SimpleRng {
 
 // ============================================================================
 // AllpassDiffuser — 6 cascaded allpass filters for pre-diffusion
-// Port of AllpassDiffuser.h
+
 //
 // Delay times chosen to smear transients without audible echo:
 //   Stage 1:  2.1ms  g=0.50    Stage 4: 23.1ms  g=0.40
@@ -146,7 +146,7 @@ class AllpassDiffuser {
 
 // ============================================================================
 // SpatialDecorator — Cross-channel modulated delay with 4-stage allpass
-// Port of SpatialDecorator.h
+
 //
 // Creates 3D depth via independent L/R delay modulation:
 //   1. Cross-feed (L↔R blend)
@@ -587,7 +587,7 @@ class GranularPitchShifter {
 
 // ============================================================================
 // FeedbackEnergyLimiter — RMS envelope follower with gain reduction
-// Port of FeedbackEnergyLimiter.h
+
 //
 // Prevents shimmer runaway at high shimmer + high decay settings.
 //   - One-pole envelope follower tracks stereo RMS (~10ms window)
@@ -634,15 +634,15 @@ class FeedbackEnergyLimiter {
 
 
 // ============================================================================
-// DriftEffect — 3-stage tube character (warmth/glow)
-// Port of DriftEffect.h
+// TubeSaturation — 3-stage tube character (warmth/glow)
+// Port of TubeSaturation.h
 //
 // Amount 0.0 (clean) → 1.0 (full tube limiter):
 //   1. Tube compression:  RMS compressor, threshold 1.0→0.15, ratio 1:1→10:1
 //   2. Tube saturation:   Asymmetric tanh, drive 1×→6×, even-harmonic warmth
 //   3. HF rolloff:        One-pole LP, 20kHz→6kHz (tape head character)
 // ============================================================================
-class DriftEffect {
+class TubeSaturation {
     constructor(sr) {
         this.sr = sr;
         // Envelope follower coefficients
@@ -747,7 +747,7 @@ class DriftEffect {
 
 // ============================================================================
 // TiltEQ — First-order crossover tilt at 1 kHz pivot
-// Port of TiltEQ.h
+
 //
 // Splits signal into LP + HP bands via one-pole crossover, applies
 // complementary gain.  V = 10^(|dB|/40) — half the total tilt per side.
@@ -801,7 +801,7 @@ class TiltEQ {
 
 // ============================================================================
 // StereoWidthProcessor — Mid/side encoding with width control
-// Port of StereoWidthProcessor.h
+
 //
 // Stateless. Width semantics:
 //   0.0       = mono  (side zeroed)
@@ -826,9 +826,9 @@ class StereoWidthProcessor {
 
 
 // ============================================================================
-// DriftCisternProcessor — AudioWorklet main processor
+// GlowReverbProcessor — AudioWorklet main processor
 // ============================================================================
-class DriftCisternProcessor extends AudioWorkletProcessor {
+class GlowReverbProcessor extends AudioWorkletProcessor {
     static get parameterDescriptors() {
         return [
             { name: 'mix',          defaultValue: 0,    minValue: 0,    maxValue: 1,  automationRate: 'k-rate' },
@@ -855,7 +855,7 @@ class DriftCisternProcessor extends AudioWorkletProcessor {
         this.pitchL         = new GranularPitchShifter(sr, 42);
         this.pitchR         = new GranularPitchShifter(sr, 12345);
         this.energyLimiter  = new FeedbackEnergyLimiter(sr);
-        this.driftEffect    = new DriftEffect(sr);
+        this.tubeSaturation    = new TubeSaturation(sr);
         this.tiltEQ         = new TiltEQ(sr);
         this.stereoWidth    = new StereoWidthProcessor();
 
@@ -937,8 +937,8 @@ class DriftCisternProcessor extends AudioWorkletProcessor {
         // ── Update spatial decorrelator ──
         this.spatial.setAmount(spatialAmt);
 
-        // ── Update DriftEffect (warmth) ──
-        this.driftEffect.setAmount(warmth);
+        // ── Update TubeSaturation (warmth) ──
+        this.tubeSaturation.setAmount(warmth);
 
         // ── Update TiltEQ: tone -1..+1 → -6..+6 dB ──
         this.tiltEQ.setTilt(tone * 6.0);
@@ -960,7 +960,7 @@ class DriftCisternProcessor extends AudioWorkletProcessor {
         }
 
         // ════════════════════════════════════════════════════════════════
-        // SIGNAL CHAIN — matches DriftEngine.h processBlock exactly
+        // SIGNAL CHAIN
         // ════════════════════════════════════════════════════════════════
 
         // ── 1. Pre-Diffusion (6-stage cascaded allpass, density=1.0) ──
@@ -1014,8 +1014,8 @@ class DriftCisternProcessor extends AudioWorkletProcessor {
             this.prevShimmerR[i] = this.shimmerBufR[i];
         }
 
-        // ── 9. DriftEffect (warmth: tube comp → saturation → HF rolloff) ──
-        this.driftEffect.process(wetL, wetR, numSamples);
+        // ── 9. TubeSaturation (warmth: tube comp → saturation → HF rolloff) ──
+        this.tubeSaturation.process(wetL, wetR, numSamples);
 
         // ── 10. TiltEQ (tone: first-order crossover tilt at 1kHz) ──
         this.tiltEQ.process(wetL, wetR, numSamples);
@@ -1073,4 +1073,4 @@ class DriftCisternProcessor extends AudioWorkletProcessor {
     }
 }
 
-registerProcessor('drift-cistern', DriftCisternProcessor);
+registerProcessor('glow-reverb', GlowReverbProcessor);
