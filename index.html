@@ -297,27 +297,27 @@
 <div class="slider-stack" id="sliderStack">
     <div class="slider-row">
         <span class="slider-label">Immersion</span>
-        <input type="range" class="param-slider" data-param="immersion" min="0" max="100" value="0">
+        <input type="range" class="param-slider" data-param="immersion" min="0" max="100" value="50">
     </div>
     <div class="slider-row">
         <span class="slider-label">Expanse</span>
-        <input type="range" class="param-slider" data-param="expanse" min="0" max="100" value="0">
+        <input type="range" class="param-slider" data-param="expanse" min="0" max="100" value="80">
     </div>
     <div class="slider-row">
         <span class="slider-label">Ascend</span>
-        <input type="range" class="param-slider" data-param="ascend" min="0" max="100" value="0">
+        <input type="range" class="param-slider" data-param="ascend" min="0" max="100" value="50">
     </div>
     <div class="slider-row">
         <span class="slider-label">Descend</span>
-        <input type="range" class="param-slider" data-param="descend" min="0" max="100" value="0">
+        <input type="range" class="param-slider" data-param="descend" min="0" max="100" value="50">
     </div>
     <div class="slider-row">
         <span class="slider-label">Lush</span>
-        <input type="range" class="param-slider" data-param="lush" min="0" max="100" value="0">
+        <input type="range" class="param-slider" data-param="lush" min="0" max="100" value="70">
     </div>
     <div class="slider-row">
         <span class="slider-label">Glow</span>
-        <input type="range" class="param-slider" data-param="glow" min="0" max="100" value="0">
+        <input type="range" class="param-slider" data-param="glow" min="0" max="100" value="100">
     </div>
     <div class="slider-row">
         <span class="slider-label">Timbre</span>
@@ -325,7 +325,7 @@
     </div>
     <div class="slider-row" style="margin-top: 4px;">
         <span class="slider-label">Vol</span>
-        <input type="range" class="param-slider" id="volumeSlider" min="0" max="100" value="100">
+        <input type="range" class="param-slider" id="volumeSlider" min="0" max="100" value="50">
     </div>
 </div>
 
@@ -386,12 +386,12 @@ const clamp01 = v => Math.max(0, Math.min(1, v));
 // ── PARAM STATE ──────────────────────────────────────────────────────────────
 // These map to Cistern knobs AND control real audio effects
 const params = {
-    immersion:  { value: 0,    min: 0, max: 1,  label: 'Mix'       },
-    expanse:    { value: 0.1,  min: 0.1, max: 60, label: 'Decay'   },
-    ascend:     { value: 0,    min: 0, max: 1,  label: 'OctUp'     },
-    descend:    { value: 0,    min: 0, max: 1,  label: 'OctDown'   },
-    lush:       { value: 0,    min: 0, max: 1,  label: 'ModDepth'  },
-    glow:       { value: 0,    min: 0, max: 1,  label: 'Warmth'    },
+    immersion:  { value: 0.50, min: 0, max: 1,  label: 'Mix'       },
+    expanse:    { value: 48,   min: 0.1, max: 60, label: 'Decay'   },
+    ascend:     { value: 0.50, min: 0, max: 1,  label: 'OctUp'     },
+    descend:    { value: 0.50, min: 0, max: 1,  label: 'OctDown'   },
+    lush:       { value: 0.70, min: 0, max: 1,  label: 'ModDepth'  },
+    glow:       { value: 1.0,  min: 0, max: 1,  label: 'Warmth'    },
     timbre:     { value: 0.5,  min: 0, max: 1,  label: 'Tone'      },
 };
 // Normalized 0-1 for visualization
@@ -705,7 +705,7 @@ async function initAudio() {
     audioCtx = new (window.AudioContext||window.webkitAudioContext)();
     analyserNode = audioCtx.createAnalyser();
     analyserNode.fftSize = 256; analyserNode.smoothingTimeConstant = 0.85;
-    masterGain = audioCtx.createGain(); masterGain.gain.value = 4.0;
+    masterGain = audioCtx.createGain(); masterGain.gain.value = 2.0;
     compressor = audioCtx.createDynamicsCompressor();
     compressor.threshold.value = -24; compressor.knee.value = 30;
     compressor.ratio.value = 6; compressor.attack.value = 0.005; compressor.release.value = 0.3;
@@ -806,11 +806,11 @@ function updateBloomShapes() {
     if (vblankCount >= 6) { noiseFrameIdx = (noiseFrameIdx + 1) % 4; vblankCount = 0; }
 
     // Core formula
-    const idleBase = 0.15, reactivity = 1.9;
+    const idleBase = 0.14, reactivity = 1.75;
     const audioLevel = idleBase + smoothedPeak * reactivity;
-    const mixScale = 0.9 + mix * 0.8;
-    const upperParam = 0.35 + octUp * 0.85;
-    const lowerParam = 0.35 + octDown * 0.85;
+    const mixScale = 0.9 + mix * 0.7;
+    const upperParam = 0.35 + octUp * 0.75;
+    const lowerParam = 0.35 + octDown * 0.75;
 
     const decayNorm = clampa((decay - 0.1) / 59.9, 0, 1);
     const baseSigma = 0.28 + decayNorm * 0.30;
@@ -869,7 +869,7 @@ function paintSpectralBloom() {
     const vh = vizH * 0.6;
     const vy = (vizH - vh) / 2;
     const midY = vy + vh * 0.50;
-    const maxBloomH = vh * 0.575;
+    const maxBloomH = vh * 0.52;
 
     const mix = params.immersion.value;
     const warmth = params.glow.value;
@@ -964,7 +964,7 @@ function paintSpectralBloom() {
     function drawShells(bloom, dir, maxH, numShells, octAmt, innerCol, outerCol, deepCol) {
         if (octAmt < 0.02) return;
         for (let shell = numShells; shell >= 1; shell--) {
-            const expand = 1 + shell * 0.30 * octAmt;
+            const expand = 1 + shell * 0.27 * octAmt;
             let shellAlpha = (octAmt * octAmt) * 0.18 / (shell * 0.7);
             shellAlpha = Math.min(shellAlpha, 0.35);
             shellAlpha *= (1 - glowIntensity * 0.7);
