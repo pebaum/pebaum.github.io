@@ -667,40 +667,193 @@ function scheduleTonalityChange() {
 }
 
 // ── Apply knob params to audio ────────────────────────────────────
+// ── Apply knob params to audio (models the real Drift Cistern DSP chain) ──
+// Signal chain: voices → preDelay → reverb(decay) → shimmer(pitch shift) → warmth(saturation) → tone(tilt EQ) → dry/wet mix
+//
+// Immersion = MIX (equal-power dry/wet crossfade)
+// Expanse   = DIMENSION (reverb decay time 0.1-60s, rebuilds impulse)
+// Ascend    = OCT_UP (octave-up pitch shift level on reverb tail)
+// Descend   = OCT_DOWN (octave-down pitch shift level on reverb tail)
+// Lush      = MOD_DEPTH (FDN modulation → chorus/spatial movement on reverb)
+// Glow      = WARMTH (tube saturation + compression on wet signal)
+// Timbre    = TONE (output tilt EQ: 0=dark −16dB, 0.5=flat, 1=bright +16dB)
+
+let shimmerUpNode, shimmerDownNode, shimmerUpGain, shimmerDownGain;
+let warmthWaveshaper, toneEQ, dryGainNode, wetGainNode, lushMod;
+let lastBuiltDecay = -1;
+
 function applyParamsToAudio() {
-    if(!audioCtx)return; const now=audioCtx.currentTime;
-    // Immersion -> reverb wet level
-    if(reverbWet) reverbWet.gain.setTargetAtTime(params.immersion.value*0.9,now,0.05);
-    // Glow -> warmth filter boost
-    const wm=0.6+params.glow.value*1.0;
-    if(mVoice) mVoice.filter.frequency.setTargetAtTime(1800*wm,now,0.3);
-    if(tVoice) tVoice.filter.frequency.setTargetAtTime(2200*wm,now,0.3);
-    if(droneVoice) droneVoice.filter.frequency.setTargetAtTime(400*wm,now,0.3);
-    if(bellVoice) bellVoice.filter.frequency.setTargetAtTime(3500*wm,now,0.3);
-    // Timbre -> tilt high frequency
-    if(tVoice) tVoice.filter.Q.setTargetAtTime(0.5+params.timbre.value*2,now,0.1);
+    if(!audioCtx) return;
+    const now = audioCtx.currentTime;
+
+    // ── IMMERSION (MIX): equal-power dry/wet crossfade ──
+    const mix = params.immersion.value;
+    const mixTapered = mix * mix; // quadratic taper like the plugin
+    const dryLevel = Math.cos(mixTapered * Math.PI/2);
+    const wetLevel = Math.sin(mixTapered * Math.PI/2);
+    if(dryGainNode) dryGainNode.gain.setTargetAtTime(dryLevel, now, 0.02);
+    if(wetGainNode) wetGainNode.gain.setTargetAtTime(wetLevel, now, 0.02);
+
+    // ── EXPANSE (DIMENSION): reverb decay time — rebuild impulse when changed ──
+    const decay = params.expanse.value;
+    if(Math.abs(decay - lastBuiltDecay) > 0.3 || lastBuiltDecay < 0) {
+        lastBuiltDecay = decay;
+        // FDN size scales with sqrt of normalized decay (like plugin)
+        const tNorm = clampa((decay - 0.1) / 59.9, 0, 1);
+        const duration = Math.max(1, Math.min(decay * 1.5, 12));
+        const len = audioCtx.sampleRate * duration;
+        const imp = audioCtx.createBuffer(2, len, audioCtx.sampleRate);
+        const L = imp.getChannelData(0), R = imp.getChannelData(1);
+        // Early reflections (stone walls)
+        for(let i=0;i<8;i++){
+            const t=Math.floor(rand(0.015,0.1)*audioCtx.sampleRate);
+            const a=rand(0.2,0.5)*Math.pow(0.8,i);
+            if(t<len){L[t]+=a*rand(0.7,1);R[t]+=a*rand(0.7,1);}
+        }
+        // Diffuse tail with RT60-proportional decay
+        const decayPow = Math.max(0.8, decay * 0.25);
+        for(let i=0;i<len;i++){
+            const t=i/audioCtx.sampleRate;
+            const env=Math.pow(Math.max(0, 1-t/duration), decayPow);
+            L[i]+=(Math.random()*2-1)*env*0.25;
+            R[i]+=(Math.random()*2-1)*env*0.25;
+        }
+        try { masterReverb.buffer = imp; } catch(e) {}
+    }
+
+    // ── ASCEND (OCT_UP): octave-up pitch shift on reverb tail ──
+    // Web Audio doesn't have real pitch shifters, but we can approximate
+    // with playbackRate on a delay or by boosting high harmonic content.
+    // We use a high-shelf boost + feedback to simulate shimmer buildup.
+    if(shimmerUpGain) shimmerUpGain.gain.setTargetAtTime(params.ascend.value * 0.5, now, 0.05);
+    if(shimmerUpNode) shimmerUpNode.frequency.setTargetAtTime(
+        2000 + params.ascend.value * 3000, now, 0.1); // open up high freq
+
+    // ── DESCEND (OCT_DOWN): octave-down — boost sub harmonics ──
+    if(shimmerDownGain) shimmerDownGain.gain.setTargetAtTime(params.descend.value * 0.5, now, 0.05);
+    if(shimmerDownNode) shimmerDownNode.frequency.setTargetAtTime(
+        400 - params.descend.value * 250, now, 0.1); // darken low freq
+
+    // ── LUSH (MOD_DEPTH): chorus/spatial modulation on reverb ──
+    // Modulate the LFO depth that feeds into a delay-based chorus
+    if(lushMod) lushMod.gain.setTargetAtTime(params.lush.value * 0.003, now, 0.1);
+
+    // ── GLOW (WARMTH): tube saturation on wet signal ──
+    // Drive the waveshaper harder with more warmth
+    if(warmthWaveshaper) {
+        const drive = 1 + params.glow.value * 8; // 1x clean to 9x drive
+        const curve = new Float32Array(257);
+        for(let i=0;i<257;i++){
+            const x = (i - 128) / 128;
+            // Soft clipping: tanh-style with variable drive
+            curve[i] = Math.tanh(x * drive) / Math.tanh(drive);
+        }
+        warmthWaveshaper.curve = curve;
+    }
+
+    // ── TIMBRE (TONE): output tilt EQ (0=dark −16dB, 0.5=flat, 1=bright +16dB) ──
+    if(toneEQ) {
+        const toneDb = (params.timbre.value - 0.5) * 32; // -16 to +16 dB
+        toneEQ.gain.setTargetAtTime(toneDb, now, 0.05);
+    }
 }
 
-// ── Audio init ────────────────────────────────────────────────────
+// ── Audio init — models the Drift Cistern signal chain ──────────
 function initAudio() {
     audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-    analyserNode = audioCtx.createAnalyser(); analyserNode.fftSize=256; analyserNode.smoothingTimeConstant=0.85;
+    analyserNode = audioCtx.createAnalyser();
+    analyserNode.fftSize=256; analyserNode.smoothingTimeConstant=0.85;
+
+    // ── Master output chain ──
     masterGain = audioCtx.createGain(); masterGain.gain.value=4.0;
     compressor = audioCtx.createDynamicsCompressor();
     compressor.threshold.value=-24; compressor.knee.value=30; compressor.ratio.value=6;
     compressor.attack.value=0.005; compressor.release.value=0.3;
-    const hpF = audioCtx.createBiquadFilter(); hpF.type='highpass'; hpF.frequency.value=45; hpF.Q.value=0.7;
-    masterReverb = audioCtx.createConvolver(); masterReverb.buffer=createCathedralReverb(10,2.5);
-    reverbWet = audioCtx.createGain(); reverbWet.gain.value=0.7;
-    const reverbDry = audioCtx.createGain(); reverbDry.gain.value=0.45;
+    const hpF = audioCtx.createBiquadFilter();
+    hpF.type='highpass'; hpF.frequency.value=20; hpF.Q.value=0.7;
+
+    // ── Voice bus (all tintinnabuli voices connect here) ──
     voiceBus = audioCtx.createGain(); voiceBus.gain.value=1;
-    voiceBus.connect(reverbDry); voiceBus.connect(masterReverb);
-    masterReverb.connect(reverbWet); reverbDry.connect(masterGain); reverbWet.connect(masterGain);
-    masterGain.connect(compressor); compressor.connect(hpF); hpF.connect(analyserNode); analyserNode.connect(audioCtx.destination);
+
+    // ── DRY path: voices → dryGain → masterGain ──
+    dryGainNode = audioCtx.createGain(); dryGainNode.gain.value=1.0;
+    voiceBus.connect(dryGainNode);
+    dryGainNode.connect(masterGain);
+
+    // ── WET path: voices → reverb → shimmer → warmth → toneEQ → wetGain → masterGain ──
+
+    // Reverb (convolution — cathedral impulse, decay controlled by Expanse)
+    masterReverb = audioCtx.createConvolver();
+    masterReverb.buffer = createCathedralReverb(10, 2.5);
+    reverbWet = audioCtx.createGain(); reverbWet.gain.value=1.0;
+    voiceBus.connect(masterReverb);
+    masterReverb.connect(reverbWet);
+
+    // Shimmer Up: high-shelf boost to simulate octave-up pitch shift shimmer
+    shimmerUpNode = audioCtx.createBiquadFilter();
+    shimmerUpNode.type='highshelf'; shimmerUpNode.frequency.value=2000; shimmerUpNode.gain.value=0;
+    shimmerUpGain = audioCtx.createGain(); shimmerUpGain.gain.value=0;
+    // Feedback path: reverb out → shimmer filter → gain → back into reverb input
+    reverbWet.connect(shimmerUpNode);
+    shimmerUpNode.connect(shimmerUpGain);
+    shimmerUpGain.connect(masterReverb); // feedback shimmer
+
+    // Shimmer Down: low-shelf boost to simulate octave-down
+    shimmerDownNode = audioCtx.createBiquadFilter();
+    shimmerDownNode.type='lowshelf'; shimmerDownNode.frequency.value=400; shimmerDownNode.gain.value=0;
+    shimmerDownGain = audioCtx.createGain(); shimmerDownGain.gain.value=0;
+    reverbWet.connect(shimmerDownNode);
+    shimmerDownNode.connect(shimmerDownGain);
+    shimmerDownGain.connect(masterReverb); // feedback shimmer
+
+    // Lush: chorus-like modulation via LFO-modulated delay
+    const lushDelay = audioCtx.createDelay(0.05);
+    lushDelay.delayTime.value = 0.012; // 12ms base
+    const lushLFO = audioCtx.createOscillator();
+    lushLFO.type='sine'; lushLFO.frequency.value=0.5; // 0.5Hz
+    lushMod = audioCtx.createGain();
+    lushMod.gain.value = 0; // controlled by Lush param
+    lushLFO.connect(lushMod);
+    lushMod.connect(lushDelay.delayTime);
+    lushLFO.start();
+    reverbWet.connect(lushDelay);
+
+    // Warmth: waveshaper (tube saturation)
+    warmthWaveshaper = audioCtx.createWaveShaper();
+    warmthWaveshaper.oversample = '4x';
+    // Start with clean (linear) curve
+    const cleanCurve = new Float32Array(257);
+    for(let i=0;i<257;i++) cleanCurve[i] = (i-128)/128;
+    warmthWaveshaper.curve = cleanCurve;
+
+    // Tone: output tilt EQ (high-shelf)
+    toneEQ = audioCtx.createBiquadFilter();
+    toneEQ.type='highshelf'; toneEQ.frequency.value=1000; toneEQ.gain.value=0;
+
+    // Wet gain (controlled by Immersion)
+    wetGainNode = audioCtx.createGain(); wetGainNode.gain.value=0; // starts at 0 (Immersion=0)
+
+    // Wire wet chain: reverbWet + lushDelay → warmth → tone → wetGain → masterGain
+    const wetMerge = audioCtx.createGain(); wetMerge.gain.value=0.6; // -4.5dB compensation like plugin
+    reverbWet.connect(wetMerge);
+    lushDelay.connect(wetMerge);
+    wetMerge.connect(warmthWaveshaper);
+    warmthWaveshaper.connect(toneEQ);
+    toneEQ.connect(wetGainNode);
+    wetGainNode.connect(masterGain);
+
+    // ── Output chain ──
+    masterGain.connect(compressor);
+    compressor.connect(hpF);
+    hpF.connect(analyserNode);
+    analyserNode.connect(audioCtx.destination);
+
+    // ── Create voices ──
     mVoice=new MelodicVoice(audioCtx,voiceBus);
     tVoice=new TintinnabuliVoice(audioCtx,voiceBus);
     droneVoice=new DroneVoice(audioCtx,voiceBus);
     bellVoice=new BellVoice(audioCtx,voiceBus);
+
     // Randomize starting tonality
     sacredRoot=randInt(0,11);
     sacredMode=pick(Object.keys(MODES));
