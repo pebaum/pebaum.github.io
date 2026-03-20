@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peter Baumgartner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInRight {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        #canvas {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            animation: fadeIn 1.5s ease-out 0.3s forwards;
+        }
+
+        .ui {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 30px;
+        }
+
+        .top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .info-block {
+            font-size: 10px;
+            letter-spacing: 0.15em;
+            line-height: 1.8;
+            text-transform: uppercase;
+            text-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+            opacity: 0;
+            position: relative;
+        }
+
+        .info-block.loaded {
+            animation: fadeInUp 1.2s ease-out forwards;
+        }
+
+        .info-block.loaded strong,
+        .info-block.loaded a,
+        .info-block.loaded span,
+        .info-block.loaded br + * {
+            opacity: 0.5;
+        }
+
+        .info-block strong {
+            opacity: 1;
+            font-weight: normal;
+        }
+
+        .info-block a {
+            color: #fff;
+            text-decoration: none;
+            opacity: 0.5;
+            transition: opacity 0.3s;
+            pointer-events: all;
+        }
+
+        .info-block a:hover {
+            opacity: 1;
+        }
+
+        .volume-control {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            pointer-events: all;
+            font-size: 9px;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            z-index: 100;
+            opacity: 0;
+        }
+
+        .volume-control.loaded {
+            animation: fadeInUp 1.2s ease-out forwards;
+        }
+
+        .volume-control.loaded span {
+            opacity: 0.8;
+        }
+
+        .volume-slider {
+            width: 80px;
+            height: 2px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: rgba(255, 255, 255, 0.3);
+            outline: none;
+            cursor: pointer;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 10px;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            border-radius: 50%;
+        }
+
+        .volume-slider::-moz-range-thumb {
+            width: 10px;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            border-radius: 50%;
+            border: none;
+        }
+
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: opacity 1.5s;
+        }
+
+        .overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #projectsList {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 100%;
+            margin-left: 40px;
+            font-size: 10px;
+            line-height: 1.8;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            text-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+            opacity: 0;
+            z-index: 10;
+            min-width: 350px;
+            white-space: nowrap;
+        }
+
+        #projectsList.visible {
+            display: block;
+            animation: fadeInRight 0.8s ease-out forwards;
+        }
+
+        #projectsList a {
+            color: #fff;
+            text-decoration: none;
+            opacity: 0.5;
+            transition: opacity 0.3s;
+            pointer-events: all;
+            display: block;
+            text-transform: none;
+            font-size: 9px;
+            letter-spacing: 0.05em;
+        }
+
+        #projectsList a:hover {
+            opacity: 1;
+        }
+
+        #projectsList .category {
+            opacity: 1;
+            font-weight: normal;
+            margin-top: 15px;
+            margin-bottom: 0;
+        }
+
+        #projectsList .category:first-child {
+            margin-top: 0;
+        }
+
+        /* Custom scrollbar for projects list */
+        #projectsList::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        #projectsList::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        #projectsList::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+        }
+
+        #projectsList::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+
+    <div class="ui">
+        <div class="top">
+            <div class="info-block" id="infoLeft">
+                <strong>Peter Baumgartner</strong><br>
+                37 / M / Mission Viejo<br>
+                <a href="https://www.linkedin.com/in/peter-baumgartner-b0094a49/" target="_blank">PM @ Microsoft</a><br>
+                <a href="https://open.spotify.com/artist/YOUR_SPOTIFY_ID" target="_blank">music</a> · <span style="position: relative; display: inline-block;"><a href="#" id="builderLink">projects</a>
+                <div id="projectsList">
+                    <div class="category">Music</div>
+                    <a href="https://pebaum.github.io/4-track-tape-looper/">4-Track Tape Recorder</a>
+                    <a href="https://pebaum.github.io/dualshock-synth/">PS4 Synth</a>
+                    <a href="https://pebaum.github.io/drift/v7/">Drift v7 - Generative Ambient</a>
+                    <a href="https://pebaum.github.io/drift/v6/">Drift v6</a>
+                    <a href="https://pebaum.github.io/drift/v5/">Drift v5</a>
+                    <a href="https://pebaum.github.io/drift/v4/">Drift v4</a>
+                    <a href="https://pebaum.github.io/drift/v3/">Drift v3</a>
+                    <a href="https://pebaum.github.io/drift/v2/">Drift v2</a>
+                    <a href="https://pebaum.github.io/granular-ambient/">Granular Ambient</a>
+                    <a href="https://pebaum.github.io/textscape/">Textscape</a>
+                    <div class="category">Interactive Art</div>
+                    <a href="https://pebaum.github.io/generative-web-art/dungeongame.html">Dungeon Game</a>
+                    <a href="https://pebaum.github.io/generative-web-art/mazesend.html">Maze Send</a>
+                    <a href="https://pebaum.github.io/generative-web-art/waterlillies.html">Water Lillies</a>
+                    <a href="https://pebaum.github.io/generative-web-art/viewofaburningcity.html">View of a Burning City</a>
+                    <a href="https://pebaum.github.io/generative-web-art/wordprocessor.html">Word Processor</a>
+                    <a href="https://pebaum.github.io/generative-web-art/colorexplore.html">Color Explore</a>
+                    <a href="https://pebaum.github.io/generative-web-art/blocksnow.html">Block Snow</a>
+                    <div class="category">Code</div>
+                    <a href="https://pebaum.github.io/dnd-dm-screen/">D&D 5e DM Screen</a>
+                    <a href="projects/benji-site/index.html">Benji Site</a>
+                    <a href="https://pebaum.github.io/the-duel-boardgame/">The Duel</a>
+                    <a href="https://pebaum.github.io/forward-boardgame/play.html">Forward Playground</a>
+                </div></span><br>
+                <a href="mailto:p.l.baumgartner@gmail.com">contact</a>
+            </div>
+            <div class="info-block" id="infoRight" style="text-align: right;">
+                <strong id="elapsed">00:00</strong><br>
+                <span id="key">—</span> <span id="mode">—</span><br>
+                <span id="mood">—</span><br>
+                <strong id="active-voices">0</strong> ACTIVE<br>
+                <span id="voice-count">0</span> VOICES<br>
+                <a href="#" id="pauseBtn" style="pointer-events: all;">pause</a> · <a href="#" id="restartBtn" style="pointer-events: all;">restart</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="volume-control" id="volumeControl">
+        <span>VOL</span>
+        <input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="100">
+    </div>
+
+
+    <!-- Click-to-start overlay (required for browser autoplay policy) -->
+    <div class="overlay" id="overlay" style="cursor: pointer;">
+        <div style="font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 0.2em; opacity: 0.5; text-transform: uppercase;">
+            enter ⏎
+        </div>
+        <button id="startBtn" style="display: none;"></button>
+    </div>
+
+    <script src="https://pebaum.github.io/drift/v7/drift7.js"></script>
+    <script>
+        // Handle projects link toggle
+        document.getElementById('builderLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            const projectsList = document.getElementById('projectsList');
+
+            if (projectsList.classList.contains('visible')) {
+                // Fade out and hide
+                projectsList.classList.remove('visible');
+                setTimeout(() => {
+                    projectsList.style.display = 'none';
+                }, 800);
+            } else {
+                // Show and fade in
+                projectsList.style.display = 'block';
+                setTimeout(() => {
+                    projectsList.classList.add('visible');
+                }, 10);
+            }
+        });
+
+        // Prevent default behavior for pause and restart links
+        document.getElementById('pauseBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+        });
+        document.getElementById('restartBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+        });
+
+        // Accept any interaction to start (required for browser autoplay policy)
+        const overlay = document.getElementById('overlay');
+        const startBtn = document.getElementById('startBtn');
+
+        function triggerStart() {
+            if (overlay.classList.contains('hidden')) return;
+            startBtn.click();
+            // Remove listeners after first interaction
+            document.removeEventListener('keydown', triggerStart);
+            overlay.removeEventListener('click', triggerStart);
+        }
+
+        // Accept any key press or click anywhere
+        document.addEventListener('keydown', triggerStart);
+        overlay.addEventListener('click', triggerStart);
+
+        // Staggered fade-in animations
+        window.addEventListener('load', () => {
+            const elements = [
+                { id: 'infoLeft', delay: 800 },
+                { id: 'infoRight', delay: 1200 },
+                { id: 'volumeControl', delay: 1600 }
+            ];
+
+            // Randomize delays slightly
+            elements.forEach(item => {
+                const randomDelay = item.delay + (Math.random() * 400 - 200); // +/- 200ms
+                setTimeout(() => {
+                    const el = document.getElementById(item.id);
+                    if (el) {
+                        el.classList.add('loaded');
+                    }
+                }, randomDelay);
+            });
+        });
+    </script>
+</body>
+</html>
