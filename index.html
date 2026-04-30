@@ -217,7 +217,7 @@
         <span id="mood">—</span><br>
         <strong id="active-voices">0</strong> ACTIVE<br>
         <span id="voice-count">0</span> VOICES<br>
-        <a href="#" id="pauseBtn">pause</a> · <a href="#" id="restartBtn">restart</a>
+        <a href="#" id="pauseBtn">pause</a> · <a href="#" id="restartBtn">restart</a> · <a href="#" id="rndBtn">rnd</a>
     </div>
 </div>
 
@@ -441,6 +441,17 @@ let tintAtmosphereTargets = { ...tintAtmosphere };
 let atmosphereInterval = null, atmosphereChangeTimeout = null, tonalityChangeTimeout = null;
 let voiceStartTimeouts = [];
 
+const DECISION_LOG_MAX = 80;
+const decisionLog = [];
+function logDecision(multiline) {
+    const ts = new Date();
+    const t = `${String(ts.getMinutes()).padStart(2,'0')}:${String(ts.getSeconds()).padStart(2,'0')}.${String(ts.getMilliseconds()).padStart(3,'0')}`;
+    const lines = multiline.split('\n');
+    decisionLog.push(`[${t}] ${lines[0]}`);
+    for (let i = 1; i < lines.length; i++) decisionLog.push(`  ${lines[i]}`);
+    while (decisionLog.length > DECISION_LOG_MAX) decisionLog.shift();
+}
+
 const rand = (a,b) => Math.random()*(b-a)+a;
 const randInt = (a,b) => Math.floor(rand(a,b+1));
 const pick = arr => arr[Math.floor(Math.random()*arr.length)];
@@ -466,16 +477,35 @@ function getNextStepwiseNote(cur, range) {
     if (!sc.length) return null;
     let idx = sc.indexOf(cur);
     if (idx===-1) { const d=sc.map(n=>Math.abs(n-cur)); idx=d.indexOf(Math.min(...d)); }
+    const idxIn = idx;
+    const dirIn = melodyDirection;
     let next = idx + melodyDirection;
-    if (next>=sc.length||next<0) { melodyDirection*=-1; next=idx+melodyDirection; }
-    if (Math.random()<0.12) melodyDirection*=-1;
-    if (Math.random()<0.08) { next=idx+melodyDirection*2; next=clampa(next,0,sc.length-1); }
-    return sc[next];
+    let edgeFlip = false;
+    if (next>=sc.length||next<0) { melodyDirection*=-1; next=idx+melodyDirection; edgeFlip=true; }
+    let randFlip = false;
+    if (Math.random()<0.12) { melodyDirection*=-1; randFlip=true; }
+    let jump = false;
+    if (Math.random()<0.08) { next=idx+melodyDirection*2; next=clampa(next,0,sc.length-1); jump=true; }
+    const out = sc[next];
+    logDecision(
+        `getNextStepwiseNote(${cur}, [${range[0]},${range[1]}])\n` +
+        `scale[${sc.length}]: [${sc.join(',')}]\n` +
+        `idx=${idxIn}, dir=${dirIn>0?'+1':'-1'}, edgeFlip=${edgeFlip}, randFlip=${randFlip}, jump=${jump}\n` +
+        `→ ${out}  // ${midiToNoteName(out)}`
+    );
+    return out;
 }
 function getTintinnabuliNote(mNote, position) {
     const tn = getSacredTriad();
-    if (position==='superior') { const a=tn.filter(n=>n>=mNote); return a.length?a[0]:tn[tn.length-1]; }
-    const b=tn.filter(n=>n<=mNote); return b.length?b[b.length-1]:tn[0];
+    let out;
+    if (position==='superior') { const a=tn.filter(n=>n>=mNote); out = a.length?a[0]:tn[tn.length-1]; }
+    else { const b=tn.filter(n=>n<=mNote); out = b.length?b[b.length-1]:tn[0]; }
+    logDecision(
+        `getTintinnabuliNote(${mNote}, '${position}')\n` +
+        `triad[${tn.length}]: [${tn.map(midiToNoteName).join(',')}]\n` +
+        `→ ${out}  // ${midiToNoteName(out)}`
+    );
+    return out;
 }
 
 class SacredVoice {
@@ -552,31 +582,57 @@ class MelodicVoice extends SacredVoice {
     constructor(ctx,out){super(ctx,out,{name:'M-voice',volume:0.32,brightness:2800,pan:-0.25,interval:4000,attack:0.5,decay:6,range:[48,72]});}
     playNote(){
         const n=getNextStepwiseNote(lastMelodyNote,this.config.range); if(!n)return;
-        lastMelodyNote=n; this.createBellTone(midiToFreq(n),rand(0.45,0.7));
+        lastMelodyNote=n;
+        const vel=rand(0.45,0.7);
+        const f=midiToFreq(n);
+        logDecision(`MelodicVoice.playNote()\ncreateBellTone(${f.toFixed(2)} Hz, vel=${vel.toFixed(2)})`);
+        this.createBellTone(f,vel);
     }
 }
 class TintinnabuliVoice extends SacredVoice {
     constructor(ctx,out){super(ctx,out,{name:'T-voice',volume:0.26,brightness:3200,pan:0.25,interval:5000,attack:0.3,decay:8,bellLike:true,range:[52,84]});this.position='superior';}
     playNote(){
-        if(Math.random()<0.25) this.position=this.position==='superior'?'inferior':'superior';
+        const flip = Math.random()<0.25;
+        if(flip) this.position=this.position==='superior'?'inferior':'superior';
+        logDecision(`TintinnabuliVoice.playNote()\nposition: ${this.position}  (flip? ${flip?'yes':'no'})`);
         let n=getTintinnabuliNote(lastMelodyNote,this.position);
         const r=this.config.range; while(n<r[0])n+=12; while(n>r[1])n-=12;
-        this.createBellTone(midiToFreq(n),rand(0.35,0.55));
+        const vel=rand(0.35,0.55);
+        const f=midiToFreq(n);
+        logDecision(`  → octave-fold to range[${r[0]},${r[1]}] → ${n}  // ${midiToNoteName(n)}\ncreateBellTone(${f.toFixed(2)} Hz, vel=${vel.toFixed(2)})`);
+        this.createBellTone(f,vel);
     }
 }
 class DroneVoice extends SacredVoice {
     constructor(ctx,out){super(ctx,out,{name:'Drone',volume:0.22,brightness:600,pan:0,interval:15000,attack:3,decay:18,range:[36,48]});}
     playNote(){
         const root=sacredRoot+36, fifth=root+7;
-        const n=Math.random()<0.75?root:fifth;
-        this.createBellTone(midiToFreq(n),rand(0.35,0.55));
+        const r=Math.random();
+        const n = r<0.75 ? root : fifth;
+        const vel=rand(0.35,0.55);
+        const f=midiToFreq(n);
+        logDecision(
+            `DroneVoice.playNote()\n` +
+            `rand=${r.toFixed(2)} ${r<0.75?'<':'≥'} 0.75 → ${r<0.75?'root':'fifth'}  // ${midiToNoteName(n)} (${n})\n` +
+            `createBellTone(${f.toFixed(2)} Hz, vel=${vel.toFixed(2)})`
+        );
+        this.createBellTone(f,vel);
     }
 }
 class BellVoice extends SacredVoice {
     constructor(ctx,out){super(ctx,out,{name:'Bells',volume:0.18,brightness:4500,pan:0,interval:18000,attack:0.008,decay:10,bellLike:true,range:[72,88]});}
     playNote(){
         const t=getTriadInRange(this.config.range[0],this.config.range[1]);
-        if(!t.length)return; this.createBellTone(midiToFreq(pick(t)),rand(0.25,0.45));
+        if(!t.length)return;
+        const n=pick(t);
+        const vel=rand(0.25,0.45);
+        const f=midiToFreq(n);
+        logDecision(
+            `BellVoice.playNote()\n` +
+            `pick from triad[${t.length}] in [${this.config.range[0]},${this.config.range[1]}] → ${n}  // ${midiToNoteName(n)}\n` +
+            `createBellTone(${f.toFixed(2)} Hz, vel=${vel.toFixed(2)})`
+        );
+        this.createBellTone(f,vel);
     }
 }
 
@@ -585,7 +641,6 @@ function startTintAtmosphere() {
     atmosphereInterval=setInterval(()=>{
         Object.keys(tintAtmosphere).forEach(k=>{tintAtmosphere[k]+=(tintAtmosphereTargets[k]-tintAtmosphere[k])*0.012;});
         applyTintAtmosphere();
-        smoothParamDrift();   // gradual front-panel knob drift, generative
     },50);
     scheduleTintAtmosphereChange();
 }
@@ -605,10 +660,19 @@ function runTintAtmosphereChange() {
         return;
     }
     const ps=Object.keys(tintAtmosphere); const nc=Math.random()<0.4?2:1;
+    const traces=[`runTintAtmosphereChange()`, `nc=${nc} (${nc===2?'40%':'60%'} branch)`];
     for(let i=0;i<nc;i++){
         const p=pick(ps);
-        tintAtmosphereTargets[p]=Math.random()<0.35?(Math.random()<0.5?rand(0.12,0.3):rand(0.7,0.9)):clampa(tintAtmosphereTargets[p]+rand(-0.35,0.35),0.1,0.9);
+        const prev=tintAtmosphereTargets[p];
+        const big=Math.random()<0.35;
+        if(big){
+            tintAtmosphereTargets[p]=Math.random()<0.5?rand(0.12,0.3):rand(0.7,0.9);
+        } else {
+            tintAtmosphereTargets[p]=clampa(prev+rand(-0.35,0.35),0.1,0.9);
+        }
+        traces.push(`${p}: ${prev.toFixed(2)} → target ${tintAtmosphereTargets[p].toFixed(2)}  (${big?'big move':'nudge'})`);
     }
+    logDecision(traces.join('\n'));
     scheduleTintAtmosphereChange();
 }
 function applyTintAtmosphere() {
@@ -631,12 +695,25 @@ function runTonalityChange() {
         tonalityChangeTimeout = setTimeout(runTonalityChange, 1000);
         return;
     }
-    if(Math.random()<0.7){
+    const r=Math.random();
+    if(r<0.7){
+        const prev=sacredMode;
         sacredMode=pick(Object.keys(MODES));
         sacredTriad=['aeolian','dorian','phrygian'].includes(sacredMode)?'minor':'major';
+        logDecision(
+            `runTonalityChange()\n` +
+            `rand=${r.toFixed(2)} < 0.7 → swap mode\n` +
+            `mode: ${prev} → ${sacredMode}  // ${MODES[sacredMode].character}, ${sacredTriad}`
+        );
     } else {
         const mv=Math.random()<0.5?7:5, dir=Math.random()<0.5?1:-1;
+        const prev=sacredRoot;
         sacredRoot=(sacredRoot+mv*dir+12)%12; lastMelodyNote=sacredRoot+60;
+        logDecision(
+            `runTonalityChange()\n` +
+            `rand=${r.toFixed(2)} ≥ 0.7 → transpose\n` +
+            `root ${dir>0?'+':'-'}${mv}: ${NOTE_NAMES[prev]} → ${NOTE_NAMES[sacredRoot]}`
+        );
     }
     scheduleTonalityChange();
 }
@@ -1027,6 +1104,39 @@ function paintSpectralBloom() {
         }
     }
 
+    // ── Decision trace, clipped to bloom envelope ──
+    if (decisionLog.length) {
+        g.save();
+        g.beginPath();
+        g.moveTo(vx, midY);
+        for (let i = 0; i < BLOOM_RES; i++) {
+            const px = vx + (i / (BLOOM_RES - 1)) * vw;
+            g.lineTo(px, midY - upperBloom[i] * maxBloomH);
+        }
+        g.lineTo(vx + vw, midY);
+        for (let i = BLOOM_RES - 1; i >= 0; i--) {
+            const px = vx + (i / (BLOOM_RES - 1)) * vw;
+            g.lineTo(px, midY + lowerBloom[i] * maxBloomH * 0.8);
+        }
+        g.closePath();
+        g.clip();
+
+        g.font = '11px ui-monospace, "SF Mono", Menlo, Consolas, monospace';
+        g.textBaseline = 'alphabetic';
+        g.fillStyle = 'rgba(138, 180, 232, 0.18)';
+        const lh = 14;
+        const startY = midY + maxBloomH * 0.7;
+        const xPad = 40;
+        const n = decisionLog.length;
+        for (let i = 0; i < n; i++) {
+            const line = decisionLog[n - 1 - i];
+            const y = startY - i * lh;
+            if (y < midY - maxBloomH) break;
+            g.fillText(line, xPad, y);
+        }
+        g.restore();
+    }
+
     if (noiseFrames.length > 0) {
         const grainAlpha = 0.12 + glowIntensity*0.28 + sizzle*0.35;
         g.globalAlpha = grainAlpha;
@@ -1088,78 +1198,6 @@ function randomizeFrontPanel() {
     });
     // descend has a 50% chance of being silent (frees the lower bloom)
     if (Math.random() < 0.5) params.descend.value = 0;
-}
-
-// ── Generative param drift ──────────────────────────────────────────────────
-// Continuously evolves the 9 reverb knobs over time so the page plays as a
-// generative unit. Targets are re-rolled on a 90–240s interval (offset from
-// the 120–360s tonality cadence so the two systems don't lock in lockstep).
-// Smoothing is slow (α = 0.0008 per 50ms tick → ~62 s time constant), so
-// values are still ramping toward each new target when the next nudge fires
-// — the page never reaches a steady state.
-let paramDriftTimeout = null;
-const paramTargets = {};
-
-function initParamTargets() {
-    Object.keys(PARAM_DRIFT_RANGES).forEach(k => {
-        paramTargets[k] = params[k].value;
-    });
-}
-function scheduleParamDrift() {
-    if (!driftRunning) return;
-    paramDriftTimeout = setTimeout(runParamDrift, rand(90000, 240000));
-}
-function runParamDrift() {
-    if (!driftRunning) return;
-    if (driftPaused) {
-        paramDriftTimeout = setTimeout(runParamDrift, 1000);
-        return;
-    }
-    // Re-roll a 3–6 random subset of the 9 knob targets each tick.
-    const keys = Object.keys(PARAM_DRIFT_RANGES);
-    const shuffled = keys.slice().sort(() => Math.random() - 0.5);
-    const numToChange = 3 + Math.floor(Math.random() * 4);
-    for (let i = 0; i < numToChange; i++) {
-        const k = shuffled[i];
-        const [lo, hi] = PARAM_DRIFT_RANGES[k];
-        const cur = params[k].value;
-        if (Math.random() < 0.3) {
-            // Big move — fully re-randomize within the range
-            paramTargets[k] = lo + Math.random() * (hi - lo);
-        } else {
-            // Local nudge within ±30% of the param's range
-            const range = hi - lo;
-            paramTargets[k] = clampa(cur + rand(-range * 0.3, range * 0.3), lo, hi);
-        }
-        // Descend occasionally returns to zero for stillness moments
-        if (k === 'descend' && Math.random() < 0.35) paramTargets[k] = 0;
-    }
-    scheduleParamDrift();
-}
-function stopParamDrift() {
-    if (paramDriftTimeout) { clearTimeout(paramDriftTimeout); paramDriftTimeout = null; }
-}
-function smoothParamDrift() {
-    let any = false;
-    const alpha = 0.0008; // ~62.5 s time constant @ 50 ms tick
-    Object.keys(PARAM_DRIFT_RANGES).forEach(k => {
-        const target = paramTargets[k];
-        if (target === undefined) return;
-        const cur = params[k].value;
-        const diff = target - cur;
-        if (Math.abs(diff) > 1e-5) {
-            params[k].value = cur + diff * alpha;
-            any = true;
-        }
-    });
-    if (!any) return;
-    // Push the drifted values back into the slider DOM, value labels, and audio.
-    Object.keys(PARAM_DRIFT_RANGES).forEach(k => {
-        const slider = document.querySelector(`.param-slider[data-param="${k}"]`);
-        if (slider) slider.value = valueToSlider(k, params[k].value);
-        updateSliderValueLabel(k);
-    });
-    applyParamsToAudio();
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1232,8 +1270,6 @@ async function startApp() {
 
     startTintAtmosphere();
     scheduleTonalityChange();
-    initParamTargets();
-    scheduleParamDrift();
 
     vizCanvas.classList.add('active');
     setTimeout(() => document.getElementById('infoOverlay').classList.add('loaded'), 800);
@@ -1281,7 +1317,6 @@ document.getElementById('restartBtn').addEventListener('click', e => {
     driftRunning = false; driftPaused = false;
     mVoice?.stop(); tVoice?.stop(); droneVoice?.stop(); bellVoice?.stop();
     stopTintAtmosphere();
-    stopParamDrift();
     if(tonalityChangeTimeout){clearTimeout(tonalityChangeTimeout);tonalityChangeTimeout=null;}
     // Cancel pending deferred voice starts so they don't fire into the new session
     voiceStartTimeouts.forEach(clearTimeout);
@@ -1295,6 +1330,19 @@ document.getElementById('restartBtn').addEventListener('click', e => {
         analyserNode = null;
     }
     setTimeout(startApp, 300);
+});
+
+document.getElementById('rndBtn').addEventListener('click', e => {
+    e.preventDefault();
+    if (!driftRunning) return;
+    randomizeFrontPanel();
+    Object.keys(PARAM_DRIFT_RANGES).forEach(k => {
+        const slider = document.querySelector(`.param-slider[data-param="${k}"]`);
+        if (slider) slider.value = valueToSlider(k, params[k].value);
+        updateSliderValueLabel(k);
+    });
+    applyParamsToAudio();
+    logDecision(`randomizeFrontPanel()\n9 knob targets re-rolled`);
 });
 
 document.addEventListener('keydown', e => {
