@@ -125,65 +125,6 @@
             font-variant-numeric: tabular-nums;
         }
 
-        /* ── ADVANCED TOGGLE + PANEL ── */
-        .advanced-toggle {
-            font-size: 9px;
-            letter-spacing: 0.20em;
-            text-transform: uppercase;
-            color: rgba(255,255,255,0.40);
-            margin-top: 8px;
-            padding: 4px 0;
-            cursor: pointer;
-            user-select: none;
-            transition: color 0.3s;
-            background: none;
-            border: none;
-            font-family: inherit;
-            text-align: left;
-            width: fit-content;
-        }
-        .advanced-toggle:hover {
-            color: rgba(255,255,255,0.85);
-        }
-        .advanced-toggle .arrow {
-            display: inline-block;
-            margin-left: 4px;
-            transition: transform 0.3s;
-        }
-        .advanced-toggle.open .arrow {
-            transform: rotate(90deg);
-        }
-
-        .advanced-stack {
-            position: fixed;
-            bottom: 30px;
-            left: 280px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            z-index: 100;
-            opacity: 0;
-            transform: translateX(-12px);
-            pointer-events: none;
-            transition: opacity 0.4s ease-out, transform 0.4s ease-out;
-        }
-        .advanced-stack.open {
-            opacity: 1;
-            transform: translateX(0);
-            pointer-events: all;
-        }
-        .advanced-stack .section-label {
-            font-size: 8px;
-            letter-spacing: 0.25em;
-            text-transform: uppercase;
-            color: rgba(255,255,255,0.25);
-            margin-top: 4px;
-            margin-bottom: -2px;
-        }
-        .advanced-stack .section-label:first-child {
-            margin-top: 0;
-        }
-
         /* ── INFO OVERLAY ── */
         .info-overlay {
             position: fixed;
@@ -233,13 +174,6 @@
             transition: opacity 0.3s;
         }
         .info-right a:hover { opacity: 1; }
-
-        .experimental-tag {
-            font-size: 8px;
-            letter-spacing: 0.30em;
-            color: rgba(212, 168, 84, 0.55);
-            margin-top: 6px;
-        }
 
         /* ── START OVERLAY ── */
         .overlay {
