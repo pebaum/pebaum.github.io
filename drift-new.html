@@ -1,0 +1,1349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peter Baumgartner — Drift (experimental)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg:           #0C0E18;
+            --viz-bg:       #080A14;
+            --header-bg:    #0A0C14;
+            --panel-bg:     rgba(26, 26, 26, 0.38);
+            --text:         #E0DCD4;
+            --text-dim:     #6B7080;
+            --text-muted:   #4A4E5A;
+            --midline:      #2E2E2E;
+            --bloom-blue:   #8AB4E8;
+            --bloom-gold:   #D4A854;
+            --bloom-indigo: #6A5ACD;
+            --bloom-purple: #9A6ACD;
+            --arc-immersion: #8AB4E8;
+            --arc-expanse:   #8AB4E8;
+            --arc-ascend:    #D4A854;
+            --arc-descend:   #6A5ACD;
+            --arc-lush:      #6AC4D4;
+            --arc-glow:      #D4946A;
+            --arc-muted:     #6B7080;
+            --cascade:       #D4A854;
+            --toggle-on:     #6AC4D4;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Outfit', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            cursor: default;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        #vizCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            opacity: 0;
+            transition: opacity 1.5s ease-out;
+        }
+        #vizCanvas.active { opacity: 1; }
+
+        /* ── SLIDER STACK (bottom-left, front panel) ── */
+        .slider-stack {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 1.2s ease-out;
+        }
+        .slider-stack.loaded { opacity: 1; }
+
+        .slider-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            pointer-events: all;
+        }
+        .slider-label {
+            font-size: 9px;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.35);
+            width: 78px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+        .param-slider {
+            width: 80px;
+            height: 2px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: rgba(255,255,255,0.15);
+            outline: none;
+            cursor: pointer;
+            border-radius: 1px;
+        }
+        .param-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 8px;
+            height: 8px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .param-slider::-webkit-slider-thumb:hover {
+            background: rgba(255,255,255,0.8);
+        }
+        .param-slider::-moz-range-thumb {
+            width: 8px;
+            height: 8px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+        }
+
+        .slider-value {
+            font-size: 9px;
+            letter-spacing: 0.05em;
+            color: rgba(255,255,255,0.40);
+            width: 56px;
+            text-align: left;
+            flex-shrink: 0;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* ── ADVANCED TOGGLE + PANEL ── */
+        .advanced-toggle {
+            font-size: 9px;
+            letter-spacing: 0.20em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.40);
+            margin-top: 8px;
+            padding: 4px 0;
+            cursor: pointer;
+            user-select: none;
+            transition: color 0.3s;
+            background: none;
+            border: none;
+            font-family: inherit;
+            text-align: left;
+            width: fit-content;
+        }
+        .advanced-toggle:hover {
+            color: rgba(255,255,255,0.85);
+        }
+        .advanced-toggle .arrow {
+            display: inline-block;
+            margin-left: 4px;
+            transition: transform 0.3s;
+        }
+        .advanced-toggle.open .arrow {
+            transform: rotate(90deg);
+        }
+
+        .advanced-stack {
+            position: fixed;
+            bottom: 30px;
+            left: 280px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 100;
+            opacity: 0;
+            transform: translateX(-12px);
+            pointer-events: none;
+            transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+        }
+        .advanced-stack.open {
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: all;
+        }
+        .advanced-stack .section-label {
+            font-size: 8px;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.25);
+            margin-top: 4px;
+            margin-bottom: -2px;
+        }
+        .advanced-stack .section-label:first-child {
+            margin-top: 0;
+        }
+
+        /* ── INFO OVERLAY ── */
+        .info-overlay {
+            position: fixed;
+            top: 0;
+            left: 0; right: 0;
+            bottom: 0;
+            padding: 30px;
+            pointer-events: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            z-index: 80;
+            opacity: 0;
+            transition: opacity 1.2s ease-out;
+        }
+        .info-overlay.loaded { opacity: 1; }
+
+        .info-left, .info-right {
+            font-size: 10px;
+            letter-spacing: 0.15em;
+            line-height: 1.8;
+            text-transform: uppercase;
+            text-shadow: 0 0 20px rgba(0,0,0,0.8);
+        }
+        .info-left strong, .info-right strong {
+            font-weight: 400;
+            opacity: 1;
+        }
+        .info-left a, .info-left span, .info-left br + * {
+            opacity: 0.5;
+        }
+        .info-right { text-align: right; }
+        .info-right span, .info-right strong { opacity: 0.7; }
+
+        .info-left a {
+            color: #fff;
+            text-decoration: none;
+            pointer-events: all;
+            transition: opacity 0.3s;
+        }
+        .info-left a:hover { opacity: 1; }
+        .info-right a {
+            color: #fff;
+            text-decoration: none;
+            pointer-events: all;
+            opacity: 0.5;
+            transition: opacity 0.3s;
+        }
+        .info-right a:hover { opacity: 1; }
+
+        .experimental-tag {
+            font-size: 8px;
+            letter-spacing: 0.30em;
+            color: rgba(212, 168, 84, 0.55);
+            margin-top: 6px;
+        }
+
+        /* ── START OVERLAY ── */
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: opacity 1.5s;
+            cursor: pointer;
+        }
+        .overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .overlay-text {
+            font-size: 10px;
+            letter-spacing: 0.2em;
+            opacity: 0.5;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="vizCanvas"></canvas>
+
+<div class="info-overlay" id="infoOverlay">
+    <div class="info-left">
+        <strong>Peter Baumgartner</strong><br>
+        37 / M / Mission Viejo<br>
+        <a href="https://www.linkedin.com/in/peter-baumgartner-b0094a49/" target="_blank">PM @ Microsoft</a><br>
+        <a href="https://open.spotify.com/artist/4T87J20L8uHSVkOuhP2oYX" target="_blank">music</a><br>
+        <a href="mailto:p.l.baumgartner@gmail.com">contact</a>
+        <div class="experimental-tag">DRIFT · EXPERIMENTAL</div>
+    </div>
+    <div class="info-right">
+        <strong id="elapsed">00:00</strong><br>
+        <span id="key">—</span> <span id="mode">—</span><br>
+        <span id="mood">—</span><br>
+        <strong id="active-voices">0</strong> ACTIVE<br>
+        <span id="voice-count">0</span> VOICES<br>
+        <a href="#" id="pauseBtn">pause</a> · <a href="#" id="restartBtn">restart</a>
+    </div>
+</div>
+
+<!-- Front panel sliders (mirror Drift plugin front knobs) -->
+<div class="slider-stack" id="sliderStack">
+    <div class="slider-row">
+        <span class="slider-label">In</span>
+        <input type="range" class="param-slider" data-param="inGain" min="0" max="100" value="80">
+        <span class="slider-value" data-param-value="inGain">0.0 dB</span>
+    </div>
+    <div class="slider-row">
+        <span class="slider-label">Immersion</span>
+        <input type="range" class="param-slider" data-param="immersion" min="0" max="100" value="30">
+        <span class="slider-value" data-param-value="immersion">30%</span>
+    </div>
+    <div class="slider-row">
+        <span class="slider-label">Distance</span>
+        <input type="range" class="param-slider" data-param="distance" min="0" max="100" value="50">
+        <span class="slider-value" data-param-value="distance">2.75x</span>
+    </div>
+    <div class="slider-row">
+        <span class="slider-label">Expanse</span>
+        <input type="range" class="param-slider" data-param="expanse" min="0" max="100" value="22">
+        <span class="slider-value" data-param-value="expanse">5.0 s</span>
+    </div>
+    <div class="slider-row">
+        <span class="slider-label">Feedback</span>
+        <input type="range" class="param-slider" data-param="feedback" min="0" max="100" value="0">
+        <span class="slider-value" data-param-value="feedback">0%</span>
+    </div>
+    <div class="slider-row">
+        <span class="slider-label">Mod Depth</span>
+        <input type="range" class="param-slider" data-param="modDepth" min="0" max="100" value="40">
+        <span class="slider-value" data-param-value="modDepth">40%</span>
+    </div>
+    <div class="slider-row">
+        <span class="slider-label">Glow</span>
+        <input type="range" class="param-slider" data-param="glow" min="0" max="100" value="10">
+        <span class="slider-value" data-param-value="glow">10%</span>
+    </div>
+    <div class="slider-row">
+        <span class="slider-label">Ascend</span>
+        <input type="range" class="param-slider" data-param="ascend" min="0" max="100" value="10">
+        <span class="slider-value" data-param-value="ascend">10%</span>
+    </div>
+    <div class="slider-row">
+        <span class="slider-label">Descend</span>
+        <input type="range" class="param-slider" data-param="descend" min="0" max="100" value="0">
+        <span class="slider-value" data-param-value="descend">0%</span>
+    </div>
+    <div class="slider-row">
+        <span class="slider-label">Drift</span>
+        <input type="range" class="param-slider" data-param="drift" min="0" max="100" value="10">
+        <span class="slider-value" data-param-value="drift">10%</span>
+    </div>
+    <div class="slider-row">
+        <span class="slider-label">Out</span>
+        <input type="range" class="param-slider" data-param="outGain" min="0" max="100" value="80">
+        <span class="slider-value" data-param-value="outGain">0.0 dB</span>
+    </div>
+
+    <button class="advanced-toggle" id="advancedToggle" type="button">
+        Advanced<span class="arrow">▸</span>
+    </button>
+</div>
+
+<!-- Advanced panel — everything not on Drift's front -->
+<div class="advanced-stack" id="advancedStack">
+    <div class="section-label">Reverb</div>
+    <div class="slider-row">
+        <span class="slider-label">Tone</span>
+        <input type="range" class="param-slider" data-param="tone" min="0" max="100" value="50">
+        <span class="slider-value" data-param-value="tone">0 dB</span>
+    </div>
+    <div class="slider-row">
+        <span class="slider-label">Shimmer</span>
+        <input type="range" class="param-slider" data-param="shimmer" min="0" max="100" value="25">
+        <span class="slider-value" data-param-value="shimmer">25%</span>
+    </div>
+    <div class="slider-row">
+        <span class="slider-label">Stereo Width</span>
+        <input type="range" class="param-slider" data-param="stereoWidth" min="0" max="100" value="50">
+        <span class="slider-value" data-param-value="stereoWidth">100%</span>
+    </div>
+    <div class="slider-row">
+        <span class="slider-label">Spatial</span>
+        <input type="range" class="param-slider" data-param="spatial" min="0" max="100" value="40">
+        <span class="slider-value" data-param-value="spatial">40%</span>
+    </div>
+    <div class="section-label">Voices</div>
+    <div class="slider-row">
+        <span class="slider-label">Melody</span>
+        <input type="range" class="param-slider" data-param="mVoiceVol" min="0" max="100" value="100">
+        <span class="slider-value" data-param-value="mVoiceVol">100%</span>
+    </div>
+    <div class="slider-row">
+        <span class="slider-label">Tintinnabuli</span>
+        <input type="range" class="param-slider" data-param="tVoiceVol" min="0" max="100" value="100">
+        <span class="slider-value" data-param-value="tVoiceVol">100%</span>
+    </div>
+    <div class="slider-row">
+        <span class="slider-label">Drone</span>
+        <input type="range" class="param-slider" data-param="droneVol" min="0" max="100" value="100">
+        <span class="slider-value" data-param-value="droneVol">100%</span>
+    </div>
+    <div class="slider-row">
+        <span class="slider-label">Bells</span>
+        <input type="range" class="param-slider" data-param="bellVol" min="0" max="100" value="100">
+        <span class="slider-value" data-param-value="bellVol">100%</span>
+    </div>
+    <div class="section-label">Atmosphere</div>
+    <div class="slider-row">
+        <span class="slider-label">Space</span>
+        <input type="range" class="param-slider" data-param="atmoSpace" min="0" max="100" value="70">
+        <span class="slider-value" data-param-value="atmoSpace">70%</span>
+    </div>
+    <div class="slider-row">
+        <span class="slider-label">Density</span>
+        <input type="range" class="param-slider" data-param="atmoDensity" min="0" max="100" value="55">
+        <span class="slider-value" data-param-value="atmoDensity">55%</span>
+    </div>
+    <div class="slider-row">
+        <span class="slider-label">Warmth</span>
+        <input type="range" class="param-slider" data-param="atmoWarmth" min="0" max="100" value="50">
+        <span class="slider-value" data-param-value="atmoWarmth">50%</span>
+    </div>
+    <div class="slider-row">
+        <span class="slider-label">Breath</span>
+        <input type="range" class="param-slider" data-param="atmoBreath" min="0" max="100" value="35">
+        <span class="slider-value" data-param-value="atmoBreath">35%</span>
+    </div>
+</div>
+
+<div class="overlay" id="overlay">
+    <div class="overlay-text">enter ⏎</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════════
+// Drift — experimental web port
+// Mirrors current Drift plugin parameter set (front + advanced).
+// Reuses tintinnabuli generative engine + spectral bloom visualization
+// from the home page (index.html). Background animation is intentionally
+// unchanged.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ── SIMPLEX NOISE (2D) ──────────────────────────────────────────────────────
+const F2 = 0.3660254037844386, G2 = 0.21132486540518713;
+const grad2 = [[1,1],[-1,1],[1,-1],[-1,-1],[1,0],[-1,0],[0,1],[0,-1]];
+const perm = [151,160,137,91,90,15,131,13,201,95,96,53,194,233,7,225,140,36,103,30,69,142,8,99,37,240,21,10,23,190,6,148,247,120,234,75,0,26,197,62,94,252,219,203,117,35,11,32,57,177,33,88,237,149,56,87,174,20,125,136,171,168,68,175,74,165,71,134,139,48,27,166,77,146,158,231,83,111,229,122,60,211,133,230,220,105,92,41,55,46,245,40,244,102,143,54,65,25,63,161,1,216,80,73,209,76,132,187,208,89,18,169,200,196,135,130,116,188,159,86,164,100,109,198,173,186,3,64,52,217,226,250,124,123,5,202,38,147,118,126,255,82,85,212,207,206,59,227,47,16,58,17,182,189,28,42,223,183,170,213,119,248,152,2,44,154,163,70,221,153,101,155,167,43,172,9,129,22,39,253,19,98,108,110,79,113,224,232,178,185,112,104,218,246,97,228,251,34,242,193,238,210,144,12,191,179,162,241,81,51,145,235,249,14,239,107,49,192,214,31,181,199,106,157,184,84,204,176,115,121,50,45,127,4,150,254,138,236,205,93,222,114,67,29,24,72,243,141,128,195,78,66,215,61,156,180];
+const hp = i => perm[i & 255];
+
+function simplex2D(x, y) {
+    const s = (x + y) * F2;
+    const i = Math.floor(x + s), j = Math.floor(y + s);
+    const t = (i + j) * G2;
+    const x0 = x - (i - t), y0 = y - (j - t);
+    const i1 = x0 > y0 ? 1 : 0, j1 = x0 > y0 ? 0 : 1;
+    const x1 = x0 - i1 + G2, y1 = y0 - j1 + G2;
+    const x2 = x0 - 1 + 2 * G2, y2 = y0 - 1 + 2 * G2;
+    const gi0 = hp(i + hp(j)) % 8, gi1 = hp(i + i1 + hp(j + j1)) % 8, gi2 = hp(i + 1 + hp(j + 1)) % 8;
+    let t0 = 0.5 - x0*x0 - y0*y0, t1 = 0.5 - x1*x1 - y1*y1, t2 = 0.5 - x2*x2 - y2*y2;
+    const n0 = t0 < 0 ? 0 : (t0 *= t0, t0 * t0 * (grad2[gi0][0]*x0 + grad2[gi0][1]*y0));
+    const n1 = t1 < 0 ? 0 : (t1 *= t1, t1 * t1 * (grad2[gi1][0]*x1 + grad2[gi1][1]*y1));
+    const n2 = t2 < 0 ? 0 : (t2 *= t2, t2 * t2 * (grad2[gi2][0]*x2 + grad2[gi2][1]*y2));
+    return 70 * (n0 + n1 + n2);
+}
+
+function fbm2D(x, y, t, octaves = 3) {
+    let val = 0, amp = 1, freq = 1, maxAmp = 0;
+    for (let o = 0; o < octaves; o++) {
+        val += simplex2D(x * freq + t * 0.3, y * freq + t * 0.2) * amp;
+        maxAmp += amp; amp *= 0.5; freq *= 2;
+    }
+    return val / maxAmp;
+}
+
+// ── COLOR HELPERS ────────────────────────────────────────────────────────────
+function hexToRgb(hex) {
+    const n = parseInt(hex.replace('#',''), 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+function lerpColor(c1, c2, t) {
+    return [c1[0]+(c2[0]-c1[0])*t, c1[1]+(c2[1]-c1[1])*t, c1[2]+(c2[2]-c1[2])*t];
+}
+function rgba(c, a) { return `rgba(${c[0]|0},${c[1]|0},${c[2]|0},${a})`; }
+const clamp01 = v => Math.max(0, Math.min(1, v));
+
+// ── PARAM STATE ──────────────────────────────────────────────────────────────
+// dB ↔ linear helpers. UI is 0..100; piecewise so that UI 80 = exactly 0 dB.
+//   UI  0 → -60 dB,  UI 80 → 0 dB,  UI 100 → +12 dB
+function uiToDb(ui) {
+    if (ui <= 0) return -Infinity;
+    return ui <= 80 ? (ui / 80) * 60 - 60 : ((ui - 80) / 20) * 12;
+}
+function dbToUi(db) {
+    if (db === -Infinity) return 0;
+    return db < 0 ? ((db + 60) / 60) * 80 : 80 + (db / 12) * 20;
+}
+function dbToLinear(db) { return db === -Infinity ? 0 : Math.pow(10, db / 20); }
+function fmtDb(db)      { return db === -Infinity ? '−∞ dB' : `${db.toFixed(1)} dB`; }
+
+const params = {
+    // Front panel (mirrors Drift plugin)
+    inGain:    { value: 0,    label: 'In',          fmt: v => fmtDb(v) },
+    immersion: { value: 0.30, label: 'Immersion',   fmt: v => `${Math.round(v*100)}%` },
+    distance:  { value: 2.75, label: 'Distance',    fmt: v => `${v.toFixed(2)}x` },
+    expanse:   { value: 5.0,  label: 'Expanse',     fmt: v => v < 10 ? `${v.toFixed(1)} s` : `${v.toFixed(0)} s` },
+    feedback:  { value: 0,    label: 'Feedback',    fmt: v => `${Math.round(v*100)}%` },
+    modDepth:  { value: 0.40, label: 'Mod Depth',   fmt: v => `${Math.round(v*100)}%` },
+    glow:      { value: 0.10, label: 'Glow',        fmt: v => `${Math.round(v*100)}%` },
+    ascend:    { value: 0.10, label: 'Ascend',      fmt: v => `${Math.round(v*100)}%` },
+    descend:   { value: 0,    label: 'Descend',     fmt: v => `${Math.round(v*100)}%` },
+    drift:     { value: 0.10, label: 'Drift',       fmt: v => `${Math.round(v*100)}%` },
+    outGain:   { value: 0,    label: 'Out',         fmt: v => fmtDb(v) },
+    // Advanced
+    tone:        { value: 0,    label: 'Tone',         fmt: v => `${(v*6).toFixed(1)} dB` },
+    shimmer:     { value: 0.25, label: 'Shimmer',      fmt: v => `${Math.round(v*100)}%` },
+    stereoWidth: { value: 1.0,  label: 'Stereo Width', fmt: v => `${v.toFixed(2)}x` },
+    spatial:     { value: 0.40, label: 'Spatial',      fmt: v => `${Math.round(v*100)}%` },
+    mVoiceVol:   { value: 1.0,  label: 'Melody',       fmt: v => `${Math.round(v*100)}%` },
+    tVoiceVol:   { value: 1.0,  label: 'Tintinnabuli', fmt: v => `${Math.round(v*100)}%` },
+    droneVol:    { value: 1.0,  label: 'Drone',        fmt: v => `${Math.round(v*100)}%` },
+    bellVol:     { value: 1.0,  label: 'Bells',        fmt: v => `${Math.round(v*100)}%` },
+    atmoSpace:   { value: 0.70, label: 'Space',        fmt: v => `${Math.round(v*100)}%` },
+    atmoDensity: { value: 0.55, label: 'Density',      fmt: v => `${Math.round(v*100)}%` },
+    atmoWarmth:  { value: 0.50, label: 'Warmth',       fmt: v => `${Math.round(v*100)}%` },
+    atmoBreath:  { value: 0.35, label: 'Breath',       fmt: v => `${Math.round(v*100)}%` },
+};
+
+// Convert slider 0–100 to param value (depends on which param)
+function sliderToValue(name, ui) {
+    const u = ui / 100;
+    switch (name) {
+        case 'inGain':
+        case 'outGain':   return uiToDb(ui);
+        case 'distance':  return 0.5 + u * 4.5;            // 0.5–5.0
+        case 'expanse':   return 0.1 + u * 59.9;           // 0.1–60s
+        case 'tone':      return (u - 0.5) * 2;            // -1..+1
+        case 'stereoWidth': return u * 2;                  // 0–2
+        default:          return u;                        // 0–1 normalized
+    }
+}
+function valueToSlider(name, v) {
+    switch (name) {
+        case 'inGain':
+        case 'outGain':   return Math.max(0, Math.min(100, dbToUi(v)));
+        case 'distance':  return ((v - 0.5) / 4.5) * 100;
+        case 'expanse':   return ((v - 0.1) / 59.9) * 100;
+        case 'tone':      return (v / 2 + 0.5) * 100;
+        case 'stereoWidth': return (v / 2) * 100;
+        default:          return v * 100;
+    }
+}
+
+// ── TINTINNABULI GENERATIVE ENGINE (unchanged from index.html) ──────────────
+const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const MODES = {
+    aeolian:     { intervals: [0,2,3,5,7,8,10],  name:'Aeolian',     character:'sorrowful' },
+    dorian:      { intervals: [0,2,3,5,7,9,10],  name:'Dorian',      character:'contemplative' },
+    phrygian:    { intervals: [0,1,3,5,7,8,10],  name:'Phrygian',    character:'mournful' },
+    lydian:      { intervals: [0,2,4,6,7,9,11],  name:'Lydian',      character:'luminous' },
+    mixolydian:  { intervals: [0,2,4,5,7,9,10],  name:'Mixolydian',  character:'pastoral' },
+    ionian:      { intervals: [0,2,4,5,7,9,11],  name:'Ionian',      character:'pure' },
+};
+const TRIADS = { major:[0,4,7], minor:[0,3,7] };
+
+let audioCtx, masterGain, inputGain, compressor, voiceBus;
+let analyserNode, reverbWorkletNode = null;
+let sacredRoot = 0, sacredMode = 'aeolian', sacredTriad = 'minor';
+let lastMelodyNote = 60, melodyDirection = 1;
+let mVoice = null, tVoice = null, droneVoice = null, bellVoice = null;
+let driftRunning = false, driftPaused = false;
+let startTime = 0, pausedTime = 0, totalPausedDuration = 0, activeNotes = 0;
+let tintAtmosphere = { space:0.7, density:0.55, warmth:0.5, breath:0.35 };
+let tintAtmosphereTargets = { ...tintAtmosphere };
+let atmosphereInterval = null, atmosphereChangeTimeout = null, tonalityChangeTimeout = null;
+let voiceStartTimeouts = [];
+
+const rand = (a,b) => Math.random()*(b-a)+a;
+const randInt = (a,b) => Math.floor(rand(a,b+1));
+const pick = arr => arr[Math.floor(Math.random()*arr.length)];
+const clampa = (v,a,b) => Math.max(a,Math.min(b,v));
+const midiToFreq = m => 440*Math.pow(2,(m-69)/12);
+const midiToNoteName = m => NOTE_NAMES[m%12]+Math.floor(m/12-1);
+
+function getSacredScale() {
+    const iv = MODES[sacredMode].intervals, notes = [];
+    for (let o=2; o<=7; o++) for (const i of iv) { const m=sacredRoot+i+o*12; if(m>=36&&m<=96) notes.push(m); }
+    return notes;
+}
+function getSacredTriad() {
+    const t = TRIADS[sacredTriad], notes = [];
+    for (let o=2; o<=7; o++) for (const i of t) { const m=sacredRoot+i+o*12; if(m>=36&&m<=96) notes.push(m); }
+    return notes;
+}
+function getScaleInRange(lo,hi) { return getSacredScale().filter(n=>n>=lo&&n<=hi); }
+function getTriadInRange(lo,hi) { return getSacredTriad().filter(n=>n>=lo&&n<=hi); }
+
+function getNextStepwiseNote(cur, range) {
+    const sc = getScaleInRange(range[0],range[1]);
+    if (!sc.length) return null;
+    let idx = sc.indexOf(cur);
+    if (idx===-1) { const d=sc.map(n=>Math.abs(n-cur)); idx=d.indexOf(Math.min(...d)); }
+    let next = idx + melodyDirection;
+    if (next>=sc.length||next<0) { melodyDirection*=-1; next=idx+melodyDirection; }
+    if (Math.random()<0.12) melodyDirection*=-1;
+    if (Math.random()<0.08) { next=idx+melodyDirection*2; next=clampa(next,0,sc.length-1); }
+    return sc[next];
+}
+function getTintinnabuliNote(mNote, position) {
+    const tn = getSacredTriad();
+    if (position==='superior') { const a=tn.filter(n=>n>=mNote); return a.length?a[0]:tn[tn.length-1]; }
+    const b=tn.filter(n=>n<=mNote); return b.length?b[b.length-1]:tn[0];
+}
+
+class SacredVoice {
+    constructor(ctx, output, config) {
+        this.ctx=ctx; this.config=config; this.isVoicePlaying=false;
+        this.timeout=null; this.activeOscs=[];
+        this.filter=ctx.createBiquadFilter(); this.filter.type='lowpass';
+        this.filter.frequency.value=config.brightness||2000; this.filter.Q.value=0.5;
+        this.panner=ctx.createStereoPanner(); this.panner.pan.value=config.pan||0;
+        this.gain=ctx.createGain(); this.gain.gain.value=config.volume||0.2;
+        this.userVol = 1.0; // multiplicative trim from advanced panel
+        this.baseVolume = config.volume || 0.2;
+        this.filter.connect(this.panner); this.panner.connect(this.gain); this.gain.connect(output);
+        this.panDriftTimeout=null;
+    }
+    setUserVolume(v) {
+        this.userVol = v;
+        if (this.gain) this.gain.gain.setTargetAtTime(this.baseVolume * v, this.ctx.currentTime, 0.05);
+    }
+    start() { this.isVoicePlaying=true; this.scheduleNext(true); this.startPanDrift(); }
+    stop() {
+        this.isVoicePlaying=false;
+        if(this.timeout){clearTimeout(this.timeout);this.timeout=null;}
+        if(this.panDriftTimeout){clearTimeout(this.panDriftTimeout);this.panDriftTimeout=null;}
+        this.activeOscs.forEach(n=>{try{n.env.gain.setTargetAtTime(0,this.ctx.currentTime,0.5);setTimeout(()=>{try{n.osc.stop();}catch(e){}try{n.osc2?.stop();}catch(e){}},1000);}catch(e){}});
+        this.activeOscs=[];
+    }
+    scheduleNext(immediate=false) {
+        if(!this.isVoicePlaying)return;
+        if(immediate) this.playNote();
+        const base=this.config.interval||5000;
+        const dm=1.8-tintAtmosphere.density*0.8;
+        const interval=base*dm*rand(0.7,1.3);
+        this.timeout=setTimeout(()=>{
+            if(!this.isVoicePlaying)return;
+            const sc=Math.max(0,0.6-tintAtmosphere.density*0.8);
+            if(Math.random()<sc){this.scheduleNext();return;}
+            this.playNote(); this.scheduleNext();
+        },interval);
+    }
+    playNote(){}
+    createBellTone(freq, velocity=0.5) {
+        const now=this.ctx.currentTime;
+        const osc=this.ctx.createOscillator(); osc.type='sine'; osc.frequency.value=freq; osc.detune.value=rand(-4,4);
+        const osc2=this.ctx.createOscillator(); osc2.type='sine'; osc2.frequency.value=freq*2; osc2.detune.value=rand(-6,6);
+        const env=this.ctx.createGain(); env.gain.value=0;
+        const att=this.config.bellLike?0.008:(this.config.attack||0.6);
+        const dec=(this.config.decay||5)*(0.6+tintAtmosphere.warmth*0.6);
+        const vol=velocity*0.8;
+        env.gain.setValueAtTime(0,now);
+        env.gain.linearRampToValueAtTime(vol,now+att);
+        env.gain.exponentialRampToValueAtTime(0.001,now+att+dec);
+        const env2=this.ctx.createGain(); env2.gain.value=0;
+        env2.gain.setValueAtTime(0,now);
+        env2.gain.linearRampToValueAtTime(vol*0.12,now+att);
+        env2.gain.exponentialRampToValueAtTime(0.001,now+att+dec*0.6);
+        osc.connect(env); osc2.connect(env2); env.connect(this.filter); env2.connect(this.filter);
+        osc.start(now); osc2.start(now);
+        const obj={osc,osc2,env,env2}; this.activeOscs.push(obj);
+        const stop=(att+dec+1)*1000;
+        setTimeout(()=>{try{osc.stop();osc2.stop();}catch(e){}this.activeOscs=this.activeOscs.filter(n=>n!==obj);},stop);
+        activeNotes++; setTimeout(()=>{activeNotes=Math.max(0,activeNotes-1);},stop);
+    }
+    startPanDrift() {
+        const drift=()=>{if(!this.isVoicePlaying)return;
+            const np=clampa(this.panner.pan.value+rand(-0.4,0.4),-0.85,0.85);
+            const dt=rand(12,30); this.panner.pan.linearRampToValueAtTime(np,this.ctx.currentTime+dt);
+            this.panDriftTimeout=setTimeout(drift,dt*1000+rand(5000,15000));
+        }; drift();
+    }
+}
+
+class MelodicVoice extends SacredVoice {
+    constructor(ctx,out){super(ctx,out,{name:'M-voice',volume:0.32,brightness:2800,pan:-0.25,interval:4000,attack:0.5,decay:6,range:[48,72]});}
+    playNote(){
+        const n=getNextStepwiseNote(lastMelodyNote,this.config.range); if(!n)return;
+        lastMelodyNote=n; this.createBellTone(midiToFreq(n),rand(0.45,0.7));
+    }
+}
+class TintinnabuliVoice extends SacredVoice {
+    constructor(ctx,out){super(ctx,out,{name:'T-voice',volume:0.26,brightness:3200,pan:0.25,interval:5000,attack:0.3,decay:8,bellLike:true,range:[52,84]});this.position='superior';}
+    playNote(){
+        if(Math.random()<0.25) this.position=this.position==='superior'?'inferior':'superior';
+        let n=getTintinnabuliNote(lastMelodyNote,this.position);
+        const r=this.config.range; while(n<r[0])n+=12; while(n>r[1])n-=12;
+        this.createBellTone(midiToFreq(n),rand(0.35,0.55));
+    }
+}
+class DroneVoice extends SacredVoice {
+    constructor(ctx,out){super(ctx,out,{name:'Drone',volume:0.22,brightness:600,pan:0,interval:15000,attack:3,decay:18,range:[36,48]});}
+    playNote(){
+        const root=sacredRoot+36, fifth=root+7;
+        const n=Math.random()<0.75?root:fifth;
+        this.createBellTone(midiToFreq(n),rand(0.35,0.55));
+    }
+}
+class BellVoice extends SacredVoice {
+    constructor(ctx,out){super(ctx,out,{name:'Bells',volume:0.18,brightness:4500,pan:0,interval:18000,attack:0.008,decay:10,bellLike:true,range:[72,88]});}
+    playNote(){
+        const t=getTriadInRange(this.config.range[0],this.config.range[1]);
+        if(!t.length)return; this.createBellTone(midiToFreq(pick(t)),rand(0.25,0.45));
+    }
+}
+
+function startTintAtmosphere() {
+    Object.keys(tintAtmosphere).forEach(k=>{tintAtmosphereTargets[k]=tintAtmosphere[k];});
+    atmosphereInterval=setInterval(()=>{
+        Object.keys(tintAtmosphere).forEach(k=>{tintAtmosphere[k]+=(tintAtmosphereTargets[k]-tintAtmosphere[k])*0.012;});
+        applyTintAtmosphere();
+    },50);
+    scheduleTintAtmosphereChange();
+}
+function stopTintAtmosphere() {
+    if(atmosphereInterval){clearInterval(atmosphereInterval);atmosphereInterval=null;}
+    if(atmosphereChangeTimeout){clearTimeout(atmosphereChangeTimeout);atmosphereChangeTimeout=null;}
+}
+function scheduleTintAtmosphereChange() {
+    if(!driftRunning)return;
+    atmosphereChangeTimeout=setTimeout(runTintAtmosphereChange, rand(15000,40000));
+}
+function runTintAtmosphereChange() {
+    if(!driftRunning) return;
+    if(driftPaused) {
+        // Paused — defer the change without dropping the timer entirely
+        atmosphereChangeTimeout = setTimeout(runTintAtmosphereChange, 1000);
+        return;
+    }
+    const ps=Object.keys(tintAtmosphere); const nc=Math.random()<0.4?2:1;
+    for(let i=0;i<nc;i++){
+        const p=pick(ps);
+        tintAtmosphereTargets[p]=Math.random()<0.35?(Math.random()<0.5?rand(0.12,0.3):rand(0.7,0.9)):clampa(tintAtmosphereTargets[p]+rand(-0.35,0.35),0.1,0.9);
+    }
+    scheduleTintAtmosphereChange();
+}
+function applyTintAtmosphere() {
+    if(!masterGain||!audioCtx)return; const now=audioCtx.currentTime;
+    const wm=0.6+tintAtmosphere.warmth*0.8;
+    if(mVoice) mVoice.filter.frequency.setTargetAtTime(1800*wm,now,3);
+    if(tVoice) tVoice.filter.frequency.setTargetAtTime(2200*wm,now,3);
+    if(droneVoice) droneVoice.filter.frequency.setTargetAtTime(400*wm,now,3);
+    if(bellVoice) bellVoice.filter.frequency.setTargetAtTime(3500*wm,now,3);
+}
+
+function scheduleTonalityChange() {
+    if(!driftRunning)return;
+    tonalityChangeTimeout=setTimeout(runTonalityChange, rand(120000,360000));
+}
+function runTonalityChange() {
+    if(!driftRunning) return;
+    if(driftPaused) {
+        // Paused — defer rather than dropping the timer
+        tonalityChangeTimeout = setTimeout(runTonalityChange, 1000);
+        return;
+    }
+    if(Math.random()<0.7){
+        sacredMode=pick(Object.keys(MODES));
+        sacredTriad=['aeolian','dorian','phrygian'].includes(sacredMode)?'minor':'major';
+    } else {
+        const mv=Math.random()<0.5?7:5, dir=Math.random()<0.5?1:-1;
+        sacredRoot=(sacredRoot+mv*dir+12)%12; lastMelodyNote=sacredRoot+60;
+    }
+    scheduleTonalityChange();
+}
+
+// ── Apply params to audio (worklet + gain nodes + voices + atmosphere) ──────
+function applyParamsToAudio() {
+    if (!audioCtx) return;
+    const now = audioCtx.currentTime;
+    // IN / OUT gain (dB)
+    if (inputGain)  inputGain.gain.setTargetAtTime(dbToLinear(params.inGain.value),  now, 0.02);
+    if (masterGain) masterGain.gain.setTargetAtTime(dbToLinear(params.outGain.value), now, 0.02);
+    // Worklet params
+    if (reverbWorkletNode) {
+        const p = reverbWorkletNode.parameters;
+        p.get('mix').setValueAtTime(params.immersion.value, now);
+        p.get('distance').setValueAtTime(params.distance.value, now);
+        p.get('dimension').setValueAtTime(params.expanse.value, now);
+        p.get('feedback').setValueAtTime(params.feedback.value, now);
+        p.get('modDepth').setValueAtTime(params.modDepth.value, now);
+        p.get('warmth').setValueAtTime(params.glow.value, now);
+        p.get('octUp').setValueAtTime(params.ascend.value, now);
+        p.get('octDown').setValueAtTime(params.descend.value, now);
+        p.get('drift').setValueAtTime(params.drift.value, now);
+        p.get('tone').setValueAtTime(params.tone.value, now);
+        p.get('shimmerLevel').setValueAtTime(params.shimmer.value, now);
+        p.get('stereoWidth').setValueAtTime(params.stereoWidth.value, now);
+        p.get('spatial').setValueAtTime(params.spatial.value, now);
+    }
+    // Voice user volumes
+    if (mVoice) mVoice.setUserVolume(params.mVoiceVol.value);
+    if (tVoice) tVoice.setUserVolume(params.tVoiceVol.value);
+    if (droneVoice) droneVoice.setUserVolume(params.droneVol.value);
+    if (bellVoice) bellVoice.setUserVolume(params.bellVol.value);
+    // Atmosphere overrides — set targets so the smoothing loop converges to them
+    tintAtmosphereTargets.space   = params.atmoSpace.value;
+    tintAtmosphereTargets.density = params.atmoDensity.value;
+    tintAtmosphereTargets.warmth  = params.atmoWarmth.value;
+    tintAtmosphereTargets.breath  = params.atmoBreath.value;
+}
+
+async function initAudio() {
+    audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    analyserNode = audioCtx.createAnalyser();
+    analyserNode.fftSize = 256; analyserNode.smoothingTimeConstant = 0.85;
+    inputGain  = audioCtx.createGain(); inputGain.gain.value  = dbToLinear(params.inGain.value);
+    masterGain = audioCtx.createGain(); masterGain.gain.value = dbToLinear(params.outGain.value);
+    compressor = audioCtx.createDynamicsCompressor();
+    compressor.threshold.value = -24; compressor.knee.value = 30;
+    compressor.ratio.value = 6; compressor.attack.value = 0.005; compressor.release.value = 0.3;
+    const hpF = audioCtx.createBiquadFilter();
+    hpF.type = "highpass"; hpF.frequency.value = 20; hpF.Q.value = 0.7;
+
+    // Load updated AudioWorklet (drift-reverb)
+    await audioCtx.audioWorklet.addModule("drift-worklet-new.js");
+    reverbWorkletNode = new AudioWorkletNode(audioCtx, "drift-reverb", {
+        numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2],
+    });
+
+    // Voice bus → IN gain → worklet → OUT gain → compressor → HPF → analyser → output
+    voiceBus = audioCtx.createGain(); voiceBus.gain.value = 1;
+    voiceBus.connect(inputGain);
+    inputGain.connect(reverbWorkletNode);
+    reverbWorkletNode.connect(masterGain);
+    masterGain.connect(compressor);
+    compressor.connect(hpF);
+    hpF.connect(analyserNode);
+    analyserNode.connect(audioCtx.destination);
+
+    mVoice = new MelodicVoice(audioCtx, voiceBus);
+    tVoice = new TintinnabuliVoice(audioCtx, voiceBus);
+    droneVoice = new DroneVoice(audioCtx, voiceBus);
+    bellVoice = new BellVoice(audioCtx, voiceBus);
+
+    sacredRoot = randInt(0, 11);
+    sacredMode = pick(Object.keys(MODES));
+    sacredTriad = ["aeolian","dorian","phrygian"].includes(sacredMode) ? "minor" : "major";
+    lastMelodyNote = sacredRoot + 60;
+    Object.keys(tintAtmosphere).forEach(k => { const v = rand(0.25, 0.75); tintAtmosphere[k] = v; tintAtmosphereTargets[k] = v; });
+    applyParamsToAudio();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SPECTRAL BLOOM VISUALIZATION (unchanged from index.html — wired to new params)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const BLOOM_RES = 200;
+let upperBloom = new Float32Array(BLOOM_RES);
+let lowerBloom = new Float32Array(BLOOM_RES);
+let smoothedPeak = 0;
+let noisePhase = 0;
+let animPhase = 0;
+let descendThrob = 0;
+let cascadeBrightness = 0;
+let vizCanvas, vizCtx;
+let vizW, vizH;
+let cascadeActive = false, fxActive = false;
+
+let noiseFrames = [];
+let noiseFrameIdx = 0;
+let vblankCount = 0;
+
+function initFilmGrain() {
+    for (let f = 0; f < 4; f++) {
+        const c = document.createElement('canvas');
+        c.width = 550; c.height = 250;
+        const cx = c.getContext('2d');
+        const img = cx.createImageData(550, 250);
+        const d = img.data;
+        for (let i = 0; i < d.length; i += 4) {
+            const r = (Math.random() + Math.random() + Math.random()) / 3;
+            const v = (r * 255) | 0;
+            const a = 4 + (Math.random() * 6) | 0;
+            d[i] = v; d[i+1] = v; d[i+2] = v; d[i+3] = a;
+        }
+        cx.putImageData(img, 0, 0);
+        noiseFrames.push(c);
+    }
+}
+
+function getAudioPeak() {
+    if (!analyserNode) return 0;
+    const data = new Uint8Array(analyserNode.frequencyBinCount);
+    analyserNode.getByteTimeDomainData(data);
+    let peak = 0;
+    for (let i = 0; i < data.length; i++) peak = Math.max(peak, Math.abs(data[i] - 128) / 128);
+    return peak;
+}
+
+function updateBloomShapes() {
+    const mix = params.immersion.value;
+    const octUp = params.ascend.value;
+    const octDown = params.descend.value;
+    const decay = params.expanse.value;
+    const modD = params.modDepth.value;
+    // tone here is used only for visual tinting; map worklet -1..+1 to UI 0..1
+    const tone = params.tone.value * 0.5 + 0.5;
+
+    const currentPeak = clampa(getAudioPeak() * 3, 0, 1);
+    smoothedPeak += (currentPeak > smoothedPeak ? 0.5 : 0.06) * (currentPeak - smoothedPeak);
+
+    const cascadeTarget = cascadeActive ? 1 : 0;
+    cascadeBrightness += (cascadeTarget - cascadeBrightness) * 0.05;
+    animPhase += 0.011;
+    descendThrob += 0.004;
+    noisePhase += cascadeActive ? 0.003 : 0.025;
+
+    vblankCount++;
+    if (vblankCount >= 6) { noiseFrameIdx = (noiseFrameIdx + 1) % 4; vblankCount = 0; }
+
+    const idleBase = 0.13, reactivity = 1.58;
+    const audioLevel = idleBase + smoothedPeak * reactivity;
+    const mixScale = 0.9 + mix * 0.63;
+    const upperParam = 0.35 + octUp * 0.68;
+    const lowerParam = 0.35 + octDown * 0.68;
+
+    const decayNorm = clampa((decay - 0.1) / 59.9, 0, 1);
+    const baseSigma = 0.28 + decayNorm * 0.30;
+    let upperSigma = baseSigma * (1 - octUp * 0.3);
+    upperSigma = Math.max(0.12, upperSigma);
+    const lowerSigma = baseSigma * (1 + octDown * 0.4);
+    const gaussianCenter = 0.5;
+    const fbmOctaves = 3 + Math.floor(modD * 3);
+    const breathAmp = 0.4 + modD * 0.75;
+    const cascadeBoost = 1 + cascadeBrightness * 0.8;
+
+    for (let i = 0; i < BLOOM_RES; i++) {
+        const t = i / (BLOOM_RES - 1);
+        const tc = t - gaussianCenter;
+        const upperEnv = Math.exp(-(tc*tc) / (2 * upperSigma * upperSigma));
+        const lowerEnv = Math.exp(-(tc*tc) / (2 * lowerSigma * lowerSigma));
+        const nx = t * 3;
+        const nv1 = fbm2D(nx, 0, noisePhase, fbmOctaves) * 0.5 + 0.5;
+        const nv2 = fbm2D(nx + 10, 5, noisePhase * 0.8, fbmOctaves) * 0.5 + 0.5;
+        const breath = Math.sin(animPhase * 2.75 + t * 5.5) * breathAmp * 0.23;
+        upperBloom[i] = clampa((audioLevel + breath) * mixScale * upperParam * upperEnv * nv1 * cascadeBoost, 0, 1);
+        lowerBloom[i] = clampa((audioLevel * 0.8 + breath * 0.7) * mixScale * lowerParam * lowerEnv * nv2 * cascadeBoost, 0, 1);
+    }
+
+    if (octDown > 0.001) {
+        const throbMod = 1 + Math.sin(descendThrob) * octDown * 0.25;
+        for (let i = 0; i < BLOOM_RES; i++) lowerBloom[i] = clampa(lowerBloom[i] * throbMod, 0, 1);
+    }
+}
+
+function paintSpectralBloom() {
+    const g = vizCtx;
+    g.clearRect(0, 0, vizW, vizH);
+
+    const vx = 0;
+    const vw = vizW;
+    const vh = vizH * 0.6;
+    const vy = (vizH - vh) / 2;
+    const midY = vy + vh * 0.50;
+    const maxBloomH = vh * 0.47;
+
+    const mix = params.immersion.value;
+    const warmth = params.glow.value;
+    const tone = params.tone.value * 0.5 + 0.5;
+    const octUp = params.ascend.value;
+    const octDown = params.descend.value;
+
+    const glowIntensity = clampa(warmth * warmth * warmth * 4, 0, 1);
+    const sizzle = clampa((warmth - 0.75) * 4, 0, 1);
+    const glowSuppress = 1 - glowIntensity * 0.85;
+
+    const amberTint = [212,148,106], hotAmber = [232,130,58], scorchOrange = [240,112,26], blazeHot = [255,96,16];
+    const glowCol = lerpColor(lerpColor(amberTint, lerpColor(hotAmber, scorchOrange, glowIntensity), glowIntensity), blazeHot, sizzle * 0.5);
+    const darkAmber = [26,14,8];
+    const vizBgBase = hexToRgb('#080A14');
+    const vizBgCol = lerpColor(vizBgBase, darkAmber, glowIntensity * 0.9 + sizzle * 0.1);
+
+    const bloomBlue = hexToRgb('#8AB4E8'), bloomGold = hexToRgb('#D4A854');
+    const bloomIndigo = hexToRgb('#6A5ACD'), bloomPurple = hexToRgb('#9A6ACD');
+
+    g.fillStyle = rgba(vizBgCol, 1);
+    g.fillRect(0, 0, vizW, vizH);
+
+    const midAlpha = 0.10 + mix*0.12 + cascadeBrightness*0.08 + glowIntensity*0.15 + sizzle*0.20;
+    const midCol = lerpColor([46,46,46], glowCol, glowIntensity * 0.7);
+    g.strokeStyle = rgba(midCol, midAlpha);
+    g.lineWidth = 1;
+    g.beginPath();
+    g.moveTo(vx + 10, midY);
+    g.lineTo(vx + vw - 10, midY);
+    g.stroke();
+
+    let upperBaseCol = lerpColor(bloomBlue, glowCol, glowIntensity * 0.75);
+    let upperPeakCol = lerpColor(upperBaseCol, lerpColor(bloomGold, glowCol, glowIntensity*0.5), 0.3 + tone*0.5);
+
+    const ascWhiteGold = [255,244,208], ascBrightGold = [255,232,160];
+    upperBaseCol = lerpColor(upperBaseCol, ascBrightGold, octUp * 0.4 * glowSuppress);
+    upperPeakCol = lerpColor(upperPeakCol, ascWhiteGold, octUp * 0.75 * glowSuppress);
+
+    const descDeepViolet = [74,32,176], descRichPurple = [112,48,208];
+    let lowerBaseCol = lerpColor(lerpColor(bloomIndigo, glowCol, glowIntensity*0.6), descDeepViolet, octDown*0.5*glowSuppress);
+    let lowerPeakCol = lerpColor(lerpColor(lowerBaseCol, lerpColor(bloomPurple, glowCol, glowIntensity*0.4), 0.3+tone*0.3), descRichPurple, octDown*0.4*glowSuppress);
+
+    function drawBloom(bloom, dir, maxH, baseCol, peakCol, alphaBase, alphaPeak) {
+        const grad = g.createLinearGradient(vx + vw/2, midY, vx + vw/2, midY + dir * maxH);
+        grad.addColorStop(0, rgba(baseCol, alphaBase));
+        grad.addColorStop(0.4, rgba(bloomPurple.map((c,i)=>c+(glowCol[i]-c)*glowIntensity*0.5), 0.4 + glowIntensity*0.15));
+        grad.addColorStop(1, rgba(peakCol, alphaPeak));
+        g.fillStyle = grad;
+        g.beginPath();
+        g.moveTo(vx, midY);
+        for (let i = 0; i < BLOOM_RES; i++) {
+            const px = vx + (i / (BLOOM_RES-1)) * vw;
+            g.lineTo(px, midY + dir * bloom[i] * maxH);
+        }
+        g.lineTo(vx + vw, midY);
+        g.closePath();
+        g.fill();
+
+        g.fillStyle = rgba(peakCol, 0.06 + cascadeBrightness*0.04 + (dir < 0 ? octUp*0.10 : 0));
+        g.beginPath();
+        g.moveTo(vx, midY);
+        for (let i = 0; i < BLOOM_RES; i++) {
+            const px = vx + (i / (BLOOM_RES-1)) * vw;
+            g.lineTo(px, midY + dir * bloom[i] * maxH * 1.2);
+        }
+        g.lineTo(vx + vw, midY);
+        g.closePath();
+        g.fill();
+
+        const edgeA = dir < 0 ? (0.20 + octUp*0.20 + cascadeBrightness*0.15) : (0.15 + octDown*0.15);
+        g.strokeStyle = rgba(peakCol, edgeA);
+        g.lineWidth = 1.5 + (dir < 0 ? octUp : octDown) * 1;
+        g.beginPath();
+        for (let i = 0; i < BLOOM_RES; i++) {
+            const px = vx + (i / (BLOOM_RES-1)) * vw;
+            if (i === 0) g.moveTo(px, midY + dir * bloom[i] * maxH);
+            else g.lineTo(px, midY + dir * bloom[i] * maxH);
+        }
+        g.stroke();
+    }
+
+    function drawShells(bloom, dir, maxH, numShells, octAmt, innerCol, outerCol, deepCol) {
+        if (octAmt < 0.02) return;
+        for (let shell = numShells; shell >= 1; shell--) {
+            const expand = 1 + shell * 0.24 * octAmt;
+            let shellAlpha = (octAmt * octAmt) * 0.18 / (shell * 0.7);
+            shellAlpha = Math.min(shellAlpha, 0.35);
+            shellAlpha *= (1 - glowIntensity * 0.7);
+            const frac = (shell - 1) / (numShells - 1);
+            const shellCol = lerpColor(lerpColor(innerCol, outerCol, frac * 0.6), deepCol || outerCol, frac * 0.3);
+            g.fillStyle = rgba(shellCol, shellAlpha);
+            g.beginPath();
+            g.moveTo(vx, midY);
+            for (let i = 0; i < BLOOM_RES; i++) {
+                const px = vx + (i / (BLOOM_RES-1)) * vw;
+                const h = bloom[i] * maxH * (dir < 0 ? 1 : 0.8) * expand;
+                g.lineTo(px, midY + dir * h);
+            }
+            g.lineTo(vx + vw, midY);
+            g.closePath();
+            g.fill();
+        }
+    }
+
+    drawShells(upperBloom, -1, maxBloomH, 7, octUp, [255,244,208], [255,224,144], [255,255,255]);
+    drawShells(lowerBloom, 1, maxBloomH, 7, octDown, [106,58,224], [58,24,128], [42,16,96]);
+
+    drawBloom(upperBloom, -1, maxBloomH, upperBaseCol, upperPeakCol,
+        0.55 + octUp*0.10, 0.75 + cascadeBrightness*0.2 + octUp*0.15);
+    drawBloom(lowerBloom, 1, maxBloomH * 0.8, lowerBaseCol, lowerPeakCol, 0.45, 0.30);
+
+    if (glowIntensity > 0.01) {
+        const sunCore = [255,248,224];
+        for (let shell = 2; shell >= 1; shell--) {
+            const expand = 1 + shell * 0.12 * glowIntensity;
+            let sa = (glowIntensity * 0.30 + sizzle * 0.25) / shell;
+            sa = Math.min(sa, 0.55);
+            const sCol = lerpColor(lerpColor(glowCol, scorchOrange, sizzle*0.6), sunCore, glowIntensity*(shell===1?0.5:0.2));
+            g.fillStyle = rgba(sCol, sa);
+            g.beginPath(); g.moveTo(vx, midY);
+            for (let i = 0; i < BLOOM_RES; i++) {
+                const px = vx + (i/(BLOOM_RES-1))*vw;
+                g.lineTo(px, midY - upperBloom[i] * maxBloomH * expand);
+            }
+            g.lineTo(vx+vw, midY); g.closePath(); g.fill();
+            g.fillStyle = rgba(sCol, sa * 0.7);
+            g.beginPath(); g.moveTo(vx, midY);
+            for (let i = 0; i < BLOOM_RES; i++) {
+                const px = vx + (i/(BLOOM_RES-1))*vw;
+                g.lineTo(px, midY + lowerBloom[i] * maxBloomH * 0.8 * expand);
+            }
+            g.lineTo(vx+vw, midY); g.closePath(); g.fill();
+        }
+    }
+
+    const haloI = clampa(glowIntensity + sizzle*0.8 + octUp*octUp*0.15 + octDown*octDown*0.15, 0, 1);
+    if (haloI > 0.01) {
+        const warmHalo = lerpColor(lerpColor(glowCol, [255,216,112], 0.3+sizzle*0.3), [255,232,176], octUp*0.3);
+        const coolHalo = lerpColor([80,112,208], [112,80,224], octDown*0.4);
+        const offsets = [2,5,10,18,28,40], scales = [1.02,1.05,1.10,1.18,1.28,1.40];
+        const wAs = [0.10,0.08,0.06,0.04,0.025,0.015], cAs = [0.07,0.055,0.04,0.028,0.018,0.010];
+
+        for (let layer = 5; layer >= 0; layer--) {
+            const off = offsets[layer] * haloI;
+            const sc = 1 + (scales[layer]-1) * haloI;
+            const wA = wAs[layer] * haloI, cA = cAs[layer] * haloI;
+
+            for (const dir of [-1, 1]) {
+                const bl = dir < 0 ? upperBloom : lowerBloom;
+                const hm = dir < 0 ? maxBloomH : maxBloomH * 0.8;
+                g.fillStyle = rgba(warmHalo, dir < 0 ? wA : wA*0.8);
+                g.beginPath(); g.moveTo(vx-off, midY);
+                for (let i = 0; i < BLOOM_RES; i++) {
+                    const px = vx + (i/(BLOOM_RES-1))*vw - off;
+                    g.lineTo(px, midY + dir * bl[i] * hm * sc);
+                }
+                g.lineTo(vx+vw-off, midY); g.closePath(); g.fill();
+            }
+            for (const dir of [-1, 1]) {
+                const bl = dir < 0 ? upperBloom : lowerBloom;
+                const hm = dir < 0 ? maxBloomH : maxBloomH * 0.8;
+                g.fillStyle = rgba(coolHalo, dir < 0 ? cA : cA*0.8);
+                g.beginPath(); g.moveTo(vx+off, midY);
+                for (let i = 0; i < BLOOM_RES; i++) {
+                    const px = vx + (i/(BLOOM_RES-1))*vw + off;
+                    g.lineTo(px, midY + dir * bl[i] * hm * sc);
+                }
+                g.lineTo(vx+vw+off, midY); g.closePath(); g.fill();
+            }
+        }
+    }
+
+    if (octDown > 0.01) {
+        const strataCol = bloomIndigo;
+        for (let line = 0; line < 5; line++) {
+            const lineFrac = (line+1) / 6;
+            const lineY = midY + maxBloomH * 0.8 * lineFrac;
+            const pulse = Math.sin(descendThrob * 2 + line * 1.5) * 0.5 + 0.5;
+            const la = octDown * 0.12 * pulse;
+            if (la < 0.005) continue;
+            g.strokeStyle = rgba(strataCol, la);
+            g.lineWidth = 1;
+            g.beginPath();
+            let inSeg = false;
+            for (let i = 0; i < BLOOM_RES; i++) {
+                const bH = lowerBloom[i] * maxBloomH * 0.8;
+                const bBottom = midY + bH;
+                if (bBottom >= lineY && lowerBloom[i] > 0.05) {
+                    const px = vx + (i/(BLOOM_RES-1))*vw;
+                    if (!inSeg) { g.moveTo(px, lineY); inSeg = true; }
+                    else g.lineTo(px, lineY);
+                } else { inSeg = false; }
+            }
+            g.stroke();
+        }
+    }
+
+    if (noiseFrames.length > 0) {
+        const grainAlpha = 0.12 + glowIntensity*0.28 + sizzle*0.35;
+        g.globalAlpha = grainAlpha;
+        g.drawImage(noiseFrames[noiseFrameIdx], 0, 0, vizW, vizH);
+        g.globalAlpha = 1;
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SLIDER UI
+// ─────────────────────────────────────────────────────────────────────────────
+
+function updateSliderValueLabel(name) {
+    const p = params[name];
+    if (!p) return;
+    const el = document.querySelector(`[data-param-value="${name}"]`);
+    if (el) el.textContent = p.fmt(p.value);
+}
+
+function initSliders() {
+    document.querySelectorAll('.param-slider[data-param]').forEach(slider => {
+        const name = slider.dataset.param;
+        const p = params[name];
+        if (!p) return;
+        slider.value = valueToSlider(name, p.value);
+        updateSliderValueLabel(name);
+
+        slider.addEventListener('input', () => {
+            p.value = sliderToValue(name, parseFloat(slider.value));
+            updateSliderValueLabel(name);
+            applyParamsToAudio();
+        });
+    });
+}
+
+function refreshAllValueLabels() {
+    Object.keys(params).forEach(updateSliderValueLabel);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN LOOP
+// ─────────────────────────────────────────────────────────────────────────────
+
+function driftUpdate() {
+    if (!driftRunning || driftPaused) return;
+    updateDriftUI();
+    setTimeout(driftUpdate, 500);
+}
+
+function updateDriftUI() {
+    const elapsed = (Date.now() - startTime - totalPausedDuration) / 1000;
+    const mins = Math.floor(elapsed / 60), secs = Math.floor(elapsed % 60);
+    document.getElementById('elapsed').textContent = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+    document.getElementById('key').textContent = NOTE_NAMES[sacredRoot];
+    document.getElementById('mode').textContent = MODES[sacredMode].name;
+    const moodEl = document.getElementById('mood');
+    if (moodEl) moodEl.textContent = MODES[sacredMode].character || '—';
+    document.getElementById('active-voices').textContent = activeNotes;
+    document.getElementById('voice-count').textContent = '4';
+}
+
+function vizLoop() {
+    if (!driftRunning) return;
+    if (vizW !== window.innerWidth || vizH !== window.innerHeight) {
+        resizeViz();
+    }
+    updateBloomShapes();
+    paintSpectralBloom();
+    requestAnimationFrame(vizLoop);
+}
+
+function resizeViz() {
+    if (!vizCanvas) return;
+    const dpr = window.devicePixelRatio || 1;
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    vizCanvas.width = w * dpr;
+    vizCanvas.height = h * dpr;
+    vizCtx = vizCanvas.getContext('2d');
+    vizCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    vizW = w;
+    vizH = h;
+}
+
+function initVizCanvas() {
+    vizCanvas = document.getElementById('vizCanvas');
+    vizCtx = vizCanvas.getContext('2d');
+    resizeViz();
+    window.addEventListener('resize', resizeViz);
+}
+
+async function startApp() {
+    document.getElementById('overlay').classList.add('hidden');
+
+    initFilmGrain();
+    await initAudio();
+
+    driftRunning = true;
+    driftPaused = false;
+    startTime = Date.now();
+    totalPausedDuration = 0;
+
+    droneVoice.start();
+    voiceStartTimeouts.push(setTimeout(() => { if(driftRunning) mVoice.start(); }, 1500));
+    voiceStartTimeouts.push(setTimeout(() => { if(driftRunning) tVoice.start(); }, 3500));
+    voiceStartTimeouts.push(setTimeout(() => { if(driftRunning) bellVoice.start(); }, 8000));
+
+    startTintAtmosphere();
+    scheduleTonalityChange();
+
+    vizCanvas.classList.add('active');
+    setTimeout(() => document.getElementById('infoOverlay').classList.add('loaded'), 800);
+    setTimeout(() => document.getElementById('sliderStack').classList.add('loaded'), 1600);
+
+    refreshAllValueLabels();
+    applyParamsToAudio();
+    driftUpdate();
+    vizLoop();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EVENT HANDLERS
+// ─────────────────────────────────────────────────────────────────────────────
+
+const overlay = document.getElementById('overlay');
+function triggerStart() {
+    if (overlay.classList.contains('hidden')) return;
+    startApp();
+    document.removeEventListener('keydown', triggerStart);
+    overlay.removeEventListener('click', triggerStart);
+}
+document.addEventListener('keydown', triggerStart);
+overlay.addEventListener('click', triggerStart);
+
+document.getElementById('pauseBtn').addEventListener('click', e => {
+    e.preventDefault();
+    if (!driftRunning) return;
+    if (driftPaused) {
+        driftPaused = false;
+        totalPausedDuration += Date.now() - pausedTime;
+        if (audioCtx?.state === 'suspended') audioCtx.resume();
+        document.getElementById('pauseBtn').textContent = 'pause';
+        driftUpdate();
+    } else {
+        driftPaused = true;
+        pausedTime = Date.now();
+        if (audioCtx?.state === 'running') audioCtx.suspend();
+        document.getElementById('pauseBtn').textContent = 'resume';
+    }
+});
+document.getElementById('restartBtn').addEventListener('click', e => {
+    e.preventDefault();
+    if (!driftRunning && !driftPaused) return;
+    driftRunning = false; driftPaused = false;
+    mVoice?.stop(); tVoice?.stop(); droneVoice?.stop(); bellVoice?.stop();
+    stopTintAtmosphere();
+    if(tonalityChangeTimeout){clearTimeout(tonalityChangeTimeout);tonalityChangeTimeout=null;}
+    // Cancel pending deferred voice starts so they don't fire into the new session
+    voiceStartTimeouts.forEach(clearTimeout);
+    voiceStartTimeouts.length = 0;
+    // Close the previous AudioContext before startApp() creates a new one
+    if (audioCtx) {
+        try { audioCtx.close(); } catch (err) {}
+        audioCtx = null;
+        reverbWorkletNode = null;
+        inputGain = null; masterGain = null;
+        analyserNode = null;
+    }
+    setTimeout(startApp, 300);
+});
+
+document.getElementById('advancedToggle').addEventListener('click', () => {
+    const t = document.getElementById('advancedToggle');
+    const s = document.getElementById('advancedStack');
+    const open = !t.classList.contains('open');
+    t.classList.toggle('open', open);
+    s.classList.toggle('open', open);
+});
+
+document.addEventListener('keydown', e => {
+    if (!driftRunning && !driftPaused) return;
+    if (e.key === ' ') { e.preventDefault(); document.getElementById('pauseBtn').click(); }
+    if (e.key.toLowerCase() === 'r') { e.preventDefault(); document.getElementById('restartBtn').click(); }
+});
+
+document.addEventListener('visibilitychange', () => {
+    if (driftRunning && audioCtx && !driftPaused && audioCtx.state === 'suspended') audioCtx.resume();
+});
+setInterval(() => {
+    if (driftRunning && !driftPaused && audioCtx?.state === 'suspended') audioCtx.resume().catch(()=>{});
+}, 1000);
+
+window.addEventListener('DOMContentLoaded', () => { initVizCanvas(); initSliders(); });
+</script>
+</body>
+</html>
