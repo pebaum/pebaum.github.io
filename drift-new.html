@@ -504,7 +504,11 @@ function ioValToDb(val) {
     if (val <= 0.001) return -Infinity;
     return val * 66 - 60;
 }
-function fmtDb(db)   { return db === -Infinity ? '−∞ dB' : `${db.toFixed(1)} dB`; }
+function fmtDb(db)   {
+    if (db === -Infinity) return '−∞ dB';
+    if (Math.abs(db) < 0.05) return '0.0 dB';   // squash -0.006 → 0.0 from float rounding
+    return `${db.toFixed(1)} dB`;
+}
 function fmtHz(v)    { return v < 1000 ? `${Math.round(v)} Hz` : `${(v/1000).toFixed(2)} kHz`; }
 
 const params = {
