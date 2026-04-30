@@ -585,6 +585,7 @@ function startTintAtmosphere() {
     atmosphereInterval=setInterval(()=>{
         Object.keys(tintAtmosphere).forEach(k=>{tintAtmosphere[k]+=(tintAtmosphereTargets[k]-tintAtmosphere[k])*0.012;});
         applyTintAtmosphere();
+        smoothParamDrift();   // gradual front-panel knob drift, generative
     },50);
     scheduleTintAtmosphereChange();
 }
@@ -1065,19 +1066,100 @@ function refreshAllValueLabels() {
     Object.keys(params).forEach(updateSliderValueLabel);
 }
 
-// Randomize the 9 reverb-related front-panel knobs to musically-sensible
-// ranges. IN/OUT gain are intentionally left alone (kept at unity).
+// Musically-sensible target ranges for the 9 reverb-related front knobs,
+// shared between initial randomization and ongoing drift. IN/OUT stay at unity.
+const PARAM_DRIFT_RANGES = {
+    immersion: [0.05, 0.55],
+    distance:  [1.5,  4.5],
+    expanse:   [2.0,  18.0],
+    shimmer:   [0.0,  0.45],
+    modDepth:  [0.20, 0.65],
+    glow:      [0.0,  0.35],
+    ascend:    [0.0,  0.45],
+    descend:   [0.0,  0.30],
+    driftMod:  [0.0,  0.35],
+};
+
 function randomizeFrontPanel() {
     const r = (lo, hi) => lo + Math.random() * (hi - lo);
-    params.immersion.value = r(0.05, 0.55);
-    params.distance.value  = r(1.5, 4.5);
-    params.expanse.value   = r(2.0, 18.0);
-    params.shimmer.value   = r(0.0, 0.45);
-    params.modDepth.value  = r(0.20, 0.65);
-    params.glow.value      = r(0.00, 0.35);
-    params.ascend.value    = r(0.00, 0.45);
-    params.descend.value   = Math.random() < 0.5 ? 0 : r(0.05, 0.30);
-    params.driftMod.value  = r(0.00, 0.35);
+    Object.keys(PARAM_DRIFT_RANGES).forEach(k => {
+        const [lo, hi] = PARAM_DRIFT_RANGES[k];
+        params[k].value = r(lo, hi);
+    });
+    // descend has a 50% chance of being silent (frees the lower bloom)
+    if (Math.random() < 0.5) params.descend.value = 0;
+}
+
+// ── Generative param drift ──────────────────────────────────────────────────
+// Continuously evolves the 9 reverb knobs over time so the page plays as a
+// generative unit. Targets are re-rolled on a 90–240s interval (offset from
+// the 120–360s tonality cadence so the two systems don't lock in lockstep).
+// Smoothing is slow (α = 0.0008 per 50ms tick → ~62 s time constant), so
+// values are still ramping toward each new target when the next nudge fires
+// — the page never reaches a steady state.
+let paramDriftTimeout = null;
+const paramTargets = {};
+
+function initParamTargets() {
+    Object.keys(PARAM_DRIFT_RANGES).forEach(k => {
+        paramTargets[k] = params[k].value;
+    });
+}
+function scheduleParamDrift() {
+    if (!driftRunning) return;
+    paramDriftTimeout = setTimeout(runParamDrift, rand(90000, 240000));
+}
+function runParamDrift() {
+    if (!driftRunning) return;
+    if (driftPaused) {
+        paramDriftTimeout = setTimeout(runParamDrift, 1000);
+        return;
+    }
+    // Re-roll a 3–6 random subset of the 9 knob targets each tick.
+    const keys = Object.keys(PARAM_DRIFT_RANGES);
+    const shuffled = keys.slice().sort(() => Math.random() - 0.5);
+    const numToChange = 3 + Math.floor(Math.random() * 4);
+    for (let i = 0; i < numToChange; i++) {
+        const k = shuffled[i];
+        const [lo, hi] = PARAM_DRIFT_RANGES[k];
+        const cur = params[k].value;
+        if (Math.random() < 0.3) {
+            // Big move — fully re-randomize within the range
+            paramTargets[k] = lo + Math.random() * (hi - lo);
+        } else {
+            // Local nudge within ±30% of the param's range
+            const range = hi - lo;
+            paramTargets[k] = clampa(cur + rand(-range * 0.3, range * 0.3), lo, hi);
+        }
+        // Descend occasionally returns to zero for stillness moments
+        if (k === 'descend' && Math.random() < 0.35) paramTargets[k] = 0;
+    }
+    scheduleParamDrift();
+}
+function stopParamDrift() {
+    if (paramDriftTimeout) { clearTimeout(paramDriftTimeout); paramDriftTimeout = null; }
+}
+function smoothParamDrift() {
+    let any = false;
+    const alpha = 0.0008; // ~62.5 s time constant @ 50 ms tick
+    Object.keys(PARAM_DRIFT_RANGES).forEach(k => {
+        const target = paramTargets[k];
+        if (target === undefined) return;
+        const cur = params[k].value;
+        const diff = target - cur;
+        if (Math.abs(diff) > 1e-5) {
+            params[k].value = cur + diff * alpha;
+            any = true;
+        }
+    });
+    if (!any) return;
+    // Push the drifted values back into the slider DOM, value labels, and audio.
+    Object.keys(PARAM_DRIFT_RANGES).forEach(k => {
+        const slider = document.querySelector(`.param-slider[data-param="${k}"]`);
+        if (slider) slider.value = valueToSlider(k, params[k].value);
+        updateSliderValueLabel(k);
+    });
+    applyParamsToAudio();
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1150,6 +1232,8 @@ async function startApp() {
 
     startTintAtmosphere();
     scheduleTonalityChange();
+    initParamTargets();
+    scheduleParamDrift();
 
     vizCanvas.classList.add('active');
     setTimeout(() => document.getElementById('infoOverlay').classList.add('loaded'), 800);
@@ -1197,6 +1281,7 @@ document.getElementById('restartBtn').addEventListener('click', e => {
     driftRunning = false; driftPaused = false;
     mVoice?.stop(); tVoice?.stop(); droneVoice?.stop(); bellVoice?.stop();
     stopTintAtmosphere();
+    stopParamDrift();
     if(tonalityChangeTimeout){clearTimeout(tonalityChangeTimeout);tonalityChangeTimeout=null;}
     // Cancel pending deferred voice starts so they don't fire into the new session
     voiceStartTimeouts.forEach(clearTimeout);
