@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Peter Baumgartner</title>
+    <title>Peter Baumgartner — Reverie (experimental)</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700&display=swap" rel="stylesheet">
@@ -44,7 +44,6 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* ── CANVAS ── */
         #vizCanvas {
             position: fixed;
             top: 0;
@@ -56,11 +55,7 @@
         }
         #vizCanvas.active { opacity: 1; }
 
-        /* ── HEADER — removed ── */
-
-        /* ── FOOTER — removed ── */
-
-        /* ── SLIDER STACK (bottom-left) ── */
+        /* ── SLIDER STACK (bottom-left, front panel) ── */
         .slider-stack {
             position: fixed;
             bottom: 30px;
@@ -85,7 +80,7 @@
             letter-spacing: 0.15em;
             text-transform: uppercase;
             color: rgba(255,255,255,0.35);
-            width: 72px;
+            width: 78px;
             text-align: right;
             flex-shrink: 0;
         }
@@ -118,6 +113,16 @@
             border-radius: 50%;
             cursor: pointer;
             border: none;
+        }
+
+        .slider-value {
+            font-size: 9px;
+            letter-spacing: 0.05em;
+            color: rgba(255,255,255,0.40);
+            width: 56px;
+            text-align: left;
+            flex-shrink: 0;
+            font-variant-numeric: tabular-nums;
         }
 
         /* ── INFO OVERLAY ── */
@@ -170,51 +175,6 @@
         }
         .info-right a:hover { opacity: 1; }
 
-        /* ── PROJECTS LIST ── */
-        #projectsList {
-            display: none;
-            position: absolute;
-            top: 0;
-            left: 100%;
-            margin-left: 40px;
-            font-size: 10px;
-            line-height: 1.8;
-            letter-spacing: 0.15em;
-            text-transform: uppercase;
-            text-shadow: 0 0 20px rgba(0,0,0,0.8);
-            opacity: 0;
-            z-index: 10;
-            min-width: 350px;
-            white-space: nowrap;
-        }
-        #projectsList.visible {
-            display: block;
-            animation: fadeInRight 0.8s ease-out forwards;
-        }
-        #projectsList a {
-            color: #fff;
-            text-decoration: none;
-            opacity: 0.5;
-            transition: opacity 0.3s;
-            pointer-events: all;
-            display: block;
-            text-transform: none;
-            font-size: 9px;
-            letter-spacing: 0.05em;
-        }
-        #projectsList a:hover { opacity: 1; }
-        #projectsList .category {
-            opacity: 1;
-            font-weight: normal;
-            margin-top: 15px;
-        }
-        #projectsList .category:first-child { margin-top: 0; }
-
-        @keyframes fadeInRight {
-            from { opacity: 0; transform: translateX(-10px); }
-            to   { opacity: 1; transform: translateX(0); }
-        }
-
         /* ── START OVERLAY ── */
         .overlay {
             position: fixed;
@@ -237,18 +197,12 @@
             opacity: 0.5;
             text-transform: uppercase;
         }
-
-        /* ── VOLUME — now part of slider stack ── */
     </style>
 </head>
 <body>
 
-<!-- Waveform visualization canvas -->
 <canvas id="vizCanvas"></canvas>
 
-<!-- Header/footer removed — clean personal site -->
-
-<!-- Info overlay (personal site info) -->
 <div class="info-overlay" id="infoOverlay">
     <div class="info-left">
         <strong>Peter Baumgartner</strong><br>
@@ -267,52 +221,76 @@
     </div>
 </div>
 
-<!-- Slider stack (bottom-left) -->
+<!-- Front panel sliders (mirror Reverie plugin front knobs) -->
 <div class="slider-stack" id="sliderStack">
     <div class="slider-row">
+        <span class="slider-label">In</span>
+        <input type="range" class="param-slider" data-param="inputGain" min="0" max="100" step="0.5" value="75">
+        <span class="slider-value" data-param-value="inputGain">0.0 dB</span>
+    </div>
+    <div class="slider-row">
         <span class="slider-label">Immersion</span>
-        <input type="range" class="param-slider" data-param="immersion" min="0" max="100" value="50">
+        <input type="range" class="param-slider" data-param="immersion" min="0" max="100" step="0.5" value="9">
+        <span class="slider-value" data-param-value="immersion">9%</span>
+    </div>
+    <div class="slider-row">
+        <span class="slider-label">Distance</span>
+        <input type="range" class="param-slider" data-param="distance" min="0" max="100" step="0.5" value="50">
+        <span class="slider-value" data-param-value="distance">2.75x</span>
     </div>
     <div class="slider-row">
         <span class="slider-label">Expanse</span>
-        <input type="range" class="param-slider" data-param="expanse" min="0" max="100" value="80">
+        <input type="range" class="param-slider" data-param="expanse" min="0" max="100" step="0.5" value="35">
+        <span class="slider-value" data-param-value="expanse">5.0 s</span>
     </div>
     <div class="slider-row">
-        <span class="slider-label">Ascend</span>
-        <input type="range" class="param-slider" data-param="ascend" min="0" max="100" value="50">
+        <span class="slider-label">Feedback</span>
+        <input type="range" class="param-slider" data-param="shimmer" min="0" max="100" step="0.5" value="0">
+        <span class="slider-value" data-param-value="shimmer">0%</span>
     </div>
     <div class="slider-row">
-        <span class="slider-label">Descend</span>
-        <input type="range" class="param-slider" data-param="descend" min="0" max="100" value="50">
-    </div>
-    <div class="slider-row">
-        <span class="slider-label">Lush</span>
-        <input type="range" class="param-slider" data-param="lush" min="0" max="100" value="70">
+        <span class="slider-label">Mod Depth</span>
+        <input type="range" class="param-slider" data-param="modDepth" min="0" max="100" step="0.5" value="40">
+        <span class="slider-value" data-param-value="modDepth">40%</span>
     </div>
     <div class="slider-row">
         <span class="slider-label">Glow</span>
-        <input type="range" class="param-slider" data-param="glow" min="0" max="100" value="100">
+        <input type="range" class="param-slider" data-param="glow" min="0" max="100" step="0.5" value="10">
+        <span class="slider-value" data-param-value="glow">10%</span>
     </div>
     <div class="slider-row">
-        <span class="slider-label">Timbre</span>
-        <input type="range" class="param-slider" data-param="timbre" min="0" max="100" value="50">
+        <span class="slider-label">Ascend</span>
+        <input type="range" class="param-slider" data-param="ascend" min="0" max="100" step="0.5" value="10">
+        <span class="slider-value" data-param-value="ascend">10%</span>
     </div>
-    <div class="slider-row" style="margin-top: 4px;">
-        <span class="slider-label">Vol</span>
-        <input type="range" class="param-slider" id="volumeSlider" min="0" max="100" value="25">
+    <div class="slider-row">
+        <span class="slider-label">Descend</span>
+        <input type="range" class="param-slider" data-param="descend" min="0" max="100" step="0.5" value="0">
+        <span class="slider-value" data-param-value="descend">0%</span>
+    </div>
+    <div class="slider-row">
+        <span class="slider-label">Drift</span>
+        <input type="range" class="param-slider" data-param="driftMod" min="0" max="100" step="0.5" value="10">
+        <span class="slider-value" data-param-value="driftMod">10%</span>
+    </div>
+    <div class="slider-row">
+        <span class="slider-label">Out</span>
+        <input type="range" class="param-slider" data-param="outputGain" min="0" max="100" step="0.5" value="75">
+        <span class="slider-value" data-param-value="outputGain">0.0 dB</span>
     </div>
 </div>
 
-<!-- Start overlay -->
 <div class="overlay" id="overlay">
     <div class="overlay-text">enter ⏎</div>
 </div>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════════════════
-// Generative Ambient — Web Edition
-// Generative ambient engine + spectral bloom visualization
-// Knobs control real Web Audio reverb/shimmer/character effects on the music
+// Drift — experimental web port
+// Mirrors current Drift plugin parameter set (front + advanced).
+// Reuses tintinnabuli generative engine + spectral bloom visualization
+// from the home page (index.html). Background animation is intentionally
+// unchanged.
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // ── SIMPLEX NOISE (2D) ──────────────────────────────────────────────────────
@@ -357,59 +335,89 @@ function lerpColor(c1, c2, t) {
 function rgba(c, a) { return `rgba(${c[0]|0},${c[1]|0},${c[2]|0},${a})`; }
 const clamp01 = v => Math.max(0, Math.min(1, v));
 
-// ── PARAM STATE ──────────────────────────────────────────────────────────────
-// These map to reverb knobs AND control real audio effects
+// ── PARAM STATE (mirrors Reverie's DriftParameters.h) ────────────────────────
+// IN/OUT gain: 0-1 normalized → dB = val * 66 - 60. Slider 75% = 0.909 = 0 dB.
+//   slider≤75 maps linearly to val 0..0.909, slider>75 to val 0.909..1.0 (+6dB)
+function ioToVal(ui) {
+    const p = ui / 100;
+    if (p <= 0.75) return (p / 0.75) * 0.909;
+    return 0.909 + (p - 0.75) / 0.25 * 0.091;
+}
+function valToIo(val) {
+    if (val <= 0.909) return val / 0.909 * 75;
+    return 75 + (val - 0.909) / 0.091 * 25;
+}
+function ioValToDb(val) {
+    if (val <= 0.001) return -Infinity;
+    return val * 66 - 60;
+}
+function fmtDb(db)   {
+    if (db === -Infinity) return '−∞ dB';
+    if (Math.abs(db) < 0.05) return '0.0 dB';   // squash -0.006 → 0.0 from float rounding
+    return `${db.toFixed(1)} dB`;
+}
+function fmtHz(v)    { return v < 1000 ? `${Math.round(v)} Hz` : `${(v/1000).toFixed(2)} kHz`; }
+
 const params = {
-    immersion:  { value: 0.50, min: 0, max: 1,  label: 'Mix'       },
-    expanse:    { value: 48,   min: 0.1, max: 60, label: 'Decay'   },
-    ascend:     { value: 0.50, min: 0, max: 1,  label: 'OctUp'     },
-    descend:    { value: 0.50, min: 0, max: 1,  label: 'OctDown'   },
-    lush:       { value: 0.70, min: 0, max: 1,  label: 'ModDepth'  },
-    glow:       { value: 1.0,  min: 0, max: 1,  label: 'Warmth'    },
-    timbre:     { value: 0.5,  min: 0, max: 1,  label: 'Tone'      },
+    // Front panel (Reverie's main UI knobs + IN/OUT)
+    inputGain:  { value: 0.909, label: 'In',         fmt: v => fmtDb(ioValToDb(v)) },
+    immersion:  { value: 0.09,  label: 'Immersion',  fmt: v => `${Math.round(v*100)}%` },
+    distance:   { value: 2.75,  label: 'Distance',   fmt: v => `${v.toFixed(2)}x` },
+    expanse:    { value: 5.0,   label: 'Expanse',    fmt: v => v < 10 ? `${v.toFixed(1)} s` : `${v.toFixed(0)} s` },
+    shimmer:    { value: 0,     label: 'Feedback',   fmt: v => `${Math.round(v*100)}%` },
+    modDepth:   { value: 0.40,  label: 'Mod Depth',  fmt: v => `${Math.round(v*100)}%` },
+    glow:       { value: 0.10,  label: 'Glow',       fmt: v => `${Math.round(v*100)}%` },
+    ascend:     { value: 0.10,  label: 'Ascend',     fmt: v => `${Math.round(v*100)}%` },
+    descend:    { value: 0,     label: 'Descend',    fmt: v => `${Math.round(v*100)}%` },
+    driftMod:   { value: 0.10,  label: 'Drift',      fmt: v => `${Math.round(v*100)}%` },
+    outputGain: { value: 0.909, label: 'Out',        fmt: v => fmtDb(ioValToDb(v)) },
+    // Advanced — Reverie's bottom row
+    timbre:     { value: 0.5,   label: 'Timbre',     fmt: v => `${((v-0.5)*24).toFixed(1)} dB` },
+    modRate:    { value: 2.0,   label: 'Mod Rate',   fmt: v => `${v.toFixed(2)} Hz` },
+    diffusion:  { value: 1.0,   label: 'Diffusion',  fmt: v => `${Math.round(v*100)}%` },
+    damping:    { value: 0.75,  label: 'Damping',    fmt: v => `${Math.round(v*100)}%` },
+    hpfFreq:    { value: 150,   label: 'HPF',        fmt: v => fmtHz(v) },
+    lpfFreq:    { value: 5000,  label: 'LPF',        fmt: v => fmtHz(v) },
+    earlyMod:   { value: 0,     label: 'Early Mod',  fmt: v => `${Math.round(v*100)}%` },
+    // Synth voice trims (page-only)
+    mVoiceVol:   { value: 1.0,  label: 'Melody',       fmt: v => `${Math.round(v*100)}%` },
+    tVoiceVol:   { value: 1.0,  label: 'Tintinnabuli', fmt: v => `${Math.round(v*100)}%` },
+    droneVol:    { value: 1.0,  label: 'Drone',        fmt: v => `${Math.round(v*100)}%` },
+    bellVol:     { value: 1.0,  label: 'Bells',        fmt: v => `${Math.round(v*100)}%` },
+    atmoSpace:   { value: 0.70, label: 'Space',        fmt: v => `${Math.round(v*100)}%` },
+    atmoDensity: { value: 0.55, label: 'Density',      fmt: v => `${Math.round(v*100)}%` },
+    atmoWarmth:  { value: 0.50, label: 'Warmth',       fmt: v => `${Math.round(v*100)}%` },
+    atmoBreath:  { value: 0.35, label: 'Breath',       fmt: v => `${Math.round(v*100)}%` },
 };
-// Normalized 0-1 for visualization
-function pNorm(name) {
-    const p = params[name];
-    return (p.value - p.min) / (p.max - p.min);
-}
 
-let cascadeActive = false;
-let fxActive = false;
-
-// Undo stack for randomize
-let undoStack = [];
-const MAX_UNDO = 10;
-
-// ── PRESETS ──────────────────────────────────────────────────────────────────
-const presets = [
-    { name: 'Default',    immersion:0.50,expanse:3.0,distance:0,   ascend:0,   descend:0,   lush:0.50,glow:0.35,timbre:0.45 },
-    { name: 'Cathedral',  immersion:0.70,expanse:12, distance:80,  ascend:0.3, descend:0,   lush:0.65,glow:0.20,timbre:0.50 },
-    { name: 'Abyss',      immersion:0.55,expanse:30, distance:200, ascend:0,   descend:0.6, lush:0.40,glow:0.10,timbre:0.30 },
-    { name: 'Shimmer',    immersion:0.60,expanse:8,  distance:40,  ascend:0.7, descend:0.2, lush:0.55,glow:0.45,timbre:0.60 },
-    { name: 'Ember',      immersion:0.45,expanse:5,  distance:0,   ascend:0.1, descend:0,   lush:0.30,glow:0.85,timbre:0.55 },
-    { name: 'Void',       immersion:0.80,expanse:45, distance:500, ascend:0.4, descend:0.4, lush:0.70,glow:0.50,timbre:0.40 },
-    { name: 'Morning',    immersion:0.35,expanse:2,  distance:0,   ascend:0.5, descend:0,   lush:0.20,glow:0.15,timbre:0.70 },
-    { name: 'Deep Stone', immersion:0.65,expanse:20, distance:150, ascend:0,   descend:0.8, lush:0.60,glow:0.30,timbre:0.25 },
-];
-let currentPresetIdx = 0;
-
-function loadPreset(idx) {
-    currentPresetIdx = ((idx % presets.length) + presets.length) % presets.length;
-    const p = presets[currentPresetIdx];
-    for (const k of Object.keys(params)) {
-        if (p[k] !== undefined) params[k].value = p[k];
+// Slider 0–100 → param value (per-param skew matching Reverie's NormalisableRange)
+function sliderToValue(name, ui) {
+    const u = ui / 100;
+    switch (name) {
+        case 'inputGain':
+        case 'outputGain': return ioToVal(ui);
+        case 'distance':   return 0.5 + u * 4.5;                 // 0.5–5.0 linear
+        case 'expanse':    return u * u * 40;                    // 0–40s, quadratic skew (default 5s @ ~35%)
+        case 'modRate':    return u * u * 10;                    // 0–10 Hz, quadratic skew (default 2.0 Hz @ ~45%)
+        case 'hpfFreq':    return 30 * Math.pow(1000 / 30, u);   // 30–1000 Hz log
+        case 'lpfFreq':    return 500 * Math.pow(20000 / 500, u);// 500–20000 Hz log
+        default:           return u;                              // 0–1 linear
     }
-    updateAllKnobVisuals();
-    applyParamsToAudio();
+}
+function valueToSlider(name, v) {
+    switch (name) {
+        case 'inputGain':
+        case 'outputGain': return Math.max(0, Math.min(100, valToIo(v)));
+        case 'distance':   return ((v - 0.5) / 4.5) * 100;
+        case 'expanse':    return Math.sqrt(Math.max(0, v) / 40) * 100;
+        case 'modRate':    return Math.sqrt(Math.max(0, v) / 10) * 100;
+        case 'hpfFreq':    return Math.log(v / 30) / Math.log(1000 / 30) * 100;
+        case 'lpfFreq':    return Math.log(v / 500) / Math.log(20000 / 500) * 100;
+        default:           return v * 100;
+    }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// TINTINNABULI GENERATIVE ENGINE (from Drift v5)
-// 4 voices: M-voice (stepwise melody), T-voice (triad harmony),
-//           Drone (pedal tone), Bells (high punctuation)
-// ══════════════════════════════════════════════════════════════════════════════
-
+// ── TINTINNABULI GENERATIVE ENGINE (unchanged from index.html) ──────────────
 const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 const MODES = {
     aeolian:     { intervals: [0,2,3,5,7,8,10],  name:'Aeolian',     character:'sorrowful' },
@@ -421,8 +429,8 @@ const MODES = {
 };
 const TRIADS = { major:[0,4,7], minor:[0,3,7] };
 
-let audioCtx, masterGain, compressor, voiceBus;
-let analyserNode;
+let audioCtx, masterGain, voiceBus;
+let analyserNode, reverbWorkletNode = null;
 let sacredRoot = 0, sacredMode = 'aeolian', sacredTriad = 'minor';
 let lastMelodyNote = 60, melodyDirection = 1;
 let mVoice = null, tVoice = null, droneVoice = null, bellVoice = null;
@@ -431,6 +439,7 @@ let startTime = 0, pausedTime = 0, totalPausedDuration = 0, activeNotes = 0;
 let tintAtmosphere = { space:0.7, density:0.55, warmth:0.5, breath:0.35 };
 let tintAtmosphereTargets = { ...tintAtmosphere };
 let atmosphereInterval = null, atmosphereChangeTimeout = null, tonalityChangeTimeout = null;
+let voiceStartTimeouts = [];
 
 const rand = (a,b) => Math.random()*(b-a)+a;
 const randInt = (a,b) => Math.floor(rand(a,b+1));
@@ -439,7 +448,6 @@ const clampa = (v,a,b) => Math.max(a,Math.min(b,v));
 const midiToFreq = m => 440*Math.pow(2,(m-69)/12);
 const midiToNoteName = m => NOTE_NAMES[m%12]+Math.floor(m/12-1);
 
-// ── Scale helpers ─────────────────────────────────────────────────
 function getSacredScale() {
     const iv = MODES[sacredMode].intervals, notes = [];
     for (let o=2; o<=7; o++) for (const i of iv) { const m=sacredRoot+i+o*12; if(m>=36&&m<=96) notes.push(m); }
@@ -470,25 +478,6 @@ function getTintinnabuliNote(mNote, position) {
     const b=tn.filter(n=>n<=mNote); return b.length?b[b.length-1]:tn[0];
 }
 
-// ── Cathedral reverb ──────────────────────────────────────────────
-function createCathedralReverb(duration=8, decay=3) {
-    const len = audioCtx.sampleRate*duration;
-    const imp = audioCtx.createBuffer(2,len,audioCtx.sampleRate);
-    const L=imp.getChannelData(0), R=imp.getChannelData(1);
-    for (let i=0; i<8; i++) {
-        const t=Math.floor(rand(0.015,0.1)*audioCtx.sampleRate);
-        const a=rand(0.2,0.5)*Math.pow(0.8,i);
-        if(t<len){ L[t]+=a*rand(0.7,1); R[t]+=a*rand(0.7,1); }
-    }
-    for (let i=0; i<len; i++) {
-        const t=i/audioCtx.sampleRate, env=Math.pow(1-t/duration,decay);
-        L[i]+=(Math.random()*2-1)*env*0.25;
-        R[i]+=(Math.random()*2-1)*env*0.25;
-    }
-    return imp;
-}
-
-// ── SacredVoice base class ────────────────────────────────────────
 class SacredVoice {
     constructor(ctx, output, config) {
         this.ctx=ctx; this.config=config; this.isVoicePlaying=false;
@@ -497,8 +486,14 @@ class SacredVoice {
         this.filter.frequency.value=config.brightness||2000; this.filter.Q.value=0.5;
         this.panner=ctx.createStereoPanner(); this.panner.pan.value=config.pan||0;
         this.gain=ctx.createGain(); this.gain.gain.value=config.volume||0.2;
+        this.userVol = 1.0; // multiplicative trim from advanced panel
+        this.baseVolume = config.volume || 0.2;
         this.filter.connect(this.panner); this.panner.connect(this.gain); this.gain.connect(output);
         this.panDriftTimeout=null;
+    }
+    setUserVolume(v) {
+        this.userVol = v;
+        if (this.gain) this.gain.gain.setTargetAtTime(this.baseVolume * v, this.ctx.currentTime, 0.05);
     }
     start() { this.isVoicePlaying=true; this.scheduleNext(true); this.startPanDrift(); }
     stop() {
@@ -553,7 +548,6 @@ class SacredVoice {
     }
 }
 
-// ── M-Voice ───────────────────────────────────────────────────────
 class MelodicVoice extends SacredVoice {
     constructor(ctx,out){super(ctx,out,{name:'M-voice',volume:0.32,brightness:2800,pan:-0.25,interval:4000,attack:0.5,decay:6,range:[48,72]});}
     playNote(){
@@ -561,7 +555,6 @@ class MelodicVoice extends SacredVoice {
         lastMelodyNote=n; this.createBellTone(midiToFreq(n),rand(0.45,0.7));
     }
 }
-// ── T-Voice ───────────────────────────────────────────────────────
 class TintinnabuliVoice extends SacredVoice {
     constructor(ctx,out){super(ctx,out,{name:'T-voice',volume:0.26,brightness:3200,pan:0.25,interval:5000,attack:0.3,decay:8,bellLike:true,range:[52,84]});this.position='superior';}
     playNote(){
@@ -571,7 +564,6 @@ class TintinnabuliVoice extends SacredVoice {
         this.createBellTone(midiToFreq(n),rand(0.35,0.55));
     }
 }
-// ── Drone ─────────────────────────────────────────────────────────
 class DroneVoice extends SacredVoice {
     constructor(ctx,out){super(ctx,out,{name:'Drone',volume:0.22,brightness:600,pan:0,interval:15000,attack:3,decay:18,range:[36,48]});}
     playNote(){
@@ -580,7 +572,6 @@ class DroneVoice extends SacredVoice {
         this.createBellTone(midiToFreq(n),rand(0.35,0.55));
     }
 }
-// ── Bells ─────────────────────────────────────────────────────────
 class BellVoice extends SacredVoice {
     constructor(ctx,out){super(ctx,out,{name:'Bells',volume:0.18,brightness:4500,pan:0,interval:18000,attack:0.008,decay:10,bellLike:true,range:[72,88]});}
     playNote(){
@@ -589,12 +580,12 @@ class BellVoice extends SacredVoice {
     }
 }
 
-// ── Atmosphere drift ──────────────────────────────────────────────
 function startTintAtmosphere() {
     Object.keys(tintAtmosphere).forEach(k=>{tintAtmosphereTargets[k]=tintAtmosphere[k];});
     atmosphereInterval=setInterval(()=>{
         Object.keys(tintAtmosphere).forEach(k=>{tintAtmosphere[k]+=(tintAtmosphereTargets[k]-tintAtmosphere[k])*0.012;});
         applyTintAtmosphere();
+        smoothParamDrift();   // gradual front-panel knob drift, generative
     },50);
     scheduleTintAtmosphereChange();
 }
@@ -603,20 +594,25 @@ function stopTintAtmosphere() {
     if(atmosphereChangeTimeout){clearTimeout(atmosphereChangeTimeout);atmosphereChangeTimeout=null;}
 }
 function scheduleTintAtmosphereChange() {
-    if(!driftRunning||driftPaused)return;
-    atmosphereChangeTimeout=setTimeout(()=>{
-        if(!driftRunning||driftPaused)return;
-        const ps=Object.keys(tintAtmosphere); const nc=Math.random()<0.4?2:1;
-        for(let i=0;i<nc;i++){
-            const p=pick(ps);
-            tintAtmosphereTargets[p]=Math.random()<0.35?(Math.random()<0.5?rand(0.12,0.3):rand(0.7,0.9)):clampa(tintAtmosphereTargets[p]+rand(-0.35,0.35),0.1,0.9);
-        }
-        scheduleTintAtmosphereChange();
-    },rand(15000,40000));
+    if(!driftRunning)return;
+    atmosphereChangeTimeout=setTimeout(runTintAtmosphereChange, rand(15000,40000));
+}
+function runTintAtmosphereChange() {
+    if(!driftRunning) return;
+    if(driftPaused) {
+        // Paused — defer the change without dropping the timer entirely
+        atmosphereChangeTimeout = setTimeout(runTintAtmosphereChange, 1000);
+        return;
+    }
+    const ps=Object.keys(tintAtmosphere); const nc=Math.random()<0.4?2:1;
+    for(let i=0;i<nc;i++){
+        const p=pick(ps);
+        tintAtmosphereTargets[p]=Math.random()<0.35?(Math.random()<0.5?rand(0.12,0.3):rand(0.7,0.9)):clampa(tintAtmosphereTargets[p]+rand(-0.35,0.35),0.1,0.9);
+    }
+    scheduleTintAtmosphereChange();
 }
 function applyTintAtmosphere() {
     if(!masterGain||!audioCtx)return; const now=audioCtx.currentTime;
-    // Atmosphere applies to voice filters only (reverb is in worklet now)
     const wm=0.6+tintAtmosphere.warmth*0.8;
     if(mVoice) mVoice.filter.frequency.setTargetAtTime(1800*wm,now,3);
     if(tVoice) tVoice.filter.frequency.setTargetAtTime(2200*wm,now,3);
@@ -624,87 +620,94 @@ function applyTintAtmosphere() {
     if(bellVoice) bellVoice.filter.frequency.setTargetAtTime(3500*wm,now,3);
 }
 
-// ── Tonality changes ──────────────────────────────────────────────
 function scheduleTonalityChange() {
-    if(!driftRunning||driftPaused)return;
-    tonalityChangeTimeout=setTimeout(()=>{
-        if(!driftRunning||driftPaused)return;
-        if(Math.random()<0.7){
-            sacredMode=pick(Object.keys(MODES));
-            sacredTriad=['aeolian','dorian','phrygian'].includes(sacredMode)?'minor':'major';
-        } else {
-            const mv=Math.random()<0.5?7:5, dir=Math.random()<0.5?1:-1;
-            sacredRoot=(sacredRoot+mv*dir+12)%12; lastMelodyNote=sacredRoot+60;
-        }
-        scheduleTonalityChange();
-    },rand(120000,360000));
+    if(!driftRunning)return;
+    tonalityChangeTimeout=setTimeout(runTonalityChange, rand(120000,360000));
+}
+function runTonalityChange() {
+    if(!driftRunning) return;
+    if(driftPaused) {
+        // Paused — defer rather than dropping the timer
+        tonalityChangeTimeout = setTimeout(runTonalityChange, 1000);
+        return;
+    }
+    if(Math.random()<0.7){
+        sacredMode=pick(Object.keys(MODES));
+        sacredTriad=['aeolian','dorian','phrygian'].includes(sacredMode)?'minor':'major';
+    } else {
+        const mv=Math.random()<0.5?7:5, dir=Math.random()<0.5?1:-1;
+        sacredRoot=(sacredRoot+mv*dir+12)%12; lastMelodyNote=sacredRoot+60;
+    }
+    scheduleTonalityChange();
 }
 
-// ── Apply knob params to audio ────────────────────────────────────
-// ── Apply knob params to audio ──
-
-//
-// Immersion = MIX (equal-power dry/wet crossfade)
-// Expanse   = DIMENSION (reverb decay time 0.1-60s, rebuilds impulse)
-// Ascend    = OCT_UP (octave-up pitch shift level on reverb tail)
-// Descend   = OCT_DOWN (octave-down pitch shift level on reverb tail)
-// Lush      = MOD_DEPTH (FDN modulation → chorus/spatial movement on reverb)
-// Glow      = WARMTH (tube saturation + compression on wet signal)
-// Timbre    = TONE (output tilt EQ: 0=dark −16dB, 0.5=flat, 1=bright +16dB)
-
-// (Old Web Audio effect nodes removed — DSP is now in AudioWorklet)
-
-// ── AudioWorklet-based DSP (Glow Reverb) ──
-let reverbWorkletNode = null;
-
+// ── Apply params to audio (worklet handles input/output gain internally) ────
 function applyParamsToAudio() {
-    if (!reverbWorkletNode || !audioCtx) return;
+    if (!audioCtx) return;
     const now = audioCtx.currentTime;
-    const p = reverbWorkletNode.parameters;
-    p.get("mix").setValueAtTime(params.immersion.value, now);
-    p.get("dimension").setValueAtTime(params.expanse.value, now);
-    p.get("octUp").setValueAtTime(params.ascend.value, now);
-    p.get("octDown").setValueAtTime(params.descend.value, now);
-    p.get("modDepth").setValueAtTime(params.lush.value, now);
-    p.get("warmth").setValueAtTime(params.glow.value, now);
-    // Timbre: map 0-1 to the worklet's tone range (-1 to +1)
-    p.get("tone").setValueAtTime((params.timbre.value - 0.5) * 2, now);
-    // Fixed internal params (not exposed as sliders)
-    p.get("stereoWidth").setValueAtTime(1.0, now);
-    p.get("spatial").setValueAtTime(0.4, now);
-    p.get("shimmerLevel").setValueAtTime(0.25, now);
+    if (reverbWorkletNode) {
+        const p = reverbWorkletNode.parameters;
+        // Front panel
+        p.get('immersion').setValueAtTime(params.immersion.value, now);
+        p.get('distance').setValueAtTime(params.distance.value, now);
+        p.get('expanse').setValueAtTime(params.expanse.value, now);
+        p.get('shimmer').setValueAtTime(params.shimmer.value, now);
+        p.get('modDepth').setValueAtTime(params.modDepth.value, now);
+        p.get('glow').setValueAtTime(params.glow.value, now);
+        p.get('ascend').setValueAtTime(params.ascend.value, now);
+        p.get('descend').setValueAtTime(params.descend.value, now);
+        p.get('driftMod').setValueAtTime(params.driftMod.value, now);
+        p.get('inputGain').setValueAtTime(params.inputGain.value, now);
+        p.get('outputGain').setValueAtTime(params.outputGain.value, now);
+        // Advanced
+        p.get('timbre').setValueAtTime(params.timbre.value, now);
+        p.get('modRate').setValueAtTime(params.modRate.value, now);
+        p.get('diffusion').setValueAtTime(params.diffusion.value, now);
+        p.get('damping').setValueAtTime(params.damping.value, now);
+        p.get('hpfFreq').setValueAtTime(params.hpfFreq.value, now);
+        p.get('lpfFreq').setValueAtTime(params.lpfFreq.value, now);
+        p.get('earlyMod').setValueAtTime(params.earlyMod.value, now);
+    }
+    // Voice user volumes
+    if (mVoice) mVoice.setUserVolume(params.mVoiceVol.value);
+    if (tVoice) tVoice.setUserVolume(params.tVoiceVol.value);
+    if (droneVoice) droneVoice.setUserVolume(params.droneVol.value);
+    if (bellVoice) bellVoice.setUserVolume(params.bellVol.value);
+    // Atmosphere — set targets so the smoothing loop converges to them
+    tintAtmosphereTargets.space   = params.atmoSpace.value;
+    tintAtmosphereTargets.density = params.atmoDensity.value;
+    tintAtmosphereTargets.warmth  = params.atmoWarmth.value;
+    tintAtmosphereTargets.breath  = params.atmoBreath.value;
 }
 
 async function initAudio() {
     audioCtx = new (window.AudioContext||window.webkitAudioContext)();
     analyserNode = audioCtx.createAnalyser();
     analyserNode.fftSize = 256; analyserNode.smoothingTimeConstant = 0.85;
+
+    // Reverie worklet handles IN/OUT gain + limiter internally — keep
+    // a small post-worklet gain only to allow the existing pause/resume
+    // hooks (and the analyser tap) to attach somewhere stable.
     masterGain = audioCtx.createGain(); masterGain.gain.value = 1.0;
-    compressor = audioCtx.createDynamicsCompressor();
-    compressor.threshold.value = -24; compressor.knee.value = 30;
-    compressor.ratio.value = 6; compressor.attack.value = 0.005; compressor.release.value = 0.3;
-    const hpF = audioCtx.createBiquadFilter();
-    hpF.type = "highpass"; hpF.frequency.value = 20; hpF.Q.value = 0.7;
-    // Tone EQ handled inside the worklet
-    // Load AudioWorklet (16-line FDN + granular pitch shifter + saturation)
+
+    // Load Reverie AudioWorklet
     await audioCtx.audioWorklet.addModule("drift-worklet.js");
-    reverbWorkletNode = new AudioWorkletNode(audioCtx, "glow-reverb", {
+    reverbWorkletNode = new AudioWorkletNode(audioCtx, "drift-reverb", {
         numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2],
     });
-    // Voice bus → worklet → master → compressor → HPF → analyser → output
+
+    // Voice bus → worklet (IN+reverb+OUT+limiter) → masterGain → analyser → output
     voiceBus = audioCtx.createGain(); voiceBus.gain.value = 1;
     voiceBus.connect(reverbWorkletNode);
     reverbWorkletNode.connect(masterGain);
-    masterGain.connect(compressor);
-    compressor.connect(hpF);
-    hpF.connect(analyserNode);
+    masterGain.connect(analyserNode);
     analyserNode.connect(audioCtx.destination);
-    // Create tintinnabuli voices
+
     mVoice = new MelodicVoice(audioCtx, voiceBus);
     tVoice = new TintinnabuliVoice(audioCtx, voiceBus);
     droneVoice = new DroneVoice(audioCtx, voiceBus);
     bellVoice = new BellVoice(audioCtx, voiceBus);
-    // Randomize starting tonality
+
     sacredRoot = randInt(0, 11);
     sacredMode = pick(Object.keys(MODES));
     sacredTriad = ["aeolian","dorian","phrygian"].includes(sacredMode) ? "minor" : "major";
@@ -713,8 +716,9 @@ async function initAudio() {
     applyParamsToAudio();
 }
 
-// SPECTRAL BLOOM VISUALIZATION
-// ══════════════════════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────────────────
+// SPECTRAL BLOOM VISUALIZATION (unchanged from index.html — wired to new params)
+// ─────────────────────────────────────────────────────────────────────────────
 
 const BLOOM_RES = 200;
 let upperBloom = new Float32Array(BLOOM_RES);
@@ -726,8 +730,8 @@ let descendThrob = 0;
 let cascadeBrightness = 0;
 let vizCanvas, vizCtx;
 let vizW, vizH;
+let cascadeActive = false, fxActive = false;
 
-// Film grain noise frames
 let noiseFrames = [];
 let noiseFrameIdx = 0;
 let vblankCount = 0;
@@ -764,7 +768,8 @@ function updateBloomShapes() {
     const octUp = params.ascend.value;
     const octDown = params.descend.value;
     const decay = params.expanse.value;
-    const modD = params.lush.value;
+    const modD = params.modDepth.value;
+    // Reverie's timbre is 0..1 directly (0=dark, 0.5=flat, 1=bright)
     const tone = params.timbre.value;
 
     const currentPeak = clampa(getAudioPeak() * 3, 0, 1);
@@ -779,7 +784,6 @@ function updateBloomShapes() {
     vblankCount++;
     if (vblankCount >= 6) { noiseFrameIdx = (noiseFrameIdx + 1) % 4; vblankCount = 0; }
 
-    // Core formula
     const idleBase = 0.13, reactivity = 1.58;
     const audioLevel = idleBase + smoothedPeak * reactivity;
     const mixScale = 0.9 + mix * 0.63;
@@ -809,37 +813,18 @@ function updateBloomShapes() {
         lowerBloom[i] = clampa((audioLevel * 0.8 + breath * 0.7) * mixScale * lowerParam * lowerEnv * nv2 * cascadeBoost, 0, 1);
     }
 
-    // Descend throb
     if (octDown > 0.001) {
         const throbMod = 1 + Math.sin(descendThrob) * octDown * 0.25;
         for (let i = 0; i < BLOOM_RES; i++) lowerBloom[i] = clampa(lowerBloom[i] * throbMod, 0, 1);
-    }
-
-    // Dark/Fx smooth
-    if (fxActive) {
-        const su = new Float32Array(BLOOM_RES), sl = new Float32Array(BLOOM_RES);
-        for (let i = 0; i < BLOOM_RES; i++) {
-            let sU = upperBloom[i], sL = lowerBloom[i], c = 1;
-            for (let k = 1; k <= 3; k++) {
-                if (i-k >= 0) { sU += upperBloom[i-k]; sL += lowerBloom[i-k]; c++; }
-                if (i+k < BLOOM_RES) { sU += upperBloom[i+k]; sL += lowerBloom[i+k]; c++; }
-            }
-            su[i] = sU/c; sl[i] = sL/c;
-        }
-        upperBloom.set(su); lowerBloom.set(sl);
     }
 }
 
 function paintSpectralBloom() {
     const g = vizCtx;
-
-    // Fill entire canvas with background first
     g.clearRect(0, 0, vizW, vizH);
 
-    // Bloom spans the full canvas width, vertically centered
     const vx = 0;
     const vw = vizW;
-    // Height is proportional — cap at 60% of viewport height
     const vh = vizH * 0.6;
     const vy = (vizH - vh) / 2;
     const midY = vy + vh * 0.50;
@@ -855,7 +840,6 @@ function paintSpectralBloom() {
     const sizzle = clampa((warmth - 0.75) * 4, 0, 1);
     const glowSuppress = 1 - glowIntensity * 0.85;
 
-    // Color palette
     const amberTint = [212,148,106], hotAmber = [232,130,58], scorchOrange = [240,112,26], blazeHot = [255,96,16];
     const glowCol = lerpColor(lerpColor(amberTint, lerpColor(hotAmber, scorchOrange, glowIntensity), glowIntensity), blazeHot, sizzle * 0.5);
     const darkAmber = [26,14,8];
@@ -865,11 +849,9 @@ function paintSpectralBloom() {
     const bloomBlue = hexToRgb('#8AB4E8'), bloomGold = hexToRgb('#D4A854');
     const bloomIndigo = hexToRgb('#6A5ACD'), bloomPurple = hexToRgb('#9A6ACD');
 
-    // Fill entire canvas with viz background (seamless void)
     g.fillStyle = rgba(vizBgCol, 1);
     g.fillRect(0, 0, vizW, vizH);
 
-    // Midline
     const midAlpha = 0.10 + mix*0.12 + cascadeBrightness*0.08 + glowIntensity*0.15 + sizzle*0.20;
     const midCol = lerpColor([46,46,46], glowCol, glowIntensity * 0.7);
     g.strokeStyle = rgba(midCol, midAlpha);
@@ -879,7 +861,6 @@ function paintSpectralBloom() {
     g.lineTo(vx + vw - 10, midY);
     g.stroke();
 
-    // Color calculations
     let upperBaseCol = lerpColor(bloomBlue, glowCol, glowIntensity * 0.75);
     let upperPeakCol = lerpColor(upperBaseCol, lerpColor(bloomGold, glowCol, glowIntensity*0.5), 0.3 + tone*0.5);
 
@@ -891,9 +872,7 @@ function paintSpectralBloom() {
     let lowerBaseCol = lerpColor(lerpColor(bloomIndigo, glowCol, glowIntensity*0.6), descDeepViolet, octDown*0.5*glowSuppress);
     let lowerPeakCol = lerpColor(lerpColor(lowerBaseCol, lerpColor(bloomPurple, glowCol, glowIntensity*0.4), 0.3+tone*0.3), descRichPurple, octDown*0.4*glowSuppress);
 
-    // Helper: draw bloom path
     function drawBloom(bloom, dir, maxH, baseCol, peakCol, alphaBase, alphaPeak) {
-        // Fill
         const grad = g.createLinearGradient(vx + vw/2, midY, vx + vw/2, midY + dir * maxH);
         grad.addColorStop(0, rgba(baseCol, alphaBase));
         grad.addColorStop(0.4, rgba(bloomPurple.map((c,i)=>c+(glowCol[i]-c)*glowIntensity*0.5), 0.4 + glowIntensity*0.15));
@@ -909,7 +888,6 @@ function paintSpectralBloom() {
         g.closePath();
         g.fill();
 
-        // Glow layer
         g.fillStyle = rgba(peakCol, 0.06 + cascadeBrightness*0.04 + (dir < 0 ? octUp*0.10 : 0));
         g.beginPath();
         g.moveTo(vx, midY);
@@ -921,7 +899,6 @@ function paintSpectralBloom() {
         g.closePath();
         g.fill();
 
-        // Edge
         const edgeA = dir < 0 ? (0.20 + octUp*0.20 + cascadeBrightness*0.15) : (0.15 + octDown*0.15);
         g.strokeStyle = rgba(peakCol, edgeA);
         g.lineWidth = 1.5 + (dir < 0 ? octUp : octDown) * 1;
@@ -934,7 +911,6 @@ function paintSpectralBloom() {
         g.stroke();
     }
 
-    // Helper: draw shells
     function drawShells(bloom, dir, maxH, numShells, octAmt, innerCol, outerCol, deepCol) {
         if (octAmt < 0.02) return;
         for (let shell = numShells; shell >= 1; shell--) {
@@ -958,7 +934,6 @@ function paintSpectralBloom() {
         }
     }
 
-    // Paint order: Ascend shells, Descend shells, upper bloom, lower bloom, glow rip, halation
     drawShells(upperBloom, -1, maxBloomH, 7, octUp, [255,244,208], [255,224,144], [255,255,255]);
     drawShells(lowerBloom, 1, maxBloomH, 7, octDown, [106,58,224], [58,24,128], [42,16,96]);
 
@@ -966,7 +941,6 @@ function paintSpectralBloom() {
         0.55 + octUp*0.10, 0.75 + cascadeBrightness*0.2 + octUp*0.15);
     drawBloom(lowerBloom, 1, maxBloomH * 0.8, lowerBaseCol, lowerPeakCol, 0.45, 0.30);
 
-    // Glow "rip in curtain" shells
     if (glowIntensity > 0.01) {
         const sunCore = [255,248,224];
         for (let shell = 2; shell >= 1; shell--) {
@@ -974,7 +948,6 @@ function paintSpectralBloom() {
             let sa = (glowIntensity * 0.30 + sizzle * 0.25) / shell;
             sa = Math.min(sa, 0.55);
             const sCol = lerpColor(lerpColor(glowCol, scorchOrange, sizzle*0.6), sunCore, glowIntensity*(shell===1?0.5:0.2));
-            // Upper glow
             g.fillStyle = rgba(sCol, sa);
             g.beginPath(); g.moveTo(vx, midY);
             for (let i = 0; i < BLOOM_RES; i++) {
@@ -982,7 +955,6 @@ function paintSpectralBloom() {
                 g.lineTo(px, midY - upperBloom[i] * maxBloomH * expand);
             }
             g.lineTo(vx+vw, midY); g.closePath(); g.fill();
-            // Lower glow
             g.fillStyle = rgba(sCol, sa * 0.7);
             g.beginPath(); g.moveTo(vx, midY);
             for (let i = 0; i < BLOOM_RES; i++) {
@@ -993,7 +965,6 @@ function paintSpectralBloom() {
         }
     }
 
-    // Halation (chromatic warm/cool separation)
     const haloI = clampa(glowIntensity + sizzle*0.8 + octUp*octUp*0.15 + octDown*octDown*0.15, 0, 1);
     if (haloI > 0.01) {
         const warmHalo = lerpColor(lerpColor(glowCol, [255,216,112], 0.3+sizzle*0.3), [255,232,176], octUp*0.3);
@@ -1006,7 +977,6 @@ function paintSpectralBloom() {
             const sc = 1 + (scales[layer]-1) * haloI;
             const wA = wAs[layer] * haloI, cA = cAs[layer] * haloI;
 
-            // Warm channel (shifted left)
             for (const dir of [-1, 1]) {
                 const bl = dir < 0 ? upperBloom : lowerBloom;
                 const hm = dir < 0 ? maxBloomH : maxBloomH * 0.8;
@@ -1018,7 +988,6 @@ function paintSpectralBloom() {
                 }
                 g.lineTo(vx+vw-off, midY); g.closePath(); g.fill();
             }
-            // Cool channel (shifted right)
             for (const dir of [-1, 1]) {
                 const bl = dir < 0 ? upperBloom : lowerBloom;
                 const hm = dir < 0 ? maxBloomH : maxBloomH * 0.8;
@@ -1033,7 +1002,6 @@ function paintSpectralBloom() {
         }
     }
 
-    // Strata lines (Descend)
     if (octDown > 0.01) {
         const strataCol = bloomIndigo;
         for (let line = 0; line < 5; line++) {
@@ -1059,7 +1027,6 @@ function paintSpectralBloom() {
         }
     }
 
-    // Film grain
     if (noiseFrames.length > 0) {
         const grainAlpha = 0.12 + glowIntensity*0.28 + sizzle*0.35;
         g.globalAlpha = grainAlpha;
@@ -1068,40 +1035,136 @@ function paintSpectralBloom() {
     }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// ══════════════════════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────────────────
 // SLIDER UI
-// ══════════════════════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────────────────
+
+function updateSliderValueLabel(name) {
+    const p = params[name];
+    if (!p) return;
+    const el = document.querySelector(`[data-param-value="${name}"]`);
+    if (el) el.textContent = p.fmt(p.value);
+}
 
 function initSliders() {
     document.querySelectorAll('.param-slider[data-param]').forEach(slider => {
-        const paramName = slider.dataset.param;
-        // Set initial slider position from param value
-        const p = params[paramName];
-        if (p) slider.value = ((p.value - p.min) / (p.max - p.min)) * 100;
+        const name = slider.dataset.param;
+        const p = params[name];
+        if (!p) return;
+        slider.value = valueToSlider(name, p.value);
+        updateSliderValueLabel(name);
 
         slider.addEventListener('input', () => {
-            const norm = parseFloat(slider.value) / 100;
-            const p = params[paramName];
-            if (p) {
-                p.value = p.min + norm * (p.max - p.min);
-                applyParamsToAudio();
-            }
+            p.value = sliderToValue(name, parseFloat(slider.value));
+            updateSliderValueLabel(name);
+            applyParamsToAudio();
         });
     });
 }
 
-function updateAllKnobVisuals() {
-    // Sync slider positions from param values
-    document.querySelectorAll('.param-slider[data-param]').forEach(slider => {
-        const p = params[slider.dataset.param];
-        if (p) slider.value = ((p.value - p.min) / (p.max - p.min)) * 100;
-    });
+function refreshAllValueLabels() {
+    Object.keys(params).forEach(updateSliderValueLabel);
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
+// Musically-sensible target ranges for the 9 reverb-related front knobs,
+// shared between initial randomization and ongoing drift. IN/OUT stay at unity.
+const PARAM_DRIFT_RANGES = {
+    immersion: [0.05, 0.55],
+    distance:  [1.5,  4.5],
+    expanse:   [2.0,  18.0],
+    shimmer:   [0.0,  0.45],
+    modDepth:  [0.20, 0.65],
+    glow:      [0.0,  0.35],
+    ascend:    [0.0,  0.45],
+    descend:   [0.0,  0.30],
+    driftMod:  [0.0,  0.35],
+};
+
+function randomizeFrontPanel() {
+    const r = (lo, hi) => lo + Math.random() * (hi - lo);
+    Object.keys(PARAM_DRIFT_RANGES).forEach(k => {
+        const [lo, hi] = PARAM_DRIFT_RANGES[k];
+        params[k].value = r(lo, hi);
+    });
+    // descend has a 50% chance of being silent (frees the lower bloom)
+    if (Math.random() < 0.5) params.descend.value = 0;
+}
+
+// ── Generative param drift ──────────────────────────────────────────────────
+// Continuously evolves the 9 reverb knobs over time so the page plays as a
+// generative unit. Targets are re-rolled on a 90–240s interval (offset from
+// the 120–360s tonality cadence so the two systems don't lock in lockstep).
+// Smoothing is slow (α = 0.0008 per 50ms tick → ~62 s time constant), so
+// values are still ramping toward each new target when the next nudge fires
+// — the page never reaches a steady state.
+let paramDriftTimeout = null;
+const paramTargets = {};
+
+function initParamTargets() {
+    Object.keys(PARAM_DRIFT_RANGES).forEach(k => {
+        paramTargets[k] = params[k].value;
+    });
+}
+function scheduleParamDrift() {
+    if (!driftRunning) return;
+    paramDriftTimeout = setTimeout(runParamDrift, rand(90000, 240000));
+}
+function runParamDrift() {
+    if (!driftRunning) return;
+    if (driftPaused) {
+        paramDriftTimeout = setTimeout(runParamDrift, 1000);
+        return;
+    }
+    // Re-roll a 3–6 random subset of the 9 knob targets each tick.
+    const keys = Object.keys(PARAM_DRIFT_RANGES);
+    const shuffled = keys.slice().sort(() => Math.random() - 0.5);
+    const numToChange = 3 + Math.floor(Math.random() * 4);
+    for (let i = 0; i < numToChange; i++) {
+        const k = shuffled[i];
+        const [lo, hi] = PARAM_DRIFT_RANGES[k];
+        const cur = params[k].value;
+        if (Math.random() < 0.3) {
+            // Big move — fully re-randomize within the range
+            paramTargets[k] = lo + Math.random() * (hi - lo);
+        } else {
+            // Local nudge within ±30% of the param's range
+            const range = hi - lo;
+            paramTargets[k] = clampa(cur + rand(-range * 0.3, range * 0.3), lo, hi);
+        }
+        // Descend occasionally returns to zero for stillness moments
+        if (k === 'descend' && Math.random() < 0.35) paramTargets[k] = 0;
+    }
+    scheduleParamDrift();
+}
+function stopParamDrift() {
+    if (paramDriftTimeout) { clearTimeout(paramDriftTimeout); paramDriftTimeout = null; }
+}
+function smoothParamDrift() {
+    let any = false;
+    const alpha = 0.0008; // ~62.5 s time constant @ 50 ms tick
+    Object.keys(PARAM_DRIFT_RANGES).forEach(k => {
+        const target = paramTargets[k];
+        if (target === undefined) return;
+        const cur = params[k].value;
+        const diff = target - cur;
+        if (Math.abs(diff) > 1e-5) {
+            params[k].value = cur + diff * alpha;
+            any = true;
+        }
+    });
+    if (!any) return;
+    // Push the drifted values back into the slider DOM, value labels, and audio.
+    Object.keys(PARAM_DRIFT_RANGES).forEach(k => {
+        const slider = document.querySelector(`.param-slider[data-param="${k}"]`);
+        if (slider) slider.value = valueToSlider(k, params[k].value);
+        updateSliderValueLabel(k);
+    });
+    applyParamsToAudio();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // MAIN LOOP
-// ══════════════════════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────────────────
 
 function driftUpdate() {
     if (!driftRunning || driftPaused) return;
@@ -1123,7 +1186,6 @@ function updateDriftUI() {
 
 function vizLoop() {
     if (!driftRunning) return;
-    // Check every frame if window size changed
     if (vizW !== window.innerWidth || vizH !== window.innerHeight) {
         resizeViz();
     }
@@ -1145,7 +1207,6 @@ function resizeViz() {
     vizH = h;
 }
 
-// Init canvas immediately on load — always adaptive
 function initVizCanvas() {
     vizCanvas = document.getElementById('vizCanvas');
     vizCtx = vizCanvas.getContext('2d');
@@ -1164,31 +1225,30 @@ async function startApp() {
     startTime = Date.now();
     totalPausedDuration = 0;
 
-    // Start tintinnabuli voices with staggered timing
     droneVoice.start();
-    setTimeout(() => { if(driftRunning) mVoice.start(); }, 1500);
-    setTimeout(() => { if(driftRunning) tVoice.start(); }, 3500);
-    setTimeout(() => { if(driftRunning) bellVoice.start(); }, 8000);
+    voiceStartTimeouts.push(setTimeout(() => { if(driftRunning) mVoice.start(); }, 1500));
+    voiceStartTimeouts.push(setTimeout(() => { if(driftRunning) tVoice.start(); }, 3500));
+    voiceStartTimeouts.push(setTimeout(() => { if(driftRunning) bellVoice.start(); }, 8000));
 
-    // Start atmosphere + tonality systems
     startTintAtmosphere();
     scheduleTonalityChange();
+    initParamTargets();
+    scheduleParamDrift();
 
     vizCanvas.classList.add('active');
     setTimeout(() => document.getElementById('infoOverlay').classList.add('loaded'), 800);
     setTimeout(() => document.getElementById('sliderStack').classList.add('loaded'), 1600);
 
-    updateAllKnobVisuals();
+    refreshAllValueLabels();
     applyParamsToAudio();
     driftUpdate();
     vizLoop();
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────────────────
 // EVENT HANDLERS
-// ══════════════════════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────────────────
 
-// Start overlay
 const overlay = document.getElementById('overlay');
 function triggerStart() {
     if (overlay.classList.contains('hidden')) return;
@@ -1199,7 +1259,6 @@ function triggerStart() {
 document.addEventListener('keydown', triggerStart);
 overlay.addEventListener('click', triggerStart);
 
-// Pause / Restart
 document.getElementById('pauseBtn').addEventListener('click', e => {
     e.preventDefault();
     if (!driftRunning) return;
@@ -1222,27 +1281,28 @@ document.getElementById('restartBtn').addEventListener('click', e => {
     driftRunning = false; driftPaused = false;
     mVoice?.stop(); tVoice?.stop(); droneVoice?.stop(); bellVoice?.stop();
     stopTintAtmosphere();
+    stopParamDrift();
     if(tonalityChangeTimeout){clearTimeout(tonalityChangeTimeout);tonalityChangeTimeout=null;}
+    // Cancel pending deferred voice starts so they don't fire into the new session
+    voiceStartTimeouts.forEach(clearTimeout);
+    voiceStartTimeouts.length = 0;
+    // Close the previous AudioContext before startApp() creates a new one
+    if (audioCtx) {
+        try { audioCtx.close(); } catch (err) {}
+        audioCtx = null;
+        reverbWorkletNode = null;
+        masterGain = null;
+        analyserNode = null;
+    }
     setTimeout(startApp, 300);
 });
 
-// Volume
-document.getElementById('volumeSlider').addEventListener('input', e => {
-    if (masterGain) masterGain.gain.value = (parseFloat(e.target.value) / 100) * 4.0;
-});
-
-// Header/footer elements removed — no preset nav, cascade, fx, rnd, undo buttons
-
-// Projects list removed
-
-// Keyboard shortcuts
 document.addEventListener('keydown', e => {
     if (!driftRunning && !driftPaused) return;
     if (e.key === ' ') { e.preventDefault(); document.getElementById('pauseBtn').click(); }
     if (e.key.toLowerCase() === 'r') { e.preventDefault(); document.getElementById('restartBtn').click(); }
 });
 
-// Keep audio alive
 document.addEventListener('visibilitychange', () => {
     if (driftRunning && audioCtx && !driftPaused && audioCtx.state === 'suspended') audioCtx.resume();
 });
@@ -1250,8 +1310,11 @@ setInterval(() => {
     if (driftRunning && !driftPaused && audioCtx?.state === 'suspended') audioCtx.resume().catch(()=>{});
 }, 1000);
 
-// Init knobs on load
-window.addEventListener('DOMContentLoaded', () => { initVizCanvas(); initSliders(); });
+window.addEventListener('DOMContentLoaded', () => {
+    randomizeFrontPanel();
+    initVizCanvas();
+    initSliders();
+});
 </script>
 </body>
 </html>
