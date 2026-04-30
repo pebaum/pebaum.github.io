@@ -276,7 +276,6 @@
         <a href="https://www.linkedin.com/in/peter-baumgartner-b0094a49/" target="_blank">PM @ Microsoft</a><br>
         <a href="https://open.spotify.com/artist/4T87J20L8uHSVkOuhP2oYX" target="_blank">music</a><br>
         <a href="mailto:p.l.baumgartner@gmail.com">contact</a>
-        <div class="experimental-tag">REVERIE · EXPERIMENTAL</div>
     </div>
     <div class="info-right">
         <strong id="elapsed">00:00</strong><br>
@@ -344,92 +343,6 @@
         <span class="slider-label">Out</span>
         <input type="range" class="param-slider" data-param="outputGain" min="0" max="100" step="0.5" value="75">
         <span class="slider-value" data-param-value="outputGain">0.0 dB</span>
-    </div>
-
-    <button class="advanced-toggle" id="advancedToggle" type="button">
-        Advanced<span class="arrow">▸</span>
-    </button>
-</div>
-
-<!-- Advanced panel — Reverie's bottom-row + synth + atmosphere -->
-<div class="advanced-stack" id="advancedStack">
-    <div class="section-label">Reverb</div>
-    <div class="slider-row">
-        <span class="slider-label">Timbre</span>
-        <input type="range" class="param-slider" data-param="timbre" min="0" max="100" step="0.5" value="50">
-        <span class="slider-value" data-param-value="timbre">0.0 dB</span>
-    </div>
-    <div class="slider-row">
-        <span class="slider-label">Mod Rate</span>
-        <input type="range" class="param-slider" data-param="modRate" min="0" max="100" step="0.5" value="50">
-        <span class="slider-value" data-param-value="modRate">2.0 Hz</span>
-    </div>
-    <div class="slider-row">
-        <span class="slider-label">Diffusion</span>
-        <input type="range" class="param-slider" data-param="diffusion" min="0" max="100" step="0.5" value="100">
-        <span class="slider-value" data-param-value="diffusion">100%</span>
-    </div>
-    <div class="slider-row">
-        <span class="slider-label">Damping</span>
-        <input type="range" class="param-slider" data-param="damping" min="0" max="100" step="0.5" value="75">
-        <span class="slider-value" data-param-value="damping">75%</span>
-    </div>
-    <div class="slider-row">
-        <span class="slider-label">HPF</span>
-        <input type="range" class="param-slider" data-param="hpfFreq" min="0" max="100" step="0.5" value="40">
-        <span class="slider-value" data-param-value="hpfFreq">150 Hz</span>
-    </div>
-    <div class="slider-row">
-        <span class="slider-label">LPF</span>
-        <input type="range" class="param-slider" data-param="lpfFreq" min="0" max="100" step="0.5" value="60">
-        <span class="slider-value" data-param-value="lpfFreq">5.0 kHz</span>
-    </div>
-    <div class="slider-row">
-        <span class="slider-label">Early Mod</span>
-        <input type="range" class="param-slider" data-param="earlyMod" min="0" max="100" step="0.5" value="0">
-        <span class="slider-value" data-param-value="earlyMod">0%</span>
-    </div>
-    <div class="section-label">Voices</div>
-    <div class="slider-row">
-        <span class="slider-label">Melody</span>
-        <input type="range" class="param-slider" data-param="mVoiceVol" min="0" max="100" value="100">
-        <span class="slider-value" data-param-value="mVoiceVol">100%</span>
-    </div>
-    <div class="slider-row">
-        <span class="slider-label">Tintinnabuli</span>
-        <input type="range" class="param-slider" data-param="tVoiceVol" min="0" max="100" value="100">
-        <span class="slider-value" data-param-value="tVoiceVol">100%</span>
-    </div>
-    <div class="slider-row">
-        <span class="slider-label">Drone</span>
-        <input type="range" class="param-slider" data-param="droneVol" min="0" max="100" value="100">
-        <span class="slider-value" data-param-value="droneVol">100%</span>
-    </div>
-    <div class="slider-row">
-        <span class="slider-label">Bells</span>
-        <input type="range" class="param-slider" data-param="bellVol" min="0" max="100" value="100">
-        <span class="slider-value" data-param-value="bellVol">100%</span>
-    </div>
-    <div class="section-label">Atmosphere</div>
-    <div class="slider-row">
-        <span class="slider-label">Space</span>
-        <input type="range" class="param-slider" data-param="atmoSpace" min="0" max="100" value="70">
-        <span class="slider-value" data-param-value="atmoSpace">70%</span>
-    </div>
-    <div class="slider-row">
-        <span class="slider-label">Density</span>
-        <input type="range" class="param-slider" data-param="atmoDensity" min="0" max="100" value="55">
-        <span class="slider-value" data-param-value="atmoDensity">55%</span>
-    </div>
-    <div class="slider-row">
-        <span class="slider-label">Warmth</span>
-        <input type="range" class="param-slider" data-param="atmoWarmth" min="0" max="100" value="50">
-        <span class="slider-value" data-param-value="atmoWarmth">50%</span>
-    </div>
-    <div class="slider-row">
-        <span class="slider-label">Breath</span>
-        <input type="range" class="param-slider" data-param="atmoBreath" min="0" max="100" value="35">
-        <span class="slider-value" data-param-value="atmoBreath">35%</span>
     </div>
 </div>
 
@@ -1218,6 +1131,21 @@ function refreshAllValueLabels() {
     Object.keys(params).forEach(updateSliderValueLabel);
 }
 
+// Randomize the 9 reverb-related front-panel knobs to musically-sensible
+// ranges. IN/OUT gain are intentionally left alone (kept at unity).
+function randomizeFrontPanel() {
+    const r = (lo, hi) => lo + Math.random() * (hi - lo);
+    params.immersion.value = r(0.05, 0.55);
+    params.distance.value  = r(1.5, 4.5);
+    params.expanse.value   = r(2.0, 18.0);
+    params.shimmer.value   = r(0.0, 0.45);
+    params.modDepth.value  = r(0.20, 0.65);
+    params.glow.value      = r(0.00, 0.35);
+    params.ascend.value    = r(0.00, 0.45);
+    params.descend.value   = Math.random() < 0.5 ? 0 : r(0.05, 0.30);
+    params.driftMod.value  = r(0.00, 0.35);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // MAIN LOOP
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1350,14 +1278,6 @@ document.getElementById('restartBtn').addEventListener('click', e => {
     setTimeout(startApp, 300);
 });
 
-document.getElementById('advancedToggle').addEventListener('click', () => {
-    const t = document.getElementById('advancedToggle');
-    const s = document.getElementById('advancedStack');
-    const open = !t.classList.contains('open');
-    t.classList.toggle('open', open);
-    s.classList.toggle('open', open);
-});
-
 document.addEventListener('keydown', e => {
     if (!driftRunning && !driftPaused) return;
     if (e.key === ' ') { e.preventDefault(); document.getElementById('pauseBtn').click(); }
@@ -1371,7 +1291,11 @@ setInterval(() => {
     if (driftRunning && !driftPaused && audioCtx?.state === 'suspended') audioCtx.resume().catch(()=>{});
 }, 1000);
 
-window.addEventListener('DOMContentLoaded', () => { initVizCanvas(); initSliders(); });
+window.addEventListener('DOMContentLoaded', () => {
+    randomizeFrontPanel();
+    initVizCanvas();
+    initSliders();
+});
 </script>
 </body>
 </html>
