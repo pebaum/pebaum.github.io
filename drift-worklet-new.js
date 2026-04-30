@@ -1,52 +1,50 @@
 // ============================================================================
-// DriftReverbProcessor — AudioWorklet (experimental Drift port)
-// Mirrors current Drift plugin parameter set.
-//   Front panel: IMMERSION (mix), DISTANCE, EXPANSE (dimension/decay),
-//                FEEDBACK, MOD DEPTH, GLOW (warmth), ASCEND, DESCEND, DRIFT
-//   Advanced:    TONE, SHIMMER, STEREO WIDTH, SPATIAL (driven from page UI)
+// ReverieProcessor — AudioWorklet (web port of Reverie / Drift v0.11.0-b)
 //
-// Signal chain:
-//   Input → Pre-Diffusion (6-stage allpass)
-//   → Spatial Decorrelator (DISTANCE scales pre-delay 0.5–5×)
-//   → FDN Reverb (FEEDBACK boost + slow per-line DRIFT LFO + shimmer inject)
-//   → Pitch Shift → Shimmer LP → Energy Limiter → store shimmer
-//   → TubeSaturation (GLOW) → TiltEQ (tone) → Stereo Width
-//   → Wet Gain (-4.5 dB) → Equal-power dry/wet mix
-//   → Output HPF (20 Hz) → Output Limiter
+// Structural port of the Reverie plugin's DSP. Parameter set, ranges, defaults,
+// and signal-flow ordering mirror the C++ source at:
+//   plugins/reverie/plugin/Source/dsp/DriftEngine.h
+//   plugins/reverie/plugin/Source/DriftParameters.h
 //
-// All internal processing in Float64Array (64-bit double precision).
+// Signal chain (per DriftEngine.h):
+//   InputGain → Copy(dry,wet) → HPF → LPF → TiltEQ
+//   → (if expanse > 0.01) add Shimmer feedback
+//   → JPVerb (size, time, damping, diffusion, modDepth, modRate)
+//   → Pitch Ascend (feeds back via shimmer) + Pitch Descend (one-shot)
+//   → GlowEffect → DriftLoFi (tape+heat) → sin/cos dry/wet mix (immersion)
+//   → OutputGain → Limiter
+//
+// Fidelity notes (departures from C++):
+//   * Reverb: structural FDN (Householder + per-line allpass + Jot RT60 damping)
+//             tuned to Reverie's parameter interface. Not bit-exact to JPVerb.
+//   * Pitch shifter: granular (4 voices × 8 grains, Hann, Hermite). Reverie
+//             uses a 4096-pt phase-vocoder. Both produce ±octave shimmer.
+//   * DriftLoFi: simplified tape+heat (input drive, soft sat, slow wow,
+//             tube drive+bias, LPF, RMS match). Reverie uses Revox A77
+//             hysteresis modeling (~1350 lines); the character matches.
 // ============================================================================
 
 const NUM_LINES = 16;
-const NUM_ALLPASS = 2;
-const HOUSEHOLDER_SCALE = 2.0 / 16.0; // 0.125
-const OUTPUT_GAIN = 1.0 / Math.sqrt(8);
+const HOUSEHOLDER_SCALE = 2.0 / 16.0;
 const PI = 3.14159265358979323846;
 const TWO_PI = 2.0 * PI;
 const HALF_PI = PI / 2.0;
-const WET_GAIN = Math.pow(10.0, -4.5 / 20.0); // -4.5 dB ≈ 0.5957
 
-// Prime-number fractions for FDN delay line lengths
 const PRIMES = [149, 179, 223, 263, 307, 359, 419, 491, 563, 641, 727, 839, 953, 1097, 1259, 1447];
 const PRIME_SUM = PRIMES.reduce((a, b) => a + b, 0);
 const FRACTIONS = PRIMES.map(p => p / PRIME_SUM);
 
-// FDN allpass coefficients
 const AP_COEFF_1 = 0.35;
 const AP_COEFF_2 = 0.30;
-
-// Pitch shifter constants
 const NUM_VOICES = 4;
 const NUM_GRAINS = 8;
-const GRAIN_SIZE_MS_UP = 150;
+const GRAIN_SIZE_MS_UP   = 150;
 const GRAIN_SIZE_MS_DOWN = 250;
-const PITCH_RATIOS = [2.0, 4.0, 0.5, 0.25]; // +12st, +24st, -12st, -24st
+const PITCH_RATIOS = [2.0, 4.0, 0.5, 0.25];
 
-// Render quantum (always 128 in Web Audio spec)
 const BLOCK_SIZE = 128;
 
-
-// ── Hermite cubic interpolation ──────────────────────────────────────────────
+// ── Utility: Hermite cubic interpolation ────────────────────────────────────
 function hermite(buf, posD, bufSize) {
     const pos0 = Math.floor(posD);
     const frac = posD - pos0;
@@ -63,24 +61,332 @@ function hermite(buf, posD, bufSize) {
     return ((c3 * frac + c2) * frac + c1) * frac + c0;
 }
 
-// ── Simple LCG PRNG ──────────────────────────────────────────────────────────
 class SimpleRng {
     constructor(seed) { this.state = (seed === 0 ? 1 : seed) >>> 0; }
     next() { this.state = (this.state * 1664525 + 1013904223) >>> 0; return this.state; }
     nextDouble() { return this.next() / 4294967296.0; }
 }
 
+// ============================================================================
+// Biquad — 2nd-order Butterworth (Q = 1/√2). Matches DriftEngine.h coeffs.
+// ============================================================================
+class Biquad {
+    constructor() {
+        this.b0 = 1; this.b1 = 0; this.b2 = 0;
+        this.a1 = 0; this.a2 = 0;
+        this.xL = [0, 0]; this.yL = [0, 0];
+        this.xR = [0, 0]; this.yR = [0, 0];
+    }
+    setHPF(sr, freq) {
+        if (freq < 21.0) { this.b0 = 1; this.b1 = 0; this.b2 = 0; this.a1 = 0; this.a2 = 0; return; }
+        const w0 = TWO_PI * freq / sr;
+        const cs = Math.cos(w0), sn = Math.sin(w0);
+        const alpha = sn / (2.0 * 0.7071067811865476);
+        const a0 = 1.0 + alpha;
+        this.b0 = ((1.0 + cs) / 2.0) / a0;
+        this.b1 = (-(1.0 + cs)) / a0;
+        this.b2 = this.b0;
+        this.a1 = (-2.0 * cs) / a0;
+        this.a2 = (1.0 - alpha) / a0;
+    }
+    setLPF(sr, freq) {
+        if (freq > 19999.0) { this.b0 = 1; this.b1 = 0; this.b2 = 0; this.a1 = 0; this.a2 = 0; return; }
+        const w0 = TWO_PI * freq / sr;
+        const cs = Math.cos(w0), sn = Math.sin(w0);
+        const alpha = sn / (2.0 * 0.7071067811865476);
+        const a0 = 1.0 + alpha;
+        this.b0 = ((1.0 - cs) / 2.0) / a0;
+        this.b1 = (1.0 - cs) / a0;
+        this.b2 = this.b0;
+        this.a1 = (-2.0 * cs) / a0;
+        this.a2 = (1.0 - alpha) / a0;
+    }
+    process(left, right, n) {
+        for (let i = 0; i < n; i++) {
+            const xL = left[i];
+            const yL = this.b0 * xL + this.b1 * this.xL[0] + this.b2 * this.xL[1]
+                     - this.a1 * this.yL[0] - this.a2 * this.yL[1];
+            this.xL[1] = this.xL[0]; this.xL[0] = xL;
+            this.yL[1] = this.yL[0]; this.yL[0] = yL;
+            left[i] = yL;
+
+            const xR = right[i];
+            const yR = this.b0 * xR + this.b1 * this.xR[0] + this.b2 * this.xR[1]
+                     - this.a1 * this.yR[0] - this.a2 * this.yR[1];
+            this.xR[1] = this.xR[0]; this.xR[0] = xR;
+            this.yR[1] = this.yR[0]; this.yR[0] = yR;
+            right[i] = yR;
+        }
+    }
+    reset() { this.xL = [0, 0]; this.yL = [0, 0]; this.xR = [0, 0]; this.yR = [0, 0]; }
+}
 
 // ============================================================================
-// AllpassDiffuser — 6 cascaded allpass filters for pre-diffusion
+// TiltEQ — 1 kHz pivot, ±12 dB. Identical to Reverie's TiltEQ.h.
+// ============================================================================
+class TiltEQ {
+    constructor(sr) {
+        const wc = TWO_PI * 1000.0 / sr;
+        this.lpCoeff = Math.exp(-wc);
+        this.lowGain = 1.0; this.highGain = 1.0;
+        this.stateL = 0.0; this.stateR = 0.0;
+    }
+    setTilt(tiltDb) {
+        const dB = Math.max(-12.0, Math.min(12.0, tiltDb));
+        const V = Math.pow(10.0, Math.abs(dB) / 40.0);
+        if (dB >= 0.0) { this.highGain = V; this.lowGain = 1.0 / V; }
+        else            { this.lowGain  = V; this.highGain = 1.0 / V; }
+    }
+    process(left, right, n) {
+        for (let i = 0; i < n; i++) {
+            this.stateL = (1.0 - this.lpCoeff) * left[i] + this.lpCoeff * this.stateL;
+            const hpL = left[i] - this.stateL;
+            left[i] = this.stateL * this.lowGain + hpL * this.highGain;
 
+            this.stateR = (1.0 - this.lpCoeff) * right[i] + this.lpCoeff * this.stateR;
+            const hpR = right[i] - this.stateR;
+            right[i] = this.stateR * this.lowGain + hpR * this.highGain;
+        }
+    }
+    reset() { this.stateL = 0; this.stateR = 0; }
+}
+
+// ============================================================================
+// GlowEffect — tube comp + asymmetric tanh sat + HF rolloff + DC blocker.
+// Identical to Reverie's GlowEffect.h.
+// ============================================================================
+class GlowEffect {
+    constructor(sr) {
+        this.sr = sr;
+        this.envAttack  = Math.exp(-1.0 / (sr * 0.002));
+        this.envRelease = Math.exp(-1.0 / (sr * 0.200));
+        this.rmsCoeff   = Math.exp(-1.0 / (sr * 0.010));
+        this.hpR        = Math.exp(-2.0 * PI * 30.0 / sr);
+        this.reset();
+    }
+    setAmount(amount) {
+        const a = Math.max(0.0, Math.min(1.0, amount));
+        this.amount01 = a;
+        this.compThreshold = 1.0 - a * 0.85;
+        this.compRatio = 1.0 + a * 9.0;
+        this.satDrive = 1.0 + a * 5.0;
+        this.satMakeup = 1.0 / Math.max(0.3, Math.tanh(this.satDrive * 0.7));
+        const cutoffHz = 20000.0 * Math.pow(0.3, a);
+        this.lpCoeff = Math.exp(-TWO_PI * cutoffHz / this.sr);
+    }
+    saturate(x) {
+        const driven = x * this.satDrive;
+        let shaped = driven >= 0 ? Math.tanh(driven) : Math.tanh(driven * 1.15) / 1.15;
+        const bias = 0.08 * (this.satDrive - 1.0) / 5.0 * Math.exp(-driven * driven * 0.5);
+        return (shaped + bias) * this.satMakeup;
+    }
+    process(left, right, n) {
+        for (let i = 0; i < n; i++) {
+            let L = left[i], R = right[i];
+            // Stage 1 — tube compression
+            const mono = (L + R) * 0.5, sq = mono * mono;
+            this.rmsEnvelope = this.rmsCoeff * this.rmsEnvelope + (1.0 - this.rmsCoeff) * sq;
+            const rmsLevel = Math.sqrt(this.rmsEnvelope);
+            let gr = 1.0;
+            if (rmsLevel > this.compThreshold && this.compThreshold > 0.0) {
+                const overshoot = rmsLevel / this.compThreshold;
+                gr = Math.pow(overshoot, (1.0 / this.compRatio) - 1.0);
+            }
+            this.compGainSmoothed = (gr < this.compGainSmoothed)
+                ? this.envAttack * this.compGainSmoothed + (1.0 - this.envAttack) * gr
+                : this.envRelease * this.compGainSmoothed + (1.0 - this.envRelease) * gr;
+            L *= this.compGainSmoothed;
+            R *= this.compGainSmoothed;
+            // Stage 2 — saturation
+            L = this.saturate(L); R = this.saturate(R);
+            // Stage 3 — HF rolloff
+            this.lpStateL = (1.0 - this.lpCoeff) * L + this.lpCoeff * this.lpStateL; L = this.lpStateL;
+            this.lpStateR = (1.0 - this.lpCoeff) * R + this.lpCoeff * this.lpStateR; R = this.lpStateR;
+            // Stage 4 — DC blocker
+            const xL = L, xR = R;
+            L = xL - this.hpXL + this.hpR * this.hpYL; this.hpXL = xL; this.hpYL = L;
+            R = xR - this.hpXR + this.hpR * this.hpYR; this.hpXR = xR; this.hpYR = R;
+            left[i] = L; right[i] = R;
+        }
+    }
+    reset() {
+        this.rmsEnvelope = 0; this.compGainSmoothed = 1; this.lpStateL = 0; this.lpStateR = 0;
+        this.hpXL = 0; this.hpYL = 0; this.hpXR = 0; this.hpYR = 0;
+        this.amount01 = 0; this.compThreshold = 1; this.compRatio = 1;
+        this.satDrive = 1; this.satMakeup = 1; this.lpCoeff = 0;
+    }
+}
+
+// ============================================================================
+// DriftLoFi — simplified tape+heat character, driven by drift_mod (0–1).
 //
-// Delay times chosen to smear transients without audible echo:
-//   Stage 1:  2.1ms  g=0.50    Stage 4: 23.1ms  g=0.40
-//   Stage 2:  5.3ms  g=0.50    Stage 5: 37.9ms  g=0.35
-//   Stage 3: 11.7ms  g=0.45    Stage 6: 53.7ms  g=0.30
+// Reverie's DriftEffect orchestrates a Revox A77 tape model + heat tube channel
+// (≈1350 lines combined). This is a pragmatic stand-in that hits the same
+// character: input drive → soft sat → slow wow modulation → tube drive+bias
+// → LPF → DC block → RMS match.
 //
-// setDiffusion(0–1) scales base coefficients; 0 → g≈0.05 (transparent).
+// Macro curves derived from DriftEffect.h's "Kevin's macro" piecewise lookup
+// (v0.10.9 default).
+// ============================================================================
+class DriftLoFi {
+    constructor(sr) {
+        this.sr = sr;
+        // Wow delay buffer ~30ms
+        this.wfBufSize = Math.ceil(0.030 * sr) + 16;
+        this.wfBufL = new Float64Array(this.wfBufSize);
+        this.wfBufR = new Float64Array(this.wfBufSize);
+        this.wfWritePos = 0;
+        // Wow LFO ~0.35 Hz (subtle), independent L/R for stereo
+        this.wowPhaseL = 0.0;
+        this.wowPhaseR = 0.25;
+        this.wowInc = 0.35 / sr;
+        // LPF state (cable LPF + tube HF)
+        this.lpStateL = 0.0; this.lpStateR = 0.0;
+        // Compression envelope
+        this.rmsEnv = 0.0;
+        this.rmsCoeff = Math.exp(-1.0 / (sr * 0.010));
+        this.compGain = 1.0;
+        this.compAtk = Math.exp(-1.0 / (sr * 0.005));
+        this.compRel = Math.exp(-1.0 / (sr * 0.080));
+        // DC blocker
+        this.dcR = Math.exp(-2.0 * TWO_PI * 30.0 / sr);
+        this.dcXL = 0; this.dcYL = 0; this.dcXR = 0; this.dcYR = 0;
+        // RMS match
+        this.rmsMatchGain = 1.0;
+        this.rmsMatchCoeff = Math.exp(-1.0 / (sr * 0.050));
+
+        this.amount = 0.0;
+        this._derive();
+    }
+    setAmount(a) {
+        this.amount = Math.max(0.0, Math.min(1.0, a));
+        this._derive();
+    }
+    // Piecewise macro lookup mirroring DriftEffect.h's Kevin's macro
+    _kv(k, v10, v35, v50, v65, v80, v100) {
+        if (k <= 0) return 0;
+        if (k <= 0.10) return (k / 0.10) * v10;
+        if (k <= 0.35) return v10 + ((k - 0.10) / 0.25) * (v35 - v10);
+        if (k <= 0.50) return v35 + ((k - 0.35) / 0.15) * (v50 - v35);
+        if (k <= 0.65) return v50 + ((k - 0.50) / 0.15) * (v65 - v50);
+        if (k <= 0.80) return v65 + ((k - 0.65) / 0.15) * (v80 - v65);
+        return v80 + ((k - 0.80) / 0.20) * (v100 - v80);
+    }
+    _derive() {
+        const t = this.amount;
+        // Tape input drive 1×–1.45×
+        this.tapeDrive = 1.0 + this._kv(t, 0.10, 0.28, 0.36, 0.40, 0.425, 0.45);
+        // Compression
+        this.compRatio = 1.0 + this._kv(t, 0.10, 0.20, 0.275, 0.30, 0.375, 0.375) * 4.0;
+        this.compThresh = 1.0 - this._kv(t, 0.10, 0.20, 0.275, 0.30, 0.375, 0.375) * 0.6;
+        // Wow depth (cubic curve in plugin: depth01³)
+        const wowD = this._kv(t, 0.24, 0.40, 0.40, 0.40, 0.44, 0.44);
+        this.wowSamples = wowD * wowD * wowD * 0.0008 * this.sr; // up to ~36 samples at full
+        // Tube drive 1×–1.25×
+        this.tubeDrive = 1.0 + this._kv(t, 0.08, 0.10, 0.16, 0.201, 0.25, 0.25);
+        // Tube bias adds asymmetry (0–1)
+        this.tubeBias = this._kv(t, 0.10, 0.35, 0.50, 0.65, 0.80, 1.00);
+        // Cable LPF ~6kHz at 0%, ~3.5kHz at 100%
+        const lpfAmt = this._kv(t, 0.10, 0.28, 0.35, 0.35, 0.45, 0.45);
+        const cutoffHz = 6000.0 * Math.pow(0.55, lpfAmt);
+        this.lpCoeff = Math.exp(-TWO_PI * cutoffHz / this.sr);
+        // Ear compress (gentle bus comp character)
+        this.earAmt = this._kv(t, 0.10, 0.20, 0.25, 0.30, 0.35, 0.35);
+    }
+    process(left, right, n) {
+        if (this.amount < 1e-4) return; // bypass
+        // Engagement fade over first 1%
+        const engageFade = Math.min(1.0, this.amount / 0.01);
+
+        // Measure input RMS for level matching
+        let sumIn = 0;
+        for (let i = 0; i < n; i++) sumIn += left[i] * left[i] + right[i] * right[i];
+        const rmsIn = Math.sqrt(sumIn / (2 * n));
+
+        for (let i = 0; i < n; i++) {
+            let L = left[i], R = right[i];
+
+            // Stage 1 — input drive + soft tape sat (tanh asymmetric)
+            L *= this.tapeDrive; R *= this.tapeDrive;
+            L = L >= 0 ? Math.tanh(L) : Math.tanh(L * 1.10) / 1.10;
+            R = R >= 0 ? Math.tanh(R) : Math.tanh(R * 1.10) / 1.10;
+
+            // Stage 2 — wow (slow modulated short delay, chorus-y)
+            // Write into delay buffer
+            this.wfBufL[this.wfWritePos] = L;
+            this.wfBufR[this.wfWritePos] = R;
+            // LFOs
+            this.wowPhaseL += this.wowInc; if (this.wowPhaseL >= 1) this.wowPhaseL -= 1;
+            this.wowPhaseR += this.wowInc * 1.07; if (this.wowPhaseR >= 1) this.wowPhaseR -= 1;
+            const wowL = this.wowSamples * (0.5 + 0.5 * Math.sin(TWO_PI * this.wowPhaseL));
+            const wowR = this.wowSamples * (0.5 + 0.5 * Math.sin(TWO_PI * this.wowPhaseR));
+            // Read at modulated delay
+            let posL = this.wfWritePos - 4 - wowL; while (posL < 0) posL += this.wfBufSize;
+            let posR = this.wfWritePos - 4 - wowR; while (posR < 0) posR += this.wfBufSize;
+            L = hermite(this.wfBufL, posL, this.wfBufSize);
+            R = hermite(this.wfBufR, posR, this.wfBufSize);
+            this.wfWritePos = (this.wfWritePos + 1) % this.wfBufSize;
+
+            // Stage 3 — tube drive + asymmetric bias (heat)
+            const tdL = (L + this.tubeBias * 0.1) * this.tubeDrive;
+            const tdR = (R + this.tubeBias * 0.1) * this.tubeDrive;
+            L = tdL >= 0 ? Math.tanh(tdL) - this.tubeBias * 0.1
+                         : Math.tanh(tdL * (1.0 + this.tubeBias * 0.3)) / (1.0 + this.tubeBias * 0.3) - this.tubeBias * 0.1;
+            R = tdR >= 0 ? Math.tanh(tdR) - this.tubeBias * 0.1
+                         : Math.tanh(tdR * (1.0 + this.tubeBias * 0.3)) / (1.0 + this.tubeBias * 0.3) - this.tubeBias * 0.1;
+
+            // Stage 4 — cable LPF (one-pole)
+            this.lpStateL = (1.0 - this.lpCoeff) * L + this.lpCoeff * this.lpStateL; L = this.lpStateL;
+            this.lpStateR = (1.0 - this.lpCoeff) * R + this.lpCoeff * this.lpStateR; R = this.lpStateR;
+
+            // Stage 5 — gentle compression (ear comp)
+            const mono = (L + R) * 0.5, sq = mono * mono;
+            this.rmsEnv = this.rmsCoeff * this.rmsEnv + (1.0 - this.rmsCoeff) * sq;
+            const rms = Math.sqrt(this.rmsEnv);
+            let gr = 1.0;
+            if (rms > this.compThresh && this.earAmt > 0) {
+                gr = Math.pow(rms / this.compThresh, (1.0 / this.compRatio) - 1.0);
+                gr = 1.0 + (gr - 1.0) * this.earAmt;
+            }
+            this.compGain = (gr < this.compGain)
+                ? this.compAtk * this.compGain + (1.0 - this.compAtk) * gr
+                : this.compRel * this.compGain + (1.0 - this.compRel) * gr;
+            L *= this.compGain; R *= this.compGain;
+
+            // Stage 6 — DC blocker
+            const xL = L, xR = R;
+            L = xL - this.dcXL + this.dcR * this.dcYL; this.dcXL = xL; this.dcYL = L;
+            R = xR - this.dcXR + this.dcR * this.dcYR; this.dcXR = xR; this.dcYR = R;
+
+            left[i] = L; right[i] = R;
+        }
+
+        // RMS match (so DRIFT changes character, not loudness)
+        let sumOut = 0;
+        for (let i = 0; i < n; i++) sumOut += left[i] * left[i] + right[i] * right[i];
+        const rmsOut = Math.sqrt(sumOut / (2 * n));
+        const nf = 0.0001;
+        const tg = (rmsIn > nf && rmsOut > nf)
+            ? Math.max(0.25, Math.min(2.0, rmsIn / rmsOut))
+            : 1.0;
+        this.rmsMatchGain = this.rmsMatchCoeff * this.rmsMatchGain + (1.0 - this.rmsMatchCoeff) * tg;
+        for (let i = 0; i < n; i++) {
+            left[i]  *= this.rmsMatchGain * engageFade;
+            right[i] *= this.rmsMatchGain * engageFade;
+        }
+    }
+    reset() {
+        this.wfBufL.fill(0); this.wfBufR.fill(0); this.wfWritePos = 0;
+        this.wowPhaseL = 0; this.wowPhaseR = 0.25;
+        this.lpStateL = 0; this.lpStateR = 0;
+        this.rmsEnv = 0; this.compGain = 1;
+        this.dcXL = 0; this.dcYL = 0; this.dcXR = 0; this.dcYR = 0;
+        this.rmsMatchGain = 1;
+    }
+}
+
+// ============================================================================
+// AllpassDiffuser — 6 cascaded allpass for pre-diffusion, scaled by Diffusion.
 // ============================================================================
 class AllpassDiffuser {
     constructor(sr) {
@@ -89,8 +395,6 @@ class AllpassDiffuser {
         this.DELAY_TIMES_MS = [2.1, 5.3, 11.7, 23.1, 37.9, 53.7];
         this.BASE_COEFFICIENTS = [0.50, 0.50, 0.45, 0.40, 0.35, 0.30];
         this.stageCoefficients = new Float64Array(6);
-
-        // Per-channel, per-stage state: stages[ch][stage]
         this.stages = [[], []];
         for (let s = 0; s < 6; s++) {
             const delaySamples = Math.max(1, Math.ceil(this.DELAY_TIMES_MS[s] * 0.001 * sr));
@@ -98,15 +402,12 @@ class AllpassDiffuser {
             for (let ch = 0; ch < 2; ch++) {
                 this.stages[ch].push({
                     buffer: new Float64Array(bufferSize),
-                    bufferSize,
-                    delayLength: delaySamples,
-                    writePos: 0
+                    bufferSize, delayLength: delaySamples, writePos: 0
                 });
             }
         }
         this.setDiffusion(1.0);
     }
-
     setDiffusion(amount) {
         const t = Math.max(0.0, Math.min(1.0, amount));
         for (let s = 0; s < 6; s++) {
@@ -114,213 +415,40 @@ class AllpassDiffuser {
                 + (this.BASE_COEFFICIENTS[s] - this.MIN_COEFF) * t;
         }
     }
-
-    process(left, right, numSamples) {
+    process(left, right, n) {
         const channels = [left, right];
         for (let ch = 0; ch < 2; ch++) {
             const data = channels[ch];
             for (let s = 0; s < 6; s++) {
                 const ap = this.stages[ch][s];
                 const g = this.stageCoefficients[s];
-                for (let n = 0; n < numSamples; n++) {
-                    const x = data[n];
-                    let readPos = ap.writePos - ap.delayLength;
-                    if (readPos < 0) readPos += ap.bufferSize;
-                    const delayed = ap.buffer[readPos];
-                    const v = x + g * delayed;
-                    const y = delayed - g * v;
+                for (let k = 0; k < n; k++) {
+                    const x = data[k];
+                    let r = ap.writePos - ap.delayLength;
+                    if (r < 0) r += ap.bufferSize;
+                    const d = ap.buffer[r];
+                    const v = x + g * d;
                     ap.buffer[ap.writePos] = v;
-                    ap.writePos++;
-                    if (ap.writePos >= ap.bufferSize) ap.writePos = 0;
-                    data[n] = y;
+                    ap.writePos = (ap.writePos + 1) % ap.bufferSize;
+                    data[k] = d - g * v;
                 }
             }
         }
     }
-
     reset() {
-        for (let ch = 0; ch < 2; ch++) {
+        for (let ch = 0; ch < 2; ch++)
             for (let s = 0; s < this.stages[ch].length; s++) {
                 this.stages[ch][s].buffer.fill(0);
                 this.stages[ch][s].writePos = 0;
             }
-        }
     }
 }
 
-
 // ============================================================================
-// SpatialDecorator — Cross-channel modulated delay with 4-stage allpass
-
-//
-// Creates 3D depth via independent L/R delay modulation:
-//   1. Cross-feed (L↔R blend)
-//   2. Modulated stereo delay (slow LFOs at different rates per channel)
-//   3. 4-stage allpass diffusion per channel (smooths discrete echoes)
-//   4. Feedback (builds echo density)
-//
-// LFO rates: L=0.031Hz, R=0.047Hz, L2=0.073Hz, R2=0.019Hz
-// Allpass delays: [3.1, 7.3, 13.7, 21.1]ms (R channel ×1.13 for decorrelation)
-// ============================================================================
-class SpatialDecorator {
-    constructor(sr) {
-        this.sr = sr;
-        this.NUM_AP_STAGES = 4;
-        // LFO rates — very slow, irrational ratios prevent beating
-        this.LFO_RATE_L  = 0.031;
-        this.LFO_RATE_R  = 0.047;
-        this.LFO_RATE_L2 = 0.073;
-        this.LFO_RATE_R2 = 0.019;
-        const AP_DELAYS_MS = [3.1, 7.3, 13.7, 21.1];
-
-        // Delay buffers: extended to 600ms so DISTANCE (0.5–5×) can scale base delay
-        // (max base 80ms × 5 = 400ms, plus mod headroom and padding)
-        this.delayBufSize = Math.ceil(0.600 * sr) + 16;
-        this.delayBufL = new Float64Array(this.delayBufSize);
-        this.delayBufR = new Float64Array(this.delayBufSize);
-
-        // 4-stage allpass per channel
-        this.apL = [];
-        this.apR = [];
-        for (let s = 0; s < 4; s++) {
-            const apLen  = Math.max(1, Math.ceil(AP_DELAYS_MS[s] * 0.001 * sr));
-            const apLenR = Math.max(1, Math.ceil(AP_DELAYS_MS[s] * 1.13 * 0.001 * sr));
-            this.apL.push({ buffer: new Float64Array(apLen + 1),  bufferSize: apLen + 1,  delayLength: apLen,  writePos: 0 });
-            this.apR.push({ buffer: new Float64Array(apLenR + 1), bufferSize: apLenR + 1, delayLength: apLenR, writePos: 0 });
-        }
-
-        // LFO phase increments
-        this.lfoIncL  = this.LFO_RATE_L  / sr;
-        this.lfoIncR  = this.LFO_RATE_R  / sr;
-        this.lfoIncL2 = this.LFO_RATE_L2 / sr;
-        this.lfoIncR2 = this.LFO_RATE_R2 / sr;
-
-        this.reset();
-    }
-
-    setAmount(amount) {
-        this.amount01 = Math.max(0.0, Math.min(1.0, amount));
-        this.baseDelayMsRaw = 30.0 + this.amount01 * 50.0;     // 30–80ms (before DISTANCE)
-        this.baseDelayMs = this.baseDelayMsRaw * (this.distance || 1.0);
-        this.crossFeed   = this.amount01 * 0.20;                // 0–20%
-        this.feedback    = this.amount01 * 0.30;                // 0–30%
-        this.modDepthMs  = this.amount01 * 2.0;                 // 0–2ms
-        this.apCoeff     = this.amount01 * 0.55;                // 0–0.55
-    }
-
-    // DISTANCE scales the base pre-delay 0.5–5× without changing modulation depth.
-    setDistance(d) {
-        this.distance = Math.max(0.5, Math.min(5.0, d));
-        this.baseDelayMs = (this.baseDelayMsRaw || 30.0) * this.distance;
-    }
-
-    _processAllpass(ap, input, g) {
-        let readPos = ap.writePos - ap.delayLength;
-        if (readPos < 0) readPos += ap.bufferSize;
-        const delayed = ap.buffer[readPos];
-        const v = input + g * delayed;
-        const y = delayed - g * v;
-        ap.buffer[ap.writePos] = v;
-        ap.writePos++;
-        if (ap.writePos >= ap.bufferSize) ap.writePos = 0;
-        return y;
-    }
-
-    process(left, right, numSamples) {
-        if (this.amount01 < 0.001) return; // bypass when negligible
-
-        const baseDelaySamples = this.baseDelayMs * 0.001 * this.sr;
-        const modDepthSamples  = this.modDepthMs * 0.001 * this.sr;
-
-        for (let n = 0; n < numSamples; n++) {
-            const inL = left[n];
-            const inR = right[n];
-
-            // Cross-feed + feedback
-            const xfL = inL + inR * this.crossFeed + this.fbStateR * this.feedback;
-            const xfR = inR + inL * this.crossFeed + this.fbStateL * this.feedback;
-
-            // L channel modulated delay — two LFOs for complex movement
-            const modL = modDepthSamples * (
-                0.6 * Math.sin(TWO_PI * this.lfoPhaseL) +
-                0.4 * Math.sin(TWO_PI * this.lfoPhaseL2));
-            let delayL = baseDelaySamples + modL;
-            if (delayL < 1.0) delayL = 1.0;
-
-            // R channel — different LFO rates, slightly longer base delay (×1.07)
-            const modR = modDepthSamples * (
-                0.6 * Math.sin(TWO_PI * this.lfoPhaseR) +
-                0.4 * Math.sin(TWO_PI * this.lfoPhaseR2));
-            let delayR = baseDelaySamples * 1.07 + modR;
-            if (delayR < 1.0) delayR = 1.0;
-
-            // Write into delay buffers
-            this.delayBufL[this.writePos] = xfL;
-            this.delayBufR[this.writePos] = xfR;
-
-            // Read with Hermite interpolation
-            let posL = this.writePos - delayL;
-            while (posL < 0.0) posL += this.delayBufSize;
-            let tapL = hermite(this.delayBufL, posL, this.delayBufSize);
-
-            let posR = this.writePos - delayR;
-            while (posR < 0.0) posR += this.delayBufSize;
-            let tapR = hermite(this.delayBufR, posR, this.delayBufSize);
-
-            // 4-stage allpass diffusion per channel
-            for (let s = 0; s < 4; s++) {
-                tapL = this._processAllpass(this.apL[s], tapL, this.apCoeff);
-                tapR = this._processAllpass(this.apR[s], tapR, this.apCoeff);
-            }
-
-            // Store feedback state
-            this.fbStateL = tapL;
-            this.fbStateR = tapR;
-
-            // Advance LFOs
-            this.lfoPhaseL  += this.lfoIncL;  if (this.lfoPhaseL  >= 1.0) this.lfoPhaseL  -= 1.0;
-            this.lfoPhaseR  += this.lfoIncR;  if (this.lfoPhaseR  >= 1.0) this.lfoPhaseR  -= 1.0;
-            this.lfoPhaseL2 += this.lfoIncL2; if (this.lfoPhaseL2 >= 1.0) this.lfoPhaseL2 -= 1.0;
-            this.lfoPhaseR2 += this.lfoIncR2; if (this.lfoPhaseR2 >= 1.0) this.lfoPhaseR2 -= 1.0;
-
-            // Advance write pointer
-            this.writePos++;
-            if (this.writePos >= this.delayBufSize) this.writePos = 0;
-
-            // Crossfade between dry and processed
-            left[n]  = inL * (1.0 - this.amount01) + tapL * this.amount01;
-            right[n] = inR * (1.0 - this.amount01) + tapR * this.amount01;
-        }
-    }
-
-    reset() {
-        this.delayBufL.fill(0);
-        this.delayBufR.fill(0);
-        this.writePos = 0;
-        this.fbStateL = 0.0;
-        this.fbStateR = 0.0;
-        this.lfoPhaseL  = 0.0;
-        this.lfoPhaseR  = 0.25;  // offset for stereo decorrelation
-        this.lfoPhaseL2 = 0.5;
-        this.lfoPhaseR2 = 0.75;
-        this.amount01      = 0.0;
-        this.baseDelayMsRaw = 30.0;
-        this.baseDelayMs    = 30.0;
-        this.distance       = 1.0;
-        this.crossFeed   = 0.0;
-        this.feedback    = 0.0;
-        this.modDepthMs  = 0.0;
-        this.apCoeff     = 0.0;
-        for (let s = 0; s < 4; s++) {
-            this.apL[s].buffer.fill(0); this.apL[s].writePos = 0;
-            this.apR[s].buffer.fill(0); this.apR[s].writePos = 0;
-        }
-    }
-}
-
-
-// ============================================================================
-// FDN Reverb — 16-line Householder with nested allpass, Jot RT60 damping
+// FDNReverb — 16-line Householder feedback delay network with per-line allpass
+// and Jot RT60 damping. Exposes Reverie's parameter interface (size, time,
+// damping, diffusion, modDepth, modRate, earlyMod). Structurally not JPVerb,
+// but matches the parameter semantics and produces lush diffuse reverb.
 // ============================================================================
 class FDNReverb {
     constructor(sr) {
@@ -332,207 +460,183 @@ class FDNReverb {
         this.dampGain = new Float64Array(NUM_LINES);
         this.currentDelaySamples = new Float64Array(NUM_LINES);
         this.currentFeedback = 1.0;
-        this.isFrozen = false;
-        this.currentModDepthNorm = 0.3;
+        this.modDepthNorm = 0.0;
+        this.modRateHz = 0.1;
+        this.dampingCoeff = 0.5;
+        this.diffusion01 = 1.0;
 
-        // LFO state
         this.lfoRng = new SimpleRng(42);
         this.lfoState = new Float64Array(NUM_LINES);
         this.lfoFiltered = new Float64Array(NUM_LINES);
         this.lfoSmoothCoeff = new Float64Array(NUM_LINES);
         this.lfoStepScale = new Float64Array(NUM_LINES);
 
-        // DRIFT — slow per-line random walk on delay length (much slower than modDepth LFO)
-        this.driftRng = new SimpleRng(2024);
-        this.driftLfoState    = new Float64Array(NUM_LINES);
-        this.driftLfoFiltered = new Float64Array(NUM_LINES);
-        this.driftLfoSmoothCoeff = new Float64Array(NUM_LINES);
-        this.driftLfoStepScale   = new Float64Array(NUM_LINES);
-        this.driftAmount = 0.0;
-
-        // FEEDBACK — scales fb[i] regen amount above natural damping (0–2.5%)
-        this.feedbackBoost = 0.0;
-
-        // Shimmer injection buffers
-        this.shimmerInL = new Float64Array(BLOCK_SIZE);
-        this.shimmerInR = new Float64Array(BLOCK_SIZE);
-
-        // Pre-allocate per-sample work arrays (avoids GC in process loop)
-        this._tapOut  = new Float64Array(NUM_LINES);
-        this._mixed   = new Float64Array(NUM_LINES);
-        this._feedback = new Float64Array(NUM_LINES);
-
-        const maxDelay = Math.ceil(1.1 * sr) + 16;
-
+        const maxDelay = Math.ceil(1.4 * sr) + 16;
         for (let i = 0; i < NUM_LINES; i++) {
             const lineScale = 0.8 + 0.4 * i / 15.0;
             const ap1Delay = Math.max(1, Math.ceil(0.0013 * lineScale * sr));
             const ap2Delay = Math.max(1, Math.ceil(0.0029 * lineScale * sr));
-
             this.lines.push({
                 buffer: new Float64Array(maxDelay),
-                bufferSize: maxDelay,
-                writePos: 0,
-                lpState1: 0, lpState2: 0,
-                dcState: 0, dcPrevInput: 0,
+                bufferSize: maxDelay, writePos: 0,
+                lpState1: 0, lpState2: 0, dcState: 0, dcPrevInput: 0,
                 ap: [
                     { buffer: new Float64Array(ap1Delay + 1), bufferSize: ap1Delay + 1, delayLength: ap1Delay, writePos: 0 },
                     { buffer: new Float64Array(ap2Delay + 1), bufferSize: ap2Delay + 1, delayLength: ap2Delay, writePos: 0 },
                 ]
             });
-
             this.panCoeff[i] = i / (NUM_LINES - 1);
             this.fbScale[i] = 0.97 + 0.06 * i / 15.0;
             const rate = 0.05 + 0.15 * i / 15.0;
             this.lfoSmoothCoeff[i] = Math.exp(-TWO_PI * 2.0 / sr);
             this.lfoStepScale[i] = rate * 0.01;
-            // drift: smoothing pole near 0.05Hz, step is ~25× smaller than fast LFO
-            this.driftLfoSmoothCoeff[i] = Math.exp(-TWO_PI * 0.08 / sr);
-            this.driftLfoStepScale[i] = (0.05 + 0.10 * i / 15.0) * 0.0004;
         }
 
-        this.setSize(0.65);
+        this._tapOut = new Float64Array(NUM_LINES);
+        this._mixed = new Float64Array(NUM_LINES);
+        this._fb = new Float64Array(NUM_LINES);
+
+        this.setSize(1.0);
         this.computeDamping(2.0, 3.0, 1.0);
-    }
 
+        this.lastSize = -1;
+        this.lastTime = -1;
+        this.lastDamping = -1;
+    }
     setSize(size) {
-        const totalMs = 250 * Math.pow(6000 / 250, size);
-        for (let i = 0; i < NUM_LINES; i++) {
+        // size 0.5–5.0 in Reverie. Map to total delay 250 ms..6 s using same curve.
+        const sizeNorm = Math.max(0, Math.min(1, (size - 0.5) / 4.5));
+        const totalMs = 250 * Math.pow(6000 / 250, sizeNorm);
+        for (let i = 0; i < NUM_LINES; i++)
             this.currentDelaySamples[i] = Math.max(1, FRACTIONS[i] * totalMs * 0.001 * this.sr);
-        }
     }
-
-    setModDepth(d) { this.currentModDepthNorm = d; }
-    setFreeze(f) { this.isFrozen = f; }
-    setFeedback(f) { this.feedbackBoost = Math.max(0, Math.min(1, f)); }
-    setDrift(d) { this.driftAmount = Math.max(0, Math.min(1, d)); }
-
     computeDamping(t60Low, t60Mid, t60High) {
-        t60Low  = Math.max(0.05, t60Low);
-        t60Mid  = Math.max(0.05, t60Mid);
-        t60High = Math.max(0.05, t60High);
+        t60Mid = Math.max(0.05, t60Mid);
         for (let i = 0; i < NUM_LINES; i++) {
             const d = Math.max(1, this.currentDelaySamples[i]);
-            let gMid = Math.pow(10, -3.0 * d / (t60Mid * this.sr));
-            gMid = Math.min(0.9999, Math.max(0, gMid));
-            this.dampGain[i] = gMid;
-            const fc = 3000 + 7000 * (1 - i / 15.0);
+            let g = Math.pow(10, -3.0 * d / (t60Mid * this.sr));
+            g = Math.min(0.9999, Math.max(0, g));
+            this.dampGain[i] = g;
+            // Damping (0–0.8) shifts the LP cutoff per line lower → more high-freq decay
+            const baseFc = 3000 + 7000 * (1 - i / 15.0);
+            const fc = Math.max(300, baseFc * (1.0 - this.dampingCoeff * 0.85));
             this.dampLpCoeff[i] = Math.exp(-TWO_PI * fc / this.sr);
         }
     }
-
     setDecayParams(decaySec, hfDecayRatio) {
-        const tNorm = Math.max(0, Math.min(1, (decaySec - 0.1) / 59.9));
-        this.setSize(Math.sqrt(tNorm));
+        // Reverie expanse 0..40s. Use sqrt size mapping like before.
+        const t = Math.max(0, Math.min(1, decaySec / 40.0));
+        // Note: setSize is called separately by setDistance; here we only
+        // recompute damping for the t60 change.
         this.computeDamping(decaySec * 1.05, decaySec, decaySec * hfDecayRatio);
     }
+    setDistance(d)  { this.setSize(d); }       // Reverie: distance = size (0.5..5)
+    setExpanse(t)   { this.setDecayParams(Math.max(0.05, t), 0.6); } // 0.6 = hfRatio
+    setDamping(d)   {
+        this.dampingCoeff = Math.max(0, Math.min(1, d));
+        // Recompute LP cutoffs (no need to recompute t60 gain)
+        for (let i = 0; i < NUM_LINES; i++) {
+            const baseFc = 3000 + 7000 * (1 - i / 15.0);
+            const fc = Math.max(300, baseFc * (1.0 - this.dampingCoeff * 0.85));
+            this.dampLpCoeff[i] = Math.exp(-TWO_PI * fc / this.sr);
+        }
+    }
+    setDiffusion(d) { this.diffusion01 = Math.max(0, Math.min(1, d)); }
+    setModDepth(d)  { this.modDepthNorm = Math.max(0, Math.min(1, d)); }
+    setModRate(rHz) {
+        this.modRateHz = Math.max(0.0, Math.min(10.0, rHz));
+        // Adjust LFO smooth pole so fast rate moves fast
+        const fc = Math.max(0.5, this.modRateHz * 2.0);
+        for (let i = 0; i < NUM_LINES; i++)
+            this.lfoSmoothCoeff[i] = Math.exp(-TWO_PI * fc / this.sr);
+    }
+    setEarlyMod(e)  { this.earlyMod01 = Math.max(0, Math.min(1, e)); }
 
-    processAllpass(ap, input, g) {
-        let readPos = ap.writePos - ap.delayLength;
-        if (readPos < 0) readPos += ap.bufferSize;
-        const delayed = ap.buffer[readPos];
-        const v = input + g * delayed;
-        const y = delayed - g * v;
+    processAllpass(ap, x, g) {
+        let r = ap.writePos - ap.delayLength;
+        if (r < 0) r += ap.bufferSize;
+        const d = ap.buffer[r];
+        const v = x + g * d;
         ap.buffer[ap.writePos] = v;
         ap.writePos = (ap.writePos + 1) % ap.bufferSize;
-        return y;
+        return d - g * v;
     }
+    process(left, right, n) {
+        const tap = this._tapOut, mixed = this._mixed, fb = this._fb;
+        // Modulation amount in samples, per line, scaled by Reverie's mod_scale=50
+        const modScale = 50.0;
+        const modSamplesScale = modScale * this.modDepthNorm;
+        const ap1 = AP_COEFF_1 * this.diffusion01;
+        const ap2 = AP_COEFF_2 * this.diffusion01;
 
-    process(left, right, numSamples) {
-        const tapOut  = this._tapOut;
-        const mixed   = this._mixed;
-        const fb      = this._feedback;
-
-        for (let n = 0; n < numSamples; n++) {
-            // Read from delay lines with modulation + allpass
+        for (let s = 0; s < n; s++) {
             for (let i = 0; i < NUM_LINES; i++) {
                 const line = this.lines[i];
-                // Random-walk LFO
+                // Random-walk LFO at modRate
                 const rv = this.lfoRng.next();
                 const rs = (rv / 4294967296.0 - 0.5) * 2.0;
                 this.lfoState[i] = Math.max(-1, Math.min(1,
-                    this.lfoState[i] + rs * this.lfoStepScale[i]));
+                    this.lfoState[i] + rs * this.lfoStepScale[i] * (0.5 + this.modRateHz * 0.3)));
                 this.lfoFiltered[i] = this.lfoSmoothCoeff[i] * this.lfoFiltered[i]
-                    + (1 - this.lfoSmoothCoeff[i]) * this.lfoState[i];
-
-                const lineModDepth = this.currentDelaySamples[i] * 0.02 * this.currentModDepthNorm;
-                const modSamples = this.lfoFiltered[i] * lineModDepth;
-
-                // DRIFT — slow independent random walk on delay length
-                const drv = this.driftRng.next();
-                const drs = (drv / 4294967296.0 - 0.5) * 2.0;
-                this.driftLfoState[i] = Math.max(-1, Math.min(1,
-                    this.driftLfoState[i] + drs * this.driftLfoStepScale[i]));
-                this.driftLfoFiltered[i] = this.driftLfoSmoothCoeff[i] * this.driftLfoFiltered[i]
-                    + (1 - this.driftLfoSmoothCoeff[i]) * this.driftLfoState[i];
-                const driftMod = this.driftLfoFiltered[i] * this.currentDelaySamples[i]
-                    * 0.04 * this.driftAmount;
-
-                const totalDelay = this.currentDelaySamples[i] + modSamples + driftMod;
-
-                let readPosD = line.writePos - totalDelay;
-                if (readPosD < 0) readPosD += line.bufferSize;
-
-                let tap = hermite(line.buffer, readPosD, line.bufferSize);
-                tap = this.processAllpass(line.ap[0], tap, AP_COEFF_1);
-                tap = this.processAllpass(line.ap[1], tap, AP_COEFF_2);
-                tapOut[i] = tap;
+                    + (1.0 - this.lfoSmoothCoeff[i]) * this.lfoState[i];
+                const modSamples = this.lfoFiltered[i] * modSamplesScale;
+                const totalDelay = this.currentDelaySamples[i] + modSamples;
+                let r = line.writePos - totalDelay;
+                if (r < 0) r += line.bufferSize;
+                let t = hermite(line.buffer, r, line.bufferSize);
+                t = this.processAllpass(line.ap[0], t, ap1);
+                t = this.processAllpass(line.ap[1], t, ap2);
+                tap[i] = t;
             }
 
-            // Householder mixing
             let sum = 0;
-            for (let i = 0; i < NUM_LINES; i++) sum += tapOut[i];
+            for (let i = 0; i < NUM_LINES; i++) sum += tap[i];
             const scaledSum = sum * HOUSEHOLDER_SCALE;
-            for (let i = 0; i < NUM_LINES; i++) mixed[i] = tapOut[i] - scaledSum;
+            for (let i = 0; i < NUM_LINES; i++) mixed[i] = tap[i] - scaledSum;
 
-            // Per-line damping + DC blocker
             for (let i = 0; i < NUM_LINES; i++) {
                 const line = this.lines[i];
-                line.lpState1 = (1 - this.dampLpCoeff[i]) * mixed[i]
-                    + this.dampLpCoeff[i] * line.lpState1;
-                line.lpState2 = (1 - this.dampLpCoeff[i]) * line.lpState1
-                    + this.dampLpCoeff[i] * line.lpState2;
+                line.lpState1 = (1 - this.dampLpCoeff[i]) * mixed[i] + this.dampLpCoeff[i] * line.lpState1;
+                line.lpState2 = (1 - this.dampLpCoeff[i]) * line.lpState1 + this.dampLpCoeff[i] * line.lpState2;
                 let damped = line.lpState2 * this.dampGain[i];
-                // DC blocker
                 const dcIn = damped;
                 const dcOut = dcIn - line.dcPrevInput + 0.9995 * line.dcState;
-                line.dcPrevInput = dcIn;
-                line.dcState = dcOut;
-                fb[i] = this.isFrozen
-                    ? (dcOut * this.fbScale[i])
-                    : (dcOut * this.currentFeedback * this.fbScale[i]
-                        * (1.0 + this.feedbackBoost * 0.025));
+                line.dcPrevInput = dcIn; line.dcState = dcOut;
+                fb[i] = dcOut * this.currentFeedback * this.fbScale[i];
             }
 
-            // Inject input + shimmer
-            const inL = left[n], inR = right[n];
-            const shimL = n < this.shimmerInL.length ? this.shimmerInL[n] : 0;
-            const shimR = n < this.shimmerInR.length ? this.shimmerInR[n] : 0;
-
+            const inL = left[s], inR = right[s];
             for (let i = 0; i < NUM_LINES; i++) {
                 const pan = this.panCoeff[i];
                 const inp = inL * (1 - pan) + inR * pan;
-                const shim = shimL * (1 - pan) + shimR * pan;
-                this.lines[i].buffer[this.lines[i].writePos] = inp + fb[i] + shim;
-                this.lines[i].writePos = (this.lines[i].writePos + 1)
-                    % this.lines[i].bufferSize;
+                this.lines[i].buffer[this.lines[i].writePos] = inp + fb[i];
+                this.lines[i].writePos = (this.lines[i].writePos + 1) % this.lines[i].bufferSize;
             }
 
-            // Output: sum with stereo panning
             let outL = 0, outR = 0;
             for (let i = 0; i < NUM_LINES; i++) {
-                outL += tapOut[i] * (1 - this.panCoeff[i]);
-                outR += tapOut[i] * this.panCoeff[i];
+                outL += tap[i] * (1 - this.panCoeff[i]);
+                outR += tap[i] * this.panCoeff[i];
             }
-            left[n]  = outL * OUTPUT_GAIN;
-            right[n] = outR * OUTPUT_GAIN;
+            const og = 1.0 / Math.sqrt(8);
+            left[s] = outL * og;
+            right[s] = outR * og;
         }
+    }
+    reset() {
+        for (const line of this.lines) {
+            line.buffer.fill(0); line.writePos = 0;
+            line.lpState1 = 0; line.lpState2 = 0; line.dcState = 0; line.dcPrevInput = 0;
+            for (const ap of line.ap) { ap.buffer.fill(0); ap.writePos = 0; }
+        }
+        this.lfoState.fill(0); this.lfoFiltered.fill(0);
     }
 }
 
-
 // ============================================================================
-// Granular Pitch Shifter — 4 voices × 8 grains, Hann window, Hermite interp
+// GranularPitchShifter — 4 voices × 8 grains, Hann window, Hermite interp.
+// Used for both Ascend (feeds back via shimmer) and Descend (one-shot).
+// Parameterized: setAscend(0–1) and setDescend(0–1) gates voices on/off.
 // ============================================================================
 class GranularPitchShifter {
     constructor(sr, seed) {
@@ -543,12 +647,10 @@ class GranularPitchShifter {
         this.grainSpacingUp = Math.floor(this.grainSizeUp / NUM_GRAINS);
         this.grainSpacingDown = Math.floor(this.grainSizeDown / NUM_GRAINS);
 
-        // Input circular buffer
         this.bufSize = this.grainSizeDown * 8;
         this.buffer = new Float64Array(this.bufSize);
         this.writePos = 0;
 
-        // Hann windows
         this.hannUp = new Float32Array(this.grainSizeUp);
         for (let i = 0; i < this.grainSizeUp; i++)
             this.hannUp[i] = 0.5 * (1 - Math.cos(TWO_PI * i / this.grainSizeUp));
@@ -556,7 +658,6 @@ class GranularPitchShifter {
         for (let i = 0; i < this.grainSizeDown; i++)
             this.hannDown[i] = 0.5 * (1 - Math.cos(TWO_PI * i / this.grainSizeDown));
 
-        // Grain state: [voice][grain]
         this.grains = [];
         const phaseOffset = (seed * 7) % Math.max(1, this.grainSpacingUp);
         for (let v = 0; v < NUM_VOICES; v++) {
@@ -564,20 +665,22 @@ class GranularPitchShifter {
             const gs = isDown ? this.grainSizeDown : this.grainSizeUp;
             const sp = isDown ? this.grainSpacingDown : this.grainSpacingUp;
             this.grains.push([]);
-            for (let g = 0; g < NUM_GRAINS; g++) {
-                this.grains[v].push({
-                    readPos: 0,
-                    samplesActive: (g * sp + phaseOffset) % gs
-                });
-            }
+            for (let g = 0; g < NUM_GRAINS; g++)
+                this.grains[v].push({ readPos: 0, samplesActive: (g * sp + phaseOffset) % gs });
         }
-
-        this.oct1UpGain = 0;
-        this.oct2UpGain = 0;
-        this.oct1DownGain = 0;
-        this.oct2DownGain = 0;
+        this.oct1UpGain = 0; this.oct2UpGain = 0;
+        this.oct1DownGain = 0; this.oct2DownGain = 0;
     }
-
+    setAscend(a) {
+        const x = Math.max(0, Math.min(1, a));
+        this.oct1UpGain = Math.min(x / 0.75, 1.0);
+        this.oct2UpGain = Math.max((x - 0.75) / 0.25, 0.0);
+    }
+    setDescend(d) {
+        const x = Math.max(0, Math.min(1, d));
+        this.oct1DownGain = Math.min(x / 0.75, 1.0);
+        this.oct2DownGain = Math.max((x - 0.75) / 0.25, 0.0);
+    }
     resetGrain(g, v) {
         const isDown = v >= 2;
         const gs = isDown ? this.grainSizeDown : this.grainSizeUp;
@@ -590,18 +693,26 @@ class GranularPitchShifter {
         g.readPos = startPos;
         g.samplesActive = 0;
     }
-
-    process(input, output, numSamples) {
-        for (let n = 0; n < numSamples; n++) {
-            this.buffer[this.writePos] = input[n];
+    process(input, output, n) {
+        const gains = [this.oct1UpGain, this.oct2UpGain, this.oct1DownGain, this.oct2DownGain];
+        const anyActive = gains.some(g => g > 0.0001);
+        if (!anyActive) {
+            for (let i = 0; i < n; i++) {
+                this.buffer[this.writePos] = input[i];
+                this.writePos = (this.writePos + 1) % this.bufSize;
+                output[i] = 0;
+            }
+            return;
+        }
+        for (let i = 0; i < n; i++) {
+            this.buffer[this.writePos] = input[i];
             let out = 0;
-
             for (let v = 0; v < NUM_VOICES; v++) {
+                if (gains[v] < 0.0001) continue;
                 const isDown = v >= 2;
                 const gs = isDown ? this.grainSizeDown : this.grainSizeUp;
                 const hann = isDown ? this.hannDown : this.hannUp;
                 let voiceOut = 0;
-
                 for (let g = 0; g < NUM_GRAINS; g++) {
                     const gr = this.grains[v][g];
                     if (gr.samplesActive >= gs) this.resetGrain(gr, v);
@@ -614,519 +725,238 @@ class GranularPitchShifter {
                     if (gr.readPos >= this.bufSize) gr.readPos -= this.bufSize;
                     gr.samplesActive++;
                 }
-                voiceOut *= 0.25; // normalize (1/4 for 8 Hann grains summing to ~4)
-
-                const gains = [this.oct1UpGain, this.oct2UpGain,
-                               this.oct1DownGain, this.oct2DownGain];
+                voiceOut *= 0.25;
                 out += voiceOut * gains[v];
             }
-
-            output[n] = out;
+            output[i] = out;
             this.writePos = (this.writePos + 1) % this.bufSize;
         }
     }
 }
 
-
 // ============================================================================
-// FeedbackEnergyLimiter — RMS envelope follower with gain reduction
-
-//
-// Prevents shimmer runaway at high shimmer + high decay settings.
-//   - One-pole envelope follower tracks stereo RMS (~10ms window)
-//   - Gain reduction when RMS > threshold
-//   - Attack ~1ms (fast) / Release ~50ms (slow) for transparent limiting
+// ReverieProcessor — main worklet (matches Reverie's signal chain)
 // ============================================================================
-class FeedbackEnergyLimiter {
-    constructor(sr) {
-        this.rmsAlpha    = 1.0 - Math.exp(-1.0 / (0.010 * sr)); // 10ms RMS window
-        this.attackCoeff = 1.0 - Math.exp(-1.0 / (0.001 * sr)); // 1ms attack
-        this.releaseCoeff = 1.0 - Math.exp(-1.0 / (0.050 * sr)); // 50ms release
-        this.rmsLevel    = 0.0;
-        this.currentGain = 1.0;
-    }
-
-    process(left, right, numSamples, threshold) {
-        if (threshold === undefined) threshold = 0.9;
-        for (let n = 0; n < numSamples; n++) {
-            // Track RMS energy (stereo sum of squares)
-            const energy = left[n] * left[n] + right[n] * right[n];
-            this.rmsLevel += this.rmsAlpha * (energy - this.rmsLevel);
-            if (this.rmsLevel < 0.0) this.rmsLevel = 0.0;
-
-            const rms = Math.sqrt(this.rmsLevel);
-
-            // Compute target gain: reduce if above threshold
-            const targetGain = (rms > threshold) ? (threshold / rms) : 1.0;
-
-            // Smooth gain: fast attack, slow release
-            const coeff = (targetGain < this.currentGain)
-                ? this.attackCoeff : this.releaseCoeff;
-            this.currentGain += coeff * (targetGain - this.currentGain);
-
-            left[n]  *= this.currentGain;
-            right[n] *= this.currentGain;
-        }
-    }
-
-    reset() {
-        this.rmsLevel    = 0.0;
-        this.currentGain = 1.0;
-    }
-}
-
-
-// ============================================================================
-// TubeSaturation — 3-stage tube character (warmth/glow)
-// Port of TubeSaturation.h
-//
-// Amount 0.0 (clean) → 1.0 (full tube limiter):
-//   1. Tube compression:  RMS compressor, threshold 1.0→0.15, ratio 1:1→10:1
-//   2. Tube saturation:   Asymmetric tanh, drive 1×→6×, even-harmonic warmth
-//   3. HF rolloff:        One-pole LP, 20kHz→6kHz (tape head character)
-// ============================================================================
-class TubeSaturation {
-    constructor(sr) {
-        this.sr = sr;
-        // Envelope follower coefficients
-        this.envAttack  = Math.exp(-1.0 / (sr * 0.002));  // 2ms attack
-        this.envRelease = Math.exp(-1.0 / (sr * 0.200));  // 200ms release
-        this.rmsCoeff   = Math.exp(-1.0 / (sr * 0.010));  // 10ms RMS window
-        this.reset();
-    }
-
-    setAmount(amount) {
-        this.amount01 = Math.max(0.0, Math.min(1.0, amount));
-
-        // Compressor: threshold 1.0→0.15, ratio 1:1→10:1
-        this.compThreshold = 1.0 - this.amount01 * 0.85;
-        this.compRatio     = 1.0 + this.amount01 * 9.0;
-
-        // Saturation: drive 1×→6×
-        this.satDrive  = 1.0 + this.amount01 * 5.0;
-        this.satMakeup = 1.0 / Math.max(0.3, Math.tanh(this.satDrive * 0.7));
-
-        // HF rolloff: 20kHz→6kHz
-        const cutoffHz = 20000.0 * Math.pow(0.3, this.amount01);
-        const wc = 2.0 * PI * cutoffHz / this.sr;
-        this.lpCoeff = Math.exp(-wc);
-    }
-
-    _saturate(x) {
-        const driven = x * this.satDrive;
-        let shaped;
-        if (driven >= 0.0) {
-            shaped = Math.tanh(driven);
-        } else {
-            // Negative half driven 15% harder → asymmetry → even harmonics
-            shaped = Math.tanh(driven * 1.15) / 1.15;
-        }
-        // Subtle Gaussian bias for extra 2nd-harmonic content
-        const bias = 0.08 * (this.satDrive - 1.0) / 5.0
-            * Math.exp(-driven * driven * 0.5);
-        return (shaped + bias) * this.satMakeup;
-    }
-
-    process(left, right, numSamples) {
-        for (let n = 0; n < numSamples; n++) {
-            let L = left[n];
-            let R = right[n];
-
-            // ── Stage 1: Tube Compression / Limiting ──
-            {
-                const mono = (L + R) * 0.5;
-                const sq = mono * mono;
-                this.rmsEnvelope = this.rmsCoeff * this.rmsEnvelope
-                    + (1.0 - this.rmsCoeff) * sq;
-                const rmsLevel = Math.sqrt(this.rmsEnvelope);
-
-                let gainReduction = 1.0;
-                if (rmsLevel > this.compThreshold && this.compThreshold > 0.0) {
-                    const overshoot = rmsLevel / this.compThreshold;
-                    const exponent = (1.0 / this.compRatio) - 1.0;
-                    gainReduction = Math.pow(overshoot, exponent);
-                }
-
-                if (gainReduction < this.compGainSmoothed)
-                    this.compGainSmoothed = this.envAttack * this.compGainSmoothed
-                        + (1.0 - this.envAttack) * gainReduction;
-                else
-                    this.compGainSmoothed = this.envRelease * this.compGainSmoothed
-                        + (1.0 - this.envRelease) * gainReduction;
-
-                L *= this.compGainSmoothed;
-                R *= this.compGainSmoothed;
-            }
-
-            // ── Stage 2: Tube Saturation ──
-            L = this._saturate(L);
-            R = this._saturate(R);
-
-            // ── Stage 3: HF Rolloff (one-pole LP) ──
-            this.lpStateL = (1.0 - this.lpCoeff) * L + this.lpCoeff * this.lpStateL;
-            L = this.lpStateL;
-            this.lpStateR = (1.0 - this.lpCoeff) * R + this.lpCoeff * this.lpStateR;
-            R = this.lpStateR;
-
-            left[n]  = L;
-            right[n] = R;
-        }
-    }
-
-    reset() {
-        this.amount01         = 0.0;
-        this.compThreshold    = 1.0;
-        this.compRatio        = 1.0;
-        this.satDrive         = 1.0;
-        this.satMakeup        = 1.0;
-        this.lpCoeff          = 0.0;
-        this.rmsEnvelope      = 0.0;
-        this.compGainSmoothed = 1.0;
-        this.lpStateL         = 0.0;
-        this.lpStateR         = 0.0;
-    }
-}
-
-
-// ============================================================================
-// TiltEQ — First-order crossover tilt at 1 kHz pivot
-
-//
-// Splits signal into LP + HP bands via one-pole crossover, applies
-// complementary gain.  V = 10^(|dB|/40) — half the total tilt per side.
-//   Negative dB → dark (lows up, highs down)
-//   0 dB        → flat
-//   Positive dB → bright (highs up, lows down)
-// ============================================================================
-class TiltEQ {
-    constructor(sr) {
-        // First-order LP coefficient at 1000 Hz crossover
-        const wc = 2.0 * PI * 1000.0 / sr;
-        this.lpCoeff  = Math.exp(-wc);
-        this.lowGain  = 1.0;
-        this.highGain = 1.0;
-        this.stateL   = 0.0;
-        this.stateR   = 0.0;
-    }
-
-    setTilt(tiltDb) {
-        const dB = Math.max(-12.0, Math.min(12.0, tiltDb));
-        const V = Math.pow(10.0, Math.abs(dB) / 40.0);
-        if (dB >= 0.0) {
-            this.highGain = V;
-            this.lowGain  = 1.0 / V;
-        } else {
-            this.lowGain  = V;
-            this.highGain = 1.0 / V;
-        }
-    }
-
-    process(left, right, numSamples) {
-        for (let n = 0; n < numSamples; n++) {
-            // Left: split into LP + HP, apply tilt gains
-            this.stateL = (1.0 - this.lpCoeff) * left[n] + this.lpCoeff * this.stateL;
-            const hpL = left[n] - this.stateL;
-            left[n] = this.stateL * this.lowGain + hpL * this.highGain;
-
-            // Right
-            this.stateR = (1.0 - this.lpCoeff) * right[n] + this.lpCoeff * this.stateR;
-            const hpR = right[n] - this.stateR;
-            right[n] = this.stateR * this.lowGain + hpR * this.highGain;
-        }
-    }
-
-    reset() {
-        this.stateL = 0.0;
-        this.stateR = 0.0;
-    }
-}
-
-
-// ============================================================================
-// StereoWidthProcessor — Mid/side encoding with width control
-
-//
-// Stateless. Width semantics:
-//   0.0       = mono  (side zeroed)
-//   1.0       = unity (no change)
-//   1.0–2.0   = "clear center" (mid fades out, side boosted)
-//   2.0       = pure sides (mid removed)
-// ============================================================================
-class StereoWidthProcessor {
-    process(left, right, numSamples, width) {
-        for (let n = 0; n < numSamples; n++) {
-            const mid  = (left[n] + right[n]) * 0.5;
-            const side = (left[n] - right[n]) * 0.5;
-
-            const midGain  = width <= 1.0 ? 1.0 : Math.max(0.0, 2.0 - width);
-            const sideGain = width;
-
-            left[n]  = mid * midGain + side * sideGain;
-            right[n] = mid * midGain - side * sideGain;
-        }
-    }
-}
-
-
-// ============================================================================
-// GlowReverbProcessor — AudioWorklet main processor
-// ============================================================================
-class GlowReverbProcessor extends AudioWorkletProcessor {
+class ReverieProcessor extends AudioWorkletProcessor {
     static get parameterDescriptors() {
         return [
-            // Front-panel (mirrors Drift plugin defaults from screenshot)
-            { name: 'mix',          defaultValue: 0.30, minValue: 0,    maxValue: 1,  automationRate: 'k-rate' },
-            { name: 'distance',     defaultValue: 2.75, minValue: 0.5,  maxValue: 5,  automationRate: 'k-rate' },
-            { name: 'dimension',    defaultValue: 5.0,  minValue: 0.1,  maxValue: 60, automationRate: 'k-rate' },
-            { name: 'feedback',     defaultValue: 0,    minValue: 0,    maxValue: 1,  automationRate: 'k-rate' },
-            { name: 'modDepth',     defaultValue: 0.40, minValue: 0,    maxValue: 1,  automationRate: 'k-rate' },
-            { name: 'warmth',       defaultValue: 0.10, minValue: 0,    maxValue: 1,  automationRate: 'k-rate' },
-            { name: 'octUp',        defaultValue: 0.10, minValue: 0,    maxValue: 1,  automationRate: 'k-rate' },
-            { name: 'octDown',      defaultValue: 0,    minValue: 0,    maxValue: 1,  automationRate: 'k-rate' },
-            { name: 'drift',        defaultValue: 0.10, minValue: 0,    maxValue: 1,  automationRate: 'k-rate' },
-            // Advanced panel
-            { name: 'shimmerLevel', defaultValue: 0.25, minValue: 0,    maxValue: 1,  automationRate: 'k-rate' },
-            { name: 'tone',         defaultValue: 0,    minValue: -1,   maxValue: 1,  automationRate: 'k-rate' },
-            { name: 'stereoWidth',  defaultValue: 1.0,  minValue: 0,    maxValue: 2,  automationRate: 'k-rate' },
-            { name: 'spatial',      defaultValue: 0.4,  minValue: 0,    maxValue: 1,  automationRate: 'k-rate' },
+            // Main UI knobs (mirror DriftParameters.h)
+            { name: 'immersion', defaultValue: 0.09, minValue: 0,    maxValue: 1,  automationRate: 'k-rate' },
+            { name: 'distance',  defaultValue: 2.75, minValue: 0.5,  maxValue: 5,  automationRate: 'k-rate' },
+            { name: 'expanse',   defaultValue: 5.0,  minValue: 0,    maxValue: 40, automationRate: 'k-rate' },
+            { name: 'timbre',    defaultValue: 0.5,  minValue: 0,    maxValue: 1,  automationRate: 'k-rate' },
+            { name: 'ascend',    defaultValue: 0.10, minValue: 0,    maxValue: 1,  automationRate: 'k-rate' },
+            { name: 'descend',   defaultValue: 0,    minValue: 0,    maxValue: 1,  automationRate: 'k-rate' },
+            { name: 'glow',      defaultValue: 0.10, minValue: 0,    maxValue: 1,  automationRate: 'k-rate' },
+            { name: 'driftMod',  defaultValue: 0.10, minValue: 0,    maxValue: 1,  automationRate: 'k-rate' },
+            { name: 'shimmer',   defaultValue: 0,    minValue: 0,    maxValue: 1,  automationRate: 'k-rate' },
+            // Vertical sliders (0-1 normalized → dB via sliderToGain)
+            { name: 'inputGain',  defaultValue: 0.909, minValue: 0,  maxValue: 1,  automationRate: 'k-rate' },
+            { name: 'outputGain', defaultValue: 0.909, minValue: 0,  maxValue: 1,  automationRate: 'k-rate' },
+            // Bottom row
+            { name: 'modDepth',  defaultValue: 0.40, minValue: 0,    maxValue: 1,  automationRate: 'k-rate' },
+            { name: 'modRate',   defaultValue: 2.0,  minValue: 0,    maxValue: 10, automationRate: 'k-rate' },
+            { name: 'diffusion', defaultValue: 1.0,  minValue: 0,    maxValue: 1,  automationRate: 'k-rate' },
+            { name: 'damping',   defaultValue: 0.75, minValue: 0,    maxValue: 1,  automationRate: 'k-rate' },
+            { name: 'hpfFreq',   defaultValue: 150,  minValue: 30,   maxValue: 1000,  automationRate: 'k-rate' },
+            { name: 'lpfFreq',   defaultValue: 5000, minValue: 500,  maxValue: 20000, automationRate: 'k-rate' },
+            { name: 'earlyMod',  defaultValue: 0,    minValue: 0,    maxValue: 1,  automationRate: 'k-rate' },
         ];
     }
 
     constructor() {
         super();
         const sr = sampleRate;
+        this.sr = sr;
 
-        // ── DSP modules ──
-        this.diffuser       = new AllpassDiffuser(sr);
-        this.spatial        = new SpatialDecorator(sr);
-        this.fdn            = new FDNReverb(sr);
-        this.pitchL         = new GranularPitchShifter(sr, 42);
-        this.pitchR         = new GranularPitchShifter(sr, 12345);
-        this.energyLimiter  = new FeedbackEnergyLimiter(sr);
-        this.tubeSaturation    = new TubeSaturation(sr);
-        this.tiltEQ         = new TiltEQ(sr);
-        this.stereoWidth    = new StereoWidthProcessor();
+        this.diffuser  = new AllpassDiffuser(sr);
+        this.fdn       = new FDNReverb(sr);
+        this.tiltEQ    = new TiltEQ(sr);
+        this.glow      = new GlowEffect(sr);
+        this.driftLoFi = new DriftLoFi(sr);
+        this.hpf       = new Biquad();
+        this.lpf       = new Biquad();
+        // Two stereo pairs for pitch — ascend (feeds back) vs descend (one-shot)
+        this.pitchAscL = new GranularPitchShifter(sr, 42);
+        this.pitchAscR = new GranularPitchShifter(sr, 137);
+        this.pitchDescL = new GranularPitchShifter(sr, 201);
+        this.pitchDescR = new GranularPitchShifter(sr, 317);
 
-        // ── Shimmer buffers ──
-        this.shimmerBufL  = new Float64Array(BLOCK_SIZE);
-        this.shimmerBufR  = new Float64Array(BLOCK_SIZE);
-        this.prevShimmerL = new Float64Array(BLOCK_SIZE);
-        this.prevShimmerR = new Float64Array(BLOCK_SIZE);
-
-        // ── Shimmer LP filter state (one-pole lowpass, adaptive cutoff) ──
-        this.shimmerLpStateL = 0.0;
-        this.shimmerLpStateR = 0.0;
-
-        // ── Output HPF state (20 Hz DC blocker, second-order) ──
-        // Implemented as a first-order HP: y[n] = x[n] - x[n-1] + R * y[n-1]
-        // R = 1 - (2π × 20 / sr)
-        this.hpfR = 1.0 - (TWO_PI * 20.0 / sr);
-        this.hpfPrevInL  = 0.0;
-        this.hpfPrevInR  = 0.0;
-        this.hpfPrevOutL = 0.0;
-        this.hpfPrevOutR = 0.0;
-
-        // ── Output limiter envelope ──
-        this.limiterEnv = 0.0;
-
-        // ── Cached parameter for change detection ──
-        this.lastDimension = -1;
-
-        // ── Pre-allocate work buffers (avoid GC in process) ──
         this._dryL = new Float64Array(BLOCK_SIZE);
         this._dryR = new Float64Array(BLOCK_SIZE);
         this._wetL = new Float64Array(BLOCK_SIZE);
         this._wetR = new Float64Array(BLOCK_SIZE);
-        this._fdnOutL = new Float64Array(BLOCK_SIZE);
-        this._fdnOutR = new Float64Array(BLOCK_SIZE);
+        this._pitchL = new Float64Array(BLOCK_SIZE);
+        this._pitchR = new Float64Array(BLOCK_SIZE);
+        // Shimmer feedback held across blocks (ascend output recirculates)
+        this._fbL = new Float64Array(BLOCK_SIZE);
+        this._fbR = new Float64Array(BLOCK_SIZE);
 
-        // ── Set diffuser to density=1.0 (full pre-diffusion) ──
+        // Limiter (1 ms attack / 50 ms release, threshold 1.0 = 0 dBFS)
+        this.limEnv = 0; this.limGain = 1;
+        this.limAtk     = Math.exp(-1.0 / (sr * 0.001));
+        this.limRel     = Math.exp(-1.0 / (sr * 0.050));
+        this.limGainAtk = Math.exp(-1.0 / (sr * 0.001));
+        this.limGainRel = Math.exp(-1.0 / (sr * 0.050));
+
+        this.lastExpanse = -1;
+        this.lastDistance = -1;
+        this.lastDamping = -1;
+        this.lastHpfFreq = -1;
+        this.lastLpfFreq = -1;
+        this.lastModRate = -1;
+
         this.diffuser.setDiffusion(1.0);
+    }
+
+    // dB = val * 66 - 60  (0 → -60 dB / mute, 0.909 → 0 dB, 1.0 → +6 dB)
+    sliderToGain(val) {
+        if (val <= 0.001) return 0;
+        const dB = val * 66.0 - 60.0;
+        return Math.pow(10.0, dB / 20.0);
     }
 
     process(inputs, outputs, parameters) {
         const input = inputs[0];
         const output = outputs[0];
         if (!input || !input[0] || !output || !output[0]) return true;
-
-        const numSamples = output[0].length;
+        const n = output[0].length;
         const inL = input[0], inR = input[1] || input[0];
         const outL = output[0], outR = output[1] || output[0];
 
-        // ── Read parameters ──
-        const mix          = parameters.mix[0];
-        const distance     = parameters.distance[0];
-        const dimension    = parameters.dimension[0];
-        const feedback     = parameters.feedback[0];
-        const octUp        = parameters.octUp[0];
-        const octDown      = parameters.octDown[0];
-        const modDepth     = parameters.modDepth[0];
-        const warmth       = parameters.warmth[0];
-        const driftAmt     = parameters.drift[0];
-        const shimmerLevel = parameters.shimmerLevel[0];
-        const tone         = parameters.tone[0];
-        const stereoWidth  = parameters.stereoWidth[0];
-        const spatialAmt   = parameters.spatial[0];
+        const immersion = parameters.immersion[0];
+        const distance  = parameters.distance[0];
+        const expanse   = parameters.expanse[0];
+        const timbre    = parameters.timbre[0];
+        const ascend    = parameters.ascend[0];
+        const descend   = parameters.descend[0];
+        const glow      = parameters.glow[0];
+        const driftMod  = parameters.driftMod[0];
+        const shimmer   = parameters.shimmer[0];
+        const inputGV   = parameters.inputGain[0];
+        const outputGV  = parameters.outputGain[0];
+        const modDepth  = parameters.modDepth[0];
+        const modRate   = parameters.modRate[0];
+        const diffusion = parameters.diffusion[0];
+        // Damping × 0.8 cap (per processBlock comment: UI 0–100% maps to 0–80%)
+        const damping   = parameters.damping[0] * 0.8;
+        const hpfFreq   = parameters.hpfFreq[0];
+        const lpfFreq   = parameters.lpfFreq[0];
+        // Shimmer × 0.9 cap (per processBlock comment: prevents feedback meltdown)
+        const shimmerCapped = shimmer * 0.9;
 
-        // ── Update FDN decay if dimension changed ──
-        if (Math.abs(dimension - this.lastDimension) > 0.01) {
-            this.lastDimension = dimension;
-            this.fdn.setDecayParams(dimension, 0.3);
-        }
+        // Update DSP modules when parameters change
+        if (Math.abs(distance - this.lastDistance) > 0.001) { this.fdn.setDistance(distance); this.lastDistance = distance; }
+        if (Math.abs(expanse - this.lastExpanse)   > 0.01)  { this.fdn.setExpanse(Math.max(0.01, expanse)); this.lastExpanse = expanse; }
+        if (Math.abs(damping - this.lastDamping)   > 0.001) { this.fdn.setDamping(damping); this.lastDamping = damping; }
+        this.fdn.setDiffusion(diffusion);
         this.fdn.setModDepth(modDepth);
+        if (Math.abs(modRate - this.lastModRate)   > 0.01)  { this.fdn.setModRate(modRate); this.lastModRate = modRate; }
+        if (Math.abs(hpfFreq - this.lastHpfFreq)   > 0.5)   { this.hpf.setHPF(this.sr, hpfFreq); this.lastHpfFreq = hpfFreq; }
+        if (Math.abs(lpfFreq - this.lastLpfFreq)   > 0.5)   { this.lpf.setLPF(this.sr, lpfFreq); this.lastLpfFreq = lpfFreq; }
 
-        // ── Set pitch shifter gains (75% breakpoint mapping like plugin) ──
-        const oct1Up   = Math.min(octUp / 0.75, 1.0);
-        const oct2Up   = Math.max((octUp - 0.75) / 0.25, 0.0);
-        const oct1Down = Math.min(octDown / 0.75, 1.0);
-        const oct2Down = Math.max((octDown - 0.75) / 0.25, 0.0);
-        this.pitchL.oct1UpGain = oct1Up; this.pitchL.oct2UpGain = oct2Up;
-        this.pitchL.oct1DownGain = oct1Down; this.pitchL.oct2DownGain = oct2Down;
-        this.pitchR.oct1UpGain = oct1Up; this.pitchR.oct2UpGain = oct2Up;
-        this.pitchR.oct1DownGain = oct1Down; this.pitchR.oct2DownGain = oct2Down;
+        // Pre-diffusion / spatial bypass: Reverie doesn't have a separate
+        // pre-diffusion stage; the diffusers live inside JPVerb. Skip.
 
-        // ── Update spatial decorrelator (DISTANCE applied first so setAmount sees it) ──
-        this.spatial.setDistance(distance);
-        this.spatial.setAmount(spatialAmt);
+        // TiltEQ (timbre 0..1 → ±12 dB)
+        this.tiltEQ.setTilt((timbre - 0.5) * 24.0);
 
-        // ── Update FDN extras (FEEDBACK regen + DRIFT slow LFO) ──
-        this.fdn.setFeedback(feedback);
-        this.fdn.setDrift(driftAmt);
+        // Glow + DriftLoFi
+        this.glow.setAmount(glow);
+        this.driftLoFi.setAmount(driftMod);
 
-        // ── Update TubeSaturation (warmth) ──
-        this.tubeSaturation.setAmount(warmth);
+        // ── Step 5: input gain ───────────────────────────────────────────────
+        const inputGainLin = this.sliderToGain(inputGV);
 
-        // ── Update TiltEQ: tone -1..+1 → -6..+6 dB ──
-        this.tiltEQ.setTilt(tone * 6.0);
-
-        // ── Compute adaptive shimmer LP coefficient ──
-        // Cutoff sweeps from 6kHz (octUp=0) to 2.5kHz (octUp=1)
-        const shimmerLpCutoff = 6000.0 - octUp * 3500.0; // 6000 → 2500 Hz
-        const shimmerLpWc = TWO_PI * shimmerLpCutoff / sampleRate;
-        const shimmerLpCoeff = Math.exp(-shimmerLpWc);
-
-        // ── Copy dry signal + prepare wet ──
-        const dryL = this._dryL;
-        const dryR = this._dryR;
-        const wetL = this._wetL;
-        const wetR = this._wetR;
-        for (let i = 0; i < numSamples; i++) {
-            dryL[i] = inL[i]; dryR[i] = inR[i];
-            wetL[i] = inL[i]; wetR[i] = inR[i];
+        // ── Step 6: copy input to dry/wet, apply input gain ──────────────────
+        const dryL = this._dryL, dryR = this._dryR, wetL = this._wetL, wetR = this._wetR;
+        for (let i = 0; i < n; i++) {
+            dryL[i] = inL[i] * inputGainLin;
+            dryR[i] = inR[i] * inputGainLin;
+            wetL[i] = dryL[i];
+            wetR[i] = dryR[i];
         }
 
-        // ════════════════════════════════════════════════════════════════
-        // SIGNAL CHAIN
-        // ════════════════════════════════════════════════════════════════
+        // ── Step 6b: HPF + LPF on wet (pre-reverb tone shaping) ──────────────
+        this.hpf.process(wetL, wetR, n);
+        this.lpf.process(wetL, wetR, n);
 
-        // ── 1. Pre-Diffusion (6-stage cascaded allpass, density=1.0) ──
-        this.diffuser.process(wetL, wetR, numSamples);
+        // ── Step 7: TiltEQ on wet ────────────────────────────────────────────
+        this.tiltEQ.process(wetL, wetR, n);
 
-        // ── 2. Spatial Decorrelator ──
-        this.spatial.process(wetL, wetR, numSamples);
-
-        // ── 3. Inject previous block's shimmer into FDN ──
-        const shimBufSize = Math.min(numSamples, this.fdn.shimmerInL.length);
-        for (let i = 0; i < shimBufSize; i++) {
-            this.fdn.shimmerInL[i] = this.prevShimmerL[i] * shimmerLevel;
-            this.fdn.shimmerInR[i] = this.prevShimmerR[i] * shimmerLevel;
-        }
-
-        // ── 4. FDN Reverb (with shimmer injection) ──
-        this.fdn.process(wetL, wetR, numSamples);
-
-        // ── 5. Pitch Shift (FDN output → shimmer feedback) ──
-        const fdnOutL = this._fdnOutL;
-        const fdnOutR = this._fdnOutR;
-        for (let i = 0; i < numSamples; i++) {
-            fdnOutL[i] = wetL[i];
-            fdnOutR[i] = wetR[i];
-        }
-        this.pitchL.process(fdnOutL, this.shimmerBufL, numSamples);
-        this.pitchR.process(fdnOutR, this.shimmerBufR, numSamples);
-
-        // ── 6. Shimmer LP (adaptive one-pole lowpass after pitch shifting) ──
-        // Cutoff: 6kHz→2.5kHz as octUp increases (tames harsh shimmer harmonics)
-        for (let i = 0; i < numSamples; i++) {
-            this.shimmerLpStateL = (1.0 - shimmerLpCoeff) * this.shimmerBufL[i]
-                + shimmerLpCoeff * this.shimmerLpStateL;
-            this.shimmerBufL[i] = this.shimmerLpStateL;
-
-            this.shimmerLpStateR = (1.0 - shimmerLpCoeff) * this.shimmerBufR[i]
-                + shimmerLpCoeff * this.shimmerLpStateR;
-            this.shimmerBufR[i] = this.shimmerLpStateR;
-        }
-
-        // ── 7. Energy Limiter (prevents shimmer runaway, uses shimmerLevel) ──
-        // Threshold inversely related to shimmerLevel for tighter control at high levels
-        const limiterThreshold = 0.9 - shimmerLevel * 0.3; // 0.9→0.6
-        this.energyLimiter.process(
-            this.shimmerBufL, this.shimmerBufR, numSamples,
-            Math.max(0.3, limiterThreshold));
-
-        // ── 8. Store shimmer for next block ──
-        for (let i = 0; i < numSamples; i++) {
-            this.prevShimmerL[i] = this.shimmerBufL[i];
-            this.prevShimmerR[i] = this.shimmerBufR[i];
-        }
-
-        // ── 9. TubeSaturation (warmth: tube comp → saturation → HF rolloff) ──
-        this.tubeSaturation.process(wetL, wetR, numSamples);
-
-        // ── 10. TiltEQ (tone: first-order crossover tilt at 1kHz) ──
-        this.tiltEQ.process(wetL, wetR, numSamples);
-
-        // ── 11. Stereo Width (mid/side encoding) ──
-        this.stereoWidth.process(wetL, wetR, numSamples, stereoWidth);
-
-        // ── 12. Wet Gain (-4.5 dB) ──
-        for (let i = 0; i < numSamples; i++) {
-            wetL[i] *= WET_GAIN;
-            wetR[i] *= WET_GAIN;
-        }
-
-        // ── 13. Equal-power dry/wet mix (quadratic taper) ──
-        const mixTapered = mix * mix;
-        const dryGain = Math.cos(mixTapered * HALF_PI);
-        const wetGain = Math.sin(mixTapered * HALF_PI);
-
-        for (let i = 0; i < numSamples; i++) {
-            outL[i] = dryL[i] * dryGain + wetL[i] * wetGain;
-            outR[i] = dryR[i] * dryGain + wetR[i] * wetGain;
-        }
-
-        // ── 14. Output HPF (20 Hz high-pass to remove DC / sub rumble) ──
-        for (let i = 0; i < numSamples; i++) {
-            const inSampleL = outL[i];
-            const inSampleR = outR[i];
-            this.hpfPrevOutL = this.hpfR * this.hpfPrevOutL
-                + inSampleL - this.hpfPrevInL;
-            this.hpfPrevInL = inSampleL;
-            outL[i] = this.hpfPrevOutL;
-
-            this.hpfPrevOutR = this.hpfR * this.hpfPrevOutR
-                + inSampleR - this.hpfPrevInR;
-            this.hpfPrevInR = inSampleR;
-            outR[i] = this.hpfPrevOutR;
-        }
-
-        // ── 15. Output Limiter (peak envelope with fast attack / slow release) ──
-        for (let i = 0; i < numSamples; i++) {
-            const peak = Math.max(Math.abs(outL[i]), Math.abs(outR[i]));
-            if (peak > this.limiterEnv)
-                this.limiterEnv = 0.999 * this.limiterEnv + 0.001 * peak; // ~1ms attack
-            else
-                this.limiterEnv = 0.9999 * this.limiterEnv + 0.0001 * peak; // ~10ms release
-
-            if (this.limiterEnv > 0.92) {
-                const g = 0.92 / this.limiterEnv;
-                outL[i] *= g;
-                outR[i] *= g;
+        const reverbBypassed = (expanse < 0.01);
+        if (!reverbBypassed) {
+            // ── Step 8: add shimmer feedback (ascend recirculation) ──────────
+            for (let i = 0; i < n; i++) {
+                wetL[i] += this._fbL[i] * shimmerCapped;
+                wetR[i] += this._fbR[i] * shimmerCapped;
+                this._fbL[i] = 0;
+                this._fbR[i] = 0;
             }
+
+            // ── Step 9: reverb (FDN, Reverie's JPVerb stand-in) ──────────────
+            this.fdn.process(wetL, wetR, n);
+
+            // ── Step 10a: Ascend pitch (feeds back into shimmer) ─────────────
+            this.pitchAscL.setAscend(ascend);
+            this.pitchAscL.setDescend(0);
+            this.pitchAscR.setAscend(ascend);
+            this.pitchAscR.setDescend(0);
+            this.pitchAscL.process(wetL, this._pitchL, n);
+            this.pitchAscR.process(wetR, this._pitchR, n);
+            for (let i = 0; i < n; i++) {
+                this._fbL[i] = this._pitchL[i];
+                this._fbR[i] = this._pitchR[i];
+                wetL[i] += this._pitchL[i];
+                wetR[i] += this._pitchR[i];
+            }
+
+            // ── Step 10b: Descend pitch (one-shot, no feedback) ──────────────
+            if (descend > 0.001) {
+                this.pitchDescL.setAscend(0);
+                this.pitchDescL.setDescend(descend);
+                this.pitchDescR.setAscend(0);
+                this.pitchDescR.setDescend(descend);
+                this.pitchDescL.process(wetL, this._pitchL, n);
+                this.pitchDescR.process(wetR, this._pitchR, n);
+                for (let i = 0; i < n; i++) {
+                    wetL[i] += this._pitchL[i];
+                    wetR[i] += this._pitchR[i];
+                }
+            }
+        }
+
+        // ── Step 11: GlowEffect on wet ───────────────────────────────────────
+        this.glow.process(wetL, wetR, n);
+
+        // ── Step 11b: DriftLoFi on wet (tape+heat) ───────────────────────────
+        this.driftLoFi.process(wetL, wetR, n);
+
+        // ── Step 12-13: sin/cos dry/wet mix + output gain + limiter ──────────
+        const outputGainLin = this.sliderToGain(outputGV);
+        const m = immersion;
+        const dryGain = Math.cos(m * HALF_PI);
+        const wetGain = Math.sin(m * HALF_PI);
+
+        for (let i = 0; i < n; i++) {
+            let mixL = dryL[i] * dryGain + wetL[i] * wetGain;
+            let mixR = dryR[i] * dryGain + wetR[i] * wetGain;
+            mixL *= outputGainLin;
+            mixR *= outputGainLin;
+            // Limiter (threshold 1.0 / 0 dBFS, 1 ms attack / 50 ms release)
+            const pk = Math.max(Math.abs(mixL), Math.abs(mixR));
+            this.limEnv = pk > this.limEnv
+                ? this.limAtk * this.limEnv + (1.0 - this.limAtk) * pk
+                : this.limRel * this.limEnv + (1.0 - this.limRel) * pk;
+            const targetGain = this.limEnv > 1.0 ? 1.0 / this.limEnv : 1.0;
+            const gc = targetGain < this.limGain ? this.limGainAtk : this.limGainRel;
+            this.limGain = gc * this.limGain + (1.0 - gc) * targetGain;
+            outL[i] = mixL * this.limGain;
+            outR[i] = mixR * this.limGain;
         }
 
         return true;
     }
 }
 
-registerProcessor('drift-reverb', GlowReverbProcessor);
+registerProcessor('drift-reverb', ReverieProcessor);
