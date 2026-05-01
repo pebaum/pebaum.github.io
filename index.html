@@ -125,6 +125,25 @@
             font-variant-numeric: tabular-nums;
         }
 
+        .slider-action {
+            width: 78px;
+            height: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            pointer-events: all;
+        }
+        .slider-action a {
+            font-size: 9px;
+            line-height: 1;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.35);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        .slider-action a:hover { color: rgba(255,255,255,0.7); }
+
         /* ── INFO OVERLAY ── */
         .info-overlay {
             position: fixed;
@@ -217,12 +236,15 @@
         <span id="mood">—</span><br>
         <strong id="active-voices">0</strong> ACTIVE<br>
         <span id="voice-count">0</span> VOICES<br>
-        <a href="#" id="pauseBtn">pause</a> · <a href="#" id="restartBtn">restart</a> · <a href="#" id="rndBtn">rnd</a>
+        <a href="#" id="pauseBtn">pause</a> · <a href="#" id="restartBtn">restart</a>
     </div>
 </div>
 
 <!-- Front panel sliders (mirror Reverie plugin front knobs) -->
 <div class="slider-stack" id="sliderStack">
+    <div class="slider-action">
+        <a href="#" id="rndBtn">randomize</a>
+    </div>
     <div class="slider-row">
         <span class="slider-label">In</span>
         <input type="range" class="param-slider" data-param="inputGain" min="0" max="100" step="0.5" value="75">
@@ -1125,14 +1147,19 @@ function paintSpectralBloom() {
         g.textBaseline = 'alphabetic';
         g.fillStyle = 'rgba(138, 180, 232, 0.18)';
         const lh = 14;
-        const startY = midY + maxBloomH * 0.7;
-        const xPad = 40;
+        const startY = midY + maxBloomH * 0.55;
+        const sep = '    ';
         const n = decisionLog.length;
         for (let i = 0; i < n; i++) {
             const line = decisionLog[n - 1 - i];
             const y = startY - i * lh;
             if (y < midY - maxBloomH) break;
-            g.fillText(line, xPad, y);
+            // Build one string that fills the entire viz width by repeating the line
+            const lineW = g.measureText(line + sep).width;
+            if (lineW <= 0) continue;
+            const reps = Math.max(1, Math.ceil(vw / lineW) + 1);
+            const filled = (line + sep).repeat(reps);
+            g.fillText(filled, vx, y);
         }
         g.restore();
     }
