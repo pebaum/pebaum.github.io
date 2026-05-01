@@ -252,53 +252,53 @@
     </div>
     <div class="slider-row">
         <span class="slider-label">Immersion</span>
-        <input type="range" class="param-slider" data-param="immersion" min="0" max="100" step="0.5" value="9">
-        <span class="slider-value" data-param-value="immersion">9%</span>
+        <input type="range" class="param-slider" data-param="immersion" min="0" max="100" step="0.5" value="68">
+        <span class="slider-value" data-param-value="immersion">68%</span>
     </div>
     <div class="slider-row">
         <span class="slider-label">Distance</span>
-        <input type="range" class="param-slider" data-param="distance" min="0" max="100" step="0.5" value="50">
-        <span class="slider-value" data-param-value="distance">2.75x</span>
+        <input type="range" class="param-slider" data-param="distance" min="0" max="100" step="0.5" value="88">
+        <span class="slider-value" data-param-value="distance">4.47x</span>
     </div>
     <div class="slider-row">
         <span class="slider-label">Expanse</span>
-        <input type="range" class="param-slider" data-param="expanse" min="0" max="100" step="0.5" value="35">
-        <span class="slider-value" data-param-value="expanse">5.0 s</span>
+        <input type="range" class="param-slider" data-param="expanse" min="0" max="100" step="0.5" value="65">
+        <span class="slider-value" data-param-value="expanse">17 s</span>
     </div>
     <div class="slider-row">
         <span class="slider-label">Feedback</span>
-        <input type="range" class="param-slider" data-param="shimmer" min="0" max="100" step="0.5" value="0">
-        <span class="slider-value" data-param-value="shimmer">0%</span>
+        <input type="range" class="param-slider" data-param="shimmer" min="0" max="100" step="0.5" value="57">
+        <span class="slider-value" data-param-value="shimmer">57%</span>
     </div>
     <div class="slider-row">
         <span class="slider-label">Mod Depth</span>
-        <input type="range" class="param-slider" data-param="modDepth" min="0" max="100" step="0.5" value="40">
-        <span class="slider-value" data-param-value="modDepth">40%</span>
+        <input type="range" class="param-slider" data-param="modDepth" min="0" max="100" step="0.5" value="42">
+        <span class="slider-value" data-param-value="modDepth">42%</span>
     </div>
     <div class="slider-row">
         <span class="slider-label">Glow</span>
-        <input type="range" class="param-slider" data-param="glow" min="0" max="100" step="0.5" value="10">
-        <span class="slider-value" data-param-value="glow">10%</span>
+        <input type="range" class="param-slider" data-param="glow" min="0" max="100" step="0.5" value="46">
+        <span class="slider-value" data-param-value="glow">46%</span>
     </div>
     <div class="slider-row">
         <span class="slider-label">Ascend</span>
-        <input type="range" class="param-slider" data-param="ascend" min="0" max="100" step="0.5" value="10">
-        <span class="slider-value" data-param-value="ascend">10%</span>
+        <input type="range" class="param-slider" data-param="ascend" min="0" max="100" step="0.5" value="47">
+        <span class="slider-value" data-param-value="ascend">47%</span>
     </div>
     <div class="slider-row">
         <span class="slider-label">Descend</span>
-        <input type="range" class="param-slider" data-param="descend" min="0" max="100" step="0.5" value="0">
-        <span class="slider-value" data-param-value="descend">0%</span>
+        <input type="range" class="param-slider" data-param="descend" min="0" max="100" step="0.5" value="64">
+        <span class="slider-value" data-param-value="descend">64%</span>
     </div>
     <div class="slider-row">
         <span class="slider-label">Drift</span>
-        <input type="range" class="param-slider" data-param="driftMod" min="0" max="100" step="0.5" value="10">
-        <span class="slider-value" data-param-value="driftMod">10%</span>
+        <input type="range" class="param-slider" data-param="driftMod" min="0" max="100" step="0.5" value="25">
+        <span class="slider-value" data-param-value="driftMod">25%</span>
     </div>
     <div class="slider-row">
         <span class="slider-label">Out</span>
-        <input type="range" class="param-slider" data-param="outputGain" min="0" max="100" step="0.5" value="75">
-        <span class="slider-value" data-param-value="outputGain">0.0 dB</span>
+        <input type="range" class="param-slider" data-param="outputGain" min="0" max="100" step="0.5" value="62.5">
+        <span class="slider-value" data-param-value="outputGain">-10.0 dB</span>
     </div>
 </div>
 
@@ -382,17 +382,17 @@ function fmtHz(v)    { return v < 1000 ? `${Math.round(v)} Hz` : `${(v/1000).toF
 
 const params = {
     // Front panel (Reverie's main UI knobs + IN/OUT)
-    inputGain:  { value: 0.909, label: 'In',         fmt: v => fmtDb(ioValToDb(v)) },
-    immersion:  { value: 0.09,  label: 'Immersion',  fmt: v => `${Math.round(v*100)}%` },
-    distance:   { value: 2.75,  label: 'Distance',   fmt: v => `${v.toFixed(2)}x` },
-    expanse:    { value: 5.0,   label: 'Expanse',    fmt: v => v < 10 ? `${v.toFixed(1)} s` : `${v.toFixed(0)} s` },
-    shimmer:    { value: 0,     label: 'Feedback',   fmt: v => `${Math.round(v*100)}%` },
-    modDepth:   { value: 0.40,  label: 'Mod Depth',  fmt: v => `${Math.round(v*100)}%` },
-    glow:       { value: 0.10,  label: 'Glow',       fmt: v => `${Math.round(v*100)}%` },
-    ascend:     { value: 0.10,  label: 'Ascend',     fmt: v => `${Math.round(v*100)}%` },
-    descend:    { value: 0,     label: 'Descend',    fmt: v => `${Math.round(v*100)}%` },
-    driftMod:   { value: 0.10,  label: 'Drift',      fmt: v => `${Math.round(v*100)}%` },
-    outputGain: { value: 0.909, label: 'Out',        fmt: v => fmtDb(ioValToDb(v)) },
+    inputGain:  { value: 0.909,   label: 'In',         fmt: v => fmtDb(ioValToDb(v)) },
+    immersion:  { value: 0.68,    label: 'Immersion',  fmt: v => `${Math.round(v*100)}%` },
+    distance:   { value: 4.47,    label: 'Distance',   fmt: v => `${v.toFixed(2)}x` },
+    expanse:    { value: 17.0,    label: 'Expanse',    fmt: v => v < 10 ? `${v.toFixed(1)} s` : `${v.toFixed(0)} s` },
+    shimmer:    { value: 0.57,    label: 'Feedback',   fmt: v => `${Math.round(v*100)}%` },
+    modDepth:   { value: 0.42,    label: 'Mod Depth',  fmt: v => `${Math.round(v*100)}%` },
+    glow:       { value: 0.46,    label: 'Glow',       fmt: v => `${Math.round(v*100)}%` },
+    ascend:     { value: 0.47,    label: 'Ascend',     fmt: v => `${Math.round(v*100)}%` },
+    descend:    { value: 0.64,    label: 'Descend',    fmt: v => `${Math.round(v*100)}%` },
+    driftMod:   { value: 0.25,    label: 'Drift',      fmt: v => `${Math.round(v*100)}%` },
+    outputGain: { value: 50/66,   label: 'Out',        fmt: v => fmtDb(ioValToDb(v)) },
     // Advanced — Reverie's bottom row
     timbre:     { value: 0.5,   label: 'Timbre',     fmt: v => `${((v-0.5)*24).toFixed(1)} dB` },
     modRate:    { value: 2.0,   label: 'Mod Rate',   fmt: v => `${v.toFixed(2)} Hz` },
@@ -1386,7 +1386,6 @@ setInterval(() => {
 }, 1000);
 
 window.addEventListener('DOMContentLoaded', () => {
-    randomizeFrontPanel();
     initVizCanvas();
     initSliders();
 });
