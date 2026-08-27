@@ -111,8 +111,8 @@ textarea{user-select:text;-webkit-user-select:text}
   html,body{height:100dvh}
   .brand,.seam,.keyline,.strip,.master{display:none}
   .stage{grid-template-rows:1fr;padding:0 20px;height:100dvh}
-  .panes{grid-template-columns:none;grid-auto-rows:1fr}
-  .pane{grid-template-rows:1fr;padding:0}
+  .panes{grid-template-columns:none;grid-auto-rows:min-content;align-content:center;gap:26px}
+  .pane{grid-template-rows:auto;padding:0}
   .pane.inactive{opacity:1}
   .centre{gap:0}
   .field{font-size:20px;max-width:none}
@@ -792,17 +792,29 @@ function startAudio(){
 
 /** Rebuilds the machine. A new right-hand sentence IS a path swap, so it gets a
     short fade rather than a hard cut — the plugin uses 20 ms. */
+let liveNodes=null;
+const kXfade=0.025;                    // the 20 ms the plugin uses, rounded up
+
+/** Drops the previous machine once it has been faded out. */
+function teardown(old){
+  try{ old.src.disconnect(old.chainIn); }catch(e){}
+  try{ old.chainOut.disconnect(); }catch(e){}
+  try{ dryTap.disconnect(old.dry); }catch(e){}
+  try{ old.wet.disconnect(); }catch(e){}
+  try{ old.dry.disconnect(); }catch(e){}
+}
+
 function rewire(){
   if(!ctx) return;
-  try{ voiceBus.disconnect(); }catch(e){}
-  try{ chainOut.disconnect(); }catch(e){}
-  try{ dryTap.disconnect(); }catch(e){}
-
+  const now=ctx.currentTime;
   const built = buildChain(state.patch || {slots:[]});
-  chainIn = built.input; chainOut = built.output;
-
   const source = state.through && micSrc ? micSrc : voiceBus;
-  if(state.through && micSrc){ try{ voiceBus.disconnect(); }catch(e){} }
+
+  // Only the source that is not playing gets cut; the live one is crossfaded.
+  if(source!==voiceBus){ try{ voiceBus.disconnect(dryTap); }catch(e){} }
+  if(micSrc && source!==micSrc){ try{ micSrc.disconnect(dryTap); }catch(e){} }
+
+  chainIn = built.input; chainOut = built.output;
 
   // dry (the piece, or your input) and wet (through the machine), blended by MIX
   dryTap.gain.value = 1;
@@ -811,10 +823,27 @@ function rewire(){
 
   const wet=ctx.createGain(), dry=ctx.createGain();
   const w=(state.patch?state.patch.wetMix:1) * state.mix;
-  wet.gain.value = w * (state.patch?state.patch.outputTrim:1);
-  dry.gain.value = 1 - w;
+  const wetTo = w * (state.patch?state.patch.outputTrim:1);
+  const dryTo = 1 - w;
   chainOut.connect(wet); dryTap.connect(dry);
   wet.connect(normGain); dry.connect(normGain);
+
+  const old=liveNodes;
+  if(old){
+    // Equal-length ramps: the old machine leaves as the new one arrives, so a
+    // DRIFT rebuild is a fade between two near-identical chains, not an edit.
+    wet.gain.setValueAtTime(0,now); wet.gain.linearRampToValueAtTime(wetTo, now+kXfade);
+    dry.gain.setValueAtTime(0,now); dry.gain.linearRampToValueAtTime(dryTo, now+kXfade);
+    for(const g of [old.wet.gain, old.dry.gain]){
+      g.cancelScheduledValues(now);
+      g.setValueAtTime(g.value, now);
+      g.linearRampToValueAtTime(0, now+kXfade);
+    }
+    setTimeout(()=>teardown(old), kXfade*1000+80);
+  }else{
+    wet.gain.value=wetTo; dry.gain.value=dryTo;
+  }
+  liveNodes={src:source, chainIn:built.input, chainOut:built.output, wet, dry};
 }
 
 /* ---------------------------------------------------------- the composer -- */
@@ -1107,9 +1136,13 @@ function tickDrift(){
   if(state.driftR>1e-4) rewireDebounced();
 }
 let rewireTimer=null;
+/* DRIFT walks the derived words over EVERY seconds. Rebuilding the machine far
+   faster than the words actually move buys nothing and costs a rebuild each
+   time, so track it about forty times per walk and no faster. */
 function rewireDebounced(){
   if(rewireTimer) return;
-  rewireTimer=setTimeout(()=>{ rewireTimer=null; if(state.patch) rewireWithDrift(); }, 400);
+  const ms=Math.max(500, Math.min(2500, state.everyR*1000/40));
+  rewireTimer=setTimeout(()=>{ rewireTimer=null; if(state.patch) rewireWithDrift(); }, ms);
 }
 function rewireWithDrift(){
   // The chain rebuilt with DRIFT's offsets applied to the derived words.
