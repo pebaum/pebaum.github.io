@@ -640,8 +640,8 @@ const WORKLET_SRC = `/* ========================================================
    AudioWorklet — the three modules that cannot be built from stock nodes.
 
    GATE and CRUSH are ports of incant::units::GateStage and ::Bitcrush.
-   TAPE and DEREZ are ports of the Airwindows tape record/repro model and
-   resolution reducer, MIT licensed:
+   TAPE, DEREZ, SAG and the CEILING clipper are ports of Airwindows modules
+   (tape record/repro, resolution reducer, rail sag, ceiling clipper), MIT:
 
      Copyright (c) 2018 Chris Johnson
 
@@ -1255,18 +1255,554 @@ class DerezProc extends Retirable {
   }
 }
 
+/* -------------------------------------------------------------------- DRIVE --
+   Port of DriveEffect — the DREAM DECAY input drive, which is a COMPRESSOR
+   first and a saturator second. A bare waveshaper misses the whole gesture:
+   the RMS-driven gain reduction is what makes it push rather than just clip. */
+class DriveProc extends Retirable {
+  constructor(opt){
+    super();
+    const a = c01(opt.processorOptions.amount), sr = sampleRate;
+    const a2 = a * a;
+    const compDrive = Math.max(0, (a - 0.5) * 2);      // nothing below half
+    this.compThreshold = 1 - compDrive * 0.85;
+    this.compRatio = 1 + compDrive * 9;
+    this.satDrive = 1 + a2 * 11;
+    this.satMakeup = 1 / Math.max(0.3, Math.tanh(this.satDrive * 0.7));
+    this.lpCoeff = Math.exp(-2 * Math.PI * (20000 * Math.pow(0.3, a)) / sr);
+    this.envAttack = Math.exp(-1 / (sr * 0.002));
+    this.envRelease = Math.exp(-1 / (sr * 0.200));
+    this.rmsCoeff = Math.exp(-1 / (sr * 0.010));
+    this.hpR = Math.exp(-2 * Math.PI * 30 / sr);
+    this.rmsEnv = 0; this.compGain = 1;
+    this.lp = [0, 0]; this.hpX = [0, 0]; this.hpY = [0, 0];
+    this.biasPeak = 0.08 * (this.satDrive - 1) / 11;
+  }
+  sat(x){
+    const d = x * this.satDrive;
+    const shaped = d >= 0 ? Math.tanh(d) : Math.tanh(d * 1.15) / 1.15;
+    const bias = this.biasPeak * Math.exp(-d * d * 0.5);
+    return (shaped + bias - this.biasPeak) * this.satMakeup;
+  }
+  process(inputs, outputs){
+    if(this.dead) return false;
+    const i = inputs[0], o = outputs[0];
+    if(!i || !i.length || !i[0]) return true;
+    const IL = i[0], IR = i.length > 1 ? i[1] : i[0];
+    const oL = o[0], oR = o.length > 1 ? o[1] : null;
+    for(let k = 0; k < IL.length; k++){
+      let L = IL[k], R = IR[k];
+      const mono = (L + R) * 0.5;
+      this.rmsEnv = this.rmsCoeff * this.rmsEnv + (1 - this.rmsCoeff) * mono * mono;
+      const rms = Math.sqrt(this.rmsEnv);
+      let gr = 1;
+      if(rms > this.compThreshold && this.compThreshold > 0)
+        gr = Math.pow(rms / this.compThreshold, 1 / this.compRatio - 1);
+      const co = gr < this.compGain ? this.envAttack : this.envRelease;
+      this.compGain = co * this.compGain + (1 - co) * gr;
+      L *= this.compGain; R *= this.compGain;
+      L = this.sat(L); R = this.sat(R);
+      this.lp[0] = (1 - this.lpCoeff) * L + this.lpCoeff * this.lp[0]; L = this.lp[0];
+      this.lp[1] = (1 - this.lpCoeff) * R + this.lpCoeff * this.lp[1]; R = this.lp[1];
+      let x = L; L = x - this.hpX[0] + this.hpR * this.hpY[0]; this.hpX[0] = x; this.hpY[0] = L;
+      x = R;     R = x - this.hpX[1] + this.hpR * this.hpY[1]; this.hpX[1] = x; this.hpY[1] = R;
+      oL[k] = L; if(oR) oR[k] = R;
+    }
+    return true;
+  }
+}
+
+/* -------------------------------------------------------------------- GRAVE --
+   Port of GraveCompressor. UPWARD: an envelope follower measures the level and
+   the gain applied is whatever lands that envelope on the ceiling. Because the
+   envelope lags, the lift blooms into the decay of a sound once the body
+   releases — which a static curve cannot do, and which is the whole point.
+   Rack: floor -60 dB, ceiling -6 dB, amount p0, attack 1..121 ms from p1,
+   release 40..940 ms from p2, crush p3. */
+class GraveProc extends Retirable {
+  constructor(opt){
+    super();
+    const p = opt.processorOptions, sr = sampleRate;
+    this.floorDb = -60; this.ceilingDb = -6;
+    this.amount = c01(p.amount);
+    this.crush = c01(p.crush);
+    const attackMs = 1 + c01(p.attack) * 120;
+    const releaseMs = 40 + c01(p.release) * 900;
+    this.atk = Math.exp(-1 / (attackMs * 0.001 * sr));
+    this.rel = Math.exp(-1 / (releaseMs * 0.001 * sr));
+    this.env = [0, 0];
+  }
+  one(x, ch){
+    const a = Math.abs(x);
+    let e = this.env[ch];
+    e = a > e ? this.atk * (e - a) + a : this.rel * (e - a) + a;
+    this.env[ch] = e;
+    let envDb = e > 1e-10 ? 20 * Math.log10(e) : this.floorDb;
+    if(envDb < this.floorDb) envDb = this.floorDb;
+    const gainDb = (this.ceilingDb - envDb) * this.amount;
+    let y = x * Math.pow(10, gainDb * 0.05);
+    if(this.crush > 0) y = y * (1 - this.crush) + Math.tanh(y) * this.crush;
+    if(!isFinite(y)) y = 0;
+    return y < -1 ? -1 : y > 1 ? 1 : y;
+  }
+  process(inputs, outputs){
+    if(this.dead) return false;
+    const i = inputs[0], o = outputs[0];
+    if(!i || !i.length || !i[0]) return true;
+    const IL = i[0], IR = i.length > 1 ? i[1] : i[0];
+    const oL = o[0], oR = o.length > 1 ? o[1] : null;
+    for(let k = 0; k < IL.length; k++){
+      oL[k] = this.one(IL[k], 0);
+      if(oR) oR[k] = this.one(IR[k], 1);
+    }
+    return true;
+  }
+}
+
+/* ------------------------------------------------------------------- LADDER --
+   Port of LadderFilter: four one-pole TPT stages inside a zero-delay feedback
+   loop, Zavalishin's formulation, so the resonance stays stable and the cutoff
+   accurate right up to self-oscillation. The saturators sit on the INPUT and
+   the FEEDBACK, never inside a stage — that is what keeps the closed-form
+   solve valid. MODES are stage-tap mixes at two and four poles.
+   Cutoff is 20 Hz .. 20 kHz; the stand-in used 80 Hz .. 14 kHz. */
+class LadderProc extends Retirable {
+  constructor(opt){
+    super();
+    const p = opt.processorOptions, sr = sampleRate;
+    const fc = Math.min(Math.max(20 * Math.pow(1000, c01(p.cutoff)), 20), sr * 0.45);
+    this.g = Math.tan(Math.PI * fc / sr);
+    this.G = this.g / (1 + this.g);
+    this.k = 4 * c01(p.resonance);
+    this.drive = Math.pow(10, 24 * c01(p.drive) / 20);
+    this.mode = Math.min(2, Math.max(0, p.mode | 0));
+    this.fourPole = !!p.fourPole;
+    this.state = [[0,0,0,0],[0,0,0,0]];
+    this.tanhDrive = Math.tanh(this.drive);
+  }
+  tick(s, idx, x){
+    const v = (x - s[idx]) * this.G;
+    const y = v + s[idx];
+    s[idx] = y + v;
+    return y;
+  }
+  one(x, ch){
+    const s = this.state[ch], G = this.G, g = this.g, k = this.k;
+    const xin = this.drive > 1 + 1e-9 ? Math.tanh(x * this.drive) / this.tanhDrive : x;
+    const inv = 1 / (1 + g);
+    const S1 = s[0]*inv, S2 = s[1]*inv, S3 = s[2]*inv, S4 = s[3]*inv;
+    const G2 = G*G, G3 = G2*G, G4 = G3*G;
+    const sigma = G3*S1 + G2*S2 + G*S3 + S4;
+    const comp = 1 + 0.5*k;
+    const y4 = (G4*comp*xin + sigma) / (1 + k*G4);
+    const u = comp*xin - Math.tanh(k*y4);
+    const y1 = this.tick(s, 0, u);
+    const y2 = this.tick(s, 1, y1);
+    const y3 = this.tick(s, 2, y2);
+    const y4o = this.tick(s, 3, y3);
+    if(this.mode === 0) return this.fourPole ? y4o : y2;
+    if(this.mode === 1) return this.fourPole ? 4*(y2 - y3) : 2*(y1 - y2);
+    return this.fourPole ? (u - 4*y1 + 6*y2 - 4*y3 + y4o) : (u - 2*y1 + y2);
+  }
+  process(inputs, outputs){
+    if(this.dead) return false;
+    const i = inputs[0], o = outputs[0];
+    if(!i || !i.length || !i[0]) return true;
+    const IL = i[0], IR = i.length > 1 ? i[1] : i[0];
+    const oL = o[0], oR = o.length > 1 ? o[1] : null;
+    for(let k = 0; k < IL.length; k++){
+      oL[k] = this.one(IL[k], 0);
+      if(oR) oR[k] = this.one(IR[k], 1);
+    }
+    return true;
+  }
+}
+
+/* ---------------------------------------------------------------------- WOW --
+   Port of MasterWow: three summed sine partials plus a random-walk drift,
+   read out of a 100 ms line with quadratic interpolation. The stand-in was a
+   single LFO on a delay, which gives a vibrato rather than a tape's wander.
+   RANDOMNESS p2 and the DUAL (independent stereo) mode p3 were absent. */
+class WowProc extends Retirable {
+  constructor(opt){
+    super();
+    const p = opt.processorOptions, sr = sampleRate;
+    this.sr = sr;
+    const c = c01(p.depth);
+    this.depth = c * c * c;
+    this.rateMul = Math.min(4, Math.max(0.001, 0.02 + c01(p.rate) * 1.4));
+    this.rand = Math.min(4, Math.max(0, c01(p.randomness) * 2));
+    this.dual = !!p.dual;
+    this.size = Math.floor(sr * 0.1) + 4;
+    this.buf = [new Float64Array(this.size), new Float64Array(this.size)];
+    this.w = [0, 0];
+    this.ph = [0, 1.7, 3.2];
+    this.phR = [2.1, 3.9, 5.4];
+    this.drift = [0, 0]; this.driftVel = [0, 0];
+    this.rng = [501, 607];
+    this.depthSamples = this.depth * 0.002 * sr;
+    this.inc = [2*Math.PI*0.5*this.rateMul/sr, 2*Math.PI*1.2*this.rateMul/sr,
+                2*Math.PI*2.8*this.rateMul/sr];
+  }
+  nextDrift(ch){
+    let s = this.rng[ch];
+    s ^= s << 13; s ^= s >>> 17; s ^= s << 5; s >>>= 0;
+    this.rng[ch] = s;
+    this.driftVel[ch] += (s / 4294967296 - 0.5) * 0.0002;
+    this.driftVel[ch] *= 0.999;
+    this.drift[ch] += this.driftVel[ch];
+    this.drift[ch] *= 0.9999;
+    return this.drift[ch];
+  }
+  read(ch, d){
+    const N = this.size, w = this.w[ch], b = this.buf[ch];
+    const idx = d | 0, frac = d - idx;
+    const at = off => { let pos = w - off; while(pos < 0) pos += N; return b[pos % N]; };
+    const y0 = at(idx - 1), y1 = at(idx), y2 = at(idx + 1);
+    return y1 + frac * (0.5*(y2 - y0) + frac * (0.5*(y0 + y2) - y1));
+  }
+  process(inputs, outputs){
+    if(this.dead) return false;
+    const i = inputs[0], o = outputs[0];
+    if(!i || !i.length || !i[0]) return true;
+    const IL = i[0], IR = i.length > 1 ? i[1] : i[0];
+    const oL = o[0], oR = o.length > 1 ? o[1] : null;
+    const N = this.size, TAU = 2 * Math.PI;
+    const adv = (arr, n) => { arr[n] += this.inc[n]; while(arr[n] > TAU) arr[n] -= TAU; };
+
+    for(let k = 0; k < IL.length; k++){
+      if(this.depth < 1e-6){                       // still fills the line
+        this.buf[0][this.w[0]] = IL[k]; this.w[0] = (this.w[0] + 1) % N;
+        this.buf[1][this.w[1]] = IR[k]; this.w[1] = (this.w[1] + 1) % N;
+        oL[k] = IL[k]; if(oR) oR[k] = IR[k];
+        continue;
+      }
+      const mL = 0.55*Math.sin(this.ph[0]) + 0.30*Math.sin(this.ph[1]) + 0.15*Math.sin(this.ph[2]);
+      adv(this.ph, 0); adv(this.ph, 1); adv(this.ph, 2);
+      let mR = mL;
+      if(this.dual){
+        mR = 0.55*Math.sin(this.phR[0]) + 0.30*Math.sin(this.phR[1]) + 0.15*Math.sin(this.phR[2]);
+        adv(this.phR, 0); adv(this.phR, 1); adv(this.phR, 2);
+      }
+      const clamp = d => Math.min(Math.max(d, 0.5), N - 4);
+      const dL = clamp(1 + (mL + this.rand * this.nextDrift(0)) * this.depthSamples);
+      const dR = clamp(1 + (mR + this.rand * this.nextDrift(1)) * this.depthSamples);
+      this.buf[0][this.w[0]] = IL[k];
+      this.buf[1][this.w[1]] = IR[k];
+      const yL = this.read(0, dL), yR = this.read(1, dR);
+      this.w[0] = (this.w[0] + 1) % N;
+      this.w[1] = (this.w[1] + 1) % N;
+      oL[k] = yL; if(oR) oR[k] = yR;
+    }
+    return true;
+  }
+}
+
+/* -------------------------------------------------------------------- DELAY --
+   Port of DelayLine. Two Hann grains crossfading half a delay apart, which is
+   what lets the line play BACKWARDS without a click at the seam — the stand-in
+   had no reverse at all. The time law is 25 ms + p0^2 * 1800 ms, squared for
+   resolution down low, not the linear sweep the stand-in used. The output is
+   MONO, as the plugin writes it. Wet only; the slot blend is the mix. */
+class DelayProc extends Retirable {
+  constructor(opt){
+    super();
+    const p = opt.processorOptions, sr = sampleRate;
+    this.sr = sr;
+    this.size = Math.ceil(sr * 22) + 4;
+    this.buf = new Float32Array(this.size);
+    this.writeIdx = 0;
+    const t = c01(p.time);
+    this.targetSamples = Math.max(1, (25 + t * t * 1800) * sr / 1000);
+    this.smoothed = this.targetSamples;
+    this.smoothCoeff = 1 - Math.exp(-1 / Math.max(1, sr * 0.045));
+    this.fb = Math.min(0.95, Math.max(0, Math.min(0.88, c01(p.feedback))));
+    this.reverse = !!p.reverse;
+    this.a = { active:false, phase:0, inc:0, len:0, anchor:0 };
+    this.b = { active:false, phase:0, inc:0, len:0, anchor:0 };
+    this.nextIsA = true;
+    this.untilTrigger = 0;
+  }
+  trigger(g){
+    const d = this.smoothed;
+    g.active = true; g.phase = 0; g.inc = 1 / d; g.len = d;
+    let a = this.writeIdx - Math.floor(d);
+    while(a < 0) a += this.size;
+    while(a >= this.size) a -= this.size;
+    g.anchor = a;
+  }
+  readGrain(g){
+    if(!g.active) return 0;
+    const src = this.reverse ? (1 - g.phase) * g.len : g.phase * g.len;
+    let pos = g.anchor + src;
+    while(pos >= this.size) pos -= this.size;
+    while(pos < 0) pos += this.size;
+    const i0 = pos | 0, i1 = (i0 + 1) % this.size, frac = pos - Math.floor(pos);
+    const s = this.buf[i0] * (1 - frac) + this.buf[i1] * frac;
+    const w = Math.sin(Math.PI * g.phase);
+    return s * w * w;
+  }
+  process(inputs, outputs){
+    if(this.dead) return false;
+    const i = inputs[0], o = outputs[0];
+    if(!i || !i.length || !i[0]) return true;
+    const IL = i[0], IR = i.length > 1 ? i[1] : i[0];
+    const oL = o[0], oR = o.length > 1 ? o[1] : null;
+
+    for(let k = 0; k < IL.length; k++){
+      this.smoothed += (this.targetSamples - this.smoothed) * this.smoothCoeff;
+
+      if(this.untilTrigger <= 0){
+        this.trigger(this.nextIsA ? this.a : this.b);
+        this.nextIsA = !this.nextIsA;
+        this.untilTrigger = Math.max(1, Math.floor(this.smoothed / 2));
+      }
+      this.untilTrigger--;
+
+      const wet = this.readGrain(this.a) + this.readGrain(this.b);
+      for(const g of [this.a, this.b]){
+        if(g.active){ g.phase += g.inc; if(g.phase >= 1) g.active = false; }
+      }
+
+      let pos = this.writeIdx - this.smoothed;
+      while(pos < 0) pos += this.size;
+      while(pos >= this.size) pos -= this.size;
+      const i0 = pos | 0, i1 = (i0 + 1) % this.size, frac = pos - Math.floor(pos);
+      const fbTap = this.buf[i0] * (1 - frac) + this.buf[i1] * frac;
+
+      this.buf[this.writeIdx] = 0.5 * (IL[k] + IR[k]) + Math.tanh(fbTap * this.fb);
+      this.writeIdx = (this.writeIdx + 1) % this.size;
+
+      oL[k] = wet; if(oR) oR[k] = wet;
+    }
+    return true;
+  }
+}
+
+/* ---------------------------------------------------------------------- SAG --
+   Airwindows rail sag, MIT (see the notice at the top of this file). A running
+   sum of rectified level over a window sets how far the rail collapses, so the
+   pumping follows programme density rather than a fixed release. RANGE p0 is
+   the window length, INV/WET p1 the blend, where 0.5 is dry. */
+class SagProc extends Retirable {
+  constructor(opt){
+    super();
+    const p = opt.processorOptions;
+    this.offset = Math.floor(Math.pow(c01(p.range), 4) * 16383) + 1;
+    this.wet = c01(p.invwet) * 2 - 1;
+    this.d = [new Float64Array(16386), new Float64Array(16386)];
+    this.control = [0, 0];
+    this.gcount = 0;
+    this.fpd = [0x2C0FFEE5, 0x5BADF00D];
+    this.rootOffset = Math.sqrt(this.offset);
+  }
+  process(inputs, outputs){
+    if(this.dead) return false;
+    const i = inputs[0], o = outputs[0];
+    if(!i || !i.length || !i[0]) return true;
+    const IL = i[0], IR = i.length > 1 ? i[1] : i[0];
+    const oL = o[0], oR = o.length > 1 ? o[1] : null;
+    const off = this.offset;
+
+    for(let k = 0; k < IL.length; k++){
+      let sL = IL[k], sR = IR[k];
+      if(Math.abs(sL) < 1.18e-23) sL = this.fpd[0] * 1.18e-17;
+      if(Math.abs(sR) < 1.18e-23) sR = this.fpd[1] * 1.18e-17;
+      const dryL = sL, dryR = sR;
+
+      if(this.gcount < 0 || this.gcount > 16384) this.gcount = 16384;
+      const gc = this.gcount;
+      this.d[0][gc] = Math.abs(sL);
+      this.d[1][gc] = Math.abs(sR);
+      this.control[0] += this.d[0][gc];
+      this.control[1] += this.d[1][gc];
+      const tail = gc + off - (gc + off > 16384 ? 16384 : 0);
+      this.control[0] -= this.d[0][tail];
+      this.control[1] -= this.d[1][tail];
+      this.gcount--;
+      for(let c = 0; c < 2; c++){
+        if(this.control[c] > off) this.control[c] = off;
+        if(this.control[c] < 0) this.control[c] = 0;
+      }
+
+      let burst = sL * (this.control[0] / this.rootOffset);
+      let clamp = sL / (burst === 0 ? 1 : burst);
+      if(clamp > 1) clamp = 1; if(clamp < 0) clamp = 0;
+      sL *= clamp;
+      let diff = dryL - sL;
+      let dry = this.wet < 0 ? dryL * (this.wet + 1) : dryL;
+      sL = dry - diff * this.wet;
+
+      burst = sR * (this.control[1] / this.rootOffset);
+      clamp = sR / (burst === 0 ? 1 : burst);
+      if(clamp > 1) clamp = 1; if(clamp < 0) clamp = 0;
+      sR *= clamp;
+      diff = dryR - sR;
+      dry = this.wet < 0 ? dryR * (this.wet + 1) : dryR;
+      sR = dry - diff * this.wet;
+
+      for(let c = 0; c < 2; c++){
+        let f = this.fpd[c];
+        f ^= f << 13; f ^= f >>> 17; f ^= f << 5;
+        this.fpd[c] = f >>> 0;
+      }
+      oL[k] = sL; if(oR) oR[k] = sR;
+    }
+    return true;
+  }
+}
+
+/* ------------------------------------------------------- CEILING and GUARD --
+   Airwindows slew-limited clipper, MIT (see the notice at the top of this
+   file). It clips by looking one sample ahead and averaging the overshoot into
+   the samples around it, so what it does to a transient depends on the slew
+   rate rather than being a fixed curve. The stand-in was a static soft curve,
+   which cannot do that.
+
+   The same object serves twice: as the CEILING module, where it is a colour,
+   and inside the always-on output guard, where it is the last thing in the
+   signal path. */
+class Ceiling {
+  constructor(sr){
+    this.spacing = Math.min(16, Math.max(1, Math.floor(sr / 44100)));
+    this.last = [0, 0];
+    this.wasPos = [false, false];
+    this.wasNeg = [false, false];
+    this.inter = [new Float64Array(17), new Float64Array(17)];
+    this.slew = [new Float64Array(33), new Float64Array(33)];
+    this.fpd = [0x1A2B3C4D, 0x4D3C2B1A];
+  }
+  one(x, c){
+    const sp = this.spacing;
+    const noise = 1 - (this.fpd[c] >>> 0) / 4294967295 * 0.076;
+    if(this.wasPos[c]){
+      if(x < this.last[c]) this.last[c] = 0.9085097 * noise + x * (1 - noise);
+      else this.last[c] = 0.94;
+    }
+    this.wasPos[c] = false;
+    if(x > 0.9085097){ this.wasPos[c] = true; x = 0.9085097 * noise + this.last[c] * (1 - noise); }
+    if(this.wasNeg[c]){
+      if(x > this.last[c]) this.last[c] = -0.9085097 * noise + x * (1 - noise);
+      else this.last[c] = -0.94;
+    }
+    this.wasNeg[c] = false;
+    if(x < -0.9085097){ this.wasNeg[c] = true; x = -0.9085097 * noise + this.last[c] * (1 - noise); }
+
+    const sl = this.slew[c], it = this.inter[c];
+    sl[sp * 2] = Math.abs(this.last[c] - x);
+    for(let n = sp * 2; n > 0; n--) sl[n - 1] = sl[n];
+    it[sp] = x; x = this.last[c];
+    for(let n = sp; n > 0; n--) it[n - 1] = it[n];
+    this.last[c] = it[0];
+    if(this.wasPos[c] || this.wasNeg[c]){
+      for(let n = sp; n > 0; n--) this.last[c] += it[n];
+      this.last[c] /= sp;
+    }
+    let finalSlew = 0;
+    for(let n = sp * 2; n >= 0; n--) if(finalSlew < sl[n]) finalSlew = sl[n];
+    const post = 0.94 / (1 + finalSlew * 1.3986013);
+    if(x > post) x = post;
+    if(x < -post) x = -post;
+    let f = this.fpd[c];
+    f ^= f << 13; f ^= f >>> 17; f ^= f << 5;
+    this.fpd[c] = f >>> 0;
+    return x;
+  }
+}
+
+class CeilingProc extends Retirable {
+  constructor(){ super(); this.c = new Ceiling(sampleRate); }
+  process(inputs, outputs){
+    if(this.dead) return false;
+    const i = inputs[0], o = outputs[0];
+    if(!i || !i.length || !i[0]) return true;
+    const IL = i[0], IR = i.length > 1 ? i[1] : i[0];
+    const oL = o[0], oR = o.length > 1 ? o[1] : null;
+    for(let k = 0; k < IL.length; k++){
+      oL[k] = this.c.one(IL[k], 0);
+      const r = this.c.one(IR[k], 1);
+      if(oR) oR[k] = r;
+    }
+    return true;
+  }
+}
+
+/* -------------------------------------------------------------------- GUARD --
+   The always-on output guard from the end of Rack::process. Not a colour and
+   not optional: the matrix can build genuinely unstable chains — a resonant
+   ladder into an 88% feedback delay into a 24 s reverb is a reachable patch —
+   so the last thing in the path is a DC block, a peak limiter at -0.7 dBFS,
+   and the slew-limited clipper behind it. Nothing the text can say gets past
+   this. It reports its own gain reduction back for the LIM readout. */
+class GuardProc extends AudioWorkletProcessor {
+  constructor(){
+    super();
+    const sr = sampleRate;
+    this.R = 1 - 2 * Math.PI * 5.0 / sr;          // DC blocker at 5 Hz
+    this.xPrev = [0, 0]; this.yPrev = [0, 0];
+    this.atk = Math.exp(-1 / (sr * 0.002));        // peak limiter
+    this.rel = Math.exp(-1 / (sr * 0.300));
+    this.ceilingLin = 0.92;                        // ~ -0.7 dBFS
+    this.envelope = 0;
+    this.clip = new Ceiling(sr);
+    this.minGain = 1; this.frames = 0;
+  }
+  process(inputs, outputs){
+    const i = inputs[0], o = outputs[0];
+    if(!i || !i.length || !i[0]) return true;
+    const IL = i[0], IR = i.length > 1 ? i[1] : i[0];
+    const oL = o[0], oR = o.length > 1 ? o[1] : null;
+
+    for(let k = 0; k < IL.length; k++){
+      let L = IL[k], R = IR[k];
+      let y = L - this.xPrev[0] + this.R * this.yPrev[0];
+      this.xPrev[0] = L; this.yPrev[0] = y; L = y;
+      y = R - this.xPrev[1] + this.R * this.yPrev[1];
+      this.xPrev[1] = R; this.yPrev[1] = y; R = y;
+
+      const peak = Math.max(Math.abs(L), Math.abs(R));
+      const co = peak > this.envelope ? this.atk : this.rel;
+      this.envelope = co * this.envelope + (1 - co) * peak;
+      let g = 1;
+      if(this.envelope > this.ceilingLin) g = this.ceilingLin / this.envelope;
+      if(g < this.minGain) this.minGain = g;
+      L *= g; R *= g;
+
+      L = this.clip.one(L, 0);
+      R = this.clip.one(R, 1);
+      oL[k] = L; if(oR) oR[k] = R;
+    }
+
+    // The LIM readout, published about sixty times a second.
+    if(++this.frames >= 8){
+      this.port.postMessage(this.minGain >= 1 ? 0 : -20 * Math.log10(Math.max(1e-6, this.minGain)));
+      this.minGain = 1; this.frames = 0;
+    }
+    return true;
+  }
+}
+
 registerProcessor("invoker-gate", GateProc);
 registerProcessor("invoker-crush", CrushProc);
 registerProcessor("invoker-tape", TapeProc);
 registerProcessor("invoker-shimmer", ShimmerProc);
 registerProcessor("invoker-derez", DerezProc);
+registerProcessor("invoker-drive", DriveProc);
+registerProcessor("invoker-grave", GraveProc);
+registerProcessor("invoker-ladder", LadderProc);
+registerProcessor("invoker-wow", WowProc);
+registerProcessor("invoker-delay", DelayProc);
+registerProcessor("invoker-sag", SagProc);
+registerProcessor("invoker-ceiling", CeilingProc);
+registerProcessor("invoker-guard", GuardProc);
 `;
 let workletReady=false;
 
 /* ------------------------------------------------------------------ audio -- */
 let ctx=null, master=null, voiceBus=null, dryTap=null, normGain=null, limiter=null,
     clipper=null, analyser=null, noiseSrc=null, noiseGain=null, noiseLP=null, noiseHP=null,
-    chainIn=null, chainOut=null, micStream=null, micSrc=null;
+    chainIn=null, chainOut=null, micStream=null, micSrc=null, guard=null;
+let guardReductionDb=0;
 
 const state={
   engine:1, through:false,
@@ -1291,6 +1827,18 @@ function liftCurve(amount){
     const x=i/(n-1)*2-1, a=Math.abs(x);
     c[i]=Math.sign(x)*Math.pow(a,k);
   }
+  return c;
+}
+/** FUZZ, as a curve: +24 dB into the plugin's soft clipper, then makeup. The
+    clipper is x(27+x^2)/(27+9x^2), harder than a tanh, and that edge is the
+    module. */
+function fuzzCurve(amount){
+  const n=2048, c=new Float32Array(n);
+  const db=Math.max(0,Math.min(1,amount))*24;
+  const drive=Math.pow(10,db/20), makeUp=Math.pow(10,-db*0.55/20);
+  const clip=x=>{ if(x>4) return 1; if(x<-4) return -1;
+                  const x2=x*x; return x*(27+x2)/(27+9*x2); };
+  for(let i=0;i<n;i++){ const x=i/(n-1)*2-1; c[i]=clip(x*drive)*makeUp; }
   return c;
 }
 function bitCurve(bits){
@@ -1366,14 +1914,25 @@ function buildChain(patch){
                   g.release.value=.05+p[1]*.4; link(g);
                 }
                 break; }
-      case 1: case 2: case 3: {
+      case 1: { // DREAM DECAY's input drive is a compressor first, then a saturator
+                if(workletReady){ link(worklet("invoker-drive",{amount:p[0]})); }
+                else{ const w=ctx.createWaveShaper();
+                      w.curve=softCurve(p[0]*.7); w.oversample="2x"; link(w); }
+                break; }
+      case 2: { // hard ASYMMETRIC fuzz: drive to +24 dB, the plugin's soft
+                // clipper, then makeup. A static curve captures this exactly.
                 const w=ctx.createWaveShaper();
-                w.curve=softCurve(p[0]*(slot.id===2?1.6:slot.id===3?.9:.7)); w.oversample="2x";
-                link(w); break; }
-      case 4: { // GRAVE is UPWARD: it drags tails and the floor toward the
-                // ceiling. A power curve below 1 is the static form of that.
-                const w=ctx.createWaveShaper(); w.curve=liftCurve(p[0]); w.oversample="2x";
-                link(w); break; }
+                w.curve=fuzzCurve(p[0]); w.oversample="4x"; link(w); break; }
+      case 3: { const w=ctx.createWaveShaper();
+                w.curve=softCurve(p[0]*.9); w.oversample="2x"; link(w); break; }
+      case 4: { if(workletReady){
+                  link(worklet("invoker-grave",
+                    {amount:p[0], attack:p[1], release:p[2], crush:p[3]}));
+                }else{
+                  const w=ctx.createWaveShaper(); w.curve=liftCurve(p[0]);
+                  w.oversample="2x"; link(w);
+                }
+                break; }
       case 17: { const c=ctx.createDynamicsCompressor();
                 c.threshold.value=-40+p[0]*20; c.ratio.value=3+p[0]*8;
                 c.attack.value=.003+p[1]*.1; c.release.value=.05+p[2]*.5; link(c); break; }
@@ -1381,16 +1940,16 @@ function buildChain(patch){
                 lo.type="lowshelf"; lo.frequency.value=800; lo.gain.value=(0.5-p[0])*24;
                 hi.type="highshelf"; hi.frequency.value=800; hi.gain.value=(p[0]-0.5)*24;
                 link(lo); link(hi); break; }
-      case 6: { // Ladder: p0 cutoff, p1 resonance, p2 drive, p3 mode, p4 four-pole.
-                if(p[2]>1e-3){ const d=ctx.createWaveShaper();
-                               d.curve=softCurve(p[2]*.8); d.oversample="2x"; link(d); }
-                const type=["lowpass","bandpass","highpass"][Math.floor(p[3]*2.999)];
-                const freq=80*Math.pow(180,p[0]), q=.7+p[1]*14;
-                const f=ctx.createBiquadFilter();
-                f.type=type; f.frequency.value=freq; f.Q.value=q; link(f);
-                if(p[4]>0.5){                       // a second pair makes it four-pole
-                  const g=ctx.createBiquadFilter();
-                  g.type=type; g.frequency.value=freq; g.Q.value=.7; link(g);
+      case 6: { if(workletReady){
+                  link(worklet("invoker-ladder",{cutoff:p[0], resonance:p[1], drive:p[2],
+                    mode:Math.floor(p[3]*2.999), fourPole:p[4]>0.5}));
+                }else{
+                  const type=["lowpass","bandpass","highpass"][Math.floor(p[3]*2.999)];
+                  const freq=Math.min(18000,20*Math.pow(1000,p[0])), q=.7+p[1]*14;
+                  const f=ctx.createBiquadFilter();
+                  f.type=type; f.frequency.value=freq; f.Q.value=q; link(f);
+                  if(p[4]>0.5){ const g2=ctx.createBiquadFilter();
+                    g2.type=type; g2.frequency.value=freq; g2.Q.value=.7; link(g2); }
                 }
                 break; }
       case 7: { if(workletReady){
@@ -1421,22 +1980,42 @@ function buildChain(patch){
                   link(w); link(f);
                 }
                 break; }
-      case 10: case 11: {
-                const d=ctx.createDelay(0.1), lfo=ctx.createOscillator(), la=ctx.createGain();
-                d.delayTime.value = slot.id===10 ? .004 : .008;
-                lfo.frequency.value = slot.id===10 ? .05+p[1]*2.5 : .1+p[0]*4;
-                la.gain.value = (slot.id===10 ? p[0]*.003 : p[1]*.004);
+      case 10: { if(workletReady){
+                  link(worklet("invoker-wow",
+                    {depth:p[0], rate:p[1], randomness:p[2], dual:p[3]>0.5}));
+                }else{
+                  const d=ctx.createDelay(0.1), lfo=ctx.createOscillator(), la=ctx.createGain();
+                  d.delayTime.value=.004; lfo.frequency.value=.05+p[1]*2.5;
+                  la.gain.value=p[0]*.003;
+                  lfo.connect(la); la.connect(d.delayTime); lfo.start(); link(d);
+                }
+                break; }
+      case 11: { const d=ctx.createDelay(0.1), lfo=ctx.createOscillator(), la=ctx.createGain();
+                d.delayTime.value=.008;
+                lfo.frequency.value=.08+p[0]*6;      // the plugin's chorus rate law
+                la.gain.value=p[1]*.004;
                 lfo.connect(la); la.connect(d.delayTime); lfo.start();
                 link(d); break; }
-      case 12: { // wet-only; the slot blend is the mix
-                const d=ctx.createDelay(3), fb=ctx.createGain();
-                d.delayTime.value=.05+p[0]*1.6; fb.gain.value=Math.min(.86,p[1]);
-                d.connect(fb); fb.connect(d);
-                head=d; tail=d;
+      case 12: { if(workletReady){
+                  const n=worklet("invoker-delay",
+                    {time:p[0], feedback:p[1], reverse:p[2]>0.5});
+                  head=n; tail=n;
+                }else{
+                  const d=ctx.createDelay(3), fb=ctx.createGain();
+                  d.delayTime.value=Math.min(2.9,(25+p[0]*p[0]*1800)/1000);
+                  fb.gain.value=Math.min(.88,p[1]);
+                  d.connect(fb); fb.connect(d);
+                  head=d; tail=d;
+                }
                 blend = amt*(0.25+0.75*p[3]); break; }
-      case 13: { const c=ctx.createDynamicsCompressor();
-                c.threshold.value=-28; c.ratio.value=4; c.attack.value=.05+p[0]*.2;
-                c.release.value=.2+p[0]*.6; link(c); break; }
+      case 13: { if(workletReady){
+                  link(worklet("invoker-sag",{range:p[0], invwet:p[1]}));
+                }else{
+                  const c=ctx.createDynamicsCompressor();
+                  c.threshold.value=-28; c.ratio.value=4; c.attack.value=.05+p[0]*.2;
+                  c.release.value=.2+p[0]*.6; link(c);
+                }
+                break; }
       case 14: { const cv=ctx.createConvolver();
                 cv.buffer=cachedImpulse(.25+p[0]*1.2, 3.0, p[2]);
                 head=cv; tail=cv;
@@ -1455,7 +2034,9 @@ function buildChain(patch){
                   head=cv; tail=cv;
                 }
                 blend = amt*(0.25+0.75*p[2]); break; }
-      case 18: { const w=ctx.createWaveShaper(); w.curve=softCurve(.15); link(w); break; }
+      case 18: { if(workletReady){ link(worklet("invoker-ceiling",{})); }
+                else{ const w=ctx.createWaveShaper(); w.curve=softCurve(.15); link(w); }
+                break; }
     }
     if(!head) continue;
 
@@ -1492,16 +2073,24 @@ async function startAudio(){
   analyser = ctx.createAnalyser();
   master   = ctx.createGain();
 
-  // Master brickwall: limiter THEN clipper, because a 2 ms-attack envelope
-  // follower alone lets transients through — the same pairing as the plugin.
-  limiter.threshold.value=-1.0; limiter.knee.value=0; limiter.ratio.value=20;
-  limiter.attack.value=.002; limiter.release.value=.3;
-  clipper.curve=softCurve(.05); clipper.oversample="2x";
   analyser.fftSize=1024;
 
+  // The always-on output guard: DC block, peak limiter at -0.7 dBFS, then the
+  // slew-limited clipper. The matrix can build genuinely unstable chains, so
+  // this is the last thing in the path and it is not optional.
   normGain.connect(master);
-  master.connect(limiter); limiter.connect(clipper);
-  clipper.connect(analyser); analyser.connect(ctx.destination);
+  if(workletReady){
+    guard=new AudioWorkletNode(ctx,"invoker-guard",
+      {numberOfInputs:1,numberOfOutputs:1,outputChannelCount:[2]});
+    guard.port.onmessage=e=>{ guardReductionDb=e.data; };
+    master.connect(guard); guard.connect(analyser);
+  }else{
+    limiter.threshold.value=-1.0; limiter.knee.value=0; limiter.ratio.value=20;
+    limiter.attack.value=.002; limiter.release.value=.3;
+    clipper.curve=softCurve(.05); clipper.oversample="2x";
+    master.connect(limiter); limiter.connect(clipper); clipper.connect(analyser);
+  }
+  analyser.connect(ctx.destination);
 
   // Noise bed — two filters and a gain, driven by the score.
   const len=ctx.sampleRate*2, nb=ctx.createBuffer(2,len,ctx.sampleRate);
@@ -1839,7 +2428,7 @@ function frame(){
   }
   ui.normHint.textContent=(db>=0?"+":"−")+Math.abs(Math.round(db))+" dB";
   ui.meter.style.width=Math.round(Math.min(1,peak)*100)+"%";
-  const gr=Math.max(0,-limiter.reduction);
+  const gr=guard ? Math.max(0,guardReductionDb) : Math.max(0,-limiter.reduction);
   ui.lim.className = gr>0.1 ? "lim working" : "lim";
   ui.lim.querySelector(".v").textContent = gr>0.1 ? "−"+gr.toFixed(1)+" dB" : "—";
 }
