@@ -1782,6 +1782,301 @@ class GuardProc extends AudioWorkletProcessor {
   }
 }
 
+/* -------------------------------------------------------------------- VALVE --
+   Port of HeatChannel, one instance per channel with its own seed, exactly as
+   Rack builds it — the two channels are deliberately not identical, and that
+   mismatch is the width. Eight parameters, all of which the port ignored while
+   it stood in as a single tanh: DRIVE p0, SAG p1, BIAS p2, LPF p3, CRACKLE p4,
+   BREAKUP p5, DROPOUT p6, SIZZLE p7. EAR is pinned off, as in the plugin. */
+class Valve {
+  constructor(sr, seed){
+    this.sr = sr;
+    this.rng = seed >>> 0 || 1;
+    const r = () => this.rand();
+    this.driveOffset      = (r() - 0.5) * 0.10;
+    this.biasOffset       = (r() - 0.5) * 0.20;
+    this.lpfCutoffRatio   = 1 + (r() - 0.5) * 0.30;
+    this.crackleRateRatio = 1 + (r() - 0.5) * 0.60;
+    this.sagTimeRatio     = 1 + (r() - 0.5) * 0.40;
+    this.speakerResHz     = 80 + (r() - 0.5) * 30;
+    this.millerCapHz      = 8000 + (r() - 0.5) * 3000;
+
+    this.cableLp = 0;
+    this.biasWalk = 0; this.biasVel = 0;
+    this.vFast = 1; this.vSlow = 1; this.sagMakeup = 1;
+    this.tubeOsPrev = 0; this.signalEnv = 0; this.millerLp = 0;
+    this.spkExc = 0; this.spkThermal = 1; this.spkPrev = 0;
+    this.spkDoppler = 0; this.spkRes1 = 0; this.spkRes2 = 0; this.spkInduct = 0;
+    this.crackleEnv = 0; this.crackleBp1 = 0; this.crackleBp2 = 0;
+    this.dropSmooth = 1; this.dropTimer = 0; this.dropTarget = 1;
+    this.sizzleLp = 0; this.sizzleOsPrev = 0; this.sizzleEnv = 0;
+  }
+  rand(){
+    let s = this.rng;
+    s ^= s << 13; s ^= s >>> 17; s ^= s << 5;
+    this.rng = s >>> 0;
+    return this.rng / 4294967296;
+  }
+  lpf(x, amt){
+    const curved = amt * amt * amt * amt;
+    const cutoff = Math.max(1500, 20000 * (1 - curved * 0.92) * this.lpfCutoffRatio);
+    const co = Math.exp(-2 * Math.PI * cutoff / this.sr);
+    this.cableLp = (1 - co) * x + co * this.cableLp;
+    return this.cableLp;
+  }
+  shape(x, driveAmt){
+    if(x >= 0){
+      const gridLimit = 1 + (1 - driveAmt) * 2;
+      if(x > gridLimit) return Math.tanh(gridLimit) + (x - gridLimit) * 0.05;
+      return Math.tanh(x);
+    }
+    return Math.tanh(x * 1.2) / 1.2;
+  }
+  tube(x, driveAmt, sagAmt, biasAmt){
+    if(driveAmt < 1e-6 && sagAmt < 1e-6 && biasAmt < 1e-6) return x;
+    const sr = this.sr, absX = Math.abs(x);
+    this.signalEnv += (absX > this.signalEnv ? 0.005 : 0.0005) * (absX - this.signalEnv);
+    const tubeTemp = 0.3 + this.signalEnv * 0.7;
+    this.biasVel += (this.rand() - 0.5) * (0.0004 * biasAmt * tubeTemp);
+    this.biasVel *= 0.999;
+    this.biasWalk += this.biasVel;
+    this.biasWalk *= 0.9997;
+    const biasOff = (this.biasOffset * biasAmt + this.biasWalk) * 0.2;
+
+    const fastCo = Math.exp(-1 / (sr * 0.003 * this.sagTimeRatio));
+    const slowCo = Math.exp(-1 / (sr * 0.080 * this.sagTimeRatio));
+    const sagInput = this.signalEnv * 0.6 + Math.abs(this.millerLp) * 0.4;
+    let sagTarget = Math.max(0.25, 1 - sagInput * (sagAmt * 1.5));
+    this.vFast = fastCo * this.vFast + (1 - fastCo) * sagTarget;
+    this.vSlow = slowCo * this.vSlow + (1 - slowCo) * Math.max(sagTarget, this.vFast);
+    const supply = Math.max(0.25, Math.min(1, this.vSlow));
+
+    const dScaled = driveAmt * driveAmt;
+    const drive = (1 + dScaled * 9) * (1 + this.driveOffset);
+    const millerCo = Math.exp(-2 * Math.PI * (this.millerCapHz / (1 + dScaled * 3)) / sr);
+    this.millerLp = millerCo * this.millerLp + (1 - millerCo) * x;
+    const mb = dScaled * 0.6;
+    const driven = (x * (1 - mb) + this.millerLp * mb + biasOff) * drive * supply;
+    const mid = (this.tubeOsPrev + driven) * 0.5;
+    this.tubeOsPrev = driven;
+    let out = (this.shape(mid, driveAmt) + this.shape(driven, driveAmt)) * 0.5;
+
+    const rmsEst = this.signalEnv * drive * supply;
+    const t = Math.tanh(rmsEst);
+    let makeup = t > 0.01 ? rmsEst / t : 1;
+    makeup = Math.min(makeup, drive * 0.8);
+    out *= makeup / drive;
+    if(sagAmt > 1e-6){
+      const co = Math.exp(-1 / (sr * 0.200));
+      this.sagMakeup = co * this.sagMakeup + (1 - co) * supply;
+      out /= Math.max(0.25, this.sagMakeup);
+    }
+    const blend = Math.min(driveAmt * 3, 1);
+    return x * (1 - blend) + out * blend;
+  }
+  breakup(x, amount){
+    const sr = this.sr, amt = amount * amount;
+    this.spkThermal -= x * x * amt * 0.002;
+    this.spkThermal += (1 - this.spkThermal) * 0.00005;
+    this.spkThermal = Math.max(0.35, Math.min(1, this.spkThermal));
+    const thermal = 1 - (1 - this.spkThermal) * amt;
+    x *= thermal;
+    if(thermal > 0.1) x /= thermal;
+
+    const inductCo = Math.exp(-2 * Math.PI * 3000 / sr);
+    this.spkInduct = inductCo * this.spkInduct + (1 - inductCo) * x;
+    const hf = x - this.spkInduct;
+    x -= hf * (amt * 0.25);
+
+    this.spkExc += x * 0.012;
+    this.spkExc *= 0.994;
+    const excLimit = 1 - amt * 0.65;
+    if(Math.abs(this.spkExc) > excLimit){
+      const comp = excLimit / (excLimit + (Math.abs(this.spkExc) - excLimit));
+      x *= comp;
+      x /= Math.max(0.5, comp);
+    }
+    const preAbs = Math.abs(x);
+    const fwd = 1.2 - amt * 0.5, bwd = 1 - amt * 0.4;
+    if(x > fwd) x = fwd + Math.tanh((x - fwd) * 4) * 0.08;
+    else if(x < -bwd) x = -bwd + Math.tanh((x + bwd) * 4) * 0.08;
+    const postAbs = Math.abs(x);
+    if(preAbs > 0.01 && postAbs < preAbs * 0.99) x *= 1 + (preAbs / postAbs - 1) * 0.5;
+
+    this.spkDoppler += (x - this.spkPrev) * amt * 0.5;
+    this.spkDoppler *= 0.999;
+    x += hf * this.spkDoppler * 0.3;
+
+    const resAmt = Math.max(0, amt - 0.1) * 1.2;
+    if(resAmt > 0.01){
+      const f = 2 * Math.sin(Math.PI * this.speakerResHz / sr);
+      const q = 0.3 + resAmt * 0.9;
+      this.spkRes1 += f * (x - this.spkRes1 - (q + q / 1.0001) * this.spkRes2);
+      this.spkRes2 += f * this.spkRes1;
+      x += this.spkRes2 * resAmt * 0.12;
+    }
+    const maxSlew = Math.max(0.15, 0.9 - amt * 0.3);
+    const diff = x - this.spkPrev;
+    if(Math.abs(diff) > maxSlew) x = this.spkPrev + maxSlew * (diff > 0 ? 1 : -1);
+    this.spkPrev = x;
+    return x;
+  }
+  crackle(x, amount){
+    const sr = this.sr;
+    const curved = amount * amount * amount * amount;
+    const rate = curved * 6 * this.crackleRateRatio * (1 + Math.abs(x) * 2);
+    if(this.rand() < rate / sr){
+      const u1 = Math.max(this.rand(), 1e-10), u2 = this.rand();
+      const gauss = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+      const amp = Math.min(Math.exp(gauss * 0.7), 2.5);
+      const pol = this.rand() > 0.5 ? 1 : -1;
+      this.crackleEnv = amp * (curved * 0.5 + 0.5 * curved * Math.abs(x)) * 0.06 * pol;
+    }
+    this.crackleEnv *= Math.exp(-1 / (sr * 0.0004));
+    const f = 2 * Math.sin(Math.PI * 3500 / sr);
+    this.crackleBp1 += f * (this.crackleEnv - this.crackleBp1 - this.crackleBp2);
+    this.crackleBp2 += f * this.crackleBp1;
+    return x + this.crackleBp2;
+  }
+  dropout(x, amount){
+    const sr = this.sr;
+    const curved = amount * amount * amount * amount;
+    if(this.dropTimer <= 0 && this.rand() < curved * 0.8 / sr){
+      const depth = amount < 0.8 ? 1 + this.rand() * 5 * amount
+                                 : 3 + this.rand() * (8 + amount * 25);
+      this.dropTarget = Math.pow(10, -depth / 20);
+      this.dropTimer = (0.002 + this.rand() * 0.015) * sr;
+    }
+    const target = this.dropTimer > 0 ? this.dropTarget : 1;
+    const co = Math.exp(-1 / (sr * 0.002));
+    this.dropSmooth = co * this.dropSmooth + (1 - co) * target;
+    if(this.dropTimer > 0) this.dropTimer -= 1;
+    return x * this.dropSmooth;
+  }
+  sizzle(x, amount){
+    const sr = this.sr;
+    const lpCo = Math.exp(-2 * Math.PI * 3000 / sr);
+    this.sizzleLp = lpCo * this.sizzleLp + (1 - lpCo) * x;
+    const hf = x - this.sizzleLp, hfAbs = Math.abs(hf);
+    this.sizzleEnv += (hfAbs > this.sizzleEnv ? 0.01 : 0.001) * (hfAbs - this.sizzleEnv);
+    const amt = amount * amount;
+    const hfDrive = 1 + amt * 12;
+    const driven = hf * hfDrive;
+    const mid = (this.sizzleOsPrev + driven) * 0.5;
+    this.sizzleOsPrev = driven;
+    const sat = (Math.tanh(mid) + Math.tanh(driven)) * 0.5 / hfDrive;
+    const harmonics = sat - hf / hfDrive;
+    return x + harmonics * this.sizzleEnv * hfDrive * (amt * 3);
+  }
+  one(x, p){
+    if(p.lpf > 1e-6) x = this.lpf(x, p.lpf);
+    if(p.drive > 1e-6 || p.sag > 1e-6 || p.bias > 1e-6) x = this.tube(x, p.drive, p.sag, p.bias);
+    if(p.breakup > 1e-6) x = this.breakup(x, p.breakup);
+    if(p.crackle > 1e-6) x = this.crackle(x, p.crackle);
+    if(p.dropout > 1e-6) x = this.dropout(x, p.dropout);
+    if(p.sizzle > 1e-6) x = this.sizzle(x, p.sizzle);
+    return x;
+  }
+}
+
+class ValveProc extends Retirable {
+  constructor(opt){
+    super();
+    const o = opt.processorOptions;
+    this.p = { drive:c01(o.drive), sag:c01(o.sag), bias:c01(o.bias), lpf:c01(o.lpf),
+               crackle:c01(o.crackle), breakup:c01(o.breakup),
+               dropout:c01(o.dropout), sizzle:c01(o.sizzle) };
+    // the plugin's two seeds, so the channels differ the way they do there
+    this.L = new Valve(sampleRate, 0x51A7C0DE);
+    this.R = new Valve(sampleRate, 0x2D9E11F3);
+  }
+  process(inputs, outputs){
+    if(this.dead) return false;
+    const i = inputs[0], o = outputs[0];
+    if(!i || !i.length || !i[0]) return true;
+    const IL = i[0], IR = i.length > 1 ? i[1] : i[0];
+    const oL = o[0], oR = o.length > 1 ? o[1] : null;
+    for(let k = 0; k < IL.length; k++){
+      oL[k] = this.L.one(IL[k], this.p);
+      const r = this.R.one(IR[k], this.p);
+      if(oR) oR[k] = r;
+    }
+    return true;
+  }
+}
+
+/* --------------------------------------------------------------------- GLUE --
+   Port of PhoneLimiter: a bass-weighted pumping bus compressor with a
+   brickwall on top and a slow upward leveler underneath. The stand-in was a
+   plain DynamicsCompressor, which has neither the bass-weighted sidechain nor
+   the leveler, and those are what make it pump. AMOUNT is pinned at 1.0 by
+   Rack; DEPTH p0, SPEED p1, BASS p2. */
+class GlueProc extends Retirable {
+  constructor(opt){
+    super();
+    const o = opt.processorOptions, sr = sampleRate;
+    this.sr = sr;
+    this.amount = 1.0;
+    this.depth = c01(o.depth);
+    this.bass = c01(o.bass);
+    this.cAtk = Math.exp(-1 / (sr * 0.008));
+    this.cDetRel = Math.exp(-1 / (sr * 0.030));
+    this.cBass = 1 - Math.exp(-2 * Math.PI * 200 / sr);
+    this.cRms = Math.exp(-1 / (sr * 1.5));
+    this.hold = Math.floor(0.030 * sr);
+    this.cRel = Math.exp(-1 / (sr * (80 * Math.pow(37.5, c01(o.speed))) * 0.001));
+    this.bassLP = 0; this.det = 0; this.holdCtr = 0;
+    this.grSm = 0; this.grHold = 0; this.rms = 0; this.boostDb = 0;
+  }
+  process(inputs, outputs){
+    if(this.dead) return false;
+    const i = inputs[0], o = outputs[0];
+    if(!i || !i.length || !i[0]) return true;
+    const IL = i[0], IR = i.length > 1 ? i[1] : i[0];
+    const oL = o[0], oR = o.length > 1 ? o[1] : null;
+    const pumpDepthDb = this.depth * 30, bassEmph = this.bass * 6;
+    const kThr = -18, kKnee = 6, kRatio = 3, kCeil = -3;
+    const upStep = 4 / this.sr, dnStep = 24 / this.sr;
+
+    for(let k = 0; k < IL.length; k++){
+      const dryL = IL[k], dryR = IR[k];
+      const scIn = Math.max(Math.abs(dryL), Math.abs(dryR));
+      this.bassLP += this.cBass * (scIn - this.bassLP);
+      const detIn = scIn + bassEmph * this.bassLP;
+      if(detIn > this.det){ this.det = this.cAtk * this.det + (1 - this.cAtk) * detIn; this.holdCtr = this.hold; }
+      else if(this.holdCtr > 0) this.holdCtr--;
+      else this.det = this.cDetRel * this.det + (1 - this.cDetRel) * detIn;
+      this.det += 1e-20;
+
+      const detDb = 20 * Math.log10(Math.max(this.det, 1e-6));
+      let grDb = 0;
+      if(detDb > kThr - kKnee * 0.5){
+        if(detDb > kThr + kKnee * 0.5) grDb = (detDb - kThr) * (1 - 1 / kRatio);
+        else { const ov = detDb - kThr + kKnee * 0.5; grDb = (1 - 1 / kRatio) * ov * ov / (2 * kKnee); }
+      }
+      const postComp = detDb - grDb;
+      if(postComp > kCeil) grDb += postComp - kCeil;
+      if(grDb > pumpDepthDb) grDb = pumpDepthDb;
+
+      if(grDb > this.grSm){ this.grSm = this.cAtk * this.grSm + (1 - this.cAtk) * grDb; this.grHold = this.hold; }
+      else if(this.grHold > 0) this.grHold--;
+      else this.grSm = this.cRel * this.grSm + (1 - this.cRel) * grDb;
+
+      this.rms = this.cRms * this.rms + (1 - this.cRms) * detIn * detIn;
+      const lvlDb = 10 * Math.log10(this.rms + 1e-20);
+      const desired = Math.max(0, Math.min(12, kCeil - lvlDb));
+      if(desired > this.boostDb) this.boostDb = Math.min(this.boostDb + upStep, desired);
+      else this.boostDb = Math.max(this.boostDb - dnStep, desired);
+
+      const gain = Math.pow(10, -this.grSm * 0.05) * Math.pow(10, this.boostDb * 0.05);
+      oL[k] = dryL + (dryL * gain - dryL) * this.amount;
+      const r = dryR + (dryR * gain - dryR) * this.amount;
+      if(oR) oR[k] = r;
+    }
+    return true;
+  }
+}
+
 registerProcessor("invoker-gate", GateProc);
 registerProcessor("invoker-crush", CrushProc);
 registerProcessor("invoker-tape", TapeProc);
@@ -1795,6 +2090,8 @@ registerProcessor("invoker-delay", DelayProc);
 registerProcessor("invoker-sag", SagProc);
 registerProcessor("invoker-ceiling", CeilingProc);
 registerProcessor("invoker-guard", GuardProc);
+registerProcessor("invoker-valve", ValveProc);
+registerProcessor("invoker-glue", GlueProc);
 `;
 let workletReady=false;
 
@@ -1923,8 +2220,16 @@ function buildChain(patch){
                 // clipper, then makeup. A static curve captures this exactly.
                 const w=ctx.createWaveShaper();
                 w.curve=fuzzCurve(p[0]); w.oversample="4x"; link(w); break; }
-      case 3: { const w=ctx.createWaveShaper();
-                w.curve=softCurve(p[0]*.9); w.oversample="2x"; link(w); break; }
+      case 3: { // per-channel valve heat: sag, bias walk, crackle, dropout and
+                // the rest — eight words the stand-in threw away.
+                if(workletReady){
+                  link(worklet("invoker-valve",{drive:p[0], sag:p[1], bias:p[2], lpf:p[3],
+                    crackle:p[4], breakup:p[5], dropout:p[6], sizzle:p[7]}));
+                }else{
+                  const w=ctx.createWaveShaper();
+                  w.curve=softCurve(p[0]*.9); w.oversample="2x"; link(w);
+                }
+                break; }
       case 4: { if(workletReady){
                   link(worklet("invoker-grave",
                     {amount:p[0], attack:p[1], release:p[2], crush:p[3]}));
@@ -1933,9 +2238,14 @@ function buildChain(patch){
                   w.oversample="2x"; link(w);
                 }
                 break; }
-      case 17: { const c=ctx.createDynamicsCompressor();
-                c.threshold.value=-40+p[0]*20; c.ratio.value=3+p[0]*8;
-                c.attack.value=.003+p[1]*.1; c.release.value=.05+p[2]*.5; link(c); break; }
+      case 17: { if(workletReady){
+                  link(worklet("invoker-glue",{depth:p[0], speed:p[1], bass:p[2]}));
+                }else{
+                  const c=ctx.createDynamicsCompressor();
+                  c.threshold.value=-40+p[0]*20; c.ratio.value=3+p[0]*8;
+                  c.attack.value=.003+p[1]*.1; c.release.value=.05+p[2]*.5; link(c);
+                }
+                break; }
       case 5: { const lo=ctx.createBiquadFilter(), hi=ctx.createBiquadFilter();
                 lo.type="lowshelf"; lo.frequency.value=800; lo.gain.value=(0.5-p[0])*24;
                 hi.type="highshelf"; hi.frequency.value=800; hi.gain.value=(p[0]-0.5)*24;
