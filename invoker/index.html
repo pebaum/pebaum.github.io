@@ -654,6 +654,17 @@ function softCurve(k){
   for(let i=0;i<n;i++){ const x=i/(n-1)*2-1; c[i]=Math.tanh(x*(1+k*8))/Math.tanh(1+k*8); }
   return c;
 }
+/** GRAVE, statically: lift low levels toward the ceiling without touching the
+    peaks. The plugin follows an envelope so the lift blooms into a decay; a
+    fixed curve cannot bloom, but it does move in the same direction. */
+function liftCurve(amount){
+  const n=1024, c=new Float32Array(n), k=1-Math.max(0,Math.min(1,amount))*0.55;
+  for(let i=0;i<n;i++){
+    const x=i/(n-1)*2-1, a=Math.abs(x);
+    c[i]=Math.sign(x)*Math.pow(a,k);
+  }
+  return c;
+}
 function bitCurve(bits){
   const n=2048, c=new Float32Array(n), levels=Math.max(2,Math.pow(2,bits));
   for(let i=0;i<n;i++){ const x=i/(n-1)*2-1; c[i]=Math.round(x*levels)/levels; }
@@ -675,14 +686,39 @@ function impulse(seconds, decay, bright){
 
 /** The rack. Order, selection and parameters are exact; each module is a
     likeness built from Web Audio nodes rather than the plugin's own DSP. */
+/* Impulses are generated, not loaded, and DRIFT rebuilds the chain every couple
+   of seconds — so they are cached by shape. A 24 s tail is 2.3 M samples and is
+   not something to re-roll on a timer. */
+const impulseCache=new Map();
+function cachedImpulse(seconds, decay, bright){
+  const k=seconds.toFixed(2)+"/"+decay.toFixed(2)+"/"+bright.toFixed(2);
+  let b=impulseCache.get(k);
+  if(!b){
+    if(impulseCache.size>24) impulseCache.clear();
+    b=impulse(seconds,decay,bright); impulseCache.set(k,b);
+  }
+  return b;
+}
+
+/** One slot of the rack.
+
+    Every module blends against its own input by AMOUNT, exactly as
+    Rack::processSlot does — a module's contribution is always dialable and a
+    stale tail never arrives at full level. The parallel modules (DELAY, ROOM,
+    CASCADE, SHIMMER) are built wet-only and let that same blend set their mix,
+    which is why each carries a floor: the plugin holds them at a quarter wet
+    even when the derived word says zero. */
 function buildChain(patch){
   const input=ctx.createGain(), output=ctx.createGain();
   let node=input;
-  const link=n=>{ node.connect(n); node=n; };
 
   for(const slot of patch.slots){
     const p=slot.p, amt=Math.max(0,Math.min(1,slot.amount*state.intensity));
     if(amt<=1e-4) continue;
+
+    let head=null, tail=null, blend=amt;
+    const link=n=>{ if(!head){ head=n; tail=n; } else { tail.connect(n); tail=n; } };
+
     switch(slot.id){
       case 0: { const g=ctx.createDynamicsCompressor();
                 g.threshold.value=-60+p[0]*30; g.ratio.value=20; g.attack.value=.003;
@@ -691,21 +727,34 @@ function buildChain(patch){
                 const w=ctx.createWaveShaper();
                 w.curve=softCurve(p[0]*(slot.id===2?1.6:slot.id===3?.9:.7)); w.oversample="2x";
                 link(w); break; }
-      case 4: case 17: { const c=ctx.createDynamicsCompressor();
+      case 4: { // GRAVE is UPWARD: it drags tails and the floor toward the
+                // ceiling. A power curve below 1 is the static form of that.
+                const w=ctx.createWaveShaper(); w.curve=liftCurve(p[0]); w.oversample="2x";
+                link(w); break; }
+      case 17: { const c=ctx.createDynamicsCompressor();
                 c.threshold.value=-40+p[0]*20; c.ratio.value=3+p[0]*8;
                 c.attack.value=.003+p[1]*.1; c.release.value=.05+p[2]*.5; link(c); break; }
       case 5: { const lo=ctx.createBiquadFilter(), hi=ctx.createBiquadFilter();
                 lo.type="lowshelf"; lo.frequency.value=800; lo.gain.value=(0.5-p[0])*24;
                 hi.type="highshelf"; hi.frequency.value=800; hi.gain.value=(p[0]-0.5)*24;
                 link(lo); link(hi); break; }
-      case 6: { const f=ctx.createBiquadFilter();
-                f.type=["lowpass","bandpass","highpass"][Math.floor(p[3]*2.999)];
-                f.frequency.value=80*Math.pow(180,p[0]); f.Q.value=.7+p[1]*14;
-                link(f); break; }
+      case 6: { // Ladder: p0 cutoff, p1 resonance, p2 drive, p3 mode, p4 four-pole.
+                if(p[2]>1e-3){ const d=ctx.createWaveShaper();
+                               d.curve=softCurve(p[2]*.8); d.oversample="2x"; link(d); }
+                const type=["lowpass","bandpass","highpass"][Math.floor(p[3]*2.999)];
+                const freq=80*Math.pow(180,p[0]), q=.7+p[1]*14;
+                const f=ctx.createBiquadFilter();
+                f.type=type; f.frequency.value=freq; f.Q.value=q; link(f);
+                if(p[4]>0.5){                       // a second pair makes it four-pole
+                  const g=ctx.createBiquadFilter();
+                  g.type=type; g.frequency.value=freq; g.Q.value=.7; link(g);
+                }
+                break; }
       case 7: case 8: { const w=ctx.createWaveShaper();
-                w.curve=bitCurve(3+(1-(slot.id===7?p[1]:p[0]))*9);
+                // 16 bits down to 3, as the plugin writes it — not 12 down to 3.
+                w.curve=bitCurve(16-(slot.id===7?p[1]:p[0])*13);
                 const f=ctx.createBiquadFilter(); f.type="lowpass";
-                f.frequency.value=1200+ (1-(slot.id===7?p[0]:p[0]))*14000;
+                f.frequency.value=1200+(1-p[0])*14000;
                 link(w); link(f); break; }
       case 9: { const w=ctx.createWaveShaper(); w.curve=softCurve(p[0]*.35);
                 const f=ctx.createBiquadFilter(); f.type="highshelf";
@@ -713,37 +762,44 @@ function buildChain(patch){
                 link(w); link(f); break; }
       case 10: case 11: {
                 const d=ctx.createDelay(0.1), lfo=ctx.createOscillator(), la=ctx.createGain();
-                const base = slot.id===10 ? .004 : .008;
-                d.delayTime.value=base;
+                d.delayTime.value = slot.id===10 ? .004 : .008;
                 lfo.frequency.value = slot.id===10 ? .05+p[1]*2.5 : .1+p[0]*4;
                 la.gain.value = (slot.id===10 ? p[0]*.003 : p[1]*.004);
                 lfo.connect(la); la.connect(d.delayTime); lfo.start();
                 link(d); break; }
-      case 12: { const d=ctx.createDelay(3), fb=ctx.createGain(), wet=ctx.createGain(), mix=ctx.createGain();
+      case 12: { // wet-only; the slot blend is the mix
+                const d=ctx.createDelay(3), fb=ctx.createGain();
                 d.delayTime.value=.05+p[0]*1.6; fb.gain.value=Math.min(.86,p[1]);
-                wet.gain.value=p[3];
-                node.connect(mix); node.connect(d); d.connect(fb); fb.connect(d);
-                d.connect(wet); wet.connect(mix); node=mix; break; }
+                d.connect(fb); fb.connect(d);
+                head=d; tail=d;
+                blend = amt*(0.25+0.75*p[3]); break; }
       case 13: { const c=ctx.createDynamicsCompressor();
                 c.threshold.value=-28; c.ratio.value=4; c.attack.value=.05+p[0]*.2;
                 c.release.value=.2+p[0]*.6; link(c); break; }
-      case 14: case 15: {
-                const cv=ctx.createConvolver(), wet=ctx.createGain(), mix=ctx.createGain();
-                const long = slot.id===15;
-                cv.buffer=impulse(long ? .6+p[0]*6 : .25+p[0]*1.2,
-                                  long ? 2.2 : 3.0,
-                                  long ? p[6] : p[2]);
-                wet.gain.value = long ? p[7] : p[5];
-                node.connect(mix); node.connect(cv); cv.connect(wet); wet.connect(mix);
-                node=mix; break; }
+      case 14: { const cv=ctx.createConvolver();
+                cv.buffer=cachedImpulse(.25+p[0]*1.2, 3.0, p[2]);
+                head=cv; tail=cv;
+                blend = amt*(0.30+0.70*p[5]); break; }
+      case 15: { const cv=ctx.createConvolver();
+                // 0.4 .. 24 s, the plugin's curve. This is the long one.
+                cv.buffer=cachedImpulse(0.4+p[0]*p[0]*24, 1.4+ (1-p[2])*2.0, p[6]);
+                head=cv; tail=cv;
+                blend = amt*(0.25+0.75*p[7]); break; }
       case 16: { // No granular pitch shifter here — a bright, long, detuned tail
-                const cv=ctx.createConvolver(), wet=ctx.createGain(), mix=ctx.createGain();
-                cv.buffer=impulse(2.5+p[0]*4, 1.6, .85);
-                wet.gain.value=p[2]*.8;
-                node.connect(mix); node.connect(cv); cv.connect(wet); wet.connect(mix);
-                node=mix; break; }
+                const cv=ctx.createConvolver();
+                cv.buffer=cachedImpulse(2.5+p[0]*4, 1.6, .85);
+                head=cv; tail=cv;
+                blend = amt*(0.25+0.75*p[2]); break; }
       case 18: { const w=ctx.createWaveShaper(); w.curve=softCurve(.15); link(w); break; }
     }
+    if(!head) continue;
+
+    blend=Math.max(0,Math.min(1,blend));
+    const wet=ctx.createGain(), dry=ctx.createGain(), mix=ctx.createGain();
+    wet.gain.value=blend; dry.gain.value=1-blend;
+    node.connect(head); node.connect(dry);
+    tail.connect(wet); wet.connect(mix); dry.connect(mix);
+    node=mix;
   }
   node.connect(output);
   return {input, output};
