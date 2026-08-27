@@ -640,7 +640,8 @@ const WORKLET_SRC = `/* ========================================================
    AudioWorklet — the three modules that cannot be built from stock nodes.
 
    GATE and CRUSH are ports of incant::units::GateStage and ::Bitcrush.
-   TAPE is a port of the Airwindows tape record/repro model, MIT licensed:
+   TAPE and DEREZ are ports of the Airwindows tape record/repro model and
+   resolution reducer, MIT licensed:
 
      Copyright (c) 2018 Chris Johnson
 
@@ -669,11 +670,24 @@ const WORKLET_SRC = `/* ========================================================
    ============================================================================ */
 const c01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
 
+/* DRIFT rebuilds the rack every couple of seconds. A process() that always
+   returns true keeps running on the audio thread forever after its node is
+   disconnected, so the main thread retires each one explicitly with a "stop"
+   message. Input presence cannot be used for this: a connected but SILENT
+   input also arrives as an empty array, and this piece is mostly silence. */
+class Retirable extends AudioWorkletProcessor {
+  constructor(){
+    super();
+    this.dead = false;
+    this.port.onmessage = e => { if(e.data === "stop") this.dead = true; };
+  }
+}
+
 /* -------------------------------------------------------------------- GATE --
    Port of GateStage. Rack sets THRESHOLD p0, RELEASE p1, HOLD p2 and pins
    HYSTERESIS at 0.35; ATTACK stays at its 1 ms default and both key filters
    stay out of circuit, so the detector is the raw rectified link. */
-class GateProc extends AudioWorkletProcessor {
+class GateProc extends Retirable {
   constructor(opt){
     super();
     const p = opt.processorOptions, sr = sampleRate;
@@ -686,14 +700,7 @@ class GateProc extends AudioWorkletProcessor {
     this.envRel = 1 - Math.exp(-1 / (0.020 * sr));
     this.holdSamples = Math.floor(500 * c01(p.hold) * 0.001 * sr);
     this.env = 0; this.gain = 1; this.holdLeft = 0; this.open = true;
-    this.listen();
   }
-  /* DRIFT rebuilds the rack every couple of seconds. A process() that always
-     returns true keeps running on the audio thread forever after its node is
-     disconnected, so the main thread retires each one explicitly. Input
-     presence cannot be used for this: a connected but SILENT input also
-     arrives as an empty array, and this piece is mostly silence. */
-  listen(){ this.port.onmessage = e => { if(e.data === "stop") this.dead = true; }; }
   process(inputs, outputs){
     if(this.dead) return false;
     const i = inputs[0], o = outputs[0];
@@ -735,7 +742,7 @@ function rbjLowpass(fc, sr){
   return { b0:((1-cs)/2)/a0, b1:(1-cs)/a0, b2:((1-cs)/2)/a0,
            a1:(-2*cs)/a0, a2:(1-alpha)/a0 };
 }
-class CrushProc extends AudioWorkletProcessor {
+class CrushProc extends Retirable {
   constructor(opt){
     super();
     const p = opt.processorOptions, sr = sampleRate;
@@ -748,7 +755,6 @@ class CrushProc extends AudioWorkletProcessor {
     this.env = [1e-4, 1e-4];
     this.aAtk = Math.exp(-1 / (1.0 * 0.001 * sr));
     this.aRel = Math.exp(-1 / (100.0 * 0.001 * sr));
-    this.listen();
   }
   biquad(x, s){
     const c = this.c;
@@ -761,12 +767,6 @@ class CrushProc extends AudioWorkletProcessor {
     if(c > 1) c = 1; else if(c < -1) c = -1;
     return Math.round(c * this.levels) * (env / this.levels);
   }
-  /* DRIFT rebuilds the rack every couple of seconds. A process() that always
-     returns true keeps running on the audio thread forever after its node is
-     disconnected, so the main thread retires each one explicitly. Input
-     presence cannot be used for this: a connected but SILENT input also
-     arrives as an empty array, and this piece is mostly silence. */
-  listen(){ this.port.onmessage = e => { if(e.data === "stop") this.dead = true; }; }
   process(inputs, outputs){
     if(this.dead) return false;
     const i = inputs[0], o = outputs[0];
@@ -800,7 +800,7 @@ class CrushProc extends AudioWorkletProcessor {
    here, as it is in the plugin. What is left is the part you hear: Dubly
    encode, flutter, hysteresis, the averaged head-bump darkening, the Taylor
    sine saturation, the head bump itself, and Dubly decode. */
-class TapeProc extends AudioWorkletProcessor {
+class TapeProc extends Retirable {
   constructor(opt){
     super();
     const p = opt.processorOptions, sr = sampleRate;
@@ -844,7 +844,6 @@ class TapeProc extends AudioWorkletProcessor {
     const z = n => new Float64Array(n);
     this.avg  = { 32:[z(32),z(32)], 16:[z(16),z(16)], 8:[z(8),z(8)], 4:[z(4),z(4)], 2:[z(2),z(2)] };
     this.post = { 32:[z(32),z(32)], 16:[z(16),z(16)], 8:[z(8),z(8)], 4:[z(4),z(4)], 2:[z(2),z(2)] };
-    this.listen();
   }
   dark(bank, dl, dr){
     let a = dl, b = dr;
@@ -882,12 +881,6 @@ class TapeProc extends AudioWorkletProcessor {
     }
     return [sample, comp];
   }
-  /* DRIFT rebuilds the rack every couple of seconds. A process() that always
-     returns true keeps running on the audio thread forever after its node is
-     disconnected, so the main thread retires each one explicitly. Input
-     presence cannot be used for this: a connected but SILENT input also
-     arrives as an empty array, and this piece is mostly silence. */
-  listen(){ this.port.onmessage = e => { if(e.data === "stop") this.dead = true; }; }
   process(inputs, outputs){
     if(this.dead) return false;
     const i = inputs[0], o = outputs[0];
@@ -1031,9 +1024,242 @@ class TapeProc extends AudioWorkletProcessor {
   }
 }
 
+/* ----------------------------------------------------------------- SHIMMER --
+   Port of GranularPitchShifter. Two voices — an octave up and an octave down —
+   each ten overlapping Hann grains read out of one circular buffer at 2x and
+   0.5x, with jittered start positions so the grain rate never becomes a pitch
+   of its own. ASCEND p0 and DESCEND p1 are the two voice gains; the slot blend
+   carries the mix, exactly as Rack does it. */
+class ShimmerProc extends Retirable {
+  constructor(opt){
+    super();
+    const p = opt.processorOptions, sr = sampleRate;
+    this.ascend = p.ascend;
+    this.descend = p.descend;
+    this.nGrains = 10;
+    this.size = [Math.ceil(60.0 * 0.001 * sr), Math.ceil(80.0 * 0.001 * sr)];
+    this.spacing = [Math.floor(this.size[0] / this.nGrains),
+                    Math.floor(this.size[1] / this.nGrains)];
+    this.ratio = [2.0, 0.5];
+    this.bufSize = Math.max(1, this.size[1] * 8);
+    this.buf = [new Float64Array(this.bufSize), new Float64Array(this.bufSize)];
+    this.writePos = 0;
+
+    this.win = this.size.map(n => {
+      const w = new Float64Array(n);
+      for(let i = 0; i < n; i++) w[i] = 0.5 * (1 - Math.cos(2 * Math.PI * i / n));
+      return w;
+    });
+
+    // Grain state is per channel, per voice, per grain.
+    const seed = 42;
+    this.rng = [seed, seed];
+    const phaseOffset = (seed * 7) % (this.spacing[0] > 0 ? this.spacing[0] : 1);
+    this.grains = [];
+    for(let ch = 0; ch < 2; ch++){
+      const voices = [];
+      for(let v = 0; v < 2; v++){
+        const gs = [];
+        for(let g = 0; g < this.nGrains; g++)
+          gs.push({ readPos:0, active:(g * this.spacing[v] + phaseOffset) % this.size[v] });
+        voices.push(gs);
+      }
+      this.grains.push(voices);
+    }
+  }
+  next(ch){
+    this.rng[ch] = (Math.imul(this.rng[ch], 1664525) + 1013904223) >>> 0;
+    return this.rng[ch] / 4294967296;
+  }
+  resetGrain(g, v, ch){
+    const size = this.size[v], sp = this.spacing[v];
+    let start = this.writePos - size
+              + (this.next(ch) - 0.5) * 0.5 * sp     // jitter
+              + this.next(ch) * 0.3 * sp;            // read offset
+    while(start < 0) start += this.bufSize;
+    while(start >= this.bufSize) start -= this.bufSize;
+    g.readPos = start;
+    g.active = 0;
+  }
+  process(inputs, outputs){
+    if(this.dead) return false;
+    const i = inputs[0], o = outputs[0];
+    if(!i || !i.length || !i[0]) return true;
+    const IL = i[0], IR = i.length > 1 ? i[1] : i[0];
+    const oL = o[0], oR = o.length > 1 ? o[1] : null;
+    const N = this.bufSize;
+
+    for(let k = 0; k < IL.length; k++){
+      this.buf[0][this.writePos] = IL[k];
+      this.buf[1][this.writePos] = IR[k];
+
+      for(let ch = 0; ch < 2; ch++){
+        const b = this.buf[ch];
+        let up = 0, down = 0;
+        for(let v = 0; v < 2; v++){
+          const size = this.size[v], win = this.win[v], ratio = this.ratio[v];
+          let acc = 0;
+          for(let gi = 0; gi < this.nGrains; gi++){
+            const g = this.grains[ch][v][gi];
+            if(g.active >= size) this.resetGrain(g, v, ch);
+            let rp = g.readPos;
+            while(rp < 0) rp += N;
+            while(rp >= N) rp -= N;
+            const base = rp | 0, frac = rp - base;
+            const y0 = b[(base - 1 + N) % N], y1 = b[base % N],
+                  y2 = b[(base + 1) % N],     y3 = b[(base + 2) % N];
+            const c1 = 0.5 * (y2 - y0);
+            const c2 = y0 - 2.5 * y1 + 2 * y2 - 0.5 * y3;
+            const c3 = 0.5 * (y3 - y0) + 1.5 * (y1 - y2);
+            acc += (((c3 * frac + c2) * frac + c1) * frac + y1) * win[g.active];
+            g.readPos += ratio;
+            if(g.readPos >= N) g.readPos -= N;
+            g.active++;
+          }
+          acc *= 1 / 5;
+          if(v === 0) up = acc; else down = acc;
+        }
+        const out = up * this.ascend + down * this.descend;
+        if(ch === 0) oL[k] = out; else if(oR) oR[k] = out;
+      }
+
+      this.writePos++;
+      if(this.writePos >= N) this.writePos = 0;
+    }
+    return true;
+  }
+}
+
+/* ------------------------------------------------------------------- DEREZ --
+   Airwindows ResolutionReducer, MIT (see the notice at the top of this file).
+   A coarser, dirtier relative of CRUSH: the signal is split into bands by
+   Bezier-interpolated averaging cycles, the mids are sample-and-held on their
+   own slow grid, and the bands are put back together. Rack passes p0..p2 as
+   A..C and pins D at 1.0, so the output trim is a no-op here. */
+class DerezProc extends Retirable {
+  constructor(opt){
+    super();
+    const p = opt.processorOptions, sr = sampleRate;
+    const A = p.a, B = p.b, C = p.c;
+    this.os = sr / 44100;
+
+    this.Sderez = Math.pow(A, 2.0 + this.os);
+    let stepped = 999999;
+    if(this.Sderez > 0.000001) stepped = Math.floor(1 / this.Sderez);
+    if(this.Sderez > 0) this.Sderez = 0.99999999 / stepped;
+    this.Strim = 1 - this.Sderez * (stepped / (stepped + 1));
+
+    this.bright = (1 - Math.pow(B, 2)) * 4 * this.os;
+    stepped = 999999;
+    if(this.bright > 1){ stepped = Math.floor(this.bright); this.bright = 0.99999999 / stepped; }
+    else this.bright = 1.1;
+    this.brightTrim = 1 - this.bright * (stepped / (stepped + 1));
+
+    const bassRef = Math.pow(C, 4);
+    this.bassis = (bassRef * 0.25) / this.os;
+    stepped = 999999;
+    if(this.bassis > 0.000001) stepped = Math.floor(1 / this.bassis);
+    if(this.bassis > 0) this.bassis = 0.99999999 / stepped;
+    this.bassisTrim = 1 - this.bassis * (stepped / (stepped + 1));
+
+    // Two independent banks, one per pass, each holding A..D per channel.
+    const bank = () => ({ HMA:[0,0], HMB:[0,0], HMC:[0,0], HMD:[0,0], HMcycle:0,
+                          LMA:[0,0], LMB:[0,0], LMC:[0,0], LMD:[0,0], LMcycle:0 });
+    this.bez = [bank(), bank()];
+    this.pointCycle = 0;
+    this.pointA = [0, 0];
+    this.pointB = [0, 0];
+    this.fpd = [17, 29];
+  }
+  hiBand(z, s){
+    // one Bezier averaging cycle on the high-mid band; s is the [L,R] pair
+    const e = this.bez[z], gain = z === 0 ? 0.5 : 1.0;
+    e.HMcycle += this.bright;
+    e.HMA[0] += s[0] * gain * this.bright;
+    e.HMA[1] += s[1] * gain * this.bright;
+    if(e.HMcycle > this.brightTrim){
+      for(let c = 0; c < 2; c++){
+        e.HMD[c] = e.HMC[c]; e.HMC[c] = e.HMB[c];
+        e.HMB[c] = e.HMA[c] * (0.5 - this.bright * 0.082);
+        e.HMA[c] = 0;
+      }
+      e.HMcycle = 0;
+    }
+    const X = e.HMcycle;
+    for(let c = 0; c < 2; c++){
+      let v = e.HMC[c] + e.HMD[c] * (1 - X) * (1 - X);
+      v += e.HMC[c] * 2 * (1 - X) * X + e.HMB[c] * X * X;
+      s[c] = v / this.brightTrim;
+    }
+  }
+  loBand(z, s){
+    const e = this.bez[z];
+    e.LMcycle += this.bassis;
+    e.LMA[0] += s[0] * this.bassis;
+    e.LMA[1] += s[1] * this.bassis;
+    if(e.LMcycle > this.bassisTrim){
+      for(let c = 0; c < 2; c++){
+        e.LMD[c] = e.LMC[c]; e.LMC[c] = e.LMB[c];
+        e.LMB[c] = e.LMA[c] * (0.5 - this.bassis * 0.082);
+        e.LMA[c] = 0;
+      }
+      e.LMcycle = 0;
+    }
+    const X = e.LMcycle;
+    for(let c = 0; c < 2; c++){
+      s[c] -= (e.LMC[c] + e.LMD[c] * (1 - X) * (1 - X)) * 0.5;
+      s[c] -= (e.LMC[c] * 2 * (1 - X) * X + e.LMB[c] * X * X) * 0.5;
+      s[c] /= this.bassisTrim;
+    }
+  }
+  process(inputs, outputs){
+    if(this.dead) return false;
+    const i = inputs[0], o = outputs[0];
+    if(!i || !i.length || !i[0]) return true;
+    const IL = i[0], IR = i.length > 1 ? i[1] : i[0];
+    const oL = o[0], oR = o.length > 1 ? o[1] : null;
+    const s = [0, 0];
+
+    for(let k = 0; k < IL.length; k++){
+      s[0] = IL[k]; s[1] = IR[k];
+      if(Math.abs(s[0]) < 1.18e-23) s[0] = this.fpd[0] * 1.18e-17;
+      if(Math.abs(s[1]) < 1.18e-23) s[1] = this.fpd[1] * 1.18e-17;
+
+      if(this.bright < 1) this.hiBand(0, s);
+      if(this.bassis > 0) this.loBand(0, s);
+
+      // the mids, sample-and-held on their own grid and linearly joined
+      if(this.Sderez < 1){
+        this.pointCycle += this.Sderez;
+        if(this.pointCycle > 0.9999999){
+          this.pointA[0] = this.pointB[0]; this.pointB[0] = s[0];
+          this.pointA[1] = this.pointB[1]; this.pointB[1] = s[1];
+          this.pointCycle = 0;
+        }
+        const X = this.pointCycle * this.Strim;
+        if(this.Sderez > 0){
+          s[0] = (this.pointA[0] + (this.pointB[0] - this.pointA[0]) * X) / this.Strim;
+          s[1] = (this.pointA[1] + (this.pointB[1] - this.pointA[1]) * X) / this.Strim;
+        }else{
+          s[0] = 0; s[1] = 0;
+        }
+      }
+
+      if(this.bright < 1) this.hiBand(1, s);
+      if(this.bassis > 0) this.loBand(1, s);
+
+      oL[k] = s[0];
+      if(oR) oR[k] = s[1];
+    }
+    return true;
+  }
+}
+
 registerProcessor("invoker-gate", GateProc);
 registerProcessor("invoker-crush", CrushProc);
 registerProcessor("invoker-tape", TapeProc);
+registerProcessor("invoker-shimmer", ShimmerProc);
+registerProcessor("invoker-derez", DerezProc);
 `;
 let workletReady=false;
 
@@ -1177,11 +1403,15 @@ function buildChain(patch){
                   link(w); link(f);
                 }
                 break; }
-      case 8: { const w=ctx.createWaveShaper();
-                w.curve=bitCurve(16-p[0]*13);
-                const f=ctx.createBiquadFilter(); f.type="lowpass";
-                f.frequency.value=1200+(1-p[0])*14000;
-                link(w); link(f); break; }
+      case 8: { if(workletReady){
+                  link(worklet("invoker-derez",{a:p[0],b:p[1],c:p[2]}));
+                }else{
+                  const w=ctx.createWaveShaper(); w.curve=bitCurve(16-p[0]*13);
+                  const f=ctx.createBiquadFilter(); f.type="lowpass";
+                  f.frequency.value=1200+(1-p[0])*14000;
+                  link(w); link(f);
+                }
+                break; }
       case 9: { if(workletReady){
                   link(worklet("invoker-tape",{a:p[0],b:p[1],c:p[2],d:p[3],e:p[4]}));
                 }else{
@@ -1216,10 +1446,14 @@ function buildChain(patch){
                 cv.buffer=cachedImpulse(0.4+p[0]*p[0]*24, 1.4+ (1-p[2])*2.0, p[6]);
                 head=cv; tail=cv;
                 blend = amt*(0.25+0.75*p[7]); break; }
-      case 16: { // No granular pitch shifter here — a bright, long, detuned tail
-                const cv=ctx.createConvolver();
-                cv.buffer=cachedImpulse(2.5+p[0]*4, 1.6, .85);
-                head=cv; tail=cv;
+      case 16: { if(workletReady){
+                  const n=worklet("invoker-shimmer",{ascend:p[0],descend:p[1]});
+                  head=n; tail=n;
+                }else{                    // a bright, long, detuned tail instead
+                  const cv=ctx.createConvolver();
+                  cv.buffer=cachedImpulse(2.5+p[0]*4, 1.6, .85);
+                  head=cv; tail=cv;
+                }
                 blend = amt*(0.25+0.75*p[2]); break; }
       case 18: { const w=ctx.createWaveShaper(); w.curve=softCurve(.15); link(w); break; }
     }
