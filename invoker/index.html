@@ -2077,6 +2077,196 @@ class GlueProc extends Retirable {
   }
 }
 
+/* ------------------------------------------------------------- the reverbs --
+   ROOM and CASCADE are the two modules that are a LIKENESS rather than a port,
+   and it is worth being exact about what that means. SmallRoom is 623 lines of
+   Airwindows and the CASCADE kernel is 1714 lines of Faust output; hand-copying
+   either into a page is not something to trust. What is reproduced here is the
+   ARCHITECTURE and the PARAMETER SEMANTICS — SmallRoom's 3x3 early reflections
+   into a 6x6 Householder tail with Regen, Derez, Filter, EarlyRF and Position;
+   CASCADE's modulated feedback delay network with reverb time, size, damping,
+   diffusion, modulation and a high shelf. The coefficients are not the same
+   numbers, so these two do not sound identical to the plugin. They do respond
+   to every derived word, which a fixed noise impulse could not: the stand-in
+   ignored size, diffusion, modulation and regeneration entirely, and could
+   not decay for 24 seconds. */
+
+/** One delay line with a modulated fractional read. */
+class Line {
+  constructor(len){
+    this.n = Math.max(4, len | 0);
+    this.buf = new Float64Array(this.n);
+    this.w = 0;
+  }
+  write(x){ this.buf[this.w] = x; this.w = (this.w + 1) % this.n; }
+  readAt(d){
+    let pos = this.w - d;
+    while(pos < 0) pos += this.n;
+    while(pos >= this.n) pos -= this.n;
+    const i0 = pos | 0, i1 = (i0 + 1) % this.n, f = pos - i0;
+    return this.buf[i0] * (1 - f) + this.buf[i1] * f;
+  }
+}
+
+/** Schroeder allpass, used for input diffusion. */
+class Allpass {
+  constructor(len, g){ this.l = new Line(len); this.d = len; this.g = g; }
+  run(x){
+    const d = this.l.readAt(this.d);
+    const v = x + d * this.g;
+    this.l.write(v);
+    return d - v * this.g;
+  }
+}
+
+/* --------------------------------------------------------------------- ROOM --
+   SmallRoom's shape: 3x3 early reflections whose tap set moves with POSITION,
+   into a 6x6 Householder tail. A Regen, B Derez, C Filter, D EarlyRF,
+   E Position. Wet is the slot blend, so this runs fully wet. */
+const kRoomTaps = [
+  [ 331,  557,  797], [ 419,  641,  907], [ 487,  733, 1021],
+  [ 271,  479,  691], [ 373,  601,  863], [ 449,  677,  971]
+];
+class RoomProc extends Retirable {
+  constructor(opt){
+    super();
+    const p = opt.processorOptions, sr = sampleRate, k = sr / 44100;
+    this.regen = Math.min(0.92, 1 - Math.pow(1 - c01(p.regen), 1.618033988749894));
+    this.derez = c01(p.derez);                    // reverb-rate reduction
+    this.step = 1 + this.derez * 7;               // hold this many samples
+    this.phase = 0; this.held = [0, 0];
+    const filt = 1000 + Math.pow(c01(p.filter), 2) * 12000;
+    this.damp = Math.exp(-2 * Math.PI * filt / sr);
+    this.early = Math.pow(c01(p.early), 2);
+    const set = kRoomTaps[Math.min(kRoomTaps.length - 1,
+                                   Math.floor(c01(p.position) * kRoomTaps.length))];
+    this.eL = set.map(n => new Line(Math.round(n * k)));
+    this.eR = set.map(n => new Line(Math.round(n * 1.13 * k)));
+    this.eD = set.map(n => Math.round(n * k) - 2);
+    this.eDR = set.map(n => Math.round(n * 1.13 * k) - 2);
+    const tail = [1123, 1367, 1621, 1879, 2141, 2417];
+    this.t = tail.map(n => new Line(Math.round(n * k)));
+    this.tD = tail.map(n => Math.round(n * k) - 2);
+    this.lp = new Float64Array(6);
+    this.diff = [new Allpass(Math.round(211 * k), 0.62),
+                 new Allpass(Math.round(307 * k), 0.62)];
+  }
+  process(inputs, outputs){
+    if(this.dead) return false;
+    const i = inputs[0], o = outputs[0];
+    if(!i || !i.length || !i[0]) return true;
+    const IL = i[0], IR = i.length > 1 ? i[1] : i[0];
+    const oL = o[0], oR = o.length > 1 ? o[1] : null;
+
+    for(let k = 0; k < IL.length; k++){
+      this.phase += 1;
+      if(this.phase >= this.step){
+        this.phase -= this.step;
+        let x = this.diff[1].run(this.diff[0].run(0.5 * (IL[k] + IR[k])));
+
+        let erL = 0, erR = 0;
+        for(let n = 0; n < 3; n++){
+          erL += this.eL[n].readAt(this.eD[n]); this.eL[n].write(x);
+          erR += this.eR[n].readAt(this.eDR[n]); this.eR[n].write(x);
+        }
+        erL *= this.early / 3; erR *= this.early / 3;
+
+        const r = new Array(6);
+        let sum = 0;
+        for(let n = 0; n < 6; n++){ r[n] = this.t[n].readAt(this.tD[n]); sum += r[n]; }
+        sum *= 2 / 6;                                   // Householder
+        for(let n = 0; n < 6; n++){
+          let v = (r[n] - sum) * this.regen + x * 0.35;
+          this.lp[n] = (1 - this.damp) * v + this.damp * this.lp[n];
+          this.t[n].write(this.lp[n]);
+        }
+        this.held[0] = erL + (r[0] + r[2] + r[4]) * 0.28;
+        this.held[1] = erR + (r[1] + r[3] + r[5]) * 0.28;
+      }
+      oL[k] = this.held[0];
+      if(oR) oR[k] = this.held[1];
+    }
+    return true;
+  }
+}
+
+/* ------------------------------------------------------------------ CASCADE --
+   The long one: an eight-line feedback delay network with a modulated read on
+   every line, one-pole damping in the loop and a high shelf, sized and decayed
+   from the derived words. REVERB TIME reaches 24 s, as the plugin does — the
+   stand-in stopped at 6.6. */
+class CascadeProc extends Retirable {
+  constructor(opt){
+    super();
+    const p = opt.processorOptions, sr = sampleRate;
+    this.sr = sr;
+    const rt60 = 0.4 + c01(p.time) * c01(p.time) * 24;
+    const size = 0.5 + c01(p.size) * 3.2;
+    const base = [1447, 1699, 1951, 2203, 2477, 2729, 2999, 3251];
+    const k = (sr / 44100) * (size / 2.1);
+    this.lines = base.map(n => new Line(Math.round(n * k) + 8));
+    this.delays = base.map(n => Math.round(n * k));
+    this.g = this.delays.map(d => Math.pow(10, -3 * (d / sr) / Math.max(0.05, rt60)));
+    const dampHz = 12000 * (1 - c01(p.damping) * 0.92) + 400;
+    this.damp = Math.exp(-2 * Math.PI * dampHz / sr);
+    this.lp = new Float64Array(8);
+    const dg = 0.45 + c01(p.diffusion) * 0.3;
+    this.diff = [new Allpass(Math.round(241 * sr / 44100), dg),
+                 new Allpass(Math.round(359 * sr / 44100), dg),
+                 new Allpass(Math.round(487 * sr / 44100), dg),
+                 new Allpass(Math.round(613 * sr / 44100), dg)];
+    this.modDepth = c01(p.modDepth) * 12 * (sr / 44100);
+    this.modInc = 2 * Math.PI * (0.05 + c01(p.modFreq) * 3.0) / sr;
+    this.phase = new Float64Array(8);
+    for(let n = 0; n < 8; n++) this.phase[n] = n * 0.7853981633974483;
+    // HF shelf in the loop at the plugin's 5500 Hz crossover, and the fixed
+    // 0.85 LF gain below 200 Hz.
+    this.hfCo = Math.exp(-2 * Math.PI * 5500 / sr);
+    this.hfGain = c01(p.hfGain);
+    this.hfState = new Float64Array(8);
+    this.lfCo = Math.exp(-2 * Math.PI * 200 / sr);
+    this.lfState = new Float64Array(8);
+  }
+  process(inputs, outputs){
+    if(this.dead) return false;
+    const i = inputs[0], o = outputs[0];
+    if(!i || !i.length || !i[0]) return true;
+    const IL = i[0], IR = i.length > 1 ? i[1] : i[0];
+    const oL = o[0], oR = o.length > 1 ? o[1] : null;
+    const r = new Array(8);
+
+    for(let k = 0; k < IL.length; k++){
+      const x = this.diff[3].run(this.diff[2].run(
+                this.diff[1].run(this.diff[0].run(0.5 * (IL[k] + IR[k])))));
+      let sum = 0;
+      for(let n = 0; n < 8; n++){
+        this.phase[n] += this.modInc;
+        if(this.phase[n] > 6.283185307179586) this.phase[n] -= 6.283185307179586;
+        const d = this.delays[n] + this.modDepth * Math.sin(this.phase[n]);
+        r[n] = this.lines[n].readAt(d);
+        sum += r[n];
+      }
+      sum *= 2 / 8;
+      let outL = 0, outR = 0;
+      for(let n = 0; n < 8; n++){
+        let v = (r[n] - sum) * this.g[n] + x * 0.30;
+        this.lp[n] = (1 - this.damp) * v + this.damp * this.lp[n];
+        v = this.lp[n];
+        // split at the crossovers and re-weight, as the kernel's band gains do
+        this.hfState[n] = (1 - this.hfCo) * v + this.hfCo * this.hfState[n];
+        const hf = v - this.hfState[n];
+        this.lfState[n] = (1 - this.lfCo) * v + this.lfCo * this.lfState[n];
+        v = v - hf * (1 - this.hfGain) - this.lfState[n] * 0.15;
+        this.lines[n].write(v);
+        if(n % 2 === 0) outL += r[n]; else outR += r[n];
+      }
+      oL[k] = outL * 0.25;
+      if(oR) oR[k] = outR * 0.25;
+    }
+    return true;
+  }
+}
+
 registerProcessor("invoker-gate", GateProc);
 registerProcessor("invoker-crush", CrushProc);
 registerProcessor("invoker-tape", TapeProc);
@@ -2092,6 +2282,8 @@ registerProcessor("invoker-ceiling", CeilingProc);
 registerProcessor("invoker-guard", GuardProc);
 registerProcessor("invoker-valve", ValveProc);
 registerProcessor("invoker-glue", GlueProc);
+registerProcessor("invoker-room", RoomProc);
+registerProcessor("invoker-cascade", CascadeProc);
 `;
 let workletReady=false;
 
@@ -2326,14 +2518,25 @@ function buildChain(patch){
                   c.release.value=.2+p[0]*.6; link(c);
                 }
                 break; }
-      case 14: { const cv=ctx.createConvolver();
-                cv.buffer=cachedImpulse(.25+p[0]*1.2, 3.0, p[2]);
-                head=cv; tail=cv;
+      case 14: { if(workletReady){
+                  const n=worklet("invoker-room",{regen:p[0], derez:p[1], filter:p[2],
+                    early:p[3], position:p[4]});
+                  head=n; tail=n;
+                }else{
+                  const cv=ctx.createConvolver();
+                  cv.buffer=cachedImpulse(.25+p[0]*1.2, 3.0, p[2]);
+                  head=cv; tail=cv;
+                }
                 blend = amt*(0.30+0.70*p[5]); break; }
-      case 15: { const cv=ctx.createConvolver();
-                // 0.4 .. 24 s, the plugin's curve. This is the long one.
-                cv.buffer=cachedImpulse(0.4+p[0]*p[0]*24, 1.4+ (1-p[2])*2.0, p[6]);
-                head=cv; tail=cv;
+      case 15: { if(workletReady){
+                  const n=worklet("invoker-cascade",{time:p[0], size:p[1], damping:p[2],
+                    diffusion:p[3], modDepth:p[4], modFreq:p[5], hfGain:p[6]});
+                  head=n; tail=n;
+                }else{
+                  const cv=ctx.createConvolver();
+                  cv.buffer=cachedImpulse(0.4+p[0]*p[0]*24, 1.4+(1-p[2])*2.0, p[6]);
+                  head=cv; tail=cv;
+                }
                 blend = amt*(0.25+0.75*p[7]); break; }
       case 16: { if(workletReady){
                   const n=worklet("invoker-shimmer",{ascend:p[0],descend:p[1]});
