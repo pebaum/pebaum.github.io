@@ -105,6 +105,20 @@ textarea{user-select:text;-webkit-user-select:text}
 .source>span.on{color:var(--fg)}
 .source .sep{color:var(--fg-ghost);cursor:default}
 
+/* MOBILE — the two sentences stacked, and nothing else. The rack is a
+   ns-drag instrument; on a touch screen it is not one, so it is not shown. */
+@media (hover:none) and (pointer:coarse), (max-width:720px){
+  html,body{height:100dvh}
+  .brand,.seam,.keyline,.strip,.master{display:none}
+  .stage{grid-template-rows:1fr;padding:0 20px;height:100dvh}
+  .panes{grid-template-columns:none;grid-auto-rows:1fr}
+  .pane{grid-template-rows:1fr;padding:0}
+  .pane.inactive{opacity:1}
+  .centre{gap:0}
+  .field{font-size:20px;max-width:none}
+  #gate .big{font-size:28px}
+}
+
 /* Browsers will not start audio until a gesture. */
 #gate{
   position:fixed;inset:0;background:var(--ink);display:flex;align-items:center;
@@ -627,9 +641,9 @@ let ctx=null, master=null, voiceBus=null, dryTap=null, normGain=null, limiter=nu
     chainIn=null, chainOut=null, micStream=null, micSrc=null;
 
 const state={
-  engine:0, through:false,
+  engine:1, through:false,
   tempo:.25, density:.5, mix:1, intensity:1, normalize:1, output:-3,
-  driftL:0, everyL:8, driftR:0, everyR:8,
+  driftL:.04, everyL:68, driftR:.04, everyR:82,
   seedL:new Seed(""), seedR:new Seed(""),
   score:null, patch:null,
   pulseIndex:0, lastSounding:0, nextPulseAt:0,
@@ -1172,11 +1186,11 @@ function buildStrips(){
   painters.push(paramRow(ui.stripL,"Tempo",()=>state.tempo,v=>state.tempo=v,v=>v.toFixed(2)+"x",.1,4));
   painters.push(paramRow(ui.stripL,"Density",()=>state.density,v=>state.density=v,pctFmt,0,1));
   painters.push(paramRow(ui.stripL,"Drift",()=>state.driftL,v=>state.driftL=v,driftFmt,0,1));
-  painters.push(paramRow(ui.stripL,"Every",()=>state.everyL,v=>state.everyL=v,everyFmt,.5,60));
+  painters.push(paramRow(ui.stripL,"Every",()=>state.everyL,v=>state.everyL=v,everyFmt,.5,90));
   painters.push(paramRow(ui.stripR,"Mix",()=>state.mix,v=>{state.mix=v;rewire();},pctFmt,0,1));
   painters.push(paramRow(ui.stripR,"Intensity",()=>state.intensity,v=>{state.intensity=v;rewire();},pctFmt,0,2));
   painters.push(paramRow(ui.stripR,"Drift",()=>state.driftR,v=>state.driftR=v,driftFmt,0,1));
-  painters.push(paramRow(ui.stripR,"Every",()=>state.everyR,v=>state.everyR=v,everyFmt,.5,60));
+  painters.push(paramRow(ui.stripR,"Every",()=>state.everyR,v=>state.everyR=v,everyFmt,.5,90));
   painters.push(makeParam(document.getElementById("pNorm"),()=>state.normalize,v=>state.normalize=v,pctFmt,0,1));
   painters.push(makeParam(document.getElementById("pOut"),()=>state.output,v=>state.output=v,
                           v=>(v>=0?"+":"")+v.toFixed(1)+" dB",-24,12));
@@ -1284,7 +1298,7 @@ state.seedR=new Seed(ui.textR.value);
 ui.keyL.textContent=state.seedL.key;
 ui.keyR.textContent=state.seedR.key;
 paintEngine();
-renderChain(ui.chainL, describeScore(deriveScore(state.seedL,0)), null);
+renderChain(ui.chainL, describeScore(deriveScore(state.seedL,state.engine)), null);
 renderChain(ui.chainR, describePatch(derivePatch(state.seedR)), null);
 </script>
 </body>
