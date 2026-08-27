@@ -635,6 +635,408 @@ const SPECS=[
  {r:[1,2,3,4,5,6],              g:[1,.44,.22,.12,.06,.03],  a:.006,d:2.0,s:.08,rel:1.00},
  {r:[1,1.006,2,2.012,3,4],      g:[1,.72,.46,.34,.22,.13],  a:.65, d:2.4,s:.84,rel:1.10}];
 
+/* --------------------------------------------------------------- worklet -- */
+const WORKLET_SRC = `/* ============================================================================
+   AudioWorklet — the three modules that cannot be built from stock nodes.
+
+   GATE and CRUSH are ports of incant::units::GateStage and ::Bitcrush.
+   TAPE is a port of the Airwindows tape record/repro model, MIT licensed:
+
+     Copyright (c) 2018 Chris Johnson
+
+     Permission is hereby granted, free of charge, to any person obtaining a
+     copy of this software and associated documentation files (the
+     "Software"), to deal in the Software without restriction, including
+     without limitation the rights to use, copy, modify, merge, publish,
+     distribute, sublicense, and/or sell copies of the Software, and to permit
+     persons to whom the Software is furnished to do so, subject to the
+     following conditions:
+
+     The above copyright notice and this permission notice shall be included
+     in all copies or substantial portions of the Software.
+
+     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+     MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+     IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+     CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+     TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+     SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+   Parameters arrive once at construction. That is not a limitation here: the
+   rack is rebuilt whenever a derived word moves, so a node never outlives its
+   settings.
+   ============================================================================ */
+const c01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+
+/* -------------------------------------------------------------------- GATE --
+   Port of GateStage. Rack sets THRESHOLD p0, RELEASE p1, HOLD p2 and pins
+   HYSTERESIS at 0.35; ATTACK stays at its 1 ms default and both key filters
+   stay out of circuit, so the detector is the raw rectified link. */
+class GateProc extends AudioWorkletProcessor {
+  constructor(opt){
+    super();
+    const p = opt.processorOptions, sr = sampleRate;
+    this.thr = Math.pow(10, (-80 + 80 * c01(p.threshold)) / 20);
+    this.closeRatio = Math.pow(10, -(24 * 0.35) / 20);
+    const attackMs = 1.0;
+    const releaseMs = 5 * Math.pow(400, c01(p.release));
+    this.aAtk = 1 - Math.exp(-1 / (Math.max(1e-5, attackMs * 0.001) * sr));
+    this.aRel = 1 - Math.exp(-1 / (Math.max(1e-5, releaseMs * 0.001) * sr));
+    this.envRel = 1 - Math.exp(-1 / (0.020 * sr));
+    this.holdSamples = Math.floor(500 * c01(p.hold) * 0.001 * sr);
+    this.env = 0; this.gain = 1; this.holdLeft = 0; this.open = true;
+    this.listen();
+  }
+  /* DRIFT rebuilds the rack every couple of seconds. A process() that always
+     returns true keeps running on the audio thread forever after its node is
+     disconnected, so the main thread retires each one explicitly. Input
+     presence cannot be used for this: a connected but SILENT input also
+     arrives as an empty array, and this piece is mostly silence. */
+  listen(){ this.port.onmessage = e => { if(e.data === "stop") this.dead = true; }; }
+  process(inputs, outputs){
+    if(this.dead) return false;
+    const i = inputs[0], o = outputs[0];
+    if(!i || !i.length || !i[0]) return true;
+    const L = i[0], R = i.length > 1 ? i[1] : i[0];
+    const oL = o[0], oR = o.length > 1 ? o[1] : null;
+    for(let k = 0; k < L.length; k++){
+      const l = L[k], r = R[k];
+      // Rectify each channel THEN link. A mid sum is polarity-dependent and
+      // slams the gate shut on anti-correlated material.
+      const rect = Math.max(Math.abs(l), Math.abs(r));
+      this.env = rect > this.env ? rect : this.env + this.envRel * (rect - this.env);
+      if(this.env < 1e-20) this.env = 0;
+      const closeThr = this.thr * this.closeRatio;
+      if(this.env >= this.thr){ this.open = true; this.holdLeft = this.holdSamples; }
+      else if(this.open && this.env < closeThr){
+        if(this.holdLeft > 0) this.holdLeft--; else this.open = false;
+      }
+      const target = this.open ? 1 : 0;
+      this.gain += (target > this.gain ? this.aAtk : this.aRel) * (target - this.gain);
+      if(this.gain < 1e-20) this.gain = 0;
+      if(this.gain > 1) this.gain = 1;
+      oL[k] = l * this.gain;
+      if(oR) oR[k] = r * this.gain;
+    }
+    return true;
+  }
+}
+
+/* ------------------------------------------------------------------- CRUSH --
+   Port of Bitcrush: real sample-rate reduction behind a 4th-order anti-alias
+   filter, and a quantiser whose grid TRACKS AN ENVELOPE — quiet passages are
+   quantised against a quiet ceiling, so the crush stays audible as things
+   decay instead of swallowing them. */
+function rbjLowpass(fc, sr){
+  const w0 = 2 * Math.PI * Math.min(fc, sr * 0.49) / sr;
+  const cs = Math.cos(w0), alpha = Math.sin(w0) / (2 * Math.SQRT1_2);
+  const a0 = 1 + alpha;
+  return { b0:((1-cs)/2)/a0, b1:(1-cs)/a0, b2:((1-cs)/2)/a0,
+           a1:(-2*cs)/a0, a2:(1-alpha)/a0 };
+}
+class CrushProc extends AudioWorkletProcessor {
+  constructor(opt){
+    super();
+    const p = opt.processorOptions, sr = sampleRate;
+    this.rate = Math.min(Math.max(480, p.rate|0), Math.max(960, Math.floor(sr * 0.5)));
+    this.levels = Math.max(1, Math.pow(2, Math.min(16, Math.max(2, p.bits)) - 1) - 1);
+    this.step = sr / this.rate;
+    this.c = rbjLowpass(this.rate * 0.45, sr);
+    this.st = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]];  // 2 stages x 2 ch
+    this.phase = 0; this.held = [0, 0];
+    this.env = [1e-4, 1e-4];
+    this.aAtk = Math.exp(-1 / (1.0 * 0.001 * sr));
+    this.aRel = Math.exp(-1 / (100.0 * 0.001 * sr));
+    this.listen();
+  }
+  biquad(x, s){
+    const c = this.c;
+    const y = c.b0*x + c.b1*s[0] + c.b2*s[1] - c.a1*s[2] - c.a2*s[3];
+    s[1] = s[0]; s[0] = x; s[3] = s[2]; s[2] = y;
+    return y;
+  }
+  quant(x, env){
+    let c = x / env;
+    if(c > 1) c = 1; else if(c < -1) c = -1;
+    return Math.round(c * this.levels) * (env / this.levels);
+  }
+  /* DRIFT rebuilds the rack every couple of seconds. A process() that always
+     returns true keeps running on the audio thread forever after its node is
+     disconnected, so the main thread retires each one explicitly. Input
+     presence cannot be used for this: a connected but SILENT input also
+     arrives as an empty array, and this piece is mostly silence. */
+  listen(){ this.port.onmessage = e => { if(e.data === "stop") this.dead = true; }; }
+  process(inputs, outputs){
+    if(this.dead) return false;
+    const i = inputs[0], o = outputs[0];
+    if(!i || !i.length || !i[0]) return true;
+    const L = i[0], R = i.length > 1 ? i[1] : i[0];
+    const oL = o[0], oR = o.length > 1 ? o[1] : null;
+    for(let k = 0; k < L.length; k++){
+      const fL = this.biquad(this.biquad(L[k], this.st[0]), this.st[1]);
+      const fR = this.biquad(this.biquad(R[k], this.st[2]), this.st[3]);
+      for(let ch = 0; ch < 2; ch++){
+        const a = Math.abs(ch ? R[k] : L[k]);
+        const co = a > this.env[ch] ? this.aAtk : this.aRel;
+        this.env[ch] = Math.max(1e-4, a + (this.env[ch] - a) * co);
+      }
+      this.phase += 1;
+      if(this.phase >= this.step){
+        this.phase -= this.step;
+        this.held[0] = this.quant(fL, this.env[0]);
+        this.held[1] = this.quant(fR, this.env[1]);
+      }
+      oL[k] = this.held[0];
+      if(oR) oR[k] = this.held[1];
+    }
+    return true;
+  }
+}
+
+/* -------------------------------------------------------------------- TAPE --
+   Airwindows tape record/repro. Rack passes p0..p4 as A..E and leaves F..I at
+   0.5, which puts BIAS at exactly zero — so the bias slew ladder is skipped
+   here, as it is in the plugin. What is left is the part you hear: Dubly
+   encode, flutter, hysteresis, the averaged head-bump darkening, the Taylor
+   sine saturation, the head bump itself, and Dubly decode. */
+class TapeProc extends AudioWorkletProcessor {
+  constructor(opt){
+    super();
+    const p = opt.processorOptions, sr = sampleRate;
+    const A = c01(p.a), B = c01(p.b), C = c01(p.c), D = c01(p.d), E = c01(p.e);
+    const G = 0.5, H = 0.5, I = 0.5;                 // Rack leaves these alone
+    this.os = sr / 44100;
+    this.slewsing = Math.min(32, Math.max(2, Math.floor(this.os * 2)));
+    this.inputGain = Math.pow(A * 2, 2);
+    this.dublyAmount = B * 2;
+    this.outlyAmount = Math.max(-1, (1 - B) * -2);
+    this.iirEncFreq = Math.min(0.999, (1 - C) / this.os);
+    this.iirDecFreq = Math.min(0.999, C / this.os);
+    this.flutDepth = Math.min(498, Math.pow(D, 6) * this.os * 50);
+    this.flutFrequency = (0.02 * Math.pow(E, 3)) / this.os;
+    this.headBumpDrive = (G * 0.1) / this.os;
+    this.headBumpMix = G * 0.5;
+    this.outputGain = I * 2;
+
+    const mk = f => {
+      const K = Math.tan(Math.PI * f), reso = 0.618033988749894848204586;
+      const norm = 1 / (1 + K / reso + K * K);
+      return { a0:K/reso*norm, a1:0, a2:-(K/reso*norm),
+               b1:2*(K*K-1)*norm, b2:(1-K/reso+K*K)*norm,
+               sL1:0, sL2:0, sR1:0, sR2:0 };
+    };
+    const fA = ((H * H) * 175 + 25) / sr;
+    this.hdbA = mk(fA); this.hdbB = mk(fA * 0.9375);
+
+    this.dL = new Float64Array(1000); this.dR = new Float64Array(1000);
+    this.gcount = 0; this.sweepL = Math.PI; this.sweepR = Math.PI;
+    this.nextmaxL = 0.5; this.nextmaxR = 0.5;
+    this.fpdL = 17; this.fpdR = 29;
+    this.iirEncL = this.iirEncR = this.avgEncL = this.avgEncR = 0;
+    this.compEncL = this.compEncR = 0;
+    this.iirDecL = this.iirDecR = this.avgDecL = this.avgDecR = 0;
+    this.compDecL = this.compDecR = 0;
+    this.hysteresisL = this.hysteresisR = 0;
+    this.headBumpL = this.headBumpR = 0;
+    this.lastDarkL = this.lastDarkR = 0;
+    this.avgPos = 0;
+    const z = n => new Float64Array(n);
+    this.avg  = { 32:[z(32),z(32)], 16:[z(16),z(16)], 8:[z(8),z(8)], 4:[z(4),z(4)], 2:[z(2),z(2)] };
+    this.post = { 32:[z(32),z(32)], 16:[z(16),z(16)], 8:[z(8),z(8)], 4:[z(4),z(4)], 2:[z(2),z(2)] };
+    this.listen();
+  }
+  dark(bank, dl, dr){
+    let a = dl, b = dr;
+    for(const n of [32, 16, 8, 4, 2]){
+      if(this.slewsing > n - 1){
+        const bl = bank[n][0], br = bank[n][1], idx = this.avgPos % n;
+        bl[idx] = a; br[idx] = b;
+        a = 0; b = 0;
+        for(let x = 0; x < n; x++){ a += bl[x]; b += br[x]; }
+        a /= n; b /= n;
+      }
+    }
+    return [a, b];
+  }
+  taylorSin(x){
+    if(x > 2.305929007734908) x = 2.305929007734908;
+    else if(x < -2.305929007734908) x = -2.305929007734908;
+    const sq = x * x;
+    let e = x * sq;
+    x -= e / 6.0;      e *= sq;
+    x += e / 69.0;     e *= sq;
+    x -= e / 2530.08;  e *= sq;
+    x += e / 224985.6; e *= sq;
+    x -= e / 9979200.0;
+    return x;
+  }
+  dubly(hp, comp, freq, amount, sample){
+    // the shape shared by the Dubly encode and decode companders
+    let d = Math.abs(hp);
+    if(d > 0){
+      const adjust = Math.log(1 + 255 * d) / 2.40823996531;
+      if(adjust > 0) d /= adjust;
+      comp = comp * (1 - freq) + d * freq;
+      sample += hp * comp * amount;
+    }
+    return [sample, comp];
+  }
+  /* DRIFT rebuilds the rack every couple of seconds. A process() that always
+     returns true keeps running on the audio thread forever after its node is
+     disconnected, so the main thread retires each one explicitly. Input
+     presence cannot be used for this: a connected but SILENT input also
+     arrives as an empty array, and this piece is mostly silence. */
+  listen(){ this.port.onmessage = e => { if(e.data === "stop") this.dead = true; }; }
+  process(inputs, outputs){
+    if(this.dead) return false;
+    const i = inputs[0], o = outputs[0];
+    if(!i || !i.length || !i[0]) return true;
+    const IL = i[0], IR = i.length > 1 ? i[1] : i[0];
+    const oL = o[0], oR = o.length > 1 ? o[1] : null;
+
+    for(let k = 0; k < IL.length; k++){
+      let sL = IL[k], sR = IR[k];
+      if(Math.abs(sL) < 1.18e-23) sL = this.fpdL * 1.18e-17;
+      if(Math.abs(sR) < 1.18e-23) sR = this.fpdR * 1.18e-17;
+      if(this.inputGain !== 1){ sL *= this.inputGain; sR *= this.inputGain; }
+
+      // --- Dubly encode -------------------------------------------------
+      this.iirEncL = this.iirEncL * (1 - this.iirEncFreq) + sL * this.iirEncFreq;
+      let hp = (sL - this.iirEncL) * 2.848 + this.avgEncL;
+      this.avgEncL = (sL - this.iirEncL) * 1.152;
+      hp = hp > 1 ? 1 : hp < -1 ? -1 : hp;
+      let res = this.dubly(hp, this.compEncL, this.iirEncFreq, this.dublyAmount, sL);
+      sL = res[0]; this.compEncL = res[1];
+
+      this.iirEncR = this.iirEncR * (1 - this.iirEncFreq) + sR * this.iirEncFreq;
+      hp = (sR - this.iirEncR) * 2.848 + this.avgEncR;
+      this.avgEncR = (sR - this.iirEncR) * 1.152;
+      hp = hp > 1 ? 1 : hp < -1 ? -1 : hp;
+      res = this.dubly(hp, this.compEncR, this.iirEncFreq, this.dublyAmount, sR);
+      sR = res[0]; this.compEncR = res[1];
+
+      // --- flutter ------------------------------------------------------
+      if(this.flutDepth > 0){
+        if(this.gcount < 0 || this.gcount > 999) this.gcount = 999;
+        this.dL[this.gcount] = sL;
+        this.dR[this.gcount] = sR;
+
+        let count = this.gcount;
+        let offset = this.flutDepth + this.flutDepth * Math.sin(this.sweepL);
+        this.sweepL += this.nextmaxL * this.flutFrequency;
+        if(this.sweepL > Math.PI * 2){
+          this.sweepL -= Math.PI * 2;
+          const a = 0.24 + (this.fpdL >>> 0) / 4294967295 * 0.74;
+          this.fpdL ^= this.fpdL << 13; this.fpdL ^= this.fpdL >>> 17; this.fpdL ^= this.fpdL << 5;
+          const b = 0.24 + (this.fpdL >>> 0) / 4294967295 * 0.74;
+          const ref = Math.sin(this.sweepR + this.nextmaxR);
+          this.nextmaxL = Math.abs(a - ref) < Math.abs(b - ref) ? a : b;
+        }
+        count += Math.floor(offset);
+        let frac = offset - Math.floor(offset);
+        sL = this.dL[count - (count > 999 ? 1000 : 0)] * (1 - frac)
+           + this.dL[count + 1 - (count + 1 > 999 ? 1000 : 0)] * frac;
+
+        count = this.gcount;
+        offset = this.flutDepth + this.flutDepth * Math.sin(this.sweepR);
+        this.sweepR += this.nextmaxR * this.flutFrequency;
+        if(this.sweepR > Math.PI * 2){
+          this.sweepR -= Math.PI * 2;
+          const a = 0.24 + (this.fpdR >>> 0) / 4294967295 * 0.74;
+          this.fpdR ^= this.fpdR << 13; this.fpdR ^= this.fpdR >>> 17; this.fpdR ^= this.fpdR << 5;
+          const b = 0.24 + (this.fpdR >>> 0) / 4294967295 * 0.74;
+          const ref = Math.sin(this.sweepL + this.nextmaxL);
+          this.nextmaxR = Math.abs(a - ref) < Math.abs(b - ref) ? a : b;
+        }
+        count += Math.floor(offset);
+        frac = offset - Math.floor(offset);
+        sR = this.dR[count - (count > 999 ? 1000 : 0)] * (1 - frac)
+           + this.dR[count + 1 - (count + 1 > 999 ? 1000 : 0)] * frac;
+
+        this.gcount--;
+      }
+
+      // BIAS is zero at Rack's settings, so the slew ladder is a no-op here.
+
+      // --- tiny hysteresis ----------------------------------------------
+      let ah = (1 - Math.abs(sL)) * (1 - Math.abs(sL)) * 0.012;
+      this.hysteresisL = Math.max(Math.min(this.hysteresisL + sL * Math.abs(sL), 0.011449), -0.011449) * 0.999;
+      sL += this.hysteresisL * ah;
+      ah = (1 - Math.abs(sR)) * (1 - Math.abs(sR)) * 0.012;
+      this.hysteresisR = Math.max(Math.min(this.hysteresisR + sR * Math.abs(sR), 0.011449), -0.011449) * 0.999;
+      sR += this.hysteresisR * ah;
+
+      // --- averaged darkening, pass one ---------------------------------
+      if(this.avgPos > 31) this.avgPos = 0;
+      let dk = this.dark(this.avg, sL, sR);
+      let avgSlewL = Math.min(Math.abs(this.lastDarkL - sL) * 0.12 * this.os, 1);
+      avgSlewL = 1 - (1 - avgSlewL - avgSlewL);
+      sL = sL * (1 - avgSlewL) + dk[0] * avgSlewL;
+      this.lastDarkL = dk[0];
+      let avgSlewR = Math.min(Math.abs(this.lastDarkR - sR) * 0.12 * this.os, 1);
+      avgSlewR = 1 - (1 - avgSlewR - avgSlewR);
+      sR = sR * (1 - avgSlewR) + dk[1] * avgSlewR;
+      this.lastDarkR = dk[1];
+
+      // --- saturation ---------------------------------------------------
+      sL = this.taylorSin(sL);
+      sR = this.taylorSin(sR);
+
+      // --- averaged darkening, pass two ---------------------------------
+      dk = this.dark(this.post, sL, sR);
+      this.avgPos++;
+      sL = sL * (1 - avgSlewL) + dk[0] * avgSlewL;
+      sR = sR * (1 - avgSlewR) + dk[1] * avgSlewR;
+
+      // --- head bump ----------------------------------------------------
+      if(this.headBumpMix > 0){
+        const bq = (x, f, n1, n2) => {
+          const y = x * f.a0 + f[n1];
+          f[n1] = x * f.a1 - y * f.b1 + f[n2];
+          f[n2] = x * f.a2 - y * f.b2;
+          return y;
+        };
+        this.headBumpL += sL * this.headBumpDrive;
+        this.headBumpL -= this.headBumpL * this.headBumpL * this.headBumpL * (0.0618 / Math.sqrt(this.os));
+        this.headBumpR += sR * this.headBumpDrive;
+        this.headBumpR -= this.headBumpR * this.headBumpR * this.headBumpR * (0.0618 / Math.sqrt(this.os));
+        const hL = bq(bq(this.headBumpL, this.hdbA, "sL1", "sL2"), this.hdbB, "sL1", "sL2");
+        const hR = bq(bq(this.headBumpR, this.hdbA, "sR1", "sR2"), this.hdbB, "sR1", "sR2");
+        sL += hL * this.headBumpMix;
+        sR += hR * this.headBumpMix;
+      }
+
+      // --- Dubly decode -------------------------------------------------
+      this.iirDecL = this.iirDecL * (1 - this.iirDecFreq) + sL * this.iirDecFreq;
+      hp = (sL - this.iirDecL) * 2.628 + this.avgDecL;
+      this.avgDecL = (sL - this.iirDecL) * 1.372;
+      hp = hp > 1 ? 1 : hp < -1 ? -1 : hp;
+      res = this.dubly(hp, this.compDecL, this.iirDecFreq, this.outlyAmount, sL);
+      sL = res[0]; this.compDecL = res[1];
+
+      this.iirDecR = this.iirDecR * (1 - this.iirDecFreq) + sR * this.iirDecFreq;
+      hp = (sR - this.iirDecR) * 2.628 + this.avgDecR;
+      this.avgDecR = (sR - this.iirDecR) * 1.372;
+      hp = hp > 1 ? 1 : hp < -1 ? -1 : hp;
+      res = this.dubly(hp, this.compDecR, this.iirDecFreq, this.outlyAmount, sR);
+      sR = res[0]; this.compDecR = res[1];
+
+      if(this.outputGain !== 1){ sL *= this.outputGain; sR *= this.outputGain; }
+
+      oL[k] = sL;
+      if(oR) oR[k] = sR;
+    }
+    return true;
+  }
+}
+
+registerProcessor("invoker-gate", GateProc);
+registerProcessor("invoker-crush", CrushProc);
+registerProcessor("invoker-tape", TapeProc);
+`;
+let workletReady=false;
+
 /* ------------------------------------------------------------------ audio -- */
 let ctx=null, master=null, voiceBus=null, dryTap=null, normGain=null, limiter=null,
     clipper=null, analyser=null, noiseSrc=null, noiseGain=null, noiseLP=null, noiseHP=null,
@@ -710,6 +1112,7 @@ function cachedImpulse(seconds, decay, bright){
     even when the derived word says zero. */
 function buildChain(patch){
   const input=ctx.createGain(), output=ctx.createGain();
+  const workletNodes=[];
   let node=input;
 
   for(const slot of patch.slots){
@@ -718,11 +1121,25 @@ function buildChain(patch){
 
     let head=null, tail=null, blend=amt;
     const link=n=>{ if(!head){ head=n; tail=n; } else { tail.connect(n); tail=n; } };
+    const worklet=(name,opts)=>{
+      const n=new AudioWorkletNode(ctx,name,
+        {numberOfInputs:1,numberOfOutputs:1,outputChannelCount:[2],processorOptions:opts});
+      workletNodes.push(n);
+      return n;
+    };
+
 
     switch(slot.id){
-      case 0: { const g=ctx.createDynamicsCompressor();
-                g.threshold.value=-60+p[0]*30; g.ratio.value=20; g.attack.value=.003;
-                g.release.value=.05+p[1]*.4; link(g); break; }
+      case 0: { // A gate attenuates BELOW threshold. The compressor that used
+                // to stand here did the opposite gesture.
+                if(workletReady){
+                  link(worklet("invoker-gate",{threshold:p[0],release:p[1],hold:p[2]}));
+                }else{
+                  const g=ctx.createDynamicsCompressor();
+                  g.threshold.value=-60+p[0]*30; g.ratio.value=20; g.attack.value=.003;
+                  g.release.value=.05+p[1]*.4; link(g);
+                }
+                break; }
       case 1: case 2: case 3: {
                 const w=ctx.createWaveShaper();
                 w.curve=softCurve(p[0]*(slot.id===2?1.6:slot.id===3?.9:.7)); w.oversample="2x";
@@ -750,16 +1167,30 @@ function buildChain(patch){
                   g.type=type; g.frequency.value=freq; g.Q.value=.7; link(g);
                 }
                 break; }
-      case 7: case 8: { const w=ctx.createWaveShaper();
-                // 16 bits down to 3, as the plugin writes it — not 12 down to 3.
-                w.curve=bitCurve(16-(slot.id===7?p[1]:p[0])*13);
+      case 7: { if(workletReady){
+                  link(worklet("invoker-crush",
+                    {rate:Math.round(24000*Math.pow(0.03,p[0])), bits:16-p[1]*13}));
+                }else{
+                  const w=ctx.createWaveShaper(); w.curve=bitCurve(16-p[1]*13);
+                  const f=ctx.createBiquadFilter(); f.type="lowpass";
+                  f.frequency.value=1200+(1-p[0])*14000;
+                  link(w); link(f);
+                }
+                break; }
+      case 8: { const w=ctx.createWaveShaper();
+                w.curve=bitCurve(16-p[0]*13);
                 const f=ctx.createBiquadFilter(); f.type="lowpass";
                 f.frequency.value=1200+(1-p[0])*14000;
                 link(w); link(f); break; }
-      case 9: { const w=ctx.createWaveShaper(); w.curve=softCurve(p[0]*.35);
-                const f=ctx.createBiquadFilter(); f.type="highshelf";
-                f.frequency.value=3000; f.gain.value=-(1-p[3])*10;
-                link(w); link(f); break; }
+      case 9: { if(workletReady){
+                  link(worklet("invoker-tape",{a:p[0],b:p[1],c:p[2],d:p[3],e:p[4]}));
+                }else{
+                  const w=ctx.createWaveShaper(); w.curve=softCurve(p[0]*.35);
+                  const f=ctx.createBiquadFilter(); f.type="highshelf";
+                  f.frequency.value=3000; f.gain.value=-(1-p[3])*10;
+                  link(w); link(f);
+                }
+                break; }
       case 10: case 11: {
                 const d=ctx.createDelay(0.1), lfo=ctx.createOscillator(), la=ctx.createGain();
                 d.delayTime.value = slot.id===10 ? .004 : .008;
@@ -802,11 +1233,20 @@ function buildChain(patch){
     node=mix;
   }
   node.connect(output);
-  return {input, output};
+  return {input, output, workletNodes};
 }
 
-function startAudio(){
+async function startAudio(){
   ctx = new (window.AudioContext||window.webkitAudioContext)();
+
+  // GATE, CRUSH and TAPE are per-sample state machines; stock nodes cannot
+  // express them. Everything still works without the worklet, just coarser.
+  try{
+    const url=URL.createObjectURL(new Blob([WORKLET_SRC],{type:"application/javascript"}));
+    await ctx.audioWorklet.addModule(url);
+    URL.revokeObjectURL(url);
+    workletReady=true;
+  }catch(e){ workletReady=false; }
 
   voiceBus = ctx.createGain();          // the piece, before the machine
   dryTap   = ctx.createGain();          // what MIX blends against
@@ -853,6 +1293,9 @@ const kXfade=0.025;                    // the 20 ms the plugin uses, rounded up
 
 /** Drops the previous machine once it has been faded out. */
 function teardown(old){
+  // Retire the worklets explicitly — a disconnected processor whose process()
+  // returns true runs on the audio thread for the life of the context.
+  for(const n of (old.workletNodes||[])){ try{ n.port.postMessage("stop"); }catch(e){} }
   try{ old.src.disconnect(old.chainIn); }catch(e){}
   try{ old.chainOut.disconnect(); }catch(e){}
   try{ dryTap.disconnect(old.dry); }catch(e){}
@@ -899,7 +1342,8 @@ function rewire(){
   }else{
     wet.gain.value=wetTo; dry.gain.value=dryTo;
   }
-  liveNodes={src:source, chainIn:built.input, chainOut:built.output, wet, dry};
+  liveNodes={src:source, chainIn:built.input, chainOut:built.output, wet, dry,
+             workletNodes:built.workletNodes};
 }
 
 /* ---------------------------------------------------------- the composer -- */
@@ -1369,11 +1813,11 @@ window.addEventListener("keydown",e=>{
 },{passive:false});
 window.addEventListener("wheel",e=>{ if(e.ctrlKey) e.preventDefault(); },{passive:false});
 
-document.getElementById("gate").addEventListener("click",()=>{
+document.getElementById("gate").addEventListener("click",async ()=>{
   document.getElementById("gate").classList.add("hidden");
   buildStrips();
   paintEngine();
-  startAudio();
+  await startAudio();
   commitLeft(); commitRight();
   ui.textL.focus();
 },{once:true});
